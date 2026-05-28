@@ -742,7 +742,15 @@ function Verdict({ rec }) {
    ROOT
 --------------------------------------------------------------------------- */
 export default function App() {
-  const [companies] = useState(SEED);
+  const API = import.meta.env.VITE_API_URL;
+const [companies, setCompanies] = useState(SEED);
+useEffect(() => {
+  if (!API) return;
+  fetch(`${API}/api/companies`)
+    .then((r) => r.json())
+    .then((rows) => setCompanies(rows))
+    .catch(() => console.warn("API unreachable, using sample data"));
+}, []);
   const [view, setView] = useState("screener");
   const [selectedId, setSelectedId] = useState(null);
 
