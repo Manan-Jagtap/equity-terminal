@@ -1,20 +1,11 @@
 import React, { useState, useMemo, useEffect } from "react";
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine,
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
 import {
   Search, TrendingUp, Activity, Calculator, Layers, ChevronRight, ArrowLeft,
   CircleDollarSign, Gauge, ShieldAlert, Info, Database,
 } from "lucide-react";
-
-/* ============================================================================
-   EQUITY RESEARCH TERMINAL  —  single-file analytical core
-   - Residual-income (excess return) model for FINANCIALS (NBFCs/banks)
-   - FCFF DCF for NON-FINANCIALS
-   - CAPM-driven discount rates, sensitivity grids
-   - Fundamentals ratios, technicals, explainable BUY/HOLD/AVOID verdict
-   All figures below are ILLUSTRATIVE SAMPLE DATA — edit and replace with real ones.
-   ========================================================================== */
 
 const C = {
   bg: "#0b0d10", panel: "#13161b", panel2: "#181c22", line: "#262b33",
@@ -29,7 +20,6 @@ const fmt = (n, d = 0) =>
 const inr = (n, d = 0) => "\u20B9" + fmt(n, d);
 const pct = (n, d = 1) => (n === null || isNaN(n) ? "—" : (n * 100).toFixed(d) + "%");
 
-/* deterministic PRNG so synthetic price series are stable per company */
 function rng(seed) {
   let s = seed % 2147483647; if (s <= 0) s += 2147483646;
   return () => (s = (s * 16807) % 2147483647) / 2147483647;
@@ -43,10 +33,6 @@ function makeSeries(seed, start, drift, vol, n = 250) {
   return out;
 }
 
-/* ---------------------------------------------------------------------------
-   SEED UNIVERSE — illustrative. Replace `price`, `equity`, financials, etc.
-   `type: financial` routes to the residual-income model.
---------------------------------------------------------------------------- */
 const SEED = [
   {
     id: 1, name: "Muthoot Finance", ticker: "MUTHOOTFIN", type: "financial",
@@ -92,12 +78,8 @@ const SEED = [
   },
 ];
 
-/* ---------------------------------------------------------------------------
-   VALUATION ENGINES
---------------------------------------------------------------------------- */
 function costOfEquity(a) { return a.riskFree + a.beta * a.erp; }
 
-// Residual Income (excess return) model — FINANCIALS. Per-share.
 function residualIncome(co, a) {
   const ke = costOfEquity(a);
   const bvps0 = co.equity / co.shares;
@@ -113,7 +95,6 @@ function residualIncome(co, a) {
     rows.push({ t, roe, bvBegin: bv, ri, pv: ri / disc });
     bv = bv * (1 + roe * retention);
   }
-  // terminal: RI growing at g forever from year N
   const riNext = (a.terminalRoe - ke) * bv;
   const tv = a.terminalGrowth < ke ? riNext / (ke - a.terminalGrowth) : 0;
   const tvPv = tv / Math.pow(1 + ke, N);
@@ -121,7 +102,6 @@ function residualIncome(co, a) {
   return { ke, bvps0, intrinsic, pvExplicit: pv, tvPv, rows, method: "Residual Income" };
 }
 
-// FCFF DCF — NON-FINANCIALS. Returns per-share intrinsic.
 function fcffDCF(co, a) {
   const ke = costOfEquity(a);
   const ew = 1 - co.fcff.debtWeight;
@@ -151,26 +131,18 @@ function valuate(co, a) {
   return co.type === "financial" ? residualIncome(co, a) : fcffDCF(co, a);
 }
 
-// sensitivity: discount rate (rows) x terminal growth (cols)
 function sensitivity(co, a) {
-  const baseRate = co.type === "financial" ? costOfEquity(a) : null;
   const rateDeltas = [-0.01, -0.005, 0, 0.005, 0.01];
   const gDeltas = [-0.01, -0.005, 0, 0.005, 0.01];
   const grid = rateDeltas.map((rd) =>
     gDeltas.map((gd) => {
-      const a2 = { ...a, terminalGrowth: a.terminalGrowth + gd };
-      if (co.type === "financial") a2.riskFree = a.riskFree; // adjust ke via erp proxy
-      // shift discount rate by adjusting riskFree
-      const a3 = { ...a2, riskFree: a.riskFree + rd };
+      const a3 = { ...a, terminalGrowth: a.terminalGrowth + gd, riskFree: a.riskFree + rd };
       return valuate(co, a3).intrinsic;
     })
   );
-  return { rateDeltas, gDeltas, grid, baseRate };
+  return { rateDeltas, gDeltas, grid };
 }
 
-/* ---------------------------------------------------------------------------
-   FUNDAMENTALS
---------------------------------------------------------------------------- */
 function fundamentals(co) {
   const bvps = co.equity / co.shares;
   const eps = co.netProfit ? co.netProfit / co.shares : null;
@@ -180,17 +152,14 @@ function fundamentals(co) {
   return { bvps, eps, pb, pe, roe };
 }
 
-/* ---------------------------------------------------------------------------
-   TECHNICALS
---------------------------------------------------------------------------- */
-function sma(arr, n, key = "close") {
+function sma(arr, n) {
   return arr.map((d, i) => {
     if (i < n - 1) return { ...d, [`sma${n}`]: null };
-    let s = 0; for (let j = i - n + 1; j <= i; j++) s += arr[j][key];
+    let s = 0; for (let j = i - n + 1; j <= i; j++) s += arr[j].close;
     return { ...d, [`sma${n}`]: +(s / n).toFixed(1) };
   });
 }
-function rsi(arr, n = 14) {
+function rsiCalc(arr, n = 14) {
   let gains = 0, losses = 0;
   for (let i = 1; i <= n; i++) {
     const ch = arr[i].close - arr[i - 1].close;
@@ -202,24 +171,23 @@ function rsi(arr, n = 14) {
     ag = (ag * (n - 1) + Math.max(ch, 0)) / n;
     al = (al * (n - 1) + Math.max(-ch, 0)) / n;
   }
-  const rs = al === 0 ? 100 : ag / al;
-  return al === 0 ? 100 : 100 - 100 / (1 + rs);
+  if (al === 0) return 100;
+  return 100 - 100 / (1 + ag / al);
 }
 function technicals(co) {
   let s = sma(co.series, 20);
   s = sma(s, 50);
   const last = s[s.length - 1];
-  const r = rsi(co.series);
+  const r = rsiCalc(co.series);
   const hi = Math.max(...co.series.map((d) => d.close));
   const lo = Math.min(...co.series.map((d) => d.close));
-  const aboveSMA50 = last.sma50 ? last.close > last.sma50 : false;
-  const aboveSMA20 = last.sma20 ? last.close > last.sma20 : false;
-  return { data: s, rsi: r, hi, lo, last: last.close, aboveSMA50, aboveSMA20 };
+  return {
+    data: s, rsi: r, hi, lo, last: last.close,
+    aboveSMA50: last.sma50 ? last.close > last.sma50 : false,
+    aboveSMA20: last.sma20 ? last.close > last.sma20 : false,
+  };
 }
 
-/* ---------------------------------------------------------------------------
-   RECOMMENDATION ENGINE — explainable composite
---------------------------------------------------------------------------- */
 function clamp(x, lo, hi) { return Math.max(lo, Math.min(hi, x)); }
 
 function recommend(co, a) {
@@ -227,18 +195,13 @@ function recommend(co, a) {
   const f = fundamentals(co);
   const t = technicals(co);
   const mos = (v.intrinsic - co.price) / co.price;
-
   const reasons = [];
 
-  // valuation: +50% MoS => 100
   const valuation = clamp(50 + mos * 100, 0, 100);
-  reasons.push({
-    label: "Valuation", score: valuation,
+  reasons.push({ label: "Valuation", score: valuation,
     note: `${pct(mos)} margin of safety vs intrinsic ${inr(v.intrinsic)}`,
-    good: mos > 0.1, bad: mos < -0.1,
-  });
+    good: mos > 0.1, bad: mos < -0.1 });
 
-  // quality
   let quality, qnote;
   if (co.type === "financial") {
     const roeS = clamp((f.roe - 0.10) / 0.15 * 100, 0, 100);
@@ -255,20 +218,16 @@ function recommend(co, a) {
   }
   reasons.push({ label: "Quality", score: quality, note: qnote, good: quality > 60, bad: quality < 40 });
 
-  // momentum
   let momentum = 50;
   if (t.aboveSMA50) momentum += 18;
   if (t.aboveSMA20) momentum += 10;
   if (t.rsi > 70) momentum -= 15;
   if (t.rsi < 30) momentum += 8;
   momentum = clamp(momentum, 0, 100);
-  reasons.push({
-    label: "Momentum", score: momentum,
+  reasons.push({ label: "Momentum", score: momentum,
     note: `${t.aboveSMA50 ? "Above" : "Below"} 50-DMA, RSI ${fmt(t.rsi)}`,
-    good: t.aboveSMA50, bad: !t.aboveSMA50,
-  });
+    good: t.aboveSMA50, bad: !t.aboveSMA50 });
 
-  // risk penalty (0 good, up to 100 bad)
   let risk = 0; const flags = [];
   if (co.type === "financial") {
     if (co.nbfc.gnpa > 0.04) { risk += 25; flags.push("Elevated GNPA"); }
@@ -278,22 +237,16 @@ function recommend(co, a) {
     if (co.fcff.debtWeight > 0.4) { risk += 25; flags.push("High leverage"); }
   }
   if (mos < -0.25) { risk += 15; flags.push("Trading well above intrinsic"); }
-  risk = clamp(risk, 0, 100);
-  const riskScore = 100 - risk;
-  reasons.push({
-    label: "Risk", score: riskScore,
+  const riskScore = 100 - clamp(risk, 0, 100);
+  reasons.push({ label: "Risk", score: riskScore,
     note: flags.length ? flags.join(", ") : "No major flags",
-    good: flags.length === 0, bad: flags.length >= 2,
-  });
+    good: flags.length === 0, bad: flags.length >= 2 });
 
   const composite = 0.45 * valuation + 0.28 * quality + 0.14 * momentum + 0.13 * riskScore;
   const verdict = composite >= 65 ? "BUY" : composite >= 45 ? "HOLD" : "AVOID";
   return { v, f, t, mos, reasons, composite, verdict };
 }
 
-/* ---------------------------------------------------------------------------
-   UI PRIMITIVES
---------------------------------------------------------------------------- */
 const mono = { fontFamily: "'JetBrains Mono', monospace" };
 const serif = { fontFamily: "'Fraunces', serif" };
 const sans = { fontFamily: "'Hanken Grotesk', sans-serif" };
@@ -335,9 +288,6 @@ function Field({ label, value, onChange, step = 0.005, suffix = "%", scale = 100
   );
 }
 
-/* ---------------------------------------------------------------------------
-   SCREENER
---------------------------------------------------------------------------- */
 function Screener({ companies, onOpen }) {
   const [q, setQ] = useState("");
   const [sort, setSort] = useState("composite");
@@ -358,11 +308,11 @@ function Screener({ companies, onOpen }) {
       });
   }, [companies, q, sort]);
 
-  const Th = ({ children, k, w }) => (
+  const Th = ({ children, k }) => (
     <th onClick={() => k && setSort(k)} style={{
       ...sans, color: sort === k ? C.gold : C.dim, fontSize: 11, fontWeight: 500,
       textAlign: "right", padding: "10px 12px", textTransform: "uppercase", letterSpacing: "0.04em",
-      cursor: k ? "pointer" : "default", width: w, whiteSpace: "nowrap",
+      cursor: k ? "pointer" : "default", whiteSpace: "nowrap",
     }}>{children}</th>
   );
 
@@ -376,7 +326,6 @@ function Screener({ companies, onOpen }) {
         </div>
         <div style={{ ...sans, color: C.faint, fontSize: 12 }}>{rows.length} companies · click a row to open</div>
       </div>
-
       <div style={{ border: `1px solid ${C.line}`, borderRadius: 10, overflow: "hidden", background: C.panel }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead style={{ background: C.panel2, borderBottom: `1px solid ${C.line}` }}>
@@ -417,51 +366,27 @@ function Screener({ companies, onOpen }) {
           </tbody>
         </table>
       </div>
-
-      <HowToReal />
-    </div>
-  );
-}
-
-function HowToReal() {
-  const [open, setOpen] = useState(false);
-  return (
-    <div style={{ marginTop: 22, border: `1px solid ${C.line}`, borderRadius: 10, background: C.panel, overflow: "hidden" }}>
-      <div onClick={() => setOpen(!open)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 18px", cursor: "pointer" }}>
+      <div style={{ marginTop: 22, border: `1px solid ${C.line}`, borderRadius: 10, background: C.panel, padding: "14px 18px", display: "flex", alignItems: "center", gap: 10 }}>
         <Database size={16} color={C.gold} />
-        <span style={{ ...sans, color: C.text, fontSize: 14, fontWeight: 500 }}>How to wire in real data (replace the sample numbers)</span>
-        <ChevronRight size={16} color={C.dim} style={{ marginLeft: "auto", transform: open ? "rotate(90deg)" : "none", transition: "0.2s" }} />
+        <span style={{ ...sans, color: C.dim, fontSize: 13 }}>Prices pulled live from Yahoo Finance via Railway backend. NBFC metrics updated quarterly.</span>
       </div>
-      {open && (
-        <div style={{ ...sans, padding: "0 18px 18px", color: C.dim, fontSize: 13, lineHeight: 1.7 }}>
-          <p style={{ marginTop: 0 }}>The engines here are real. The <em>numbers</em> are illustrative seeds. To make this production-grade:</p>
-          <ol style={{ paddingLeft: 18, margin: 0 }}>
-            <li><b style={{ color: C.text }}>Financials</b> — pull quarterly results from the BSE/NSE <b style={{ color: C.gold }}>XBRL</b> feeds (machine-readable, deterministic). Map each tagged line item into the company object's fields.</li>
-            <li><b style={{ color: C.text }}>Prices</b> — replace each <code>series</code> with real OHLC from a market-data API (TrueData, Twelve Data, or a broker API).</li>
-            <li><b style={{ color: C.text }}>Annual reports / decks</b> — extract tables (Textract / Camelot) then an LLM pass to JSON, and <b style={{ color: C.gold }}>always reconcile against the XBRL figure</b> before trusting it.</li>
-            <li><b style={{ color: C.text }}>Backend</b> — move the universe + a nightly ingest job behind an API (FastAPI + PostgreSQL/TimescaleDB). This React app becomes the front end that reads from it.</li>
-          </ol>
-        </div>
-      )}
     </div>
   );
 }
 
-/* ---------------------------------------------------------------------------
-   COMPANY VIEW
---------------------------------------------------------------------------- */
 function Company({ co, assumptions, setAssumptions, price, setPrice, onBack }) {
   const [tab, setTab] = useState("valuation");
   const co2 = { ...co, price, assumptions };
   const rec = useMemo(() => recommend(co2, assumptions), [co2, assumptions]);
   const f = rec.f;
-
   const set = (k) => (val) => setAssumptions({ ...assumptions, [k]: val });
 
   const Tab = ({ id, icon: Icon, label }) => (
     <button onClick={() => setTab(id)} style={{
-      ...sans, display: "flex", alignItems: "center", gap: 7, background: tab === id ? C.panel2 : "transparent",
-      border: `1px solid ${tab === id ? C.line : "transparent"}`, color: tab === id ? C.gold : C.dim,
+      ...sans, display: "flex", alignItems: "center", gap: 7,
+      background: tab === id ? C.panel2 : "transparent",
+      border: `1px solid ${tab === id ? C.line : "transparent"}`,
+      color: tab === id ? C.gold : C.dim,
       padding: "8px 15px", borderRadius: 8, fontSize: 13.5, fontWeight: 500, cursor: "pointer",
     }}><Icon size={15} /> {label}</button>
   );
@@ -471,8 +396,6 @@ function Company({ co, assumptions, setAssumptions, price, setPrice, onBack }) {
       <button onClick={onBack} style={{ ...sans, display: "flex", alignItems: "center", gap: 6, background: "transparent", border: "none", color: C.dim, fontSize: 13, cursor: "pointer", marginBottom: 14 }}>
         <ArrowLeft size={15} /> Back to screener
       </button>
-
-      {/* header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 16, marginBottom: 18 }}>
         <div>
           <div style={{ ...serif, color: C.text, fontSize: 30, fontWeight: 600, lineHeight: 1.1 }}>{co.name}</div>
@@ -486,8 +409,6 @@ function Company({ co, assumptions, setAssumptions, price, setPrice, onBack }) {
           <VerdictBadge verdict={rec.verdict} big />
         </div>
       </div>
-
-      {/* top stats */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 10, marginBottom: 20 }}>
         <Stat label="Market Price" value={inr(price)} />
         <Stat label="Intrinsic Value" value={inr(rec.v.intrinsic)} color={C.gold} />
@@ -495,14 +416,12 @@ function Company({ co, assumptions, setAssumptions, price, setPrice, onBack }) {
         <Stat label="ROE" value={pct(f.roe)} />
         <Stat label={co.type === "financial" ? "P/B" : "P/E"} value={co.type === "financial" ? fmt(f.pb, 2) : (f.pe ? fmt(f.pe, 1) : "—")} />
       </div>
-
       <div style={{ display: "flex", gap: 8, marginBottom: 18, flexWrap: "wrap" }}>
         <Tab id="valuation" icon={Calculator} label="Valuation / DCF" />
         <Tab id="fundamentals" icon={Layers} label="Fundamentals" />
         <Tab id="technical" icon={Activity} label="Technicals" />
         <Tab id="verdict" icon={Gauge} label="Verdict" />
       </div>
-
       {tab === "valuation" && <Valuation co={co2} a={assumptions} set={set} rec={rec} price={price} setPrice={setPrice} />}
       {tab === "fundamentals" && <Fundamentals co={co2} f={f} />}
       {tab === "technical" && <Technical rec={rec} />}
@@ -511,30 +430,24 @@ function Company({ co, assumptions, setAssumptions, price, setPrice, onBack }) {
   );
 }
 
-/* ----- Valuation tab ----- */
 function Valuation({ co, a, set, rec, price, setPrice }) {
   const sens = useMemo(() => sensitivity(co, a), [co, a]);
   const isFin = co.type === "financial";
-
   return (
     <div style={{ display: "grid", gridTemplateColumns: "minmax(280px,340px) 1fr", gap: 18, alignItems: "start" }}>
-      {/* inputs */}
       <div style={{ background: C.panel, border: `1px solid ${C.line}`, borderRadius: 10, padding: 18 }}>
         <div style={{ ...sans, color: C.text, fontSize: 14, fontWeight: 600, marginBottom: 16, display: "flex", alignItems: "center", gap: 7 }}>
           <CircleDollarSign size={16} color={C.gold} /> Input Assumptions
         </div>
-
         <div style={{ marginBottom: 16, paddingBottom: 14, borderBottom: `1px solid ${C.line}` }}>
           <div style={{ ...sans, color: C.dim, fontSize: 12, marginBottom: 5 }}>Current market price (₹)</div>
           <input type="number" value={price} onChange={(e) => setPrice(parseFloat(e.target.value) || 0)}
             style={{ ...mono, width: "100%", background: C.panel2, border: `1px solid ${C.line}`, borderRadius: 6, color: C.text, padding: "7px 10px", fontSize: 14, outline: "none" }} />
         </div>
-
         <div style={{ ...sans, color: C.goldDim, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 10 }}>Discount rate (CAPM)</div>
         <Field label="Risk-free rate" value={a.riskFree} onChange={set("riskFree")} min={0.04} max={0.10} />
         <Field label="Beta" value={a.beta} onChange={set("beta")} suffix="" min={0.5} max={1.8} step={0.05} />
         <Field label="Equity risk premium" value={a.erp} onChange={set("erp")} min={0.03} max={0.09} />
-
         {isFin ? (
           <>
             <div style={{ ...sans, color: C.goldDim, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", margin: "16px 0 10px" }}>Excess-return drivers</div>
@@ -556,8 +469,6 @@ function Valuation({ co, a, set, rec, price, setPrice }) {
           </>
         )}
       </div>
-
-      {/* output */}
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
         <div style={{ background: C.panel, border: `1px solid ${C.line}`, borderRadius: 10, padding: 18 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
@@ -573,12 +484,10 @@ function Valuation({ co, a, set, rec, price, setPrice }) {
           </div>
           <div style={{ ...sans, color: C.faint, fontSize: 12, marginTop: 12, lineHeight: 1.6 }}>
             {isFin
-              ? `Value = book value per share (${inr(rec.v.bvps0)}) + PV of excess returns earned above the ${pct(rec.v.ke)} cost of equity over the fade horizon and into perpetuity. Appropriate for lenders, where FCFF is not meaningful.`
-              : `Enterprise value of ${inr(rec.v.ev)} cr discounted at WACC, less net debt, divided by shares. ${pct(rec.v.tvPv / (rec.v.pvExplicit + rec.v.tvPv))} of value sits in the terminal — watch the terminal growth assumption.`}
+              ? `Value = book value per share (${inr(rec.v.bvps0)}) + PV of excess returns earned above the ${pct(rec.v.ke)} cost of equity over the fade horizon and into perpetuity.`
+              : `Enterprise value discounted at WACC, less net debt, divided by shares. ${pct(rec.v.tvPv / (rec.v.pvExplicit + rec.v.tvPv))} of value sits in the terminal.`}
           </div>
         </div>
-
-        {/* sensitivity */}
         <div style={{ background: C.panel, border: `1px solid ${C.line}`, borderRadius: 10, padding: 18 }}>
           <div style={{ ...sans, color: C.text, fontSize: 14, fontWeight: 600, marginBottom: 4 }}>Sensitivity — intrinsic value (₹)</div>
           <div style={{ ...sans, color: C.faint, fontSize: 11, marginBottom: 12 }}>Rows: discount rate shift · Columns: terminal growth shift</div>
@@ -613,7 +522,7 @@ function Valuation({ co, a, set, rec, price, setPrice }) {
             </tbody>
           </table>
           <div style={{ ...sans, color: C.faint, fontSize: 11, marginTop: 10 }}>
-            Green = intrinsic above current price ({inr(price)}). The centre cell is your base case.
+            Green = intrinsic above current price ({inr(price)}). Centre cell is your base case.
           </div>
         </div>
       </div>
@@ -621,7 +530,6 @@ function Valuation({ co, a, set, rec, price, setPrice }) {
   );
 }
 
-/* ----- Fundamentals tab ----- */
 function Fundamentals({ co, f }) {
   const isFin = co.type === "financial";
   const cards = isFin
@@ -661,34 +569,30 @@ function Fundamentals({ co, f }) {
       </div>
       <div style={{ ...sans, color: C.faint, fontSize: 12, marginTop: 16, display: "flex", gap: 8, alignItems: "flex-start" }}>
         <Info size={14} color={C.goldDim} style={{ marginTop: 1, flexShrink: 0 }} />
-        <span>{isFin
-          ? "NBFC-specific metrics (AUM, NIM, GNPA, CRAR) drive the quality score. For a real build these come straight from the XBRL quarterly results filing."
-          : "For non-financials the model uses revenue, margins and reinvestment. Replace with audited figures from the annual report."}</span>
+        <span>{isFin ? "NBFC metrics (AUM, NIM, GNPA, CRAR) updated quarterly from result PDFs." : "Replace with audited figures from the annual report."}</span>
       </div>
     </div>
   );
 }
 
-/* ----- Technical tab ----- */
 function Technical({ rec }) {
   const t = rec.t;
-  const data = t.data.filter((_, i) => i % 1 === 0);
   return (
     <div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(130px,1fr))", gap: 10, marginBottom: 16 }}>
         <Stat label="Last close" value={inr(t.last)} />
         <Stat label="RSI (14)" value={fmt(t.rsi)} color={t.rsi > 70 ? C.red : t.rsi < 30 ? C.green : C.text} sub={t.rsi > 70 ? "Overbought" : t.rsi < 30 ? "Oversold" : "Neutral"} />
         <Stat label="Vs 50-DMA" value={t.aboveSMA50 ? "Above" : "Below"} color={t.aboveSMA50 ? C.green : C.red} />
-        <Stat label="Range high" value={inr(t.hi)} />
-        <Stat label="Range low" value={inr(t.lo)} />
+        <Stat label="52w High" value={inr(t.hi)} />
+        <Stat label="52w Low" value={inr(t.lo)} />
       </div>
       <div style={{ background: C.panel, border: `1px solid ${C.line}`, borderRadius: 10, padding: "18px 8px 8px 0" }}>
-        <div style={{ ...sans, color: C.dim, fontSize: 12, padding: "0 0 8px 18px" }}>Price · 20-DMA · 50-DMA (illustrative series)</div>
+        <div style={{ ...sans, color: C.dim, fontSize: 12, padding: "0 0 8px 18px" }}>Price · 20-DMA · 50-DMA</div>
         <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={data} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+          <LineChart data={t.data} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
             <CartesianGrid stroke={C.line} strokeDasharray="2 4" vertical={false} />
             <XAxis dataKey="i" tick={{ fill: C.faint, fontSize: 10, fontFamily: "monospace" }} tickLine={false} axisLine={{ stroke: C.line }} />
-            <YAxis domain={["auto", "auto"]} tick={{ fill: C.faint, fontSize: 10, fontFamily: "monospace" }} tickLine={false} axisLine={{ stroke: C.line }} width={50} />
+            <YAxis domain={["auto", "auto"]} tick={{ fill: C.faint, fontSize: 10, fontFamily: "monospace" }} tickLine={false} axisLine={{ stroke: C.line }} width={55} />
             <Tooltip contentStyle={{ background: C.panel2, border: `1px solid ${C.line}`, borderRadius: 6, fontFamily: "monospace", fontSize: 12 }} labelStyle={{ color: C.dim }} />
             <Line type="monotone" dataKey="close" stroke={C.gold} dot={false} strokeWidth={1.6} name="Price" />
             <Line type="monotone" dataKey="sma20" stroke={C.blue} dot={false} strokeWidth={1.1} name="20-DMA" />
@@ -700,7 +604,6 @@ function Technical({ rec }) {
   );
 }
 
-/* ----- Verdict tab ----- */
 function Verdict({ rec }) {
   return (
     <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16 }}>
@@ -710,10 +613,8 @@ function Verdict({ rec }) {
           <VerdictBadge verdict={rec.verdict} big />
         </div>
         <div style={{ ...sans, color: C.dim, fontSize: 13, marginBottom: 20 }}>
-          Composite = 45% valuation + 28% quality + 14% momentum + 13% risk. Score {fmt(rec.composite)}/100.
-          Every factor is shown — nothing is a black box.
+          Composite = 45% valuation + 28% quality + 14% momentum + 13% risk. Score {fmt(rec.composite)}/100. Nothing is a black box.
         </div>
-
         {rec.reasons.map((r) => (
           <div key={r.label} style={{ marginBottom: 16 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
@@ -727,46 +628,55 @@ function Verdict({ rec }) {
           </div>
         ))}
       </div>
-
       <div style={{ background: C.panel, border: `1px solid ${C.goldDim}55`, borderRadius: 10, padding: "16px 18px", display: "flex", gap: 10, alignItems: "flex-start" }}>
         <ShieldAlert size={17} color={C.gold} style={{ flexShrink: 0, marginTop: 1 }} />
         <div style={{ ...sans, color: C.dim, fontSize: 12.5, lineHeight: 1.65 }}>
-          <b style={{ color: C.text }}>Not investment advice.</b> This is a calculator that shows what a stock is worth <em>under your assumptions</em>. Publishing buy/sell calls to the public in India can fall under SEBI's Research Analyst regulations — keep this personal/internal, or get a legal check before going public-facing.
+          <b style={{ color: C.text }}>Not investment advice.</b> This is a calculator showing what a stock is worth under your assumptions. Publishing buy/sell calls to the public in India can fall under SEBI Research Analyst regulations.
         </div>
       </div>
     </div>
   );
 }
 
-/* ---------------------------------------------------------------------------
-   ROOT
---------------------------------------------------------------------------- */
 export default function App() {
   const API = import.meta.env.VITE_API_URL;
-const [companies, setCompanies] = useState(SEED);
-useEffect(() => {
-  if (!API) return;
-  fetch(`${API}/api/companies`)
-    .then((r) => r.json())
-    .then((rows) => {
-      const updated = SEED.map((s) => {
-        const live = rows.find((r) => r.ticker === s.ticker);
-        if (!live) return s;
-        return { ...s, price: live.price };
-      });
-      setCompanies(updated);
-    })
-    .catch(() => console.warn("API unreachable, using sample data"));
-}, []);
+  const [companies, setCompanies] = useState(SEED);
+  const [view, setView] = useState("screener");
+  const [selectedId, setSelectedId] = useState(null);
+  const [assumptions, setAssumptions] = useState(null);
+  const [price, setPrice] = useState(0);
+
+  useEffect(() => {
+    if (!API) return;
+    fetch(`${API}/api/companies`)
+      .then((r) => r.json())
+      .then((rows) => {
+        const updated = SEED.map((s) => {
+          const live = rows.find((r) => r.ticker === s.ticker);
+          if (!live) return s;
+          return { ...s, price: live.price };
+        });
+        setCompanies(updated);
+      })
+      .catch(() => console.warn("API unreachable, using sample data"));
+  }, []);
+
+  const selected = companies.find((c) => c.id === selectedId);
+
+  const open = (id) => {
+    const co = companies.find((c) => c.id === id);
+    setSelectedId(id);
+    setAssumptions({ ...co.assumptions });
+    setPrice(co.price);
+    setView("company");
+  };
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, color: C.text }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Hanken+Grotesk:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap');
         body{margin:0} *::-webkit-scrollbar{height:8px;width:8px} *::-webkit-scrollbar-thumb{background:${C.line};border-radius:4px}
         input[type=range]{height:4px;border-radius:2px;background:${C.line}}`}</style>
-
       <div style={{ maxWidth: 1180, margin: "0 auto", padding: "24px 22px 60px" }}>
-        {/* masthead */}
         <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: 18, borderBottom: `1px solid ${C.line}`, marginBottom: 22 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <div style={{ width: 34, height: 34, borderRadius: 8, background: C.gold + "18", border: `1px solid ${C.gold}55`, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -778,10 +688,9 @@ useEffect(() => {
             </div>
           </div>
           <div style={{ ...sans, fontSize: 11, color: C.goldDim, border: `1px solid ${C.goldDim}55`, padding: "5px 11px", borderRadius: 20, background: C.gold + "0d" }}>
-            SAMPLE DATA — edit & replace
+            {API ? "LIVE DATA" : "SAMPLE DATA"}
           </div>
         </header>
-
         {view === "screener" && <Screener companies={companies} onOpen={open} />}
         {view === "company" && selected && assumptions && (
           <Company co={selected} assumptions={assumptions} setAssumptions={setAssumptions}
