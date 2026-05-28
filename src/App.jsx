@@ -748,23 +748,16 @@ useEffect(() => {
   if (!API) return;
   fetch(`${API}/api/companies`)
     .then((r) => r.json())
-    .then((rows) => setCompanies(rows))
+    .then((rows) => {
+      const updated = SEED.map((s) => {
+        const live = rows.find((r) => r.ticker === s.ticker);
+        if (!live) return s;
+        return { ...s, price: live.price };
+      });
+      setCompanies(updated);
+    })
     .catch(() => console.warn("API unreachable, using sample data"));
 }, []);
-  const [view, setView] = useState("screener");
-  const [selectedId, setSelectedId] = useState(null);
-
-  const selected = companies.find((c) => c.id === selectedId);
-  const [assumptions, setAssumptions] = useState(null);
-  const [price, setPrice] = useState(0);
-
-  const open = (id) => {
-    const co = companies.find((c) => c.id === id);
-    setSelectedId(id);
-    setAssumptions({ ...co.assumptions });
-    setPrice(co.price);
-    setView("company");
-  };
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, color: C.text }}>
