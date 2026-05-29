@@ -15,6 +15,7 @@ import {
   ReferenceLine, Cell,
 } from "recharts";
 
+import DCFModel from "./DCFModel.jsx";
 import { C, mono, sans, serif, gridBg } from "../lib/theme.js";
 import { fmt, inr, pct, cr } from "../lib/formatters.js";
 import { recommend } from "../lib/recommend.js";
@@ -1108,7 +1109,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
         {tab==="overview"   && <OverviewTab    co={co2} rec={rec} cd={cd} />}
         {tab==="financials" && <FinancialsTab  co={co2} cd={cd} liveFinancials={liveFinancials} />}
         {tab==="ratios"     && <RatiosTab      co={co2} cd={cd} liveMetrics={liveMetrics} />}
-        {tab==="dcf"        && <DCFTab         co={co2} a={assumptions} set={set} price={price} setPrice={setPrice} cd={cd} />}
+        {tab==="dcf"        && <DCFModel       co={co2} a={assumptions} set={set} price={price} setPrice={setPrice} />}
         {tab==="peers"      && <PeersTab       co={co2} cd={cd} />}
         {tab==="thesis"     && <AIThesisTab    co={co2} API={API} />}
         {tab==="verdict"    && <VerdictTab     co={co2} rec={rec} cd={cd} price={price} />}
