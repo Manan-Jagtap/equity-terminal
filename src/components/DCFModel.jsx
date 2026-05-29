@@ -1,141 +1,470 @@
-/* DCF Model tab. Two-column layout: assumptions on the left,
-   valuation bridge + sensitivity + year-by-year on the right. */
+/**
+ * DCFModel.jsx — Institutional-grade DCF tab.
+ *
+ * Sections:
+ *   1. Scenario selector (Bear / Base / Bull)
+ *   2. WACC Builder (live formula, all components editable)
+ *   3. Growth assumptions (3-stage sliders)
+ *   4. Blended valuation hero card (DCF + Exit Multiple + P/E)
+ *   5. Monte Carlo distribution (500 simulations)
+ *   6. Projection schedule (year-by-year FCFF or RI)
+ *   7. Sensitivity grid (discount rate × terminal growth)
+ */
 
-import { useMemo } from "react";
-import { CircleDollarSign } from "lucide-react";
-import { C, mono, sans } from "../lib/theme.js";
+import { useMemo, useState } from "react";
+import {
+  ComposedChart, BarChart, Bar, Line, XAxis, YAxis,
+  CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Cell,
+} from "recharts";
+import { Info } from "lucide-react";
+
+import { C, mono, sans, serif } from "../lib/theme.js";
 import { fmt, inr, pct, cr } from "../lib/formatters.js";
-import { currentFY, fyLabel } from "../lib/fyHelpers.js";
-import { valuate, sensitivity, ke } from "../lib/valuation.js";
-import { Field, BRow, VerdictBadge, MTable, TH, TR } from "./primitives.jsx";
+import {
+  RF, ERP, DEFAULT_TAX, MAX_G,
+  SECTOR_UNLEVERED_BETAS, SECTOR_EV_EBITDA,
+  calcKe, buildWACC, blendedValuation, monteCarlo, sensitivityGrid,
+  releveredBeta, safeDiv,
+} from "../lib/valuation.js";
 
+/* ── Primitives ─────────────────────────────────────────────────── */
+const Card = ({ children, style }) => (
+  <div style={{ background:"rgba(16,14,10,0.6)", border:`1px solid rgba(220,213,193,0.10)`, padding:18, ...style }}>
+    {children}
+  </div>
+);
+
+const HL = ({ style }) => (
+  <div style={{ height:1, background:`linear-gradient(90deg,transparent,rgba(220,213,193,.15),transparent)`, margin:"12px 0", ...style }} />
+);
+
+const Label = ({ children, accent }) => (
+  <div style={{ display:"flex", alignItems:"baseline", gap:10, marginBottom:14 }}>
+    <span style={{ ...sans, fontSize:10, letterSpacing:"0.18em", textTransform:"uppercase", color:"#857d65", fontWeight:500 }}>{children}</span>
+    {accent && <span style={{ ...sans, fontSize:10, color:C.gold+"cc" }}>{accent}</span>}
+    <div style={{ flex:1, height:1, background:"rgba(220,213,193,.08)" }} />
+  </div>
+);
+
+function SliderRow({ label, value, setValue, min, max, step, display, hint }) {
+  const shown = display ? display(value) : (value * 100).toFixed(2) + "%";
+  return (
+    <div style={{ marginBottom:14 }}>
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", marginBottom:5 }}>
+        <span style={{ ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.09em", color:"#857d65", fontWeight:500 }}>{label}</span>
+        <span style={{ ...mono, fontSize:14, color:C.gold, fontWeight:500 }}>{shown}</span>
+      </div>
+      <input type="range" min={min} max={max} step={step} value={value}
+        onChange={e => setValue(parseFloat(e.target.value))}
+        style={{ width:"100%" }} />
+      {hint && <div style={{ ...sans, fontSize:10, color:"#3a3528", marginTop:3 }}>{hint}</div>}
+    </div>
+  );
+}
+
+function KV({ label, value, tone, bold, border=true }) {
+  const col = tone==="gold"?C.gold:tone==="pos"?C.green:tone==="neg"?C.red:C.text;
+  return (
+    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", padding:"7px 0", borderBottom:border?`1px solid rgba(220,213,193,.07)`:"none" }}>
+      <span style={{ ...sans, color:"#857d65", fontSize:12 }}>{label}</span>
+      <span style={{ ...mono, color:col, fontSize:13, fontWeight:bold?600:400 }}>{value}</span>
+    </div>
+  );
+}
+
+/* ── Scenario presets ───────────────────────────────────────────── */
+const SCENARIOS = {
+  bear: {
+    label:"Bear",
+    sub:"Growth disappointment · NIM/margin compression",
+    revGrowth1:0.08, revGrowth2:0.05, terminalGrowth:0.04,
+    forecastROE:0.15, terminalROE:0.12,
+    ebitMargin:0.08, peMultiple:12,
+  },
+  base: {
+    label:"Base",
+    sub:"Management guidance · Stable spreads",
+    revGrowth1:0.18, revGrowth2:0.11, terminalGrowth:0.05,
+    forecastROE:0.22, terminalROE:0.15,
+    ebitMargin:0.12, peMultiple:15,
+  },
+  bull: {
+    label:"Bull",
+    sub:"Market share gain · Margin expansion",
+    revGrowth1:0.28, revGrowth2:0.17, terminalGrowth:0.055,
+    forecastROE:0.28, terminalROE:0.18,
+    ebitMargin:0.16, peMultiple:18,
+  },
+};
+
+/* ── Main component ─────────────────────────────────────────────── */
 export default function DCFModel({ co, a, set, price, setPrice }) {
-  const isF = co.type === "financial";
-  const v = valuate(co, a);
-  const mos = (v.intrinsic - price) / price;
-  const sens = useMemo(() => sensitivity(co, a), [co, a]);
-  const lastActualFY = currentFY() - 1;
+  const isF = co.type === "financial" || ["NBFC","BANK","INSURANCE"].includes(co.template_code);
+  const template = co.template_code || (isF ? "NBFC" : "MANUFACTURING");
+
+  // Scenario state
+  const [scenario,   setScenario]  = useState("base");
+  const sc = SCENARIOS[scenario];
+
+  // CAPM inputs
+  const [rf,   setRf]   = useState(RF);
+  const [erp,  setErp]  = useState(ERP);
+  const [beta, setBeta] = useState(
+    releveredBeta(SECTOR_UNLEVERED_BETAS[template] ?? 0.90,
+      safeDiv(co.netDebt ?? 0, co.equity ?? 1) ?? 0.3)
+  );
+  const [kd,   setKd]   = useState(0.09);
+  const [taxRate, setTaxRate] = useState(DEFAULT_TAX);
+
+  // Capital structure
+  const equity  = co.equity || 10000;
+  const debt    = co.netDebt != null ? Math.max(0, co.netDebt) : equity * 0.3;
+  const totalV  = equity + debt;
+  const debtW   = Math.min(debt / totalV, 0.80);
+
+  // Growth inputs (synced to scenario)
+  const [g1,    setG1]    = useState(sc.revGrowth1);
+  const [g2,    setG2]    = useState(sc.revGrowth2);
+  const [gT,    setGT]    = useState(sc.terminalGrowth);
+  const [N1,    setN1]    = useState(5);
+  const [N2,    setN2]    = useState(5);
+
+  // Financial-specific
+  const [forecastROE, setForecastROE] = useState(sc.forecastROE);
+  const [terminalROE, setTerminalROE] = useState(sc.terminalROE);
+  const [payout,      setPayout]      = useState(0.25);
+
+  // Non-financial
+  const [ebitMargin,  setEbitMargin]  = useState(sc.ebitMargin);
+  const [peMultiple,  setPeMultiple]  = useState(sc.peMultiple);
+  const [evMultiple,  setEvMultiple]  = useState(SECTOR_EV_EBITDA[template] ?? 12);
+
+  // Apply scenario preset
+  const applyScenario = (id) => {
+    setScenario(id);
+    const s = SCENARIOS[id];
+    setG1(s.revGrowth1); setG2(s.revGrowth2); setGT(s.terminalGrowth);
+    setForecastROE(s.forecastROE); setTerminalROE(s.terminalROE);
+    setEbitMargin(s.ebitMargin); setPeMultiple(s.peMultiple);
+  };
+
+  // Derived WACC / Ke
+  const ke   = calcKe(beta, rf, erp);
+  const wacc = isF ? ke : ke * (1 - debtW) + kd * (1 - taxRate) * debtW;
+
+  // Build assumptions object for engines
+  const assumptions = {
+    rf, erp, kd, taxRate,
+    stage1Years: N1, stage2Years: N2,
+    revGrowth1: g1, revGrowth2: g2, terminalGrowth: gT,
+    forecastROE, terminalROE, payout,
+    ebitMargin, evEbitdaMultiple: evMultiple, peMultiple,
+    beta,
+    // pass computed ke/wacc for override
+    _ke: ke, _wacc: wacc,
+  };
+
+  // Full valuation
+  const blend = useMemo(() => blendedValuation(co, assumptions), [co, JSON.stringify(assumptions)]);
+  const v     = blend.v;
+  const iv    = blend.blended;
+  const mos   = (iv - price) / price;
+
+  // Monte Carlo (deferred until user toggles — expensive)
+  const [showMC,  setShowMC]  = useState(false);
+  const [mcResult, setMcResult] = useState(null);
+  const runMC = () => {
+    const r = monteCarlo(co, assumptions, 500);
+    setMcResult(r);
+    setShowMC(true);
+  };
+
+  // Sensitivity grid
+  const sens = useMemo(() => sensitivityGrid(co, assumptions), [co, JSON.stringify(assumptions)]);
+
+  // Chart data
+  const projRows = v.rows?.slice(0, N1 + N2) || [];
+  const chartData = projRows.map(r => ({
+    year: "Y" + r.year,
+    stage: r.stage,
+    fcff: isF ? Math.round(r.ri * co.shares) : Math.round(r.fcff),
+    pv:   Math.round(r.pvRI ?? r.pvFcff ?? r.pv ?? 0),
+    growth: ((r.g || 0) * 100).toFixed(1),
+  }));
+
+  const fmtP  = v => v == null ? "—" : (v * 100).toFixed(2) + "%";
+  const fmtN  = (v, d=0) => v == null || !isFinite(v) ? "—" : Number(v).toLocaleString("en-IN", { maximumFractionDigits:d });
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: 18, alignItems: "start" }}>
-        {/* INPUTS */}
-        <div style={{ background: C.panel, border: `1px solid ${C.line}`, borderRadius: 10, padding: 18 }}>
-          <div style={{ ...sans, color: C.text, fontSize: 14, fontWeight: 600, marginBottom: 16, display: "flex", alignItems: "center", gap: 7 }}>
-            <CircleDollarSign size={16} color={C.gold} /> Assumptions
-          </div>
-          <div style={{ marginBottom: 14, paddingBottom: 12, borderBottom: `1px solid ${C.line}` }}>
-            <div style={{ ...sans, color: C.dim, fontSize: 11, marginBottom: 4 }}>Market price (₹) — CMP</div>
-            <input type="number" value={price} onChange={e => setPrice(parseFloat(e.target.value) || 0)} style={{
-              ...mono, width: "100%", background: C.panel2,
-              border: `1px solid ${C.line}`, borderRadius: 6,
-              color: C.text, padding: "7px 10px", fontSize: 14, outline: "none",
-            }} />
-          </div>
-
-          <div style={{ ...sans, color: C.goldDim, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
-            Cost of Equity (CAPM)
-          </div>
-          <Field label="Risk-free rate (10Y G-Sec)" value={a.riskFree} onChange={set("riskFree")} min={0.04} max={0.10} />
-          <Field label="Beta (systematic risk)" value={a.beta} onChange={set("beta")} suffix="" min={0.5} max={1.8} step={0.05} />
-          <Field label="Equity Risk Premium (India)" value={a.erp} onChange={set("erp")} min={0.03} max={0.09} />
-
-          <div style={{ background: C.panel2, borderRadius: 6, padding: "8px 10px", marginBottom: 12, fontSize: 11, ...mono, color: C.dim }}>
-            Ke = {pct(a.riskFree)} + {a.beta.toFixed(2)} × {pct(a.erp)} = <span style={{ color: C.gold }}>{pct(ke(a))}</span>
-            {!isF && v.WACC && <span> · WACC = <span style={{ color: C.blue }}>{pct(v.WACC)}</span></span>}
-          </div>
-
-          <div style={{ ...sans, color: C.goldDim, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
-            {isF ? "Excess-Return Drivers" : "FCFF Drivers"}
-          </div>
-
-          {isF ? (
-            <>
-              <Field label="Forecast ROE (Yr 1)" value={a.forecastRoe} onChange={set("forecastRoe")} min={0.08} max={0.30} />
-              <Field label="Terminal ROE (steady state)" value={a.terminalRoe} onChange={set("terminalRoe")} min={0.08} max={0.22} />
-              <Field label="Dividend payout ratio" value={a.payout} onChange={set("payout")} min={0} max={0.6} />
-            </>
-          ) : (
-            <>
-              <Field label="Revenue growth (Yr 1)" value={a.revGrowth} onChange={set("revGrowth")} min={0.01} max={0.30} />
-              <Field label="EBIT margin" value={a.ebitMargin} onChange={set("ebitMargin")} min={0.01} max={0.40} />
-              <Field label="Tax rate" value={a.taxRate} onChange={set("taxRate")} min={0.15} max={0.35} />
-              <Field label="Reinvestment rate" value={a.reinvestRate} onChange={set("reinvestRate")} min={0.05} max={0.80} />
-            </>
-          )}
-          <Field label="Explicit forecast horizon (yrs)" value={a.fadeYears} onChange={set("fadeYears")} suffix="" min={3} max={12} step={1} />
-          <Field label="Terminal growth rate (g)" value={a.terminalGrowth} onChange={set("terminalGrowth")} min={0.02} max={0.08} />
-        </div>
-
-        {/* OUTPUT */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          {/* Valuation bridge */}
-          <div style={{ background: C.panel, border: `1px solid ${C.line}`, borderRadius: 10, padding: 18 }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14, flexWrap: "wrap", gap: 8 }}>
-              <div>
-                <div style={{ ...sans, color: C.text, fontSize: 14, fontWeight: 600 }}>{v.method}</div>
-                <div style={{ ...mono, color: C.faint, fontSize: 11, marginTop: 2 }}>
-                  Based on {fyLabel(lastActualFY, lastActualFY)} actuals + {a.fadeYears}-year projections
-                </div>
-              </div>
-              <VerdictBadge verdict={mos >= 0.15 ? "BUY" : mos >= -0.15 ? "HOLD" : "AVOID"} big />
+    <div className="fadein" style={{ padding:32 }}>
+      {/* Scenario selector */}
+      <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:12, marginBottom:28 }}>
+        {Object.entries(SCENARIOS).map(([id, s]) => (
+          <button key={id} onClick={() => applyScenario(id)} style={{
+            padding:"14px 18px", border:`1px solid ${scenario===id?C.gold+"99":"rgba(220,213,193,.1)"}`,
+            background:scenario===id?C.gold+"18":"rgba(16,14,10,.5)",
+            cursor:"pointer", textAlign:"left",
+          }}>
+            <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.18em", color:scenario===id?C.gold:"#857d65", marginBottom:4 }}>{id}</div>
+            <div style={{ ...serif, fontSize:17, color:scenario===id?C.text:"#b8b09a" }}>
+              {isF ? `ROE ${(s.forecastROE*100).toFixed(0)}% → ${(s.terminalROE*100).toFixed(0)}%` : `Growth ${(s.revGrowth1*100).toFixed(0)}% → ${(s.terminalGrowth*100).toFixed(0)}%`}
             </div>
+            <div style={{ ...sans, fontSize:11, color:"#5b5440", marginTop:3 }}>{s.sub}</div>
+          </button>
+        ))}
+      </div>
 
-            <div style={{ background: C.panel2, borderRadius: 8, padding: 14, marginBottom: 14 }}>
-              <div style={{ ...sans, color: C.dim, fontSize: 11, marginBottom: 10, textTransform: "uppercase", letterSpacing: "0.04em" }}>
-                Intrinsic Value Bridge (per share)
-              </div>
+      <div style={{ display:"grid", gridTemplateColumns:"300px 1fr", gap:24 }}>
+        {/* ── LEFT PANEL ──────────────────────────────────────── */}
+        <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+
+          {/* WACC / Ke Builder */}
+          <Card>
+            <Label accent={isF ? "COST OF EQUITY" : "WACC BUILDER"}>DISCOUNT RATE</Label>
+
+            <SliderRow label="10Y G-Sec (Rf)" value={rf} setValue={setRf} min={0.04} max={0.10} step={0.001}
+              hint="RBI 10-year benchmark yield" />
+            <SliderRow label="India ERP" value={erp} setValue={setErp} min={0.05} max={0.12} step={0.005}
+              hint="Damodaran India ERP Jan 2025 = 8.5%" />
+            <SliderRow label="Beta (β)" value={beta} setValue={setBeta} min={0.4} max={2.0} step={0.05}
+              display={v => v.toFixed(2) + "x"}
+              hint={`Damodaran ${template} sector βU = ${(SECTOR_UNLEVERED_BETAS[template]??0.90).toFixed(2)}, relevered`} />
+
+            {!isF && (
+              <>
+                <SliderRow label="Cost of Debt (pre-tax)" value={kd} setValue={setKd} min={0.06} max={0.16} step={0.005} />
+                <SliderRow label="Tax rate" value={taxRate} setValue={setTaxRate} min={0.15} max={0.35} step={0.005} />
+              </>
+            )}
+
+            <HL />
+            {/* Live WACC formula */}
+            <div style={{ background:"rgba(10,9,7,0.6)", padding:"12px 14px", fontFamily:"'JetBrains Mono',monospace", fontSize:12, lineHeight:1.9, color:"#857d65" }}>
               {isF ? (
                 <>
-                  <BRow label={`Book Value/share (${fyLabel(lastActualFY, lastActualFY)})`} value={inr(v.bvps0)} color={C.text} />
-                  <BRow label={`+ PV of excess returns (${v.N} years, Ke=${pct(v.Ke)})`} value={inr(v.pvExplicit)} color={C.blue} />
-                  <BRow label={`+ PV of terminal value (g=${pct(a.terminalGrowth)})`} value={inr(v.tvPv)} color={C.purple} />
-                  <div style={{ borderTop: `1px solid ${C.line}`, margin: "8px 0" }} />
-                  <BRow label="= Intrinsic Value / share" value={inr(v.intrinsic)} color={C.gold} bold />
-                  <BRow label="Current Market Price (CMP)" value={inr(price)} color={C.text} />
-                  <BRow label="Margin of Safety" value={pct(mos)} color={mos >= 0 ? C.green : C.red} bold />
-                  <BRow label="Implied P/B at intrinsic" value={fmt(v.intrinsic / (co.equity / co.shares), 2) + "x"} color={C.faint} />
+                  <div>Ke = Rf + β × ERP</div>
+                  <div>Ke = <span style={{color:C.text}}>{fmtP(rf)}</span> + <span style={{color:C.text}}>{beta.toFixed(2)}</span> × <span style={{color:C.text}}>{fmtP(erp)}</span></div>
+                  <div style={{color:C.gold, fontWeight:600}}>Ke = {fmtP(ke)}</div>
                 </>
               ) : (
                 <>
-                  <BRow label={`Base revenue (${fyLabel(lastActualFY, lastActualFY)})`} value={cr(v.rev0)} color={C.faint} />
-                  <BRow label={`PV of FCFFs (${v.N} years, WACC=${pct(v.WACC)})`} value={cr(v.pvExplicit)} color={C.blue} />
-                  <BRow label={`+ PV of terminal value (g=${pct(a.terminalGrowth)})`} value={cr(v.tvPv)} color={C.purple} />
-                  <div style={{ borderTop: `1px solid ${C.line}`, margin: "8px 0" }} />
-                  <BRow label="= Enterprise Value (EV)" value={cr(v.ev)} color={C.text} bold />
-                  <BRow label="− Net Debt" value={cr(v.netDebt)} color={C.red} />
-                  <BRow label="= Equity Value" value={cr(v.equityVal)} color={C.text} bold />
-                  <BRow label={`÷ Shares outstanding (${fmt(co.shares, 1)} cr)`} value="" color={C.faint} />
-                  <div style={{ borderTop: `1px solid ${C.line}`, margin: "8px 0" }} />
-                  <BRow label="= Intrinsic Value / share" value={inr(v.intrinsic)} color={C.gold} bold />
-                  <BRow label="Current Market Price (CMP)" value={inr(price)} color={C.text} />
-                  <BRow label="Margin of Safety" value={pct(mos)} color={mos >= 0 ? C.green : C.red} bold />
+                  <div>Ke = {fmtP(rf)} + {beta.toFixed(2)} × {fmtP(erp)} = <span style={{color:C.green}}>{fmtP(ke)}</span></div>
+                  <div>Kd(post-tax) = {fmtP(kd)} × (1−{fmtP(taxRate)}) = <span style={{color:C.green}}>{fmtP(kd*(1-taxRate))}</span></div>
+                  <div>E% = {(( 1-debtW)*100).toFixed(1)}%  ·  D% = {(debtW*100).toFixed(1)}%</div>
+                  <div style={{color:C.gold, fontWeight:600}}>WACC = {fmtP(wacc)}</div>
                 </>
               )}
             </div>
+          </Card>
 
-            <div style={{ ...sans, color: C.faint, fontSize: 12, lineHeight: 1.7 }}>
-              Terminal value = <b style={{ color: C.gold }}>{pct((v.tvPv) / (v.pvExplicit + v.tvPv))}</b> of total.
+          {/* Growth assumptions */}
+          <Card>
+            <Label accent="3-STAGE">GROWTH INPUTS</Label>
+
+            {isF ? (
+              <>
+                <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.15em", color:"#5b5440", marginBottom:10 }}>STAGE 1 — EXPLICIT FORECAST</div>
+                <SliderRow label="Forecast ROE (Yr 1)" value={forecastROE} setValue={setForecastROE} min={0.08} max={0.40} step={0.005} />
+                <SliderRow label="Stage 1 Years"       value={N1}          setValue={setN1}          min={3} max={8} step={1} display={v=>v+"  yrs"} />
+                <HL />
+                <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.15em", color:"#5b5440", marginBottom:10 }}>STAGE 2 — FADE</div>
+                <SliderRow label="Terminal ROE"         value={terminalROE}   setValue={setTerminalROE} min={0.08} max={0.25} step={0.005}
+                  hint="ROE converges → Ke + 2% in perpetuity" />
+                <SliderRow label="Dividend payout"      value={payout}        setValue={setPayout}      min={0} max={0.60} step={0.01} />
+                <SliderRow label="Stage 2 Years"        value={N2}            setValue={setN2}          min={3} max={8}  step={1} display={v=>v+"  yrs"} />
+                <HL />
+                <SliderRow label="Terminal growth (g∞)" value={gT}  setValue={setGT}  min={0.02} max={MAX_G} step={0.005}
+                  hint={`Cap: ${(MAX_G*100).toFixed(0)}% (India nominal GDP proxy)`} />
+              </>
+            ) : (
+              <>
+                <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.15em", color:"#5b5440", marginBottom:10 }}>STAGE 1 — HIGH GROWTH</div>
+                <SliderRow label="Revenue growth"    value={g1}          setValue={setG1}         min={0.02} max={0.40} step={0.005} />
+                <SliderRow label="EBIT margin"       value={ebitMargin}  setValue={setEbitMargin} min={0.02} max={0.40} step={0.005}
+                  hint="NOPAT = EBIT × (1 - tax)" />
+                <SliderRow label="Stage 1 Years"     value={N1}          setValue={setN1}          min={3} max={8}  step={1} display={v=>v+"  yrs"} />
+                <HL />
+                <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.15em", color:"#5b5440", marginBottom:10 }}>STAGE 2 — FADE</div>
+                <SliderRow label="Fade-period growth"  value={g2}  setValue={setG2}  min={0.01} max={0.25} step={0.005} />
+                <SliderRow label="Stage 2 Years"       value={N2}  setValue={setN2}  min={3}    max={8}    step={1} display={v=>v+"  yrs"} />
+                <HL />
+                <SliderRow label="Terminal growth (g∞)" value={gT} setValue={setGT} min={0.02} max={MAX_G} step={0.005}
+                  hint="Reinvestment = g∞ / terminal ROIC (converges to WACC)" />
+              </>
+            )}
+          </Card>
+
+          {/* Exit multiple / P/E */}
+          <Card>
+            <Label accent="CROSS-CHECK">MULTIPLES</Label>
+            {!isF && (
+              <SliderRow label={`EV/EBITDA (Damodaran ${template})`} value={evMultiple} setValue={setEvMultiple}
+                min={4} max={40} step={0.5} display={v=>v.toFixed(1)+"x"}
+                hint={`Sector median = ${SECTOR_EV_EBITDA[template]??12}x`} />
+            )}
+            <SliderRow label="P/E Multiple" value={peMultiple} setValue={setPeMultiple}
+              min={8} max={40} step={0.5} display={v=>v.toFixed(1)+"x"} />
+
+            <HL />
+            <div style={{ ...sans, fontSize:11, color:"#5b5440", lineHeight:1.65 }}>
               {isF
-                ? ` CAPM Ke=${pct(v.Ke)}. Fair P/B ≈ ROE/(Ke−g) = ${fmt(a.forecastRoe / (ke(a) - a.terminalGrowth), 2)}x.`
-                : ` WACC=${pct(v.WACC)}. EBIT margin=${pct(a.ebitMargin)} calibrated to sector "${co.sector}".`}
+                ? "Blended = RI 65% · Justified P/B 20% · P/E 15%"
+                : "Blended = FCFF DCF 55% · Exit Multiple 30% · P/E 15%"}
             </div>
-          </div>
+          </Card>
+        </div>
+
+        {/* ── RIGHT PANEL ─────────────────────────────────────── */}
+        <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
+
+          {/* Hero blended value */}
+          <Card style={{ position:"relative", overflow:"hidden" }}>
+            <div style={{
+              position:"absolute", inset:0, pointerEvents:"none",
+              backgroundImage:`linear-gradient(rgba(220,213,193,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(220,213,193,.025) 1px,transparent 1px)`,
+              backgroundSize:"56px 56px", opacity:0.5,
+            }} />
+            <div style={{ position:"relative" }}>
+              <div style={{ display:"grid", gridTemplateColumns:"1fr auto", gap:24, alignItems:"start", marginBottom:16 }}>
+                <div>
+                  <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.18em", color:"#857d65" }}>Blended Intrinsic Value · {scenario.toUpperCase()}</div>
+                  <div style={{ ...serif, fontSize:72, color:C.text, lineHeight:1, letterSpacing:"-0.02em", marginTop:6 }}>₹{fmtN(iv)}</div>
+                  <div style={{ ...sans, fontSize:14, marginTop:8, color:mos>=0?C.green:C.red }}>
+                    <span style={{ fontWeight:600 }}>{mos>=0?"+":""}{(mos*100).toFixed(1)}%</span>
+                    <span style={{ color:"#857d65", marginLeft:8 }}>margin of safety vs ₹{fmtN(price)} CMP</span>
+                  </div>
+                </div>
+                {/* Method breakdown */}
+                <div style={{ minWidth:220 }}>
+                  {blend.components.map(c => (
+                    <div key={c.method} style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", padding:"6px 0", borderBottom:`1px solid rgba(220,213,193,.07)` }}>
+                      <div>
+                        <div style={{ ...sans, fontSize:11, color:"#857d65" }}>{c.method}</div>
+                        <div style={{ ...sans, fontSize:10, color:"#3a3528" }}>{(c.weight*100).toFixed(0)}% weight</div>
+                      </div>
+                      <span style={{ ...mono, fontSize:13, color:C.text }}>₹{fmtN(c.value)}</span>
+                    </div>
+                  ))}
+                  <div style={{ display:"flex", justifyContent:"space-between", padding:"8px 0 0", alignItems:"baseline" }}>
+                    <span style={{ ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.1em", color:C.gold }}>Blended</span>
+                    <span style={{ ...serif, fontSize:22, color:C.gold }}>₹{fmtN(iv)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* TV% check */}
+              <div style={{ display:"flex", gap:24, ...mono, fontSize:11, color:"#857d65" }}>
+                <span>TV = {v.tvPct?.toFixed(1) ?? "—"}% of total</span>
+                {isF
+                  ? <span>Ke = {fmtP(ke)} · Justified P/B = {(v.justifiedPB??0).toFixed(2)}x</span>
+                  : <span>WACC = {fmtP(wacc)} · Current ROIC = {fmtP(v.currentROIC)}</span>}
+                <span style={{ color:v.tvPct>80||v.tvPct<40 ? C.red : C.green }}>
+                  {v.tvPct>80?"⚠ TV heavy — reduce terminal growth":v.tvPct<40?"ℹ TV light — long growth runway":"✓ TV% in range"}
+                </span>
+              </div>
+            </div>
+          </Card>
+
+          {/* Projection chart */}
+          <Card style={{ padding:"16px 12px 12px" }}>
+            <div style={{ padding:"0 8px 12px" }}>
+              <Label accent={isF?"₹ CR · RI SCHEDULE":"₹ CR · FCFF SCHEDULE"}>
+                {isF ? "RESIDUAL INCOME PROJECTION" : "FCFF PROJECTION"}
+              </Label>
+            </div>
+            <div style={{ height:220 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <ComposedChart data={chartData} margin={{ top:8, right:20, left:-10, bottom:0 }}>
+                  <CartesianGrid strokeDasharray="2 3" stroke="rgba(220,213,193,.07)" vertical={false} />
+                  <XAxis dataKey="year" tick={{ fill:"#857d65", fontSize:11 }} axisLine={{ stroke:"rgba(220,213,193,.1)" }} tickLine={false} />
+                  <YAxis tick={{ fill:"#857d65", fontSize:10 }} axisLine={false} tickLine={false} tickFormatter={v=>v>=1000?(v/1000).toFixed(0)+"k":v} />
+                  <Tooltip contentStyle={{ background:"#181510", border:"1px solid #2c2820", borderRadius:0, fontSize:12 }} labelStyle={{ color:C.text }}
+                    formatter={(v,n)=>["₹"+fmtN(v)+" Cr", n==="fcff"?(isF?"RI (₹ Cr)":"FCFF (₹ Cr)"):"PV (₹ Cr)"]} />
+                  <Bar dataKey="fcff" fill="rgba(212,169,62,.20)" stroke="rgba(212,169,62,.4)" radius={[2,2,0,0]} />
+                  <Line type="monotone" dataKey="pv" stroke={C.gold} strokeWidth={2.5} dot={{ fill:C.gold, r:3 }} name="PV" />
+                  <ReferenceLine x={"Y"+N1} stroke="rgba(220,213,193,.25)" strokeDasharray="2 4"
+                    label={{ value:"Fade", fill:"#857d65", fontSize:10, position:"top" }} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+
+          {/* Monte Carlo */}
+          <Card>
+            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
+              <Label accent="500 SIMULATIONS">MONTE CARLO</Label>
+              {!showMC && (
+                <button onClick={runMC} style={{
+                  ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.14em", fontWeight:500,
+                  padding:"8px 16px", border:`1px solid ${C.gold}99`, color:C.gold,
+                  background:C.gold+"0d", cursor:"pointer",
+                }}>Run Simulation</button>
+              )}
+            </div>
+
+            {!showMC && (
+              <div style={{ ...sans, fontSize:12, color:"#857d65", lineHeight:1.7 }}>
+                Simulate 500 scenarios by randomly varying growth (σ=30%), margin (σ=15%), discount rate (σ=75bps) and terminal growth (σ=50bps) to produce a probability distribution of intrinsic values.
+              </div>
+            )}
+
+            {showMC && mcResult && (
+              <>
+                <div style={{ display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:10, marginBottom:16 }}>
+                  {[["P10 (Bear)",mcResult.p10,"neg"],["P25",mcResult.p25,null],["P50 (Median)",mcResult.p50,"gold"],["P75",mcResult.p75,null],["P90 (Bull)",mcResult.p90,"pos"]].map(([l,v,t]) => (
+                    <div key={l} style={{ textAlign:"center", background:"rgba(10,9,7,.5)", padding:"10px 6px" }}>
+                      <div style={{ ...sans, fontSize:10, color:"#857d65", marginBottom:4, textTransform:"uppercase", letterSpacing:"0.08em" }}>{l}</div>
+                      <div style={{ ...mono, fontSize:14, color:t==="gold"?C.gold:t==="pos"?C.green:t==="neg"?C.red:C.text }}>₹{fmtN(v)}</div>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ height:140 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={mcResult.histogram} margin={{ top:4, right:10, left:-20, bottom:0 }}>
+                      <CartesianGrid strokeDasharray="2 3" stroke="rgba(220,213,193,.07)" vertical={false} />
+                      <XAxis dataKey="x" tick={{ fill:"#857d65", fontSize:9 }} axisLine={false} tickLine={false} tickFormatter={v=>"₹"+fmtN(v)} />
+                      <YAxis tick={{ fill:"#857d65", fontSize:9 }} axisLine={false} tickLine={false} />
+                      <Tooltip contentStyle={{ background:"#181510", border:"1px solid #2c2820", fontSize:11 }}
+                        formatter={(v,n,p)=>[p.payload.pct.toFixed(1)+"%","Probability"]} labelFormatter={v=>"₹"+fmtN(v)} />
+                      <Bar dataKey="count">
+                        {mcResult.histogram.map((b,i) => (
+                          <Cell key={i} fill={b.x>=price ? "rgba(90,143,90,.55)" : "rgba(168,81,72,.40)"} />
+                        ))}
+                      </Bar>
+                      <ReferenceLine x={price} stroke={C.gold} strokeWidth={1.5} strokeDasharray="3 3"
+                        label={{ value:"CMP", fill:C.gold, fontSize:10, position:"top" }} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <div style={{ marginTop:10, display:"flex", gap:20, ...sans, fontSize:12 }}>
+                  <div>Mean: <span style={{ ...mono, color:C.gold }}>₹{fmtN(mcResult.mean)}</span></div>
+                  <div>Prob. undervalued: <span style={{ ...mono, color:mcResult.probUpside>0.5?C.green:C.red }}>{(mcResult.probUpside*100).toFixed(0)}%</span></div>
+                  <div>Simulations: <span style={{ ...mono, color:"#857d65" }}>{mcResult.simulations}</span></div>
+                  <button onClick={runMC} style={{ ...sans, fontSize:11, background:"transparent", border:`1px solid rgba(220,213,193,.15)`, color:"#857d65", padding:"3px 10px", cursor:"pointer" }}>Re-run</button>
+                </div>
+              </>
+            )}
+          </Card>
 
           {/* Sensitivity grid */}
-          <div style={{ background: C.panel, border: `1px solid ${C.line}`, borderRadius: 10, padding: 18 }}>
-            <div style={{ ...sans, color: C.text, fontSize: 14, fontWeight: 600, marginBottom: 4 }}>Sensitivity (₹ / share)</div>
-            <div style={{ ...sans, color: C.faint, fontSize: 11, marginBottom: 12 }}>
-              Rows: Δ discount rate · Columns: Δ terminal growth
+          <Card style={{ padding:"16px" }}>
+            <div style={{ marginBottom:8 }}>
+              <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.18em", color:"#857d65" }}>INTRINSIC VALUE · ₹ / SHARE</div>
+              <div style={{ ...serif, fontSize:20, color:C.text, marginTop:2 }}>Sensitivity — Discount Rate × Terminal Growth</div>
+              <div style={{ ...sans, fontSize:11, color:"#5b5440", marginTop:4 }}>Rows: ±100bps on {isF?"Ke":"WACC"} · Cols: ±100bps on g∞ · Centre = base case</div>
             </div>
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ borderCollapse: "collapse", fontSize: 12 }}>
+            <div style={{ overflowX:"auto" }}>
+              <table style={{ width:"100%", fontSize:12, borderCollapse:"collapse", marginTop:12 }}>
                 <thead>
                   <tr>
-                    <th style={{ ...mono, color: C.faint, padding: "6px 10px", fontSize: 11 }}>Δr\Δg</th>
-                    {sens.gd.map((g, i) => (
-                      <th key={i} style={{ ...mono, color: C.dim, padding: "6px 10px", textAlign: "center", fontSize: 11 }}>
-                        {(g * 100 >= 0 ? "+" : "") + (g * 100).toFixed(1)}%
+                    <th style={{ ...sans, textAlign:"left", color:"#857d65", fontSize:10, paddingBottom:8, paddingRight:12 }}>
+                      {isF?"Ke":"WACC"} ↓ / g∞ →
+                    </th>
+                    {sens.dG.map((g, i) => (
+                      <th key={i} style={{ ...mono, textAlign:"right", color:"#857d65", fontSize:10, paddingBottom:8, paddingLeft:8 }}>
+                        {(g>=0?"+":"")+(g*100).toFixed(1)}%
                       </th>
                     ))}
                   </tr>
@@ -143,78 +472,109 @@ export default function DCFModel({ co, a, set, price, setPrice }) {
                 <tbody>
                   {sens.grid.map((row, ri) => (
                     <tr key={ri}>
-                      <td style={{ ...mono, color: C.dim, padding: "6px 10px", fontSize: 11 }}>
-                        {(sens.rd[ri] * 100 >= 0 ? "+" : "") + (sens.rd[ri] * 100).toFixed(1)}%
+                      <td style={{ ...mono, color:"#857d65", fontSize:11, paddingRight:12, paddingBottom:6 }}>
+                        {(sens.dR[ri]>=0?"+":"")+(sens.dR[ri]*100).toFixed(1)}%
                       </td>
-                      {row.map((val, ci) => {
-                        const center = ri === 2 && ci === 2;
-                        const up = val > price;
+                      {row.map((cell, ci) => {
+                        const pct2 = cell ? ((cell - price) / price) * 100 : null;
+                        const isBase = ri === 2 && ci === 2;
                         return (
                           <td key={ci} style={{
-                            ...mono, fontSize: 12, padding: "7px 8px", textAlign: "center",
-                            color: center ? C.gold : up ? C.green : C.red,
-                            background: center ? C.gold + "18" : "transparent",
-                            border: center ? `1px solid ${C.gold}55` : `1px solid ${C.line}22`,
-                            fontWeight: center ? 600 : 400,
-                          }}>{fmt(val)}</td>
+                            ...mono, textAlign:"right", fontSize:12, padding:"6px 8px", fontWeight:isBase?600:400,
+                            background:isBase ? C.gold+"33" : pct2>15 ? "rgba(90,143,90,.15)" : pct2!=null&&pct2<-10 ? "rgba(168,81,72,.15)" : "transparent",
+                            color:isBase ? C.gold : pct2>15 ? C.green : pct2!=null&&pct2<-10 ? C.red : "#b8b09a",
+                            outline:isBase ? `1px solid ${C.gold}66` : "none",
+                          }}>
+                            {cell ? "₹"+fmtN(cell) : "—"}
+                          </td>
                         );
                       })}
                     </tr>
                   ))}
                 </tbody>
               </table>
+              <div style={{ display:"flex", gap:16, marginTop:10 }}>
+                {[["Upside >15%","rgba(90,143,90,.4)"],["Downside >10%","rgba(168,81,72,.4)"],["Base case",C.gold+"55"]].map(([l,c]) => (
+                  <span key={l} style={{ display:"flex", alignItems:"center", gap:6, ...sans, fontSize:10, textTransform:"uppercase", color:"#857d65" }}>
+                    <span style={{ width:8, height:8, background:c, display:"inline-block" }} />{l}
+                  </span>
+                ))}
+              </div>
             </div>
-            <div style={{ ...sans, color: C.faint, fontSize: 11, marginTop: 8 }}>
-              Base case (centre) = {inr(v.intrinsic)}. Green = below CMP {inr(price)}.
+          </Card>
+
+          {/* Year-by-year schedule */}
+          <Card style={{ padding:0, overflow:"hidden" }}>
+            <div style={{ padding:"16px 20px 8px" }}>
+              <Label accent={isF?"COST OF EQUITY · ROE FADE":"WACC · ROIC CONVERGENCE"}>
+                {isF ? "RESIDUAL INCOME SCHEDULE" : "FCFF SCHEDULE"}
+              </Label>
             </div>
-          </div>
-        </div>
-      </div>
+            <div style={{ overflowX:"auto" }}>
+              <table style={{ width:"100%", fontSize:12, borderCollapse:"collapse" }}>
+                <thead>
+                  <tr style={{ borderTop:`1px solid rgba(220,213,193,.08)`, borderBottom:`1px solid rgba(220,213,193,.08)` }}>
+                    {(isF
+                      ? ["Year","Stage","BV/sh","ROE","EPS","DPS","Excess Ret","PV(RI)","Cum PV"]
+                      : ["Year","Stage","Growth","NOPAT","ROIC","RR","FCFF","Disc","PV"]
+                    ).map((h,i) => (
+                      <th key={i} style={{ ...sans, textAlign:i===0?"left":"right", padding:"8px 10px", fontSize:10, textTransform:"uppercase", color:"#857d65", fontWeight:500 }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {v.rows?.map((r, i) => (
+                    <tr key={i} style={{ borderBottom:`1px solid rgba(220,213,193,.05)`, background:r.stage===2?"rgba(58,53,40,.2)":"transparent" }}>
+                      {isF ? [
+                        ["Y"+r.year,"left"],
+                        [r.stage===1?"1 · High":"2 · Fade","left"],
+                        ["₹"+fmtN(r.bv,1)],
+                        [fmtP(r.roe)],
+                        ["₹"+fmtN(r.eps,1)],
+                        ["₹"+fmtN(r.dps,1)],
+                        ["₹"+fmtN(r.ri,1)],
+                        ["₹"+fmtN(r.pvRI,1)],
+                        ["₹"+fmtN(r.cumPv,1)],
+                      ].map(([val,align],j) => (
+                        <td key={j} style={{ ...mono, textAlign:align||"right", padding:"7px 10px", color:j===0?C.text200:"#b8b09a", fontSize:11 }}>{val}</td>
+                      )) : [
+                        ["Y"+r.year,"left"],
+                        [r.stage===1?"1 · High":"2 · Fade","left"],
+                        [fmtP(r.g)],
+                        ["₹"+fmtN(r.nopat,0)+" Cr"],
+                        [fmtP(r.roic)],
+                        [(r.rr*100).toFixed(0)+"%"],
+                        ["₹"+fmtN(r.fcff,0)+" Cr"],
+                        [r.df?.toFixed(3)],
+                        ["₹"+fmtN(r.pv,0)+" Cr"],
+                      ].map(([val,align],j) => (
+                        <td key={j} style={{ ...mono, textAlign:align||"right", padding:"7px 10px", color:j===0?C.text200:"#b8b09a", fontSize:11 }}>{val}</td>
+                      ))}
+                    </tr>
+                  ))}
+                  <tr style={{ borderTop:`1px solid ${C.gold}55`, background:`${C.gold}0d` }}>
+                    <td colSpan={isF?6:7} style={{ ...sans, padding:"8px 10px", color:C.gold, fontSize:11, fontWeight:500 }}>TERMINAL VALUE</td>
+                    <td style={{ ...mono, textAlign:"right", padding:"8px 10px", color:C.gold, fontSize:11 }}>₹{fmtN(v.tvRaw,0)}</td>
+                    <td style={{ ...mono, textAlign:"right", padding:"8px 10px", color:C.gold, fontSize:11 }}>PV ₹{fmtN(v.tvPv,0)}</td>
+                    {!isF && <td />}
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </Card>
 
-      {/* Year-by-year */}
-      <div style={{ background: C.panel, border: `1px solid ${C.line}`, borderRadius: 10, padding: 18 }}>
-        <div style={{ ...sans, color: C.text, fontSize: 14, fontWeight: 600, marginBottom: 4 }}>
-          {isF ? "Residual Income Schedule — Year-by-Year" : "FCFF Projection — Year-by-Year"}
+          {/* Methodology note */}
+          <Card style={{ display:"flex", gap:12, alignItems:"flex-start" }}>
+            <Info size={14} color={C.gold} style={{ flexShrink:0, marginTop:2 }} />
+            <div style={{ ...sans, fontSize:12, color:"#857d65", lineHeight:1.7 }}>
+              <strong style={{ color:C.text }}>Methodology.</strong>{" "}
+              {isF
+                ? "Residual Income (Excess Return) model — appropriate for financial firms where debt is an operating input. Ke from CAPM using Damodaran India ERP (8.5%). ROE fades to terminal ROE over explicit horizon. Terminal RI = (ROE − Ke) × BV / (Ke − g)."
+                : "3-Stage FCFF DCF. FCFF = NOPAT × (1 − RR), where RR = g/ROIC (reinvestment rate). ROIC converges from current to sector median (Damodaran India). WACC = Ke × E% + Kd(1−t) × D%. Terminal value capped when ROIC = WACC."}{" "}
+              Exit multiple uses Damodaran India sector EV/EBITDA medians (Jan 2025).
+            </div>
+          </Card>
         </div>
-        <div style={{ ...sans, color: C.faint, fontSize: 12, marginBottom: 12 }}>
-          {isF
-            ? `Ke = ${pct(v.Ke)} · BV/share compounds at ROE × retention · excess return = (ROE − Ke) × BV`
-            : `WACC = ${pct(v.WACC)} · Revenue grows from ${fyLabel(lastActualFY, lastActualFY)} base · FCFF = NOPAT × (1 − reinvestment rate)`}
-        </div>
-
-        {isF ? (
-          <MTable>
-            <thead><TH cols={["FY", "BV/sh (₹)", "ROE", "EPS/sh", "DPS/sh", "Excess Ret/sh", "Disc Factor", "PV(RI)", "Cum PV"]} /></thead>
-            <tbody>
-              <TR cells={[fyLabel(lastActualFY, lastActualFY) + " (base)", inr(v.bvps0), "—", "—", "—", "—", "—", "—", "—"]} color={C.faint} />
-              {v.rows.map((r, i) => (
-                <TR key={i} cells={[
-                  fyLabel(lastActualFY + r.t, lastActualFY),
-                  inr(r.bv), pct(r.roe, 1), inr(r.eps, 1), inr(r.dps, 1),
-                  inr(r.ri, 1), r.disc.toFixed(3), inr(r.pvRi, 1), inr(r.cumPv, 1),
-                ]} bg={i % 2 === 0 ? C.panel2 + "80" : "transparent"} />
-              ))}
-              <TR cells={["Terminal", "—", "→ " + pct(a.terminalRoe, 1), "—", "—", inr(v.tvRaw, 1), "→ ∞", inr(v.tvPv, 1), "—"]} bold bg={C.purple + "18"} />
-              <TR cells={["Total", inr(v.bvps0) + " (BV₀)", "", "", "", "Σ=" + inr(v.pvExplicit, 1), "", "TV=" + inr(v.tvPv, 1), "= " + inr(v.intrinsic)]} bold color={C.gold} />
-            </tbody>
-          </MTable>
-        ) : (
-          <MTable>
-            <thead><TH cols={["FY", "Revenue (cr)", "Growth", "EBIT (cr)", "Tax", "NOPAT", "Reinvest", "FCFF (cr)", "Disc", "PV(FCFF)", "Cum PV"]} /></thead>
-            <tbody>
-              {v.rows.map((r, i) => (
-                <TR key={i} cells={[
-                  fyLabel(lastActualFY + r.t, lastActualFY),
-                  cr(r.rev, 0), pct(r.g, 1), cr(r.ebit, 0), cr(r.tax, 0),
-                  cr(r.nopat, 0), cr(r.reinv, 0), cr(r.fcff, 0),
-                  r.disc.toFixed(3), cr(r.pvFcff, 0), cr(r.cumPv, 0),
-                ]} bg={i % 2 === 0 ? C.panel2 + "80" : "transparent"} />
-              ))}
-              <TR cells={["Terminal", "—", "→ " + pct(a.terminalGrowth, 1), "—", "—", "—", "—", cr(v.rows[v.N - 1]?.fcff * (1 + a.terminalGrowth), 0), "→ ∞", cr(v.tvPv, 0), "—"]} bold bg={C.purple + "18"} />
-              <TR cells={["", "", "", "", "", "", `Σ PV=${cr(v.pvExplicit, 0)}`, "", "", `TV=${cr(v.tvPv, 0)}`, `EV=${cr(v.ev, 0)}`]} bold color={C.gold} />
-            </tbody>
-          </MTable>
-        )}
       </div>
     </div>
   );
