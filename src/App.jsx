@@ -114,6 +114,7 @@ export default function App() {
             setPrice={setPrice}
             onBack={() => setView("screener")}
             API={API}
+            allCompanies={companies}
           />
         )}
       </div>
