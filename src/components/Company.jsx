@@ -565,6 +565,7 @@ function AIThesisTab({ co, API }) {
   };
 
   const renderMarkdown = (text) => text.split("\n").map((line, i) => {
+    if (line.startsWith("# "))  return null;   // strip top-level title
     if (line.startsWith("## ")) return (
       <div key={i} style={{ ...sans, color: C.gold, fontSize: 13, fontWeight: 600, marginTop: 18, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>
         {line.replace("## ", "")}
@@ -583,22 +584,13 @@ function AIThesisTab({ co, API }) {
             <div style={{ ...sans, color: C.text, fontSize: 14, fontWeight: 600 }}>AI Investment Thesis</div>
             {cached && <Badge label="Cached" color={C.blue} />}
           </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            {thesis && (
-              <button onClick={() => generate(true)} disabled={loading} style={{
-                ...sans, fontSize: 12, cursor: "pointer", padding: "6px 12px",
-                background: "transparent", border: `1px solid ${C.line}`,
-                color: C.dim, borderRadius: 6,
-              }}>Regenerate</button>
-            )}
-            <button onClick={() => generate(false)} disabled={loading} style={{
-              ...sans, fontSize: 12, fontWeight: 600, cursor: loading ? "wait" : "pointer",
-              padding: "8px 18px", background: C.gold + "22",
-              border: `1px solid ${C.gold}55`, color: C.gold, borderRadius: 7,
-            }}>
-              {loading ? "Generating…" : thesis ? "Regenerate" : `Generate thesis for ${co.name}`}
-            </button>
-          </div>
+          <button onClick={() => generate(!!thesis)} disabled={loading} style={{
+            ...sans, fontSize: 12, fontWeight: 600, cursor: loading ? "wait" : "pointer",
+            padding: "8px 18px", background: C.gold + "22",
+            border: `1px solid ${C.gold}55`, color: C.gold, borderRadius: 7,
+          }}>
+            {loading ? "Generating…" : thesis ? "Regenerate" : `Generate thesis for ${co.name}`}
+          </button>
         </div>
 
         {!thesis && !loading && !error && (
