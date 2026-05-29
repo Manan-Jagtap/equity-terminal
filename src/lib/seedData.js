@@ -22,26 +22,62 @@ export function makeSeries(seed, start, drift, vol, n = 250) {
 }
 
 export const SEED = [
-  { id: 1, name: "Muthoot Finance",    ticker: "MUTHOOTFIN", type: "financial",    sector: "Gold Loan NBFC",   price: 3311, shares: 40.1, equity: 26500, netProfit: 4470, revenue: null,  netDebt: null,
-    nbfc: { aum: 92000,  gnpa: 0.029, nnpa: 0.026, crar: 0.288, nim: 0.115, roa: 0.052, pledge: 0 },
-    assumptions: { beta: 1.05, riskFree: 0.069, erp: 0.065, forecastRoe: 0.225, terminalRoe: 0.155, payout: 0.22, fadeYears: 8,  terminalGrowth: 0.050 },
-    series: makeSeries(11, 2800, 0.20, 0.022) },
-  { id: 2, name: "Manappuram Finance", ticker: "MANAPPURAM", type: "financial",    sector: "Gold Loan NBFC",   price: 329,  shares: 84.6, equity: 11900, netProfit: 2200, revenue: null,  netDebt: null,
-    nbfc: { aum: 44000,  gnpa: 0.045, nnpa: 0.040, crar: 0.302, nim: 0.135, roa: 0.048, pledge: 0 },
-    assumptions: { beta: 1.20, riskFree: 0.069, erp: 0.065, forecastRoe: 0.195, terminalRoe: 0.140, payout: 0.20, fadeYears: 8,  terminalGrowth: 0.045 },
-    series: makeSeries(23, 280, 0.16, 0.028) },
-  { id: 3, name: "Fedbank Financial",  ticker: "FEDFINA",    type: "financial",    sector: "Diversified NBFC", price: 161,  shares: 37.0, equity: 2400,  netProfit: 280,  revenue: null,  netDebt: null,
-    nbfc: { aum: 14500,  gnpa: 0.020, nnpa: 0.015, crar: 0.205, nim: 0.080, roa: 0.022, pledge: 0 },
-    assumptions: { beta: 1.10, riskFree: 0.069, erp: 0.065, forecastRoe: 0.135, terminalRoe: 0.135, payout: 0.0,  fadeYears: 9,  terminalGrowth: 0.060 },
-    series: makeSeries(37, 130, 0.22, 0.030) },
-  { id: 4, name: "Bajaj Finance",      ticker: "BAJFINANCE", type: "financial",    sector: "Diversified NBFC", price: 935,  shares: 62.0, equity: 95000, netProfit: 16700,revenue: null,  netDebt: null,
+  // FY26 actuals — PAT, equity, AUM updated from Q4FY26 results & BSE filings
+  { id: 1, name: "Muthoot Finance",    ticker: "MUTHOOTFIN", type: "financial",    sector: "Gold Loan NBFC",
+    price: 3246, shares: 40.13, equity: 35600, netProfit: 10590, revenue: null, netDebt: null,
+    nbfc: { aum: 181916, gnpa: 0.020, nnpa: 0.016, crar: 0.234, nim: 0.104, roa: 0.064, pledge: 0 },
+    assumptions: {
+      beta: 0.86, rf: 0.071, erp: 0.085,
+      forecastROE: 0.339, terminalROE: 0.155, payout: 0.25,
+      stage1Years: 5, stage2Years: 5, fadeYears: 10,
+      terminalGrowth: 0.050, taxRate: 0.2517,
+    },
+    series: makeSeries(11, 2200, 0.22, 0.022) },
+
+  { id: 2, name: "Manappuram Finance", ticker: "MANAPPURAM", type: "financial",    sector: "Gold Loan NBFC",
+    price: 229, shares: 84.6, equity: 12800, netProfit: 2350, revenue: null, netDebt: null,
+    nbfc: { aum: 44000, gnpa: 0.016, nnpa: 0.012, crar: 0.302, nim: 0.135, roa: 0.048, pledge: 0 },
+    assumptions: {
+      beta: 1.10, rf: 0.071, erp: 0.085,
+      forecastROE: 0.184, terminalROE: 0.140, payout: 0.25,
+      stage1Years: 5, stage2Years: 5, fadeYears: 10,
+      terminalGrowth: 0.045, taxRate: 0.2517,
+    },
+    series: makeSeries(23, 180, 0.12, 0.028) },
+
+  { id: 3, name: "Fedbank Financial",  ticker: "FEDFINA",    type: "financial",    sector: "Diversified NBFC",
+    price: 148, shares: 37.0, equity: 2600, netProfit: 320, revenue: null, netDebt: null,
+    nbfc: { aum: 15200, gnpa: 0.018, nnpa: 0.013, crar: 0.205, nim: 0.082, roa: 0.024, pledge: 0 },
+    assumptions: {
+      beta: 1.05, rf: 0.071, erp: 0.085,
+      forecastROE: 0.130, terminalROE: 0.130, payout: 0.10,
+      stage1Years: 5, stage2Years: 5, fadeYears: 10,
+      terminalGrowth: 0.055, taxRate: 0.2517,
+    },
+    series: makeSeries(37, 120, 0.18, 0.030) },
+
+  { id: 4, name: "Bajaj Finance",      ticker: "BAJFINANCE", type: "financial",    sector: "Diversified NBFC",
+    price: 9820, shares: 62.0, equity: 78000, netProfit: 16700, revenue: null, netDebt: null,
     nbfc: { aum: 410000, gnpa: 0.010, nnpa: 0.004, crar: 0.219, nim: 0.105, roa: 0.045, pledge: 0 },
-    assumptions: { beta: 1.15, riskFree: 0.069, erp: 0.065, forecastRoe: 0.215, terminalRoe: 0.160, payout: 0.10, fadeYears: 10, terminalGrowth: 0.060 },
-    series: makeSeries(71, 800, 0.14, 0.020) },
-  { id: 5, name: "Titan Company",      ticker: "TITAN",      type: "nonfinancial", sector: "Consumer Durables",price: 4155, shares: 88.8, equity: 12000, netProfit: 3900, revenue: 56000, netDebt: 8000,
-    fcff: { revenue: 56000, netDebt: 8000, costDebt: 0.085, debtWeight: 0.15 },
-    assumptions: { beta: 0.95, riskFree: 0.069, erp: 0.065, ebitMargin: 0.115, taxRate: 0.25, reinvestRate: 0.40, revGrowth: 0.135, fadeYears: 9, terminalGrowth: 0.055 },
-    series: makeSeries(91, 3500, 0.12, 0.021) },
+    assumptions: {
+      beta: 1.05, rf: 0.071, erp: 0.085,
+      forecastROE: 0.221, terminalROE: 0.160, payout: 0.15,
+      stage1Years: 5, stage2Years: 5, fadeYears: 10,
+      terminalGrowth: 0.060, taxRate: 0.2517,
+    },
+    series: makeSeries(71, 7000, 0.12, 0.020) },
+
+  { id: 5, name: "Titan Company",      ticker: "TITAN",      type: "nonfinancial", sector: "Consumer Durables",
+    price: 3380, shares: 88.8, equity: 13500, netProfit: 4180, revenue: 58000, netDebt: -4000,
+    ebit: 6000, ebitda: 6800, cash: 4500,
+    template_code: "CONSUMER",
+    assumptions: {
+      beta: 0.78, rf: 0.071, erp: 0.085,
+      ebitMargin: 0.105, taxRate: 0.25, revGrowth1: 0.13, revGrowth2: 0.09,
+      stage1Years: 5, stage2Years: 5,
+      terminalGrowth: 0.055, evEbitdaMultiple: 26, peMultiple: 18,
+    },
+    series: makeSeries(91, 2800, 0.10, 0.021) },
 ];
 
 /* Convert one API row into the internal company shape.

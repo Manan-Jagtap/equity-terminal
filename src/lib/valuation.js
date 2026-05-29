@@ -250,52 +250,75 @@ export function fcffDCF(co, a) {
 export function residualIncomeDCF(co, a) {
   const template  = co.template_code || "NBFC";
   const betaU     = SECTOR_UNLEVERED_BETAS[template] ?? 0.86;
-  // Financial firms: minimal debt in cost-of-capital sense (debt is product, not funding choice)
-  const beta = betaU; // use unlevered beta — financial leverage is operating, not financial
-  const ke   = calcKe(beta, a.rf ?? RF, a.erp ?? ERP);
+  const beta      = betaU; // financial firms: use unlevered beta (leverage is operational)
+  const ke        = calcKe(beta, a.rf ?? RF, a.erp ?? ERP);
 
-  const equity  = co.equity || 10000;
-  const shares  = co.shares || 40;
-  const bvps0   = equity / shares;
-  const pat     = co.netProfit || equity * (a.forecastROE ?? 0.15);
-  const curROE  = safeDiv(pat, equity) ?? (a.forecastROE ?? 0.15);
-  const termROE = a.terminalROE ?? Math.max(ke + 0.02, curROE * 0.6); // floor: Ke + 2%
-  const payout  = a.payout ?? 0.25;
-  const N       = Math.round(a.fadeYears ?? 10);
+  const equity    = co.equity || 10000;
+  const shares    = co.shares || 40;
+  const bvps0     = equity / shares;
+
+  // Use forecastROE from assumptions (slider) as the STARTING ROE.
+  // This is the key fix — curROE from stale seed data was causing wrong baseline.
+  const pat       = co.netProfit || equity * (a.forecastROE ?? 0.15);
+  const dataROE   = safeDiv(pat, equity) ?? (a.forecastROE ?? 0.15);
+  const startROE  = a.forecastROE ?? dataROE; // SLIDER takes precedence
+  const termROE   = a.terminalROE ?? Math.max(ke + 0.02, startROE * 0.6);
+  const payout    = a.payout ?? 0.25;
+  const N1        = Math.round(a.stage1Years ?? 5);
+  const N2        = Math.round(a.stage2Years ?? 5);
+  const N         = N1 + N2;
 
   let bv    = bvps0;
   let pvSum = 0;
   const rows = [];
 
   for (let t = 1; t <= N; t++) {
-    const roe  = curROE + (termROE - curROE) * (t / N);
+    const isStage1 = t <= N1;
+    const stage    = isStage1 ? 1 : 2;
+
+    // Stage 1: constant high-ROE phase (startROE held constant)
+    // Stage 2: linear fade from startROE → termROE
+    const roe = isStage1
+      ? startROE
+      : startROE + (termROE - startROE) * ((t - N1) / N2);
+
     const eps  = roe * bv;
     const dps  = eps * payout;
     const ri   = (roe - ke) * bv;
     const df   = 1 / Math.pow(1 + ke, t);
     const pvRI = ri * df;
     pvSum     += pvRI;
-    rows.push({ year: t, bv, roe, eps, dps, ri, df, pvRI, cumPv: pvSum });
-    bv = bv * (1 + roe * (1 - payout)); // BV compounds at ROE × retention
+    rows.push({ year: t, stage, bv, roe, eps, dps, ri, df, pvRI, cumPv: pvSum });
+    bv = bv * (1 + roe * (1 - payout));
   }
 
-  // Terminal RI: if termROE > Ke, perpetuity; else = 0 (no excess return)
-  const lastRI   = (termROE - ke) * bv;
-  const termRI   = termROE > ke + 0.005 ? lastRI / (ke - (a.terminalGrowth ?? 0.05)) : 0;
-  const tvPv     = termRI > 0 ? termRI / Math.pow(1 + ke, N) : 0;
-  const tvPct    = safeDiv(tvPv, pvSum + tvPv) * 100;
+  // Terminal RI — perpetuity at terminal ROE with terminal growth
+  const termG  = Math.min(a.terminalGrowth ?? 0.05, MAX_G);
+  const lastRI = (termROE - ke) * bv;
+  const tvGap  = ke - termG;
+  const termRI = (termROE > ke + 0.003 && tvGap > 0.003)
+    ? lastRI / tvGap
+    : 0;
+  const tvPv   = termRI > 0 ? termRI / Math.pow(1 + ke, N) : 0;
+  const tvPct  = safeDiv(tvPv, pvSum + tvPv) * 100;
 
   const intrinsic = bvps0 + pvSum + tvPv;
-  const justifiedPB = safeDiv(intrinsic, bvps0);
-  const impliedPE   = safeDiv(intrinsic, safeDiv(pat, shares));
+
+  // Justified P/B via Gordon Growth: P/B = forecastROE / (Ke - g)
+  // This is the steady-state fair P/B, used as a cross-check (NOT circular)
+  const gordonPB    = (ke > termG + 0.005) ? startROE / (ke - termG) : startROE / 0.05;
+  const justifiedPB = Math.max(0.5, Math.min(gordonPB, 15)); // sanity clamp
+  const eps_latest  = safeDiv(pat, shares);
+  const impliedPE   = safeDiv(intrinsic, eps_latest);
 
   return {
-    rows, bvps0, pvExplicit: pvSum, tvRaw: termRI, tvPv, tvPct,
+    rows, bvps0, pvExplicit: pvSum,
+    tvRaw: termRI, tvPv, tvPct,
     intrinsic: Math.max(intrinsic, 0),
-    justifiedPB, impliedPE,
+    justifiedPB, gordonPB, impliedPE,
     ke, beta, betaU,
-    curROE, termROE, payout,
-    N, equity, shares,
+    curROE: dataROE, startROE, termROE, payout,
+    N1, N2, N, equity, shares,
     method: "Residual Income (Excess Return)",
   };
 }
@@ -324,7 +347,8 @@ export function exitMultiple(co, a) {
 // ── P/E cross-check ─────────────────────────────────────────────────────────
 
 export function peValuation(co, a) {
-  const pat    = co.netProfit || 0;
+  // Use actual PAT from company data (not model-derived)
+  const pat    = co.netProfit || (co.equity * (a.forecastROE ?? 0.15));
   const shares = co.shares || 50;
   const eps    = pat / shares;
   const peMultiple = a.peMultiple ?? 15;
@@ -361,13 +385,17 @@ export function blendedValuation(co, a) {
 
   if (isF) {
     const riVal   = v.intrinsic;
-    const pbVal   = v.bvps0 * (v.justifiedPB ?? 1);
-    const peVal   = peValuation(co, a).perShare;
-    const blended = riVal * 0.65 + pbVal * 0.20 + peVal * 0.15;
-    return { v, blended, components: [
-      { method:"Residual Income",     value:riVal,  weight:0.65 },
-      { method:"Justified P/B",       value:pbVal,  weight:0.20 },
-      { method:"P/E",                 value:peVal,  weight:0.15 },
+    // Gordon Growth Model P/B = forecastROE / (Ke − g) — proper cross-check, not circular
+    const gordonPB = v.gordonPB ?? v.justifiedPB ?? 1;
+    const pbVal    = v.bvps0 * gordonPB;
+    // P/E using latest EPS (from actual PAT, not stale)
+    const eps      = safeDiv(co.netProfit || co.equity * (a.forecastROE ?? 0.20), co.shares || 40);
+    const peVal    = eps ? eps * (a.peMultiple ?? 15) : riVal;
+    const blended  = riVal * 0.65 + pbVal * 0.20 + peVal * 0.15;
+    return { v, blended: Math.max(blended, 0), components: [
+      { method:"Residual Income",   value:riVal, weight:0.65 },
+      { method:"Gordon Growth P/B", value:pbVal, weight:0.20 },
+      { method:"P/E",               value:peVal, weight:0.15 },
     ]};
   } else {
     const dcfVal  = v.perShare;
