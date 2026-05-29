@@ -532,32 +532,99 @@ function PeersTab({ co, allCompanies, rec }) {
 }
 
 /* ── AI Thesis Tab ───────────────────────────────────────────────── */
-function AIThesisTab({ co }) {
+function AIThesisTab({ co, API }) {
+  const [thesis, setThesis] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError]   = useState(null);
+  const [cached, setCached] = useState(false);
+
+  const generate = async (force = false) => {
+    if (!API) {
+      setError("API not configured — set VITE_API_URL in Vercel environment variables.");
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(
+        `${API}/api/companies/${co.ticker}/thesis${force ? "?force_refresh=true" : ""}`,
+        { method: "POST" }
+      );
+      const data = await res.json();
+      if (data.error) {
+        setError(data.thesis);
+      } else {
+        setThesis(data.thesis);
+        setCached(data.cached || false);
+      }
+    } catch (e) {
+      setError("Network error — " + e.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderMarkdown = (text) => text.split("\n").map((line, i) => {
+    if (line.startsWith("## ")) return (
+      <div key={i} style={{ ...sans, color: C.gold, fontSize: 13, fontWeight: 600, marginTop: 18, marginBottom: 6, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+        {line.replace("## ", "")}
+      </div>
+    );
+    if (line.trim() === "") return <div key={i} style={{ height: 8 }} />;
+    return <div key={i} style={{ ...sans, color: C.text, fontSize: 13, lineHeight: 1.75 }}>{line}</div>;
+  });
+
   return (
-    <Card>
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
-        <Brain size={18} color={C.gold} />
-        <div style={{ ...sans, color: C.text, fontSize: 14, fontWeight: 600 }}>AI Investment Thesis</div>
-        <Badge label="Step 6" color={C.purple} />
-      </div>
-      <div style={{ ...sans, color: C.dim, fontSize: 13, lineHeight: 1.8, maxWidth: 560 }}>
-        The AI Thesis tab will generate a grounded investment thesis for <b style={{ color: C.text }}>{co.name}</b> by feeding live financials, key metrics, and management commentary into Claude.
-      </div>
-      <div style={{ marginTop: 16, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, maxWidth: 480 }}>
-        {[
-          ["Business overview & moat", "Sector dynamics and competitive position"],
-          ["Bull / Bear / Base cases", "Entry price, target, stop-loss, position sizing"],
-          ["Key risks to monitor", "Grounded in concall transcripts + annual reports"],
-        ].flat().map((item, i) => (
-          <div key={i} style={{ background: C.panel2, border: `1px solid ${C.line}`, borderRadius: 8, padding: "10px 12px" }}>
-            <div style={{ ...sans, color: C.faint, fontSize: 12 }}>{item}</div>
+    <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <Card>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12, marginBottom: thesis ? 16 : 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <Brain size={16} color={C.gold} />
+            <div style={{ ...sans, color: C.text, fontSize: 14, fontWeight: 600 }}>AI Investment Thesis</div>
+            {cached && <Badge label="Cached" color={C.blue} />}
           </div>
-        ))}
-      </div>
-      <div style={{ marginTop: 16, ...sans, color: C.faint, fontSize: 12 }}>
-        Coming in Step 6 — requires <code style={{ ...mono, background: C.panel2, padding: "1px 6px", borderRadius: 4 }}>POST /api/companies/{"{ticker}"}/thesis</code> endpoint on Railway with <code style={mono}>ANTHROPIC_API_KEY</code> env var.
-      </div>
-    </Card>
+          <div style={{ display: "flex", gap: 8 }}>
+            {thesis && (
+              <button onClick={() => generate(true)} disabled={loading} style={{
+                ...sans, fontSize: 12, cursor: "pointer", padding: "6px 12px",
+                background: "transparent", border: `1px solid ${C.line}`,
+                color: C.dim, borderRadius: 6,
+              }}>Regenerate</button>
+            )}
+            <button onClick={() => generate(false)} disabled={loading} style={{
+              ...sans, fontSize: 12, fontWeight: 600, cursor: loading ? "wait" : "pointer",
+              padding: "8px 18px", background: C.gold + "22",
+              border: `1px solid ${C.gold}55`, color: C.gold, borderRadius: 7,
+            }}>
+              {loading ? "Generating…" : thesis ? "Regenerate" : `Generate thesis for ${co.name}`}
+            </button>
+          </div>
+        </div>
+
+        {!thesis && !loading && !error && (
+          <div style={{ ...sans, color: C.dim, fontSize: 13, lineHeight: 1.75 }}>
+            Generates a grounded investment thesis using live financials, key metrics, and peer comparison.
+            Every figure is validated against real data.
+          </div>
+        )}
+        {loading && <div style={{ ...sans, color: C.gold, fontSize: 13, padding: "20px 0" }}>Analysing {co.name} data…</div>}
+        {error && (
+          <div style={{ ...sans, color: C.red, fontSize: 13, padding: "12px", background: C.red + "14", borderRadius: 8, border: `1px solid ${C.red}33` }}>{error}</div>
+        )}
+        {thesis && (
+          <div style={{ borderTop: `1px solid ${C.line}`, paddingTop: 14 }}>{renderMarkdown(thesis)}</div>
+        )}
+      </Card>
+
+      {thesis && (
+        <Card style={{ border: `1px solid ${C.line}44` }}>
+          <div style={{ ...sans, color: C.faint, fontSize: 11, lineHeight: 1.65 }}>
+            Generated by Claude Sonnet · Grounded in {co.ticker} financial data · Numbers validated against DB · Cached 6h ·{" "}
+            <b style={{ color: C.text }}>Not investment advice.</b>
+          </div>
+        </Card>
+      )}
+    </div>
   );
 }
 
@@ -711,7 +778,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
       {tab === "ratios"     && <RatiosTab      co={co2} liveMetrics={liveMetrics} f={rec.f} />}
       {tab === "dcf"        && <DCFModel       co={co2} a={assumptions} set={set} price={price} setPrice={setPrice} />}
       {tab === "peers"      && <PeersTab       co={co2} allCompanies={allCompanies || [co2]} rec={rec} />}
-      {tab === "thesis"     && <AIThesisTab    co={co2} />}
+      {tab === "thesis"     && <AIThesisTab    co={co2} API={API} />}
       {tab === "verdict"    && <VerdictTab     rec={rec} />}
     </div>
   );
