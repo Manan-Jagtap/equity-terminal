@@ -7,7 +7,7 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import {
   ArrowLeft, Building2, FileText, Activity, Calculator,
   Users, Brain, Shield, Sparkles, Check, AlertTriangle,
-  Info, Loader2, TrendingUp, TrendingDown,
+  Info, Loader2, TrendingUp, TrendingDown, Newspaper, Download,
 } from "lucide-react";
 import {
   ComposedChart, AreaChart, Area, BarChart, Bar, LineChart, Line,
@@ -15,7 +15,6 @@ import {
   ReferenceLine, Cell,
 } from "recharts";
 
-import DCFModel from "./DCFModel.jsx";
 import { C, mono, sans, serif, gridBg } from "../lib/theme.js";
 import { fmt, inr, pct, cr } from "../lib/formatters.js";
 import { recommend } from "../lib/recommend.js";
@@ -114,6 +113,7 @@ const TABS = [
   { id:"ratios",     icon:Activity,   label:"Ratios & KPIs" },
   { id:"dcf",        icon:Calculator, label:"DCF Model"     },
   { id:"peers",      icon:Users,      label:"Peer Universe" },
+  { id:"news",       icon:Newspaper,  label:"News"          },
   { id:"thesis",     icon:Brain,      label:"AI Thesis"     },
   { id:"verdict",    icon:Shield,     label:"Verdict"       },
 ];
@@ -260,13 +260,19 @@ function FinTable({ title, accent, rows, years }) {
 }
 
 /* ── Overview Tab ─────────────────────────────────────────────────── */
-function OverviewTab({ co, rec, cd }) {
+function OverviewTab({ co, rec, cd, priceData }) {
   const f = rec.f;
+  const t = rec.t;
   const histPAT = cd?.pnl?.years?.slice(0, 5).map((y, i) => ({
     y,
     pat: cd.pnl.rows.find(r => r.metric === "PAT (Reported)")?.v[i],
     aum: cd.bs?.rows?.find(r => r.metric === "AUM (Consol.)")?.v[i],
   })) || [];
+  const chartData = (priceData && priceData.length > 10) ? priceData : t.data;
+  const hasRealDates = priceData && priceData.length > 10 && priceData[0]?.date != null;
+  const thinned = chartData.length > 300
+    ? chartData.filter((_, i) => i % Math.ceil(chartData.length / 250) === 0)
+    : chartData;
 
   return (
     <div className="fadein" style={{ padding:"32px", display:"grid", gridTemplateColumns:"1fr 380px", gap:24 }}>
@@ -344,6 +350,49 @@ function OverviewTab({ co, rec, cd }) {
 
       {/* RIGHT */}
       <div style={{ display:"flex", flexDirection:"column", gap:24 }}>
+
+        {/* Price chart with real dates */}
+        <Card>
+          <SectionLabel accent={hasRealDates ? "LIVE · NSE DAILY OHLCV" : "SYNTHETIC · RUN PRICE INGESTER FOR REAL DATA"}>
+            PRICE CHART
+          </SectionLabel>
+          <div style={{ height:180 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={thinned} margin={{ top:4, right:4, bottom:0, left:-20 }}>
+                <defs>
+                  <linearGradient id="pg" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor={C.gold} stopOpacity={0.25} />
+                    <stop offset="95%" stopColor={C.gold} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="2 4" stroke="rgba(220,213,193,.06)" vertical={false} />
+                <XAxis
+                  dataKey={hasRealDates ? "label" : "i"}
+                  tick={{ fill:C.dim, fontSize:9 }}
+                  axisLine={{ stroke:"rgba(220,213,193,.1)" }}
+                  tickLine={false}
+                  interval={hasRealDates ? Math.floor(thinned.length / 6) : "preserveStartEnd"}
+                />
+                <YAxis domain={["auto","auto"]} tick={{ fill:C.dim, fontSize:9 }} axisLine={false} tickLine={false} tickFormatter={v=>"₹"+v} width={52} />
+                <Tooltip
+                  contentStyle={{ background:C.bg800, border:`1px solid ${C.bg600}`, borderRadius:0, fontSize:11 }}
+                  labelFormatter={l => hasRealDates ? l : ""}
+                  formatter={v => ["₹"+v.toLocaleString("en-IN"), "Close"]}
+                />
+                <Area type="monotone" dataKey="close" stroke={C.gold} strokeWidth={1.6} fill="url(#pg)" dot={false} />
+                {thinned.some(d => d.sma50 != null) && (
+                  <Line type="monotone" dataKey="sma50" stroke={C.dim} strokeWidth={1} dot={false} strokeDasharray="4 3" />
+                )}
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+          <div style={{ display:"flex", gap:16, marginTop:8 }}>
+            {[["High ₹"+fmtN(t.hi||0,1), C.text200],["Low ₹"+fmtN(t.lo||0,1), C.text200],["RSI "+fmtN(t.rsi||0,0), t.rsi>70?C.red:t.rsi<30?C.green:C.dim],[t.aboveSMA50?"Above 50DMA":"Below 50DMA", t.aboveSMA50?C.green:C.red]].map(([l,cl]) => (
+              <span key={l} style={{ ...sans, fontSize:10, color:cl }}>{l}</span>
+            ))}
+          </div>
+        </Card>
+
         {cd?.meta && (
           <Card>
             <SectionLabel>KEY FACTS</SectionLabel>
@@ -767,6 +816,117 @@ function PeersTab({ co, cd }) {
   );
 }
 
+/* ── News Tab ────────────────────────────────────────────────────── */
+function NewsTab({ co, API }) {
+  const [news, setNews]       = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError]     = useState(null);
+
+  useEffect(() => {
+    if (!API) { setLoading(false); return; }
+    setLoading(true);
+    fetch(`${API}/api/companies/${co.ticker}/news`)
+      .then(r => r.json())
+      .then(d => { setNews(d); setLoading(false); })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, [co.ticker, API]);
+
+  const typeColor = t => t === "announcement" ? C.blue : t === "result" ? C.green : C.text200;
+  const typeLabel = t => t === "announcement" ? "📋 Announcement" : t === "result" ? "📊 Result" : "📰 News";
+
+  const fmtDate = pub => {
+    if (!pub) return "—";
+    try {
+      const d = new Date(pub);
+      return d.toLocaleDateString("en-IN", { day:"numeric", month:"short", year:"numeric" });
+    } catch { return pub.slice(0, 10); }
+  };
+
+  return (
+    <div className="fadein" style={{ padding:32 }}>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20 }}>
+        <div>
+          <div style={{ ...serif, fontSize:22, color:C.text }}>{co.name} — Latest News</div>
+          <div style={{ ...sans, fontSize:12, color:C.dim, marginTop:4 }}>
+            {news ? `${news.count} items · Sources: ${(news.sources||[]).join(", ")} · refreshes every 30 min` : "Loading…"}
+          </div>
+        </div>
+        {news?.count > 0 && (
+          <div style={{ ...sans, fontSize:11, color:C.dim }}>
+            {news.count} items
+          </div>
+        )}
+      </div>
+
+      {loading && (
+        <div style={{ display:"flex", alignItems:"center", gap:12, padding:40, ...sans, color:C.dim, fontSize:13 }}>
+          <Loader2 size={20} color={C.gold} style={{ animation:"spin 1s linear infinite" }} />
+          Fetching news from NSE and market feeds…
+        </div>
+      )}
+
+      {error && !loading && (
+        <Card>
+          <div style={{ ...sans, color:C.red, fontSize:13 }}>
+            Could not load news: {error}. Ensure the backend is running and CORS is configured.
+          </div>
+        </Card>
+      )}
+
+      {!loading && !error && (!news || news.count === 0) && (
+        <Card>
+          <div style={{ ...sans, color:C.dim, fontSize:13, padding:40, textAlign:"center" }}>
+            No news found for {co.ticker}. yfinance news coverage varies — well-covered for Nifty 50 companies.
+          </div>
+        </Card>
+      )}
+
+      {news?.items?.length > 0 && (
+        <div style={{ display:"flex", flexDirection:"column", gap:0 }}>
+          {news.items.map((item, i) => (
+            <a key={i} href={item.url || "#"} target="_blank" rel="noopener noreferrer"
+              style={{ textDecoration:"none", display:"block" }}>
+              <div style={{
+                padding:"14px 20px",
+                borderBottom:`1px solid ${C.line}`,
+                background:i%2===0?"rgba(16,14,10,.4)":"transparent",
+                cursor:"pointer",
+                transition:"background 0.15s",
+              }}
+                onMouseEnter={e => e.currentTarget.style.background=C.bg600+"55"}
+                onMouseLeave={e => e.currentTarget.style.background=i%2===0?"rgba(16,14,10,.4)":"transparent"}
+              >
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:16 }}>
+                  <div style={{ flex:1 }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:5 }}>
+                      <span style={{ ...sans, fontSize:10, color:typeColor(item.type), textTransform:"uppercase", letterSpacing:"0.1em" }}>
+                        {typeLabel(item.type)}
+                      </span>
+                      <span style={{ ...sans, fontSize:10, color:C.dim }}>·</span>
+                      <span style={{ ...sans, fontSize:10, color:C.dim }}>{item.source}</span>
+                    </div>
+                    <div style={{ ...sans, fontSize:13, color:C.text, lineHeight:1.5, fontWeight:500 }}>
+                      {item.title}
+                    </div>
+                    {item.summary && item.summary !== item.title && (
+                      <div style={{ ...sans, fontSize:11, color:C.dim, marginTop:4, lineHeight:1.5 }}>
+                        {item.summary.slice(0, 180)}{item.summary.length > 180 ? "…" : ""}
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ flexShrink:0, ...mono, fontSize:11, color:C.faint, textAlign:"right", marginTop:2 }}>
+                    {fmtDate(item.published)}
+                  </div>
+                </div>
+              </div>
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ── AI Thesis Tab ───────────────────────────────────────────────── */
 function AIThesisTab({ co, API }) {
   const [thesis, setThesis] = useState(null);
@@ -977,18 +1137,55 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
     ]).then(([fins, mets]) => { setLiveFinancials(fins); setLiveMetrics(mets); });
   }, [co.ticker, API]);
 
-  // Price chart data — use histPrices if available (has real dates), else co.series
+  // Price chart data — fetch real OHLCV with dates from API
   const priceChartData = useMemo(() => {
-    if (histPrices?.prices?.length > 0) {
-      return histPrices.prices.map(p => ({
-        date: p.date,
-        label: p.date?.slice(5), // "MM-DD"
-        close: p.close,
-      }));
+    if (histPrices?.data?.length > 0) {
+      // Use real dates from /history endpoint
+      return histPrices.data
+        .filter(p => p.close != null)
+        .map(p => ({
+          date:  p.date,
+          label: p.date ? p.date.slice(5).replace("-", "/") : "", // "MM/DD"
+          close: p.close,
+          sma20: null,
+          sma50: null,
+        }));
     }
-    // Fallback: synthetic series without real dates
-    return (co.series || []).map((p, i) => ({ date: null, label: String(i), close: p.close }));
+    // Fallback: synthetic series
+    return (co.series || []).map((p, i) => ({
+      date: null, label: String(i), close: p.close, sma20: null, sma50: null,
+    }));
   }, [histPrices, co.series]);
+
+  // Add SMA to price chart data
+  const priceChartWithSMA = useMemo(() => {
+    const data = [...priceChartData];
+    for (let i = 0; i < data.length; i++) {
+      if (i >= 19) {
+        data[i].sma20 = +(data.slice(i-19,i+1).reduce((s,d)=>s+d.close,0)/20).toFixed(1);
+      }
+      if (i >= 49) {
+        data[i].sma50 = +(data.slice(i-49,i+1).reduce((s,d)=>s+d.close,0)/50).toFixed(1);
+      }
+    }
+    return data;
+  }, [priceChartData]);
+
+  // PDF download handler
+  const downloadOnepager = async () => {
+    if (!API) { alert("API not configured"); return; }
+    try {
+      const resp = await fetch(`${API}/api/companies/${co.ticker}/onepager`, { method:"POST" });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const blob = await resp.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a");
+      a.href     = url;
+      a.download = `${co.ticker}_onepager.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch(e) { alert("PDF generation failed: " + e.message); }
+  };
 
   const t = useMemo(() => technicals(co2), [co2]);
 
@@ -1023,6 +1220,16 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
               </div>
               <span style={{ color:C.bg500 }}>|</span>
               <span>₹ in Crores unless stated</span>
+              <span style={{ color:C.bg500 }}>|</span>
+              <button onClick={downloadOnepager} style={{
+                ...sans, display:"flex", alignItems:"center", gap:6,
+                fontSize:11, letterSpacing:"0.12em", textTransform:"uppercase",
+                fontWeight:500, padding:"6px 12px",
+                border:`1px solid ${C.gold}66`, color:C.gold,
+                background:C.gold+"0d", cursor:"pointer",
+              }}>
+                <Download size={12} /> One-Pager PDF
+              </button>
             </div>
           </div>
 
@@ -1106,11 +1313,12 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
 
       {/* ── Tab content ───────────────────────────────────────── */}
       <main>
-        {tab==="overview"   && <OverviewTab    co={co2} rec={rec} cd={cd} />}
+        {tab==="overview"   && <OverviewTab    co={co2} rec={rec} cd={cd} priceData={priceChartWithSMA} />}
         {tab==="financials" && <FinancialsTab  co={co2} cd={cd} liveFinancials={liveFinancials} />}
         {tab==="ratios"     && <RatiosTab      co={co2} cd={cd} liveMetrics={liveMetrics} />}
-        {tab==="dcf"        && <DCFModel       co={co2} a={assumptions} set={set} price={price} setPrice={setPrice} />}
+        {tab==="dcf"        && <DCFTab         co={co2} a={assumptions} set={set} price={price} setPrice={setPrice} cd={cd} />}
         {tab==="peers"      && <PeersTab       co={co2} cd={cd} />}
+        {tab==="news"       && <NewsTab        co={co2} API={API} />}
         {tab==="thesis"     && <AIThesisTab    co={co2} API={API} />}
         {tab==="verdict"    && <VerdictTab     co={co2} rec={rec} cd={cd} price={price} />}
       </main>

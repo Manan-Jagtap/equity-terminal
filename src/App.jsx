@@ -45,7 +45,7 @@ export default function App() {
 
     // Fetch historical prices with real dates
     if (API && co.ticker) {
-      fetch(`${API}/api/companies/${co.ticker}/history/prices`)
+      fetch(`${API}/api/companies/${co.ticker}/history`)
         .then(r => r.json())
         .then(d => setHistPrices(d))
         .catch(() => setHistPrices(null));
