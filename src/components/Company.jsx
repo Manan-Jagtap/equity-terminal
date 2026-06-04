@@ -467,76 +467,213 @@ function OverviewTab({ co, rec, cd, priceData }) {
 }
 
 /* ── Financials Tab ──────────────────────────────────────────────── */
+/* ── Live financial-statement rendering ───────────────────────────── */
+const FIN_LABELS = {
+  interest_income:"Interest Income", interest_expense:"Interest / Finance Cost",
+  nii:"Net Interest Income", other_income:"Other Income", total_income:"Total Income",
+  opex:"Operating Expenses", provisions:"Provisions", pbt:"Profit Before Tax",
+  tax:"Tax", pat:"PAT (Net Profit)", roe:"ROE", roa:"ROA", nim:"NIM",
+  cost_to_income:"Cost to Income", revenue:"Revenue", raw_material:"Raw Material Cost",
+  gross_profit:"Gross Profit", ebitda:"EBITDA", ebitda_margin:"EBITDA Margin",
+  depreciation:"Depreciation", ebit:"EBIT", ebit_margin:"EBIT Margin", pat_margin:"PAT Margin",
+  equity:"Equity Capital", reserves:"Reserves", total_equity:"Total Equity", net_worth:"Net Worth",
+  lt_debt:"Long-Term Debt", st_debt:"Short-Term Debt", borrowings:"Total Borrowings",
+  total_debt:"Total Debt", total_liabilities:"Total Liabilities", fixed_assets:"Fixed Assets",
+  investments:"Investments", cash:"Cash & Equivalents", total_assets:"Total Assets",
+  aum:"AUM", gnpa:"GNPA", nnpa:"NNPA", crar:"CRAR",
+  operating_cf:"Operating Cash Flow", investing_cf:"Investing Cash Flow",
+  financing_cf:"Financing Cash Flow", capex:"Capex", fcf:"Free Cash Flow",
+  dividends:"Dividends Paid", net_change_cash:"Net Change in Cash",
+};
+const prettyFin = k => FIN_LABELS[k] || k.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+const pctItem  = k => /margin|^roe$|^roa$|nim|crar|gnpa|nnpa|cost_to_income/i.test(k);
+const boldItem = k => /^(pat|nii|revenue|ebitda|total_income|net_worth|total_assets|fcf|operating_cf|gross_profit)$/i.test(k);
+const PL_ORDER_FIN    = ["interest_income","interest_expense","nii","other_income","total_income","opex","provisions","pbt","tax","pat","roe","roa","nim","cost_to_income"];
+const PL_ORDER_NONFIN = ["revenue","other_income","total_income","raw_material","gross_profit","ebitda","ebitda_margin","depreciation","ebit","ebit_margin","interest_expense","pbt","tax","pat","pat_margin"];
+const BS_ORDER = ["equity","reserves","total_equity","net_worth","lt_debt","st_debt","borrowings","total_debt","total_liabilities","fixed_assets","investments","cash","total_assets","aum","gnpa","nnpa","crar"];
+const CF_ORDER = ["pat","depreciation","operating_cf","investing_cf","financing_cf","capex","fcf","dividends","net_change_cash"];
+
+function LiveStatementTable({ title, accent, statements, years, stmtKey, order }) {
+  const present = new Set();
+  years.forEach(y => Object.keys(statements[y]?.[stmtKey] || {}).forEach(k => present.add(k)));
+  if (!present.size) return null;
+  const items = [...order.filter(k => present.has(k)), ...[...present].filter(k => !order.includes(k))];
+  return (
+    <Card noPad style={{ overflow:"hidden" }}>
+      <div style={{ padding:"16px 20px 8px", display:"flex", alignItems:"baseline", justifyContent:"space-between" }}>
+        <div>
+          <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.18em", color:C.dim }}>{accent}</div>
+          <div style={{ ...serif, fontSize:22, color:C.text, marginTop:2 }}>{title}</div>
+        </div>
+        <span style={{ ...sans, fontSize:10, textTransform:"uppercase", color:C.dim }}>₹ Crores · % where noted</span>
+      </div>
+      <div style={{ overflowX:"auto" }}>
+        <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
+          <thead>
+            <tr style={{ borderTop:`1px solid ${C.line}`, borderBottom:`1px solid ${C.line}` }}>
+              <th style={{ ...sans, textAlign:"left", padding:"8px 20px", fontSize:10, textTransform:"uppercase", color:C.dim, fontWeight:500 }} />
+              {years.map((y, i) => (
+                <th key={i} style={{ ...sans, textAlign:"right", padding:"8px", paddingRight:i===years.length-1?"20px":"8px", fontSize:10, color:i===years.length-1?C.gold:C.dim, fontWeight:500 }}>FY{String(y).slice(2)}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((k, i) => {
+              const isPct = pctItem(k), bold = boldItem(k);
+              return (
+                <tr key={i} style={{ borderBottom:`1px solid ${C.line}`, background:bold?"rgba(58,53,40,0.3)":"transparent" }}>
+                  <td style={{ ...sans, padding:"10px 20px", color:bold?C.text:C.text200, fontWeight:bold?500:400 }}>{prettyFin(k)}</td>
+                  {years.map((y, j) => {
+                    const v = statements[y]?.[stmtKey]?.[k];
+                    return (
+                      <td key={j} style={{ ...mono, textAlign:"right", padding:"10px 8px", paddingRight:j===years.length-1?"20px":"8px", fontSize:12, color:j===years.length-1?"#d4b96a":bold?C.text:C.text200 }}>
+                        {v == null ? "—" : isPct ? (v*100).toFixed(1)+"%" : fmtN(v, 0)}
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </Card>
+  );
+}
+
 function FinancialsTab({ co, cd, liveFinancials }) {
   const isF = co.type === "financial";
   const hasLive = liveFinancials?.has_data;
 
-  // Build display data: prefer live API, fall back to cd static data
+  // 1) Prefer real ingested multi-year statements.
+  if (hasLive) {
+    const { statements, years_available: years } = liveFinancials;
+    const plOrder = isF ? PL_ORDER_FIN : PL_ORDER_NONFIN;
+    return (
+      <div className="fadein" style={{ padding:"32px", display:"flex", flexDirection:"column", gap:24 }}>
+        <div style={{ display:"flex", alignItems:"flex-start", gap:12, padding:16, background:C.green+"0a", border:`1px solid ${C.green}33` }}>
+          <Check size={16} color={C.green} style={{ flexShrink:0, marginTop:2 }} />
+          <div style={{ ...sans, fontSize:13, color:C.text200, lineHeight:1.6 }}>
+            Live statements — <span style={{ color:C.green, fontWeight:500 }}>{years.length} fiscal year{years.length>1?"s":""}</span> ingested from XBRL / yfinance. ₹ in crores.
+          </div>
+        </div>
+        <LiveStatementTable title="Income Statement" accent={isF?"P&L · NBFC TEMPLATE":"P&L · ₹ CR"} statements={statements} years={years} stmtKey="PL" order={plOrder} />
+        <LiveStatementTable title="Balance Sheet"    accent="BALANCE SHEET · YEAR-END"          statements={statements} years={years} stmtKey="BS" order={BS_ORDER} />
+        <LiveStatementTable title="Cash Flow"        accent="CASH FLOW STATEMENT"               statements={statements} years={years} stmtKey="CF" order={CF_ORDER} />
+      </div>
+    );
+  }
+
+  // 2) Fall back to curated seed data (Muthoot etc.).
   const pnlData = cd?.pnl || null;
   const bsData  = cd?.bs  || null;
-
-  return (
-    <div className="fadein" style={{ padding:"32px", display:"flex", flexDirection:"column", gap:24 }}>
-      <div style={{ display:"flex", alignItems:"flex-start", gap:12, padding:16, background:C.gold+"0a", border:`1px solid ${C.gold}33` }}>
-        <Info size={16} color={C.gold} style={{ flexShrink:0, marginTop:2 }} />
-        <div style={{ ...sans, fontSize:13, color:C.text200, lineHeight:1.6 }}>
-          Statements rendered using the <span style={{ color:C.gold, fontWeight:500 }}>NBFC template</span> — Interest Income / NII / PPOP / Provisions / PAT.
-          {hasLive ? ` Live data from ${liveFinancials.years_available.length} fiscal years ingested.` : " Run the bulk_ingester to populate live multi-year data."}
-        </div>
+  if (pnlData) {
+    return (
+      <div className="fadein" style={{ padding:"32px", display:"flex", flexDirection:"column", gap:24 }}>
+        <FinTable title="Income Statement" accent="CONSOLIDATED · FY22 — FY27E" rows={pnlData.rows} years={pnlData.years} />
+        {bsData && <FinTable title="Balance Sheet & AUM" accent="CONSOLIDATED · YEAR-END" rows={bsData.rows} years={bsData.years} />}
       </div>
+    );
+  }
 
-      {pnlData ? (
-        <>
-          <FinTable title="Income Statement" accent="CONSOLIDATED · FY22 — FY27E" rows={pnlData.rows} years={pnlData.years} />
-          {bsData && <FinTable title="Balance Sheet & AUM" accent="CONSOLIDATED · YEAR-END" rows={bsData.rows} years={bsData.years} />}
-        </>
-      ) : hasLive ? (
-        <div style={{ ...sans, color:C.dim, fontSize:13 }}>Live financial data available — rendering from API.</div>
-      ) : (
-        <Card>
-          <div style={{ ...sans, color:C.dim, fontSize:13, textAlign:"center", padding:40 }}>
-            Financial statements will appear here once the XBRL / Screener ingestion pipeline runs for {co.ticker}.
-          </div>
-        </Card>
-      )}
+  // 3) Nothing yet — honest empty state.
+  return (
+    <div className="fadein" style={{ padding:"32px" }}>
+      <Card>
+        <div style={{ ...sans, color:C.dim, fontSize:13, textAlign:"center", padding:40, lineHeight:1.7 }}>
+          No multi-year statements ingested for <b style={{ color:C.text }}>{co.ticker}</b> yet.<br/>
+          Run the financials ingester (XBRL / yfinance) and this populates automatically.
+        </div>
+      </Card>
     </div>
   );
 }
 
 /* ── Ratios Tab ──────────────────────────────────────────────────── */
-function RatiosTab({ co, cd, liveMetrics }) {
-  const years = cd?.pnl?.years || ["FY22","FY23","FY24","FY25","FY26","FY27E"];
-  const r = cd?.ratios;
+const metricFmt = (m) => {
+  if (m.formatted != null && m.formatted !== "") return m.formatted;
+  if (m.value == null) return "—";
+  if (m.unit === "pct") return (m.value*100).toFixed(1)+"%";
+  if (m.unit === "x")   return m.value.toFixed(2)+"x";
+  return Number(m.value).toLocaleString("en-IN", { maximumFractionDigits:2 });
+};
 
-  if (!r) {
-    return (
-      <div className="fadein" style={{ padding:32 }}>
-        <Card>
-          <div style={{ ...sans, color:C.dim, fontSize:13, textAlign:"center", padding:40 }}>
-            Ratio data available once bulk_ingester runs for {co.ticker}. Live metrics: {liveMetrics?.populated_metrics || 0} computed.
+function LiveMetricCard({ cat }) {
+  const rows = cat.metrics.filter(m => m.value != null);
+  if (!rows.length) return null;
+  return (
+    <Card noPad style={{ overflow:"hidden" }}>
+      <div style={{ padding:"14px 18px 10px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+        <span style={{ ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.16em", color:C.gold, fontWeight:500 }}>{cat.name}</span>
+        <span style={{ ...sans, fontSize:10, color:C.dim }}>{rows.length} metrics</span>
+      </div>
+      <div style={{ borderTop:`1px solid ${C.line}` }}>
+        {rows.map((m, i) => (
+          <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", padding:"9px 18px", borderBottom:`1px solid ${C.line}` }}
+               title={m.note || ""}>
+            <span style={{ ...sans, color:C.text200, fontSize:12.5 }}>{m.label}</span>
+            <span style={{ ...mono, fontSize:13, color:m.good===true?C.green:m.good===false?C.red:C.text }}>{metricFmt(m)}</span>
           </div>
-        </Card>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+function RatiosTab({ co, cd, liveMetrics }) {
+  // 1) Prefer live computed metrics (the 80+ ratio registry).
+  const liveCats = (liveMetrics?.categories || []).filter(c => c.metrics.some(m => m.value != null));
+  if (liveCats.length) {
+    return (
+      <div className="fadein" style={{ padding:"32px", display:"flex", flexDirection:"column", gap:24 }}>
+        <div style={{ display:"flex", alignItems:"flex-start", gap:12, padding:16, background:C.green+"0a", border:`1px solid ${C.green}33` }}>
+          <Check size={16} color={C.green} style={{ flexShrink:0, marginTop:2 }} />
+          <div style={{ ...sans, fontSize:13, color:C.text200, lineHeight:1.6 }}>
+            <span style={{ color:C.green, fontWeight:500 }}>{liveMetrics.populated_metrics}</span> of {liveMetrics.total_metrics} ratios computed live from ingested financials. Green = healthy, red = watch.
+          </div>
+        </div>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, alignItems:"start" }}>
+          {liveCats.map(cat => <LiveMetricCard key={cat.name} cat={cat} />)}
+        </div>
       </div>
     );
   }
 
-  return (
-    <div className="fadein" style={{ padding:"32px", display:"flex", flexDirection:"column", gap:24 }}>
-      {/* NBFC-specific: highlighted with gold glow */}
-      <div style={{ position:"relative" }}>
-        <div style={{ position:"absolute", inset:-1, background:`linear-gradient(135deg,${C.gold}33,transparent)`, pointerEvents:"none" }} />
-        <div style={{ position:"relative" }}>
-          <RatioTable title="NBFC-Specific KPIs" rows={r.nbfc} years={years} accentColor={C.gold} />
+  // 2) Fall back to curated seed ratios.
+  const years = cd?.pnl?.years || ["FY22","FY23","FY24","FY25","FY26","FY27E"];
+  const r = cd?.ratios;
+  if (r) {
+    return (
+      <div className="fadein" style={{ padding:"32px", display:"flex", flexDirection:"column", gap:24 }}>
+        {r.nbfc && (
+          <div style={{ position:"relative" }}>
+            <div style={{ position:"absolute", inset:-1, background:`linear-gradient(135deg,${C.gold}33,transparent)`, pointerEvents:"none" }} />
+            <div style={{ position:"relative" }}>
+              <RatioTable title="NBFC-Specific KPIs" rows={r.nbfc} years={years} accentColor={C.gold} />
+            </div>
+          </div>
+        )}
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:24 }}>
+          {r.growth && <RatioTable title="Growth"         rows={r.growth}        years={years} />}
+          {r.profitability && <RatioTable title="Profitability"  rows={r.profitability} years={years} />}
+          {r.returns && <RatioTable title="Return Ratios"  rows={r.returns}       years={years} />}
+          {r.leverage && <RatioTable title="Leverage"       rows={r.leverage}      years={years} />}
+          {r.perShare && <RatioTable title="Per-Share Data" rows={r.perShare}      years={years} />}
+          {r.valuation && <RatioTable title="Valuation"      rows={r.valuation}     years={years} />}
         </div>
       </div>
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:24 }}>
-        <RatioTable title="Growth"         rows={r.growth}        years={years} />
-        <RatioTable title="Profitability"  rows={r.profitability} years={years} />
-        <RatioTable title="Return Ratios"  rows={r.returns}       years={years} />
-        <RatioTable title="Leverage"       rows={r.leverage}      years={years} />
-        <RatioTable title="Per-Share Data" rows={r.perShare}      years={years} />
-        <RatioTable title="Valuation"      rows={r.valuation}     years={years} />
-      </div>
+    );
+  }
+
+  // 3) Honest empty state.
+  return (
+    <div className="fadein" style={{ padding:32 }}>
+      <Card>
+        <div style={{ ...sans, color:C.dim, fontSize:13, textAlign:"center", padding:40, lineHeight:1.7 }}>
+          No ratios computed for <b style={{ color:C.text }}>{co.ticker}</b> yet.<br/>
+          Once fundamentals are ingested, the full ratio registry populates here.
+        </div>
+      </Card>
     </div>
   );
 }
