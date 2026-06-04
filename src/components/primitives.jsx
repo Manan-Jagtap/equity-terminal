@@ -4,7 +4,11 @@
 import { C, mono, sans } from "../lib/theme.js";
 
 export function VerdictBadge({ verdict, big }) {
-  const col = verdict === "BUY" ? C.green : verdict === "HOLD" ? C.gold : C.red;
+  const col =
+    verdict === "BUY" || verdict === "ACCUMULATE" ? C.green :
+    verdict === "HOLD" ? C.gold :
+    verdict === "TRIM" || verdict === "AVOID" ? C.red :
+    C.dim; // NO DATA / LOW CONF → neutral grey, never green
   return (
     <span style={{
       ...mono,

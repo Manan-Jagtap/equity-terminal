@@ -16,41 +16,10 @@ import {
 } from "recharts";
 
 import { C, mono, sans, serif, gridBg } from "../lib/theme.js";
-import { fmt, inr, pct, cr, multiple, inrOrDash, signedPct } from "../lib/formatters.js";
+import { fmt, inr, pct, cr } from "../lib/formatters.js";
 import { recommend } from "../lib/recommend.js";
-import { fundamentals, isFinancial } from "../lib/valuation.js";
+import { fundamentals } from "../lib/valuation.js";
 import { technicals } from "../lib/technicals.js";
-import DCFModel from "./DCFModel.jsx";
-
-/* Verdict → colour tone (single mapping, used in header + snapshot). */
-function verdictTone(v) {
-  if (v === "BUY" || v === "ACCUMULATE") return C.green;
-  if (v === "HOLD") return C.gold;
-  if (v === "TRIM" || v === "AVOID") return C.red;
-  return C.dim; // NO DATA / LOW CONF
-}
-
-/* Build descriptive tags from the actual company, instead of hard-coding
-   gold-loan tags onto every company (the old code showed #GoldPriceProxy on
-   Bajaj Finance). */
-function tagsFor(co, rec) {
-  const tags = [];
-  const fin = isFinancial(co);
-  const sec = (co.sector || "").toLowerCase();
-  if (fin) {
-    tags.push({ t: "#NBFC", tone: "neutral" });
-    if (sec.includes("gold")) tags.push({ t: "#GoldLoan", tone: "gold" });
-    if (sec.includes("bank")) tags.push({ t: "#Bank", tone: "neutral" });
-  } else {
-    tags.push({ t: "#" + (co.sector || "Equity").replace(/[^A-Za-z]/g, "").slice(0, 18), tone: "neutral" });
-  }
-  const roe = rec?.f?.roe;
-  if (roe != null && roe > 0.18) tags.push({ t: "#HighROE", tone: "pos" });
-  if (rec?.mos != null && rec.mos > 0.15) tags.push({ t: "#MarginOfSafety", tone: "pos" });
-  if (rec?.mos != null && rec.mos < -0.15) tags.push({ t: "#PricedForGrowth", tone: "neg" });
-  if (co.netProfit != null && co.netProfit < 0) tags.push({ t: "#LossMaking", tone: "neg" });
-  return tags;
-}
 
 /* ── Company-specific static data fallbacks ─────────────────────── */
 // Rich data for seeded companies so Overview/Financials/Ratios/Verdict
@@ -316,9 +285,10 @@ function OverviewTab({ co, rec, cd, priceData }) {
             {cd?.description || `${co.name} is a leading company in the ${co.sector} sector. Financial data is being populated — check back after running the bulk ingester.`}
           </div>
           <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginTop:16 }}>
-            {tagsFor(co, rec).map(({ t, tone }) => (
-              <Chip key={t} tone={tone}>{t}</Chip>
-            ))}
+            <Chip tone="gold">#GoldPriceProxy</Chip>
+            <Chip>#NBFC</Chip>
+            <Chip tone="pos">#OperatingLeverage</Chip>
+            <Chip>#DividendCompounder</Chip>
           </div>
         </Card>
 
@@ -417,11 +387,9 @@ function OverviewTab({ co, rec, cd, priceData }) {
             </ResponsiveContainer>
           </div>
           <div style={{ display:"flex", gap:16, marginTop:8 }}>
-            {hasRealDates
-              ? [["High ₹"+fmtN(t.hi||0,1), C.text200],["Low ₹"+fmtN(t.lo||0,1), C.text200],["RSI "+fmtN(t.rsi||0,0), t.rsi>70?C.red:t.rsi<30?C.green:C.dim],[t.aboveSMA50?"Above 50DMA":"Below 50DMA", t.aboveSMA50?C.green:C.red]].map(([l,cl]) => (
-                  <span key={l} style={{ ...sans, fontSize:10, color:cl }}>{l}</span>
-                ))
-              : <span style={{ ...sans, fontSize:10, color:C.faint }}>High / Low / RSI shown once real OHLC is ingested — synthetic series suppressed</span>}
+            {[["High ₹"+fmtN(t.hi||0,1), C.text200],["Low ₹"+fmtN(t.lo||0,1), C.text200],["RSI "+fmtN(t.rsi||0,0), t.rsi>70?C.red:t.rsi<30?C.green:C.dim],[t.aboveSMA50?"Above 50DMA":"Below 50DMA", t.aboveSMA50?C.green:C.red]].map(([l,cl]) => (
+              <span key={l} style={{ ...sans, fontSize:10, color:cl }}>{l}</span>
+            ))}
           </div>
         </Card>
 
@@ -757,92 +725,14 @@ function DCFTab({ co, a, set, price, setPrice, cd }) {
   );
 }
 
-/* ── Dynamic peer comparison (consistent basis) ──────────────────────
-   Every peer's P/E, P/B, ROE, intrinsic and MoS are computed with the SAME
-   functions (fundamentals + recommend) used for the hero company. This is the
-   key fix vs hand-keyed peer tables, where each row could be on a different
-   definition. Peers are same-type companies in a related sector. */
-function broadSector(s) {
-  const x = (s || "").toLowerCase();
-  if (x.includes("bank") || x.includes("financ") || x.includes("nbfc")) return "Financials";
-  if (x.includes("tech") || x.includes("information")) return "Technology";
-  if (x.includes("pharma") || x.includes("health")) return "Healthcare";
-  if (x.includes("auto")) return "Auto";
-  if (x.includes("fmcg") || x.includes("consumer")) return "Consumer";
-  if (x.includes("energy") || x.includes("oil") || x.includes("power")) return "Energy";
-  if (x.includes("metal") || x.includes("mining")) return "Metals";
-  if (x.includes("chem")) return "Chemicals";
-  return "Other";
-}
-
-function DynamicPeers({ co, allCompanies }) {
-  const universe = (allCompanies || []).filter(c =>
-    c.type === co.type && broadSector(c.sector) === broadSector(co.sector)
-  );
-  const rows = (universe.length >= 2 ? universe : (allCompanies || []).filter(c => c.type === co.type))
-    .map(c => {
-      const r = recommend(c, c.assumptions);
-      return { c, iv: r.iv, mos: r.mos, pe: r.f.pe, pb: r.f.pb, roe: r.f.roe, verdict: r.verdict, conf: r.confidence };
-    })
-    .sort((a, b) => (b.mos ?? -Infinity) - (a.mos ?? -Infinity));
-
-  if (rows.length < 2) return (
-    <div className="fadein" style={{ padding:32 }}>
-      <Card><div style={{ ...sans, color:C.dim, fontSize:13, padding:40, textAlign:"center" }}>
-        Not enough peers in this sector yet. Once more companies are ingested, this table compares them all on a single, consistent basis.
-      </div></Card>
-    </div>
-  );
-
-  return (
-    <div className="fadein" style={{ padding:32, display:"flex", flexDirection:"column", gap:24 }}>
-      <Card noPad style={{ overflow:"hidden" }}>
-        <div style={{ padding:"16px 20px 8px" }}>
-          <SectionLabel accent={`${broadSector(co.sector).toUpperCase()} · CONSISTENT BASIS`}>PEER COMPARISON</SectionLabel>
-        </div>
-        <div style={{ overflowX:"auto" }}>
-          <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
-            <thead>
-              <tr style={{ borderTop:`1px solid ${C.line}`, borderBottom:`1px solid ${C.line}` }}>
-                {["Company","CMP","Intrinsic","MoS","P/E","P/B","ROE","Verdict"].map((h, i) => (
-                  <th key={i} style={{ ...sans, textAlign:i===0?"left":"right", padding:"8px", paddingLeft:i===0?"20px":"8px", paddingRight:i===7?"20px":"8px", fontSize:10, textTransform:"uppercase", color:C.dim, fontWeight:500 }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((p, i) => {
-                const isHero = p.c.ticker === co.ticker;
-                return (
-                  <tr key={i} style={{ borderBottom:`1px solid ${C.line}`, background:isHero?C.gold+"0d":"transparent" }}>
-                    <td style={{ ...sans, padding:"10px 20px", color:isHero?C.gold:C.text200, fontWeight:isHero?500:400 }}>
-                      {isHero && <span style={{ color:C.gold, marginRight:6 }}>◆</span>}
-                      {p.c.name} <span style={{ ...mono, fontSize:10, color:C.dim }}>· {p.c.ticker}</span>
-                    </td>
-                    <td style={{ ...mono, textAlign:"right", padding:"10px 8px", color:C.text }}>{inrOrDash(p.c.price,0)}</td>
-                    <td style={{ ...mono, textAlign:"right", padding:"10px 8px", color:C.gold }}>{inrOrDash(p.iv,0)}</td>
-                    <td style={{ ...mono, textAlign:"right", padding:"10px 8px", color:p.mos==null?C.dim:p.mos>=0?C.green:C.red }}>{signedPct(p.mos)}</td>
-                    <td style={{ ...mono, textAlign:"right", padding:"10px 8px", color:C.text }}>{multiple(p.pe,1)}</td>
-                    <td style={{ ...mono, textAlign:"right", padding:"10px 8px", color:C.text }}>{multiple(p.pb,1)}</td>
-                    <td style={{ ...mono, textAlign:"right", padding:"10px 8px", color:C.green }}>{p.roe!=null?fmtPa(p.roe*100,1):"—"}</td>
-                    <td style={{ ...mono, textAlign:"right", padding:"10px 20px", color:verdictTone(p.verdict) }}>{p.verdict}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-        <div style={{ padding:"10px 20px", ...sans, fontSize:11, color:C.faint }}>
-          All metrics computed by the same engine for every company, so columns are directly comparable.
-        </div>
-      </Card>
-    </div>
-  );
-}
-
 /* ── Peers Tab ───────────────────────────────────────────────────── */
-function PeersTab({ co, cd, allCompanies }) {
+function PeersTab({ co, cd }) {
   const peers = cd?.peers;
-  if (!peers) return <DynamicPeers co={co} allCompanies={allCompanies} />;
+  if (!peers) return (
+    <div className="fadein" style={{ padding:32 }}>
+      <Card><div style={{ ...sans, color:C.dim, fontSize:13, padding:40, textAlign:"center" }}>Peer data available for seeded NBFC universe. Run bulk_ingester to expand.</div></Card>
+    </div>
+  );
   const sorted = [...peers].sort((a, b) => b.aumGr - a.aumGr);
   return (
     <div className="fadein" style={{ padding:32, display:"flex", flexDirection:"column", gap:24 }}>
@@ -1129,16 +1019,15 @@ function AIThesisTab({ co, API }) {
 /* ── Verdict Tab ─────────────────────────────────────────────────── */
 function VerdictTab({ co, rec, cd, price }) {
   const f = rec.f;
-  // Single source of truth: the canonical blended intrinsic + gated verdict
-  // from recommend(). No re-deriving a different verdict here.
-  const intrinsic = rec.iv;
-  const mos = rec.mos != null ? rec.mos * 100 : null;
-  const verdict = rec.verdict;
-  const verdictColor = verdictTone(verdict);
+  const intrinsic = rec.v.intrinsic;
+  const mos = ((intrinsic - price) / price) * 100;
+  const verdict = mos > 25 ? "BUY" : mos > 10 ? "ACCUMULATE" : mos > -10 ? "HOLD" : mos > -25 ? "TRIM" : "AVOID";
+  const tone = mos > 10 ? "pos" : mos < -10 ? "neg" : "gold";
+  const verdictColor = tone==="pos" ? C.green : tone==="neg" ? C.red : C.gold;
 
   const quality = cd?.quality || [
     { k:"Profitability", s:8.0, n:"ROE "+((f.roe||0)*100).toFixed(1)+"%" },
-    { k:"Valuation MoS",  s:mos==null?5.0:mos>0?7.5:4.0, n:mos==null?"Intrinsic unavailable":mos.toFixed(1)+"% MoS" },
+    { k:"Valuation MoS",  s:mos>0?7.5:4.0, n:mos.toFixed(1)+"% MoS" },
     { k:"Growth",        s:7.0, n:"Based on DCF projections" },
     { k:"Balance Sheet", s:7.5, n:"Leverage and capital adequacy" },
   ];
@@ -1157,10 +1046,10 @@ function VerdictTab({ co, rec, cd, price }) {
               <div style={{ ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.18em", color:C.gold, marginBottom:8 }}>Equity Terminal · Final Verdict</div>
               <div style={{ ...serif, fontSize:96, color:verdictColor, lineHeight:1 }}>{verdict}</div>
               <div style={{ display:"flex", gap:32, marginTop:16 }}>
-                {[["Fair Value",inrOrDash(intrinsic,0)],["CMP","₹"+fmtN(price,0)],["Upside",mos==null?"—":(mos>=0?"+":"")+fmtN(mos,1)+"%"],["Horizon","12M"]].map(([l,v],i) => (
+                {[["Target Price","₹"+fmtN(intrinsic,0)],["CMP","₹"+fmtN(price,0)],["Upside",(mos>=0?"+":"")+fmtN(mos,1)+"%"],["Horizon","12M"]].map(([l,v],i) => (
                   <div key={l}>
                     <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.1em", color:C.dim }}>{l}</div>
-                    <div style={{ ...mono, fontSize:24, color:i===2?(mos!=null&&mos>=0?C.green:mos!=null?C.red:C.dim):i===0?C.gold:C.text, marginTop:4 }}>{v}</div>
+                    <div style={{ ...mono, fontSize:24, color:i===2?(mos>=0?C.green:C.red):i===0?C.gold:C.text, marginTop:4 }}>{v}</div>
                   </div>
                 ))}
               </div>
@@ -1228,11 +1117,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
   const [liveFinancials, setLiveFinancials] = useState(null);
   const [liveMetrics,    setLiveMetrics]    = useState(null);
 
-  const hasRealPrices = (histPrices?.data?.length || 0) > 10;
-  const co2 = useMemo(
-    () => ({ ...co, price, assumptions, syntheticSeries: !hasRealPrices }),
-    [co, price, assumptions, hasRealPrices]
-  );
+  const co2 = useMemo(() => ({ ...co, price, assumptions }), [co, price, assumptions]);
   const rec  = useMemo(() => recommend(co2, assumptions), [co2, assumptions]);
   const set  = useCallback(k => val => setAssumptions(prev => ({ ...prev, [k]: val })), [setAssumptions]);
 
@@ -1304,18 +1189,10 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
 
   const t = useMemo(() => technicals(co2), [co2]);
 
-  // Header snapshot stats — canonical intrinsic + gated verdict from recommend()
-  const mos = rec.mos;
-  const verdictLabel = rec.verdict;
-  const verdictColor = verdictTone(rec.verdict);
-  const conf = rec.confidence;
-
-  // 52-week range: prefer curated real data, else real ingested OHLC, else "—".
-  // Never fall back to the synthetic series (which produced Bajaj's impossible
-  // 52W High 8,547 while the price was 920).
-  const realCloses = hasRealPrices ? priceChartData.map(p => p.close).filter(x => x != null) : [];
-  const hi52 = mktData.high52 ?? (realCloses.length ? Math.max(...realCloses) : null);
-  const lo52 = mktData.low52  ?? (realCloses.length ? Math.min(...realCloses) : null);
+  // Header snapshot stats
+  const mos = (rec.v.intrinsic - price) / price;
+  const verdictLabel = mos > 0.25 ? "BUY" : mos > 0.10 ? "ACCUMULATE" : mos > -0.10 ? "HOLD" : mos > -0.25 ? "TRIM" : "AVOID";
+  const verdictColor = mos > 0.10 ? C.green : mos < -0.10 ? C.red : C.gold;
 
   const chgPct = mktData.chgPct || 0;
   const chgAmt = mktData.chg    || 0;
@@ -1341,15 +1218,6 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
                 <span className="blink" style={{ width:6, height:6, borderRadius:"50%", background:C.green, display:"inline-block" }} />
                 <span style={{ letterSpacing:"0.1em" }}>LIVE · {cd?.meta?.asOf || new Date().toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})}</span>
               </div>
-              <span style={{ color:C.bg500 }}>|</span>
-              <span title={conf.flags.length ? conf.flags.join("  •  ") : "All core inputs present"}
-                style={{ display:"flex", alignItems:"center", gap:6, cursor:"help" }}>
-                <span style={{ width:7, height:7, borderRadius:"50%", display:"inline-block",
-                  background: conf.level==="high"?C.green:conf.level==="medium"?C.gold:C.red }} />
-                <span style={{ letterSpacing:"0.1em", textTransform:"uppercase" }}>
-                  Data {conf.level} ({Math.round(conf.score*100)}%)
-                </span>
-              </span>
               <span style={{ color:C.bg500 }}>|</span>
               <span>₹ in Crores unless stated</span>
               <span style={{ color:C.bg500 }}>|</span>
@@ -1391,8 +1259,8 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
                 </div>
               </div>
               <div style={{ display:"flex", gap:20, marginTop:8, ...mono, fontSize:11, color:C.dim, justifyContent:"flex-end" }}>
-                <span>52W H {fmtN(hi52, 2)}</span>
-                <span>52W L {fmtN(lo52, 2)}</span>
+                <span>52W H {fmtN(mktData.high52 || t.hi, 2)}</span>
+                <span>52W L {fmtN(mktData.low52  || t.lo, 2)}</span>
                 <span>Beta {fmtN(mktData.beta || co.assumptions?.beta, 2)}</span>
                 <span>ADV {fmtN(mktData.adv30Cr, 0)} Cr</span>
               </div>
@@ -1406,15 +1274,15 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
         <div style={{ padding:"14px 32px", display:"grid", gridTemplateColumns:"repeat(11,1fr)", gap:8 }}>
           {[
             { l:"Market Cap",       v:"₹"+fmtCr(mcap)               },
-            { l:"Enterprise Value", v:mktData.evCr ? "₹"+fmtCr(mktData.evCr) : "—" },
-            { l:"P / E (TTM)",      v:multiple(rec.f.pe, 2)         },
-            { l:"P / B",            v:multiple(rec.f.pb, 2)         },
-            { l:"ROE",              v:rec.f.roe!=null?fmtPa(rec.f.roe*100):"—", accent:C.green },
-            { l:"ROA",              v:co.nbfc?.roa!=null?fmtPa(co.nbfc.roa*100):"—" },
-            { l:"NIM",              v:co.nbfc?.nim!=null?fmtPa(co.nbfc.nim*100):"—" },
-            { l:"Promoter Hold",    v:mktData.promoterPct!=null?fmtPa(mktData.promoterPct):"—", accent:C.gold },
-            { l:"Intrinsic Value",  v:inrOrDash(rec.iv,0), accent:C.gold },
-            { l:"Margin of Safety", v:signedPct(mos), accent:mos==null?C.dim:mos>=0?C.green:C.red },
+            { l:"Enterprise Value", v:"₹"+fmtCr(mktData.evCr)        },
+            { l:"P / E (TTM)",      v:fmtN(rec.f.pe||13.4,2)+"x"    },
+            { l:"P / B",            v:fmtN(rec.f.pb,2)+"x"          },
+            { l:"ROE (FY26)",       v:fmtPa((rec.f.roe||0)*100),     accent:C.green },
+            { l:"ROA (FY26)",       v:fmtPa((co.nbfc?.roa||0)*100)  },
+            { l:"NIM (FY26)",       v:fmtPa((co.nbfc?.nim||0)*100)  },
+            { l:"Promoter Hold",    v:fmtPa(mktData.promoterPct||73.4), accent:C.gold },
+            { l:"Intrinsic Value",  v:"₹"+fmtN(rec.v.intrinsic,0), accent:C.gold },
+            { l:"Margin of Safety", v:(mos>=0?"+":"")+fmtN(mos*100,1)+"%", accent:mos>=0?C.green:C.red },
             { l:"Verdict",          v:verdictLabel, accent:verdictColor, large:true },
           ].map(s => (
             <div key={s.l}>
@@ -1448,8 +1316,8 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
         {tab==="overview"   && <OverviewTab    co={co2} rec={rec} cd={cd} priceData={priceChartWithSMA} />}
         {tab==="financials" && <FinancialsTab  co={co2} cd={cd} liveFinancials={liveFinancials} />}
         {tab==="ratios"     && <RatiosTab      co={co2} cd={cd} liveMetrics={liveMetrics} />}
-        {tab==="dcf"        && <DCFModel       co={co2} a={assumptions} set={set} price={price} setPrice={setPrice} />}
-        {tab==="peers"      && <PeersTab       co={co2} cd={cd} allCompanies={allCompanies} />}
+        {tab==="dcf"        && <DCFTab         co={co2} a={assumptions} set={set} price={price} setPrice={setPrice} cd={cd} />}
+        {tab==="peers"      && <PeersTab       co={co2} cd={cd} />}
         {tab==="news"       && <NewsTab        co={co2} API={API} />}
         {tab==="thesis"     && <AIThesisTab    co={co2} API={API} />}
         {tab==="verdict"    && <VerdictTab     co={co2} rec={rec} cd={cd} price={price} />}

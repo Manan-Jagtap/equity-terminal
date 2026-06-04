@@ -4,10 +4,12 @@
 import { useMemo, useState } from "react";
 import { Search, ChevronRight, Database } from "lucide-react";
 import { C, mono, sans } from "../lib/theme.js";
-import { fmt, inr, pct } from "../lib/formatters.js";
+import { fmt, inr, pct, multiple, inrOrDash, signedPct } from "../lib/formatters.js";
 import { fundamentals } from "../lib/valuation.js";
 import { recommend } from "../lib/recommend.js";
 import { VerdictBadge } from "./primitives.jsx";
+
+const confColor = lvl => lvl === "high" ? C.green : lvl === "medium" ? C.gold : C.red;
 
 export default function Screener({ companies, onOpen, loading }) {
   const [q, setQ] = useState("");
@@ -34,7 +36,8 @@ export default function Screener({ companies, onOpen, loading }) {
     .map(co => {
       const r = recommend(co, co.assumptions);
       const f = fundamentals(co);
-      return { co, ...r, pb: f.pb, pe: f.pe, roe: f.roe };
+      // mos can be null (no clean intrinsic); use -Infinity for sort stability
+      return { co, ...r, pb: f.pb, pe: f.pe, roe: f.roe, sortMos: r.mos ?? -Infinity };
     })
     .filter(r => {
       const mQ = (r.co.name + r.co.ticker).toLowerCase().includes(q.toLowerCase());
@@ -52,7 +55,7 @@ export default function Screener({ companies, onOpen, loading }) {
     })
     .sort((a, b) => {
       if (sort === "composite") return b.composite - a.composite;
-      if (sort === "mos")       return b.mos - a.mos;
+      if (sort === "mos")       return b.sortMos - a.sortMos;
       if (sort === "roe")       return (b.roe || 0) - (a.roe || 0);
       return a.co.name.localeCompare(b.co.name);
     }), [companies, q, sort, sf]);
@@ -132,17 +135,23 @@ export default function Screener({ companies, onOpen, loading }) {
                 onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
               >
                 <td style={{ padding: "11px 16px" }}>
-                  <div style={{ ...sans, color: C.text, fontSize: 13, fontWeight: 500 }}>{r.co.name}</div>
-                  <div style={{ ...mono, color: C.faint, fontSize: 10 }}>{r.co.ticker} · {r.co.sector}</div>
+                  <div style={{ display:"flex", alignItems:"center", gap:7 }}>
+                    <span title={`Data confidence: ${r.confidence.level}${r.confidence.flags.length ? " — " + r.confidence.flags.join("; ") : ""}`}
+                      style={{ width:7, height:7, borderRadius:"50%", background:confColor(r.confidence.level), flexShrink:0 }} />
+                    <div>
+                      <div style={{ ...sans, color: C.text, fontSize: 13, fontWeight: 500 }}>{r.co.name}</div>
+                      <div style={{ ...mono, color: C.faint, fontSize: 10 }}>{r.co.ticker} · {r.co.sector}</div>
+                    </div>
+                  </div>
                 </td>
                 <td style={{ ...mono, textAlign: "right", padding: "11px 12px", fontSize: 12 }}>
-                  {inr(r.co.price)} <span style={{ color: C.faint }}>/</span> <span style={{ color: C.gold }}>{inr(r.v.intrinsic)}</span>
+                  {inr(r.co.price)} <span style={{ color: C.faint }}>/</span> <span style={{ color: C.gold }}>{inrOrDash(r.iv)}</span>
                 </td>
-                <td style={{ ...mono, textAlign: "right", padding: "11px 12px", fontSize: 12, color: r.mos >= 0 ? C.green : C.red }}>{pct(r.mos)}</td>
+                <td style={{ ...mono, textAlign: "right", padding: "11px 12px", fontSize: 12, color: r.mos == null ? C.faint : r.mos >= 0 ? C.green : C.red }}>{signedPct(r.mos)}</td>
                 <td style={{ ...mono, textAlign: "right", padding: "11px 12px", fontSize: 12, color: C.text }}>{pct(r.roe)}</td>
-                <td style={{ ...mono, textAlign: "right", padding: "11px 12px", fontSize: 12, color: C.text }}>{fmt(r.pb, 2)}</td>
-                <td style={{ ...mono, textAlign: "right", padding: "11px 12px", fontSize: 12, color: C.text }}>{r.pe ? fmt(r.pe, 1) : "—"}</td>
-                <td style={{ ...mono, textAlign: "right", padding: "11px 12px", fontSize: 12, color: C.text }}>{fmt(r.composite)}</td>
+                <td style={{ ...mono, textAlign: "right", padding: "11px 12px", fontSize: 12, color: C.text }}>{multiple(r.pb, 2)}</td>
+                <td style={{ ...mono, textAlign: "right", padding: "11px 12px", fontSize: 12, color: C.text }}>{multiple(r.pe, 1)}</td>
+                <td style={{ ...mono, textAlign: "right", padding: "11px 12px", fontSize: 12, color: C.text }}>{r.reliable ? fmt(r.composite) : "—"}</td>
                 <td style={{ textAlign: "right", padding: "11px 12px" }}><VerdictBadge verdict={r.verdict} /></td>
                 <td style={{ textAlign: "center" }}><ChevronRight size={14} color={C.faint} /></td>
               </tr>
@@ -158,7 +167,8 @@ export default function Screener({ companies, onOpen, loading }) {
       }}>
         <Database size={14} color={C.gold} />
         <span style={{ ...sans, color: C.dim, fontSize: 12 }}>
-          Live prices · 15-min refresh during market hours · EBIT margins calibrated by sector · click row for full DCF
+          Intrinsic = blended DCF / Residual-Income value · the dot shows data confidence (green = high, amber = medium, red = low) ·
+          score &amp; verdict are suppressed when data is insufficient · click a row for the full model
         </span>
       </div>
     </div>

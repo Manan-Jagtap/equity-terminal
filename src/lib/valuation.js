@@ -23,6 +23,20 @@ export const MAX_G       = 0.06;    // Cap terminal growth at 6% (below nominal 
 export const DEFAULT_TAX = 0.2517;  // India corporate tax (new regime)
 
 /**
+ * Single, central definition of "is this a financial firm?".
+ * Every panel (screener, header, DCF tab, recommendation) must agree on which
+ * model is used (Residual Income vs FCFF DCF). Previously this check was
+ * duplicated inline in several places and could disagree with itself — which
+ * is why an NBFC could show ROE-based scenarios in one panel and revenue-growth
+ * FCFF scenarios in another.
+ */
+export function isFinancial(co) {
+  if (!co) return false;
+  if (co.type === "financial") return true;
+  return ["NBFC", "BANK", "INSURANCE"].includes(co.template_code);
+}
+
+/**
  * Damodaran sector unlevered betas (India, Jan 2025).
  * We relevered them for each company using its actual D/E.
  * Source: pages.stern.nyu.edu/~adamodar/
@@ -304,10 +318,15 @@ export function residualIncomeDCF(co, a) {
 
   const intrinsic = bvps0 + pvSum + tvPv;
 
-  // Justified P/B via Gordon Growth: P/B = forecastROE / (Ke - g)
-  // This is the steady-state fair P/B, used as a cross-check (NOT circular)
-  const gordonPB    = (ke > termG + 0.005) ? startROE / (ke - termG) : startROE / 0.05;
-  const justifiedPB = Math.max(0.5, Math.min(gordonPB, 15)); // sanity clamp
+  // Justified (steady-state) P/B via Gordon Growth:
+  //     P/B = (ROE_sustainable − g) / (Ke − g)
+  // IMPORTANT: use the TERMINAL/sustainable ROE and terminal growth, not the
+  // (often very high) starting ROE. Using startROE here double-counted the
+  // excess-return phase and badly inflated fair P/B (a key over-valuation bug).
+  const gordonPB    = (ke > termG + 0.005)
+    ? Math.max(0.2, (termROE - termG) / (ke - termG))
+    : (termROE - termG) / 0.05;
+  const justifiedPB = Math.max(0.4, Math.min(gordonPB, 12)); // sanity clamp
   const eps_latest  = safeDiv(pat, shares);
   const impliedPE   = safeDiv(intrinsic, eps_latest);
 
@@ -447,7 +466,11 @@ export function monteCarlo(co, a, N = 500) {
       };
       const result = isF ? residualIncomeDCF(co, aMC) : fcffDCF(co, aMC);
       const val    = isF ? result.intrinsic : result.perShare;
-      if (isFinite(val) && val > 0 && val < co.price * 20) results.push(val);
+      // Keep every finite, positive draw. Previously draws above 20× price were
+      // discarded, which truncated the right tail and biased the mean/percentiles
+      // downward — an honest distribution must not filter its own outliers.
+      // We only drop non-finite / non-positive results and obvious blow-ups.
+      if (isFinite(val) && val > 0 && val < co.price * 200) results.push(val);
     } catch { /* skip bad scenarios */ }
   }
 
@@ -510,15 +533,87 @@ export function sensitivityGrid(co, a) {
 // ── Snapshot fundamentals ───────────────────────────────────────────────────
 
 export function fundamentals(co) {
-  const equity = co.equity || 1;
-  const shares = co.shares || 50;
-  const pat    = co.netProfit || null;
-  const bvps   = equity / shares;
-  const eps    = pat ? pat / shares : null;
-  return {
-    bvps, eps,
-    pb:  co.price / bvps,
-    pe:  eps ? co.price / eps : null,
-    roe: pat  ? pat / equity  : null,
+  const equity = co.equity;
+  const shares = co.shares;
+  const pat    = co.netProfit;
+  const haveBook = equity != null && shares > 0;
+  const bvps   = haveBook ? equity / shares : null;
+  const eps    = pat != null && shares > 0 ? pat / shares : null;
+  // P/E and P/B are "not meaningful" when the denominator is ≤ 0 (loss-making
+  // or negative book value). Return null in those cases so the UI shows N/M
+  // instead of a misleading negative or near-zero multiple.
+  const pe  = eps != null && eps > 0 ? co.price / eps : null;
+  const pb  = bvps != null && bvps > 0 ? co.price / bvps : null;
+  const roe = pat != null && equity > 0 ? pat / equity : null;
+  return { bvps, eps, pb, pe, roe };
+}
+
+// ── Canonical intrinsic value (single source of truth) ──────────────────────
+
+/**
+ * The ONE intrinsic value the whole app should display.
+ * Screener, company header and the DCF tab must all derive their number from
+ * this function so they can never disagree. Returns null when it can't be
+ * computed cleanly (so callers show "—" rather than a fabricated figure).
+ */
+export function intrinsicOf(co, a) {
+  try {
+    const b = blendedValuation(co, a);
+    const v = b?.blended;
+    return isFinite(v) && v > 0 ? v : null;
+  } catch {
+    return null;
+  }
+}
+
+// ── Reverse DCF (market-implied expectations) ───────────────────────────────
+
+/**
+ * Reverse DCF — solves for the single growth/return assumption that makes the
+ * blended intrinsic value equal today's price. This answers the most
+ * decision-useful question in fundamental investing:
+ *   "What does the market already expect this business to do?"
+ * If the implied number is far above what the company can plausibly deliver,
+ * the stock is priced for perfection; far below, expectations are depressed.
+ *
+ * Non-financials → solves Stage-1 revenue growth.
+ * Financials     → solves Stage-1 (forecast) ROE.
+ */
+export function reverseDCF(co, a) {
+  const fin = isFinancial(co);
+  const key = fin ? "forecastROE" : "revGrowth1";
+  const lo0 = fin ? 0.0 : -0.05;
+  const hi0 = fin ? 0.60 : 0.80;
+  const price = co.price;
+  if (!(price > 0)) return null;
+
+  const f = (x) => {
+    const aa = fin
+      ? { ...a, forecastROE: x }
+      : { ...a, revGrowth1: x, revGrowth2: x * 0.6 };
+    const iv = intrinsicOf(co, aa);
+    return iv == null ? null : iv - price;
   };
+
+  let lo = lo0, hi = hi0;
+  let flo = f(lo), fhi = f(hi);
+  if (flo == null || fhi == null) return null;
+
+  if (flo > 0) return { key, label: fin ? "Implied forecast ROE" : "Implied Stage-1 growth",
+    value: lo, bounded: "below",
+    note: "Market is pricing in less than the floor assumption — depressed expectations." };
+  if (fhi < 0) return { key, label: fin ? "Implied forecast ROE" : "Implied Stage-1 growth",
+    value: hi, bounded: "above",
+    note: "Even an aggressive assumption doesn't reach today's price — priced for perfection." };
+
+  for (let i = 0; i < 64; i++) {
+    const mid = (lo + hi) / 2;
+    const fm = f(mid);
+    if (fm == null) break;
+    if (Math.abs(fm) < price * 0.0005) { lo = hi = mid; break; }
+    if ((fm > 0) === (fhi > 0)) { hi = mid; fhi = fm; }
+    else { lo = mid; flo = fm; }
+  }
+  return { key, label: fin ? "Implied forecast ROE" : "Implied Stage-1 growth",
+    value: (lo + hi) / 2, bounded: null };
 }
