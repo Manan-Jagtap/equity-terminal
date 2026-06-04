@@ -85,15 +85,46 @@ export const SEED = [
    Otherwise reconstruct from API fields, falling back to sector defaults. */
 export function buildFromApi(r) {
   const seed = SEED.find(s => s.ticker === r.ticker);
-  if (seed) return { ...seed, price: r.price };
+  if (seed) {
+    // Take the live price, but ALSO refresh the per-share fundamentals from the
+    // API when present so price and book/earnings stay on the SAME basis. The
+    // old code kept stale seed shares/equity/PAT alongside a split-adjusted live
+    // price — which is exactly what produced Bajaj Finance's impossible P/E 3.4x
+    // / P/B 0.73x and a fake "undervalued" signal.
+    const merged = { ...seed, price: r.price, syntheticSeries: true };
+    if (r.shares > 0)       merged.shares    = r.shares;
+    if (r.equity != null)   merged.equity    = r.equity;
+    if (r.net_profit != null) merged.netProfit = r.net_profit;
+    if (r.net_debt != null) merged.netDebt   = r.net_debt;
+    // If the live price diverges sharply from the seeded basis and the API did
+    // not supply a fresh share count, the per-share data is probably stale
+    // (corporate action). Flag it so the confidence layer can down-weight it.
+    if (seed.price && r.price && !(r.shares > 0) &&
+        (r.price < seed.price * 0.6 || r.price > seed.price * 1.6)) {
+      merged.dataWarning =
+        "Live price differs sharply from seeded basis; per-share fundamentals may be pre-split/stale.";
+    }
+    return merged;
+  }
 
   const ts = r.ticker.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
   const series = makeSeries(ts, r.price * 0.85, 0.10, 0.025);
 
-  const shares = r.shares || 50;
-  const equity = r.equity || (r.pb ? (r.price * shares) / r.pb : shares * 200);
-  const netProfit = r.net_profit || (r.roe && equity ? equity * r.roe : null);
+  // Only use real shares; do NOT fabricate a share count — a wrong denominator
+  // silently corrupts every per-share ratio and the DCF. null flows through to
+  // the confidence layer, which lowers the score and shows the gaps.
+  const shares = r.shares > 0 ? r.shares : null;
+  const equity = r.equity != null ? r.equity : null;
+  const netProfit = r.net_profit != null ? r.net_profit
+    : (r.roe != null && equity != null ? equity * r.roe : null);
   const sp = sectorParams(r.sector);
+
+  // NOTE: assumption keys MUST match what valuation.js reads
+  // (rf / erp / forecastROE / terminalROE / revGrowth1 / revGrowth2 /
+  //  stage1Years / stage2Years / ebitMargin / taxRate / terminalGrowth).
+  // The previous adapter wrote riskFree / forecastRoe / revGrowth, which the
+  // engine ignored — so every API company silently used DEFAULT growth, a major
+  // cause of uniform, inflated intrinsic values across the screener.
 
   if (r.type === "financial") {
     return {
@@ -101,45 +132,42 @@ export function buildFromApi(r) {
       type: "financial", sector: r.sector,
       price: r.price, shares, equity, netProfit,
       revenue: null, netDebt: null,
+      syntheticSeries: true,
       nbfc: {
-        aum:    r.aum   || equity * 4,
-        gnpa:   r.gnpa  || 0.025,
-        nnpa:   r.nnpa  || 0.015,
-        crar:   r.crar  || 0.18,
-        nim:    r.nim   || 0.09,
-        roa:    r.roa   || 0.02,
+        aum:    r.aum  != null ? r.aum  : null,
+        gnpa:   r.gnpa != null ? r.gnpa : null,
+        nnpa:   r.nnpa != null ? r.nnpa : null,
+        crar:   r.crar != null ? r.crar : null,
+        nim:    r.nim  != null ? r.nim  : null,
+        roa:    r.roa  != null ? r.roa  : null,
         pledge: 0,
       },
       assumptions: {
-        beta: 1.1, riskFree: 0.069, erp: 0.065,
-        forecastRoe: r.roe || 0.14,
-        terminalRoe: Math.max((r.roe || 0.14) * 0.75, 0.11),
-        payout: 0.20, fadeYears: 8, terminalGrowth: 0.05,
+        beta: 1.1, rf: 0.071, erp: 0.085,
+        forecastROE: r.roe != null ? r.roe : 0.14,
+        terminalROE: Math.max((r.roe != null ? r.roe : 0.14) * 0.75, 0.11),
+        payout: 0.20, stage1Years: 5, stage2Years: 5, terminalGrowth: 0.05,
       },
       series,
     };
   }
 
-  const revenue = r.revenue ||
-    (netProfit ? netProfit / sp.ebitMargin / (1 - sp.taxRate) : r.price * shares * 0.3);
-  const netDebt = r.net_debt != null ? r.net_debt : revenue * 0.08;
-  const debtWeight = revenue > 0
-    ? Math.min(Math.max(netDebt / (equity + netDebt), 0.05), 0.50)
-    : 0.20;
+  const revenue = r.revenue != null ? r.revenue : null;
+  const netDebt = r.net_debt != null ? r.net_debt : null;
 
   return {
     id: r.ticker, name: r.name, ticker: r.ticker,
     type: "nonfinancial", sector: r.sector,
     price: r.price, shares, equity, netProfit,
     revenue, netDebt,
-    fcff: { revenue, netDebt, costDebt: 0.085, debtWeight },
+    syntheticSeries: true,
     assumptions: {
-      beta: 1.0, riskFree: 0.069, erp: 0.065,
+      beta: 1.0, rf: 0.071, erp: 0.085,
       ebitMargin:   sp.ebitMargin,
       taxRate:      sp.taxRate,
-      reinvestRate: sp.reinvestRate,
-      revGrowth:    sp.revGrowth,
-      fadeYears: 8,
+      revGrowth1:   sp.revGrowth,
+      revGrowth2:   sp.revGrowth * 0.6,
+      stage1Years: 5, stage2Years: 5,
       terminalGrowth: Math.min(sp.revGrowth * 0.4, 0.06),
     },
     series,

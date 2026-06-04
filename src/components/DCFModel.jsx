@@ -24,7 +24,7 @@ import {
   RF, ERP, DEFAULT_TAX, MAX_G,
   SECTOR_UNLEVERED_BETAS, SECTOR_EV_EBITDA,
   calcKe, buildWACC, blendedValuation, monteCarlo, sensitivityGrid,
-  releveredBeta, safeDiv,
+  releveredBeta, safeDiv, reverseDCF, isFinancial,
 } from "../lib/valuation.js";
 
 /* ── Primitives ─────────────────────────────────────────────────── */
@@ -106,15 +106,17 @@ export default function DCFModel({ co, a, set, price, setPrice }) {
   const [scenario,   setScenario]  = useState("base");
   const sc = SCENARIOS[scenario];
 
-  // CAPM inputs
-  const [rf,   setRf]   = useState(RF);
-  const [erp,  setErp]  = useState(ERP);
+  // CAPM inputs — seed from the company's own assumptions so the DCF tab's
+  // BASE case equals the value shown in the header/screener (single source of
+  // truth). Sliders still let the user explore from there.
+  const [rf,   setRf]   = useState(a?.rf ?? RF);
+  const [erp,  setErp]  = useState(a?.erp ?? ERP);
   const [beta, setBeta] = useState(
-    releveredBeta(SECTOR_UNLEVERED_BETAS[template] ?? 0.90,
+    a?.beta ?? releveredBeta(SECTOR_UNLEVERED_BETAS[template] ?? 0.90,
       safeDiv(co.netDebt ?? 0, co.equity ?? 1) ?? 0.3)
   );
-  const [kd,   setKd]   = useState(0.09);
-  const [taxRate, setTaxRate] = useState(DEFAULT_TAX);
+  const [kd,   setKd]   = useState(a?.kd ?? 0.09);
+  const [taxRate, setTaxRate] = useState(a?.taxRate ?? DEFAULT_TAX);
 
   // Capital structure
   const equity  = co.equity || 10000;
@@ -122,22 +124,22 @@ export default function DCFModel({ co, a, set, price, setPrice }) {
   const totalV  = equity + debt;
   const debtW   = Math.min(debt / totalV, 0.80);
 
-  // Growth inputs (synced to scenario)
-  const [g1,    setG1]    = useState(sc.revGrowth1);
-  const [g2,    setG2]    = useState(sc.revGrowth2);
-  const [gT,    setGT]    = useState(sc.terminalGrowth);
-  const [N1,    setN1]    = useState(5);
-  const [N2,    setN2]    = useState(5);
+  // Growth inputs — seed from company assumptions, fall back to scenario base
+  const [g1,    setG1]    = useState(a?.revGrowth1 ?? sc.revGrowth1);
+  const [g2,    setG2]    = useState(a?.revGrowth2 ?? sc.revGrowth2);
+  const [gT,    setGT]    = useState(a?.terminalGrowth ?? sc.terminalGrowth);
+  const [N1,    setN1]    = useState(a?.stage1Years ?? 5);
+  const [N2,    setN2]    = useState(a?.stage2Years ?? 5);
 
   // Financial-specific
-  const [forecastROE, setForecastROE] = useState(sc.forecastROE);
-  const [terminalROE, setTerminalROE] = useState(sc.terminalROE);
-  const [payout,      setPayout]      = useState(0.25);
+  const [forecastROE, setForecastROE] = useState(a?.forecastROE ?? sc.forecastROE);
+  const [terminalROE, setTerminalROE] = useState(a?.terminalROE ?? sc.terminalROE);
+  const [payout,      setPayout]      = useState(a?.payout ?? 0.25);
 
   // Non-financial
-  const [ebitMargin,  setEbitMargin]  = useState(sc.ebitMargin);
-  const [peMultiple,  setPeMultiple]  = useState(sc.peMultiple);
-  const [evMultiple,  setEvMultiple]  = useState(SECTOR_EV_EBITDA[template] ?? 12);
+  const [ebitMargin,  setEbitMargin]  = useState(a?.ebitMargin ?? sc.ebitMargin);
+  const [peMultiple,  setPeMultiple]  = useState(a?.peMultiple ?? sc.peMultiple);
+  const [evMultiple,  setEvMultiple]  = useState(a?.evEbitdaMultiple ?? SECTOR_EV_EBITDA[template] ?? 12);
 
   // Apply scenario preset
   const applyScenario = (id) => {
@@ -181,6 +183,12 @@ export default function DCFModel({ co, a, set, price, setPrice }) {
 
   // Sensitivity grid
   const sens = useMemo(() => sensitivityGrid(co, assumptions), [co, JSON.stringify(assumptions)]);
+
+  // Reverse DCF — the growth/ROE the market is implicitly pricing in at today's
+  // CMP. Compared against your forecast, it tells you whether expectations are
+  // cheap or demanding.
+  const reverse = useMemo(() => reverseDCF(co, assumptions), [co, JSON.stringify(assumptions)]);
+  const fwdDriver = isF ? forecastROE : g1;
 
   // Chart data
   const projRows = v.rows?.slice(0, N1 + N2) || [];
@@ -363,6 +371,36 @@ export default function DCFModel({ co, a, set, price, setPrice }) {
                 </span>
               </div>
             </div>
+          </Card>
+
+          {/* Reverse DCF — market-implied expectations */}
+          <Card>
+            <Label accent="WHAT THE PRICE IMPLIES">REVERSE DCF</Label>
+            {reverse == null ? (
+              <div style={{ ...sans, fontSize:12, color:"#857d65" }}>Not computable from available data.</div>
+            ) : (
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
+                <div>
+                  <div style={{ ...sans, fontSize:11, color:"#857d65", textTransform:"uppercase", letterSpacing:"0.08em" }}>{reverse.label}</div>
+                  <div style={{ ...serif, fontSize:40, color:C.gold, lineHeight:1.1, marginTop:4 }}>
+                    {reverse.bounded === "above" ? ">" : reverse.bounded === "below" ? "<" : ""}{(reverse.value*100).toFixed(1)}%
+                  </div>
+                  <div style={{ ...sans, fontSize:11, color:"#5b5440", marginTop:4 }}>implied by CMP ₹{fmtN(price)}</div>
+                </div>
+                <div>
+                  <div style={{ ...sans, fontSize:11, color:"#857d65", textTransform:"uppercase", letterSpacing:"0.08em" }}>Your forecast</div>
+                  <div style={{ ...serif, fontSize:40, color:C.text, lineHeight:1.1, marginTop:4 }}>{(fwdDriver*100).toFixed(1)}%</div>
+                  <div style={{ ...sans, fontSize:11, color: fwdDriver >= reverse.value ? C.green : C.red, marginTop:4 }}>
+                    {fwdDriver >= reverse.value
+                      ? "Your forecast clears the bar → upside"
+                      : "Market expects more than your forecast → caution"}
+                  </div>
+                </div>
+                {reverse.note && (
+                  <div style={{ gridColumn:"1/-1", ...sans, fontSize:11, color:"#857d65", lineHeight:1.6 }}>{reverse.note}</div>
+                )}
+              </div>
+            )}
           </Card>
 
           {/* Projection chart */}
