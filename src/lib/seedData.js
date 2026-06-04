@@ -155,6 +155,17 @@ export function buildFromApi(r) {
   const revenue = r.revenue != null ? r.revenue : null;
   const netDebt = r.net_debt != null ? r.net_debt : null;
 
+  // Anchor the EBIT margin to the company's REALISED profitability rather than a
+  // generic sector default. Applying a 15% sector margin to a 2%-margin
+  // distributor like Redington produced fantasy earnings (+700% "undervalued").
+  // Approximate EBIT margin from reported net margin grossed back up for tax,
+  // and never let the assumption exceed the sector norm.
+  let ebitMargin = sp.ebitMargin;
+  if (netProfit != null && revenue != null && revenue > 0) {
+    const impliedEbitMargin = (netProfit / revenue) / (1 - sp.taxRate);
+    ebitMargin = Math.max(0.02, Math.min(impliedEbitMargin, sp.ebitMargin));
+  }
+
   return {
     id: r.ticker, name: r.name, ticker: r.ticker,
     type: "nonfinancial", sector: r.sector,
@@ -163,7 +174,7 @@ export function buildFromApi(r) {
     syntheticSeries: true,
     assumptions: {
       beta: 1.0, rf: 0.071, erp: 0.085,
-      ebitMargin:   sp.ebitMargin,
+      ebitMargin,
       taxRate:      sp.taxRate,
       revGrowth1:   sp.revGrowth,
       revGrowth2:   sp.revGrowth * 0.6,
