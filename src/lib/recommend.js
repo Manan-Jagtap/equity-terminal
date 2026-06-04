@@ -100,10 +100,12 @@ export function recommend(co, a) {
   const composite = reliable ? rawComposite * (0.6 + 0.4 * conf.score) : rawComposite * 0.5;
 
   // Verdict — demanding, and willing to say "no".
+  // A BUY now requires HIGH data confidence (not just "present"); medium-
+  // confidence names cap at ACCUMULATE so a thin-data estimate can't shout BUY.
   let verdict;
   if (iv == null)            verdict = "NO DATA";
   else if (conf.score < 0.5) verdict = "LOW CONF";
-  else if (composite >= 68 && mos > 0.15)  verdict = "BUY";
+  else if (composite >= 68 && mos > 0.15 && conf.level === "high") verdict = "BUY";
   else if (composite >= 58 && mos > 0.05)  verdict = "ACCUMULATE";
   else if (mos >= -0.10)                   verdict = "HOLD";
   else if (mos >= -0.25)                   verdict = "TRIM";

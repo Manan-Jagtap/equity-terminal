@@ -148,10 +148,14 @@ export function buildWACC(co, a) {
   const template = co.template_code || "MANUFACTURING";
   const betaU = SECTOR_UNLEVERED_BETAS[template] ?? 0.90;
 
-  // Capital structure
-  const equity   = co.equity || (co.price * co.shares * 0.5);
-  const debt     = co.netDebt != null ? co.netDebt + (co.price * co.shares * 0.1) : equity * 0.3;
-  const deRatio  = debt > 0 ? debt / equity : 0.3;
+  // Capital structure. Use MARKET value of equity for weights (the correct WACC
+  // basis), and the REPORTED net debt only — no invented market-cap fudge. If
+  // net debt is unknown we assume zero (then re-flag via confidence) rather than
+  // inventing a number that silently moves the discount rate.
+  const equity   = (co.price && co.shares) ? co.price * co.shares
+                   : (co.equity || 1);
+  const debt     = Math.max(co.netDebt ?? 0, 0);
+  const deRatio  = equity > 0 ? debt / equity : 0;
   const debtWeight   = Math.min(deRatio / (1 + deRatio), 0.75);
   const equityWeight = 1 - debtWeight;
 
@@ -181,15 +185,24 @@ export function fcffDCF(co, a) {
 
   const template  = co.template_code || "MANUFACTURING";
   const taxRate   = a.taxRate ?? DEFAULT_TAX;
-  const shares    = co.shares || 50;
+  const shares    = co.shares;
 
-  // Base NOPAT (EBIT net of tax) — from actual data where available
-  const baseEBIT  = co.ebit || (co.revenue || co.equity * 2) * (a.ebitMargin ?? 0.12);
+  // Base NOPAT must come from REAL operating data (EBIT, or revenue × margin).
+  // If neither exists, we refuse to value rather than invent a revenue proxy
+  // from book equity (the old `co.equity * 2` fabrication that produced
+  // confidently-wrong intrinsics). Returning perShare: null → UI shows N/M.
+  const baseEBIT  = co.ebit != null ? co.ebit
+                    : (co.revenue != null ? co.revenue * (a.ebitMargin ?? 0.12) : null);
+  if (baseEBIT == null || !(shares > 0)) {
+    return { rows: [], perShare: null, ev: null, equityVal: null, tvPct: null,
+             wacc, ke, kd, beta, betaU, debtWeight, equityWeight, deRatio,
+             method: "FCFF DCF", insufficient: true };
+  }
   const baseNOPAT = baseEBIT * (1 - taxRate);
 
-  // Invested Capital (equity + debt - excess cash)
-  const cash         = co.cash ?? (equity * 0.1);
-  const investedCap  = equity + debt - cash;
+  // Invested Capital from reported book equity + net debt (no cash fabrication).
+  const bookEquity   = co.equity != null && co.equity > 0 ? co.equity : equity;
+  const investedCap  = bookEquity + Math.max(co.netDebt ?? 0, 0);
   const currentROIC  = safeDiv(baseNOPAT, investedCap) ?? 0.12;
   const terminalROIC = a.terminalROIC ?? SECTOR_TERMINAL_ROIC[template] ?? 0.12;
 
@@ -238,7 +251,7 @@ export function fcffDCF(co, a) {
   const tvPct        = safeDiv(tvPv, pvSum + tvPv) * 100;
 
   const ev         = pvSum + tvPv;
-  const netDebt    = (co.netDebt ?? debt - cash);
+  const netDebt    = Math.max(co.netDebt ?? 0, 0);
   const equityVal  = ev - netDebt;
   const perShare   = equityVal / shares;
 
@@ -267,16 +280,25 @@ export function residualIncomeDCF(co, a) {
   const beta      = betaU; // financial firms: use unlevered beta (leverage is operational)
   const ke        = calcKe(beta, a.rf ?? RF, a.erp ?? ERP);
 
-  const equity    = co.equity || 10000;
-  const shares    = co.shares || 40;
+  // Refuse to value without real book equity and a share count.
+  if (!(co.equity > 0) || !(co.shares > 0)) {
+    return { rows: [], intrinsic: null, bvps0: null, pvExplicit: null,
+             tvPv: null, tvPct: null, ke, beta, betaU,
+             method: "Residual Income (Excess Return)", insufficient: true };
+  }
+  const equity    = co.equity;
+  const shares    = co.shares;
   const bvps0     = equity / shares;
 
-  // Use forecastROE from assumptions (slider) as the STARTING ROE.
-  // This is the key fix — curROE from stale seed data was causing wrong baseline.
-  const pat       = co.netProfit || equity * (a.forecastROE ?? 0.15);
-  const dataROE   = safeDiv(pat, equity) ?? (a.forecastROE ?? 0.15);
-  const startROE  = a.forecastROE ?? dataROE; // SLIDER takes precedence
-  const termROE   = a.terminalROE ?? Math.max(ke + 0.02, startROE * 0.6);
+  // Starting ROE is anchored to REALIZED ROE (PAT / equity) when available, then
+  // SANITY-CAPPED. A reported ROE of, say, 47% (LIC) is real but not a
+  // sustainable excess return to compound for years — left uncapped it produced
+  // wildly inflated intrinsics. We cap the starting excess-return ROE at 25% and
+  // fade it toward a normalised terminal ROE.
+  const dataROE   = safeDiv(co.netProfit, equity);
+  const rawStart  = a.forecastROE ?? dataROE ?? 0.15;
+  const startROE  = Math.min(Math.max(rawStart, 0.05), 0.25);
+  const termROE   = Math.min(a.terminalROE ?? Math.max(ke + 0.02, startROE * 0.7), 0.18);
   const payout    = a.payout ?? 0.25;
   const N1        = Math.round(a.stage1Years ?? 5);
   const N2        = Math.round(a.stage2Years ?? 5);
@@ -327,7 +349,7 @@ export function residualIncomeDCF(co, a) {
     ? Math.max(0.2, (termROE - termG) / (ke - termG))
     : (termROE - termG) / 0.05;
   const justifiedPB = Math.max(0.4, Math.min(gordonPB, 12)); // sanity clamp
-  const eps_latest  = safeDiv(pat, shares);
+  const eps_latest  = safeDiv(co.netProfit, shares);
   const impliedPE   = safeDiv(intrinsic, eps_latest);
 
   return {
@@ -352,13 +374,15 @@ export function residualIncomeDCF(co, a) {
 export function exitMultiple(co, a) {
   const template  = co.template_code || "MANUFACTURING";
   const multiple  = a.evEbitdaMultiple ?? SECTOR_EV_EBITDA[template] ?? 12;
-  const ebitda    = co.ebitda || (co.revenue || co.equity * 2) * ((a.ebitMargin ?? 0.12) + 0.03);
+  // Only from real EBITDA / revenue — no book-equity proxy.
+  const ebitda    = co.ebitda != null ? co.ebitda
+                    : (co.revenue != null ? co.revenue * ((a.ebitMargin ?? 0.12) + 0.03) : null);
+  if (ebitda == null || !(co.shares > 0)) return { multiple, ebitda: null, perShare: null, method: "Exit Multiple (EV/EBITDA)" };
   const ev        = ebitda * multiple;
-  const netDebt   = co.netDebt ?? 0;
-  const equityVal = ev - netDebt;
+  const netDebt   = Math.max(co.netDebt ?? 0, 0);
   return {
     multiple, ebitda, ev, netDebt,
-    perShare: equityVal / (co.shares || 50),
+    perShare: (ev - netDebt) / co.shares,
     method: "Exit Multiple (EV/EBITDA)",
   };
 }
@@ -366,16 +390,12 @@ export function exitMultiple(co, a) {
 // ── P/E cross-check ─────────────────────────────────────────────────────────
 
 export function peValuation(co, a) {
-  // Use actual PAT from company data (not model-derived)
-  const pat    = co.netProfit || (co.equity * (a.forecastROE ?? 0.15));
-  const shares = co.shares || 50;
-  const eps    = pat / shares;
+  // Real PAT only — never a model-derived proxy.
+  if (co.netProfit == null || co.netProfit <= 0 || !(co.shares > 0))
+    return { multiple: a.peMultiple ?? 15, eps: null, perShare: null, method: "P/E" };
+  const eps        = co.netProfit / co.shares;
   const peMultiple = a.peMultiple ?? 15;
-  return {
-    multiple: peMultiple, eps,
-    perShare: eps * peMultiple,
-    method: `P/E (${peMultiple}x)`,
-  };
+  return { multiple: peMultiple, eps, perShare: eps * peMultiple, method: `P/E (${peMultiple}x)` };
 }
 
 // ── Router ──────────────────────────────────────────────────────────────────
@@ -398,34 +418,43 @@ export function valuate(co, a) {
  * For financials: RI (65%) + Justified P/B (20%) + P/E (15%)
  * For non-financial: DCF (55%) + Exit Multiple (30%) + P/E (15%)
  */
+// Re-weight only the components that are actually available; return null if the
+// primary model couldn't be computed. Never invent a value to fill the blend.
+function blendComponents(primaryOk, raw) {
+  if (!primaryOk) return { blended: null, components: raw.map(c => ({ ...c })) };
+  const avail = raw.filter(c => c.value != null && isFinite(c.value) && c.value > 0);
+  if (!avail.length) return { blended: null, components: raw };
+  const wsum = avail.reduce((s, c) => s + c.weight, 0);
+  const blended = avail.reduce((s, c) => s + c.value * (c.weight / wsum), 0);
+  return { blended, components: raw };
+}
+
 export function blendedValuation(co, a) {
-  const isF = co.type === "financial" || ["NBFC","BANK","INSURANCE"].includes(co.template_code);
+  const isF = isFinancial(co);
   const v   = valuate(co, a);
 
   if (isF) {
-    const riVal   = v.intrinsic;
-    // Gordon Growth Model P/B = forecastROE / (Ke − g) — proper cross-check, not circular
-    const gordonPB = v.gordonPB ?? v.justifiedPB ?? 1;
-    const pbVal    = v.bvps0 * gordonPB;
-    // P/E using latest EPS (from actual PAT, not stale)
-    const eps      = safeDiv(co.netProfit || co.equity * (a.forecastROE ?? 0.20), co.shares || 40);
-    const peVal    = eps ? eps * (a.peMultiple ?? 15) : riVal;
-    const blended  = riVal * 0.65 + pbVal * 0.20 + peVal * 0.15;
-    return { v, blended: Math.max(blended, 0), components: [
+    const riVal    = v.intrinsic;
+    const gordonPB = v.gordonPB ?? v.justifiedPB ?? null;
+    const pbVal    = (v.bvps0 != null && gordonPB != null) ? v.bvps0 * gordonPB : null;
+    const eps      = (co.netProfit != null && co.netProfit > 0 && co.shares > 0) ? co.netProfit / co.shares : null;
+    const peVal    = eps != null ? eps * (a.peMultiple ?? 15) : null;
+    const { blended, components } = blendComponents(riVal != null, [
       { method:"Residual Income",   value:riVal, weight:0.65 },
       { method:"Gordon Growth P/B", value:pbVal, weight:0.20 },
       { method:"P/E",               value:peVal, weight:0.15 },
-    ]};
+    ]);
+    return { v, blended, components };
   } else {
-    const dcfVal  = v.perShare;
-    const emVal   = exitMultiple(co, a).perShare;
-    const peVal   = peValuation(co, a).perShare;
-    const blended = dcfVal * 0.55 + emVal * 0.30 + peVal * 0.15;
-    return { v, blended, components: [
-      { method:"FCFF DCF",            value:dcfVal, weight:0.55 },
-      { method:"Exit Multiple",       value:emVal,  weight:0.30 },
-      { method:"P/E",                 value:peVal,  weight:0.15 },
-    ]};
+    const dcfVal = v.perShare;
+    const emVal  = exitMultiple(co, a).perShare;
+    const peVal  = peValuation(co, a).perShare;
+    const { blended, components } = blendComponents(dcfVal != null, [
+      { method:"FCFF DCF",      value:dcfVal, weight:0.55 },
+      { method:"Exit Multiple", value:emVal,  weight:0.30 },
+      { method:"P/E",           value:peVal,  weight:0.15 },
+    ]);
+    return { v, blended, components };
   }
 }
 
