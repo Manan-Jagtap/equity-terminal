@@ -793,37 +793,33 @@ function LiveStatementTable({ title, accent, statements, years, stmtKey, order }
   );
 }
 
-/* Shared Screener-style income statement (quarterly OR annual) — both come
-   from /historical_stats in the SAME {periods, metrics} shape, so they render
-   identically. */
-const PL_SCREENER_ROWS = [
-  ["Sales", "Sales", "cr", true],
-  ["Expenses", "Expenses", "cr"],
-  ["Operating Profit", "Operating Profit", "cr", true],
-  ["OPM %", "OPM %", "pct"],
-  ["Other Income", "Other Income", "cr"],
-  ["Interest", "Interest", "cr"],
-  ["Depreciation", "Depreciation", "cr"],
-  ["Profit Before Tax", "Profit before tax", "cr", true],
-  ["Tax %", "Tax %", "pct"],
-  ["Net Profit", "Net Profit", "cr", true],
-  ["EPS (₹)", "EPS in Rs", "rs"],
-];
-const plScreenerCell = (v, kind) =>
-  v == null ? "—" : kind === "pct" ? Number(v).toFixed(0) + "%" : kind === "rs" ? "₹" + fmtN(v, 2) : fmtN(v, 0);
+/* Shared statement table. Renders the EXACT line items IndianAPI returns for
+   THIS company (no forced template) — NBFCs show Revenue / Financing Profit /
+   Financing Margin %, manufacturers show Sales / Operating Profit / OPM %, etc.
+   Works for quarterly or annual ({periods, metrics, order}). */
+const _isBoldLine = name => /(^|\s)(sales|revenue|operating profit|financing profit|profit before tax|net profit|profit after tax)(\s|$)/i.test(name || "");
+const _fmtStmtVal = (v, name) => {
+  if (v == null || v === "") return "—";
+  const n = Number(v);
+  if (isNaN(n)) return String(v);
+  if (String(name).includes("%")) return n.toFixed(0) + "%";
+  if (/\beps\b/i.test(name)) return "₹" + fmtN(n, 2);
+  return fmtN(n, 0);
+};
 
-function ScreenerIncomeTable({ accent, periods, metrics, kind }) {
+function ScreenerIncomeTable({ accent, title = "Income Statement", periods, metrics, order, kind }) {
+  const m = metrics || {};
+  const names = (order && order.length ? order : Object.keys(m));
   const label = p => {
     const a = String(p).split(" ");
     return kind === "annual" ? "FY" + (a[1] || "").slice(-2) : a[0] + " '" + (a[1] || "").slice(-2);
   };
-  const m = metrics || {};
   return (
     <Card noPad style={{ overflow:"hidden" }}>
       <div style={{ padding:"16px 20px 8px", display:"flex", alignItems:"baseline", justifyContent:"space-between" }}>
         <div>
           <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.18em", color:C.dim }}>{accent}</div>
-          <div style={{ ...serif, fontSize:22, color:C.text, marginTop:2 }}>Income Statement</div>
+          <div style={{ ...serif, fontSize:22, color:C.text, marginTop:2 }}>{title}</div>
         </div>
         <span style={{ ...sans, fontSize:10, textTransform:"uppercase", color:C.dim }}>₹ Crores</span>
       </div>
@@ -838,16 +834,19 @@ function ScreenerIncomeTable({ accent, periods, metrics, kind }) {
             </tr>
           </thead>
           <tbody>
-            {PL_SCREENER_ROWS.map(([rl, key, kind2, bold], i) => (
-              <tr key={i} style={{ borderBottom:`1px solid ${C.line}`, background:bold?"rgba(58,53,40,0.3)":"transparent" }}>
-                <td style={{ ...sans, padding:"10px 20px", color:bold?C.text:C.text200, fontWeight:bold?500:400 }}>{rl}</td>
-                {periods.map((p, j) => (
-                  <td key={j} style={{ ...mono, textAlign:"right", padding:"10px 8px", paddingRight:j===periods.length-1?"20px":"8px", fontSize:12, color:j===periods.length-1?"#d4b96a":bold?C.text:C.text200 }}>
-                    {plScreenerCell(m[key]?.[j], kind2)}
-                  </td>
-                ))}
-              </tr>
-            ))}
+            {names.map((name, i) => {
+              const bold = _isBoldLine(name);
+              return (
+                <tr key={i} style={{ borderBottom:`1px solid ${C.line}`, background:bold?"rgba(58,53,40,0.3)":"transparent" }}>
+                  <td style={{ ...sans, padding:"10px 20px", color:bold?C.text:C.text200, fontWeight:bold?500:400 }}>{name}</td>
+                  {periods.map((p, j) => (
+                    <td key={j} style={{ ...mono, textAlign:"right", padding:"10px 8px", paddingRight:j===periods.length-1?"20px":"8px", fontSize:12, color:j===periods.length-1?"#d4b96a":bold?C.text:C.text200 }}>
+                      {_fmtStmtVal(m[name]?.[j], name)}
+                    </td>
+                  ))}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -874,7 +873,7 @@ function QuarterlyResults({ co, API }) {
     </div></Card>
   );
   return <ScreenerIncomeTable accent={`QUARTERLY RESULTS · LAST ${data.quarters.length} QUARTERS`}
-                              periods={data.quarters} metrics={data.metrics} kind="quarterly" />;
+                              periods={data.quarters} metrics={data.metrics} order={data.order} kind="quarterly" />;
 }
 
 /* Annual income statement — last 5 years from /annual_pl, SAME format as
@@ -891,7 +890,7 @@ function AnnualIncomeStatement({ co, API, fallback }) {
   if (data === undefined) return <div style={{ ...sans, color:C.dim, fontSize:13, padding:24 }}>Loading income statement…</div>;
   if (!data?.has_data || !(data.periods || []).length) return fallback || null;
   return <ScreenerIncomeTable accent={`ANNUAL RESULTS · LAST ${data.periods.length} YEARS`}
-                              periods={data.periods} metrics={data.metrics} kind="annual" />;
+                              periods={data.periods} metrics={data.metrics} order={data.order} kind="annual" />;
 }
 
 function FinancialsTab({ co, cd, liveFinancials, API }) {
@@ -1848,6 +1847,16 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
     const p = (liveProfile?.shareholding || []).find(s => (s.name || "").toLowerCase().includes("promoter"));
     return p?.pct ?? null;
   }, [liveProfile]);
+  // Enterprise Value = market cap + total debt − cash (latest balance sheet).
+  const evLive = useMemo(() => {
+    const st = liveFinancials?.statements;
+    if (!st || mcap == null) return null;
+    const yrs = Object.keys(st).sort();
+    const bs = st[yrs[yrs.length - 1]]?.BS || {};
+    const debt = bs.borrowings, cash = bs.cash;
+    if (debt == null && cash == null) return null;
+    return mcap + (debt || 0) - (cash || 0);
+  }, [liveFinancials, mcap]);
 
   // Price chart data — fetch real OHLCV with dates from API
   const priceChartData = useMemo(() => {
@@ -2003,12 +2012,12 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
         <div style={{ padding:`14px ${PAD}px`, display:"grid", gridTemplateColumns: isMobile ? "repeat(3,1fr)" : "repeat(11,1fr)", gap: isMobile ? 14 : 8, rowGap: isMobile ? 16 : 8 }}>
           {[
             { l:"Market Cap",       v:"₹"+fmtCr(mcap)               },
-            { l:"Enterprise Value", v:mktData.evCr ? "₹"+fmtCr(mktData.evCr) : "—" },
+            { l:"Enterprise Value", v:mktData.evCr ? "₹"+fmtCr(mktData.evCr) : (evLive!=null?"₹"+fmtCr(evLive):"—") },
             { l:"P / E (TTM)",      v:sm?.pe!=null?multiple(sm.pe,2):multiple(rec.f.pe, 2)         },
             { l:"P / B",            v:sm?.pb!=null?multiple(sm.pb,2):multiple(rec.f.pb, 2)         },
             { l:"ROE",              v:sm?.roe_ttm!=null?fmtPa(sm.roe_ttm):(rec.f.roe!=null?fmtPa(rec.f.roe*100):"—"), accent:C.green },
             { l:"ROA",              v:roaLive!=null?fmtPa(roaLive*100):(co.nbfc?.roa!=null?fmtPa(co.nbfc.roa*100):"—") },
-            { l:"NIM",              v:co.nbfc?.nim!=null?fmtPa(co.nbfc.nim*100):"—" },
+            { l:"Div Yield",        v:sm?.div_yield!=null?fmtPa(sm.div_yield):"—" },
             { l:"Promoter Hold",    v:promoterLive!=null?fmtPa(promoterLive):(mktData.promoterPct!=null?fmtPa(mktData.promoterPct):"—"), accent:C.gold },
             { l:"Intrinsic Value",  v:inrOrDash(rec.iv,0), accent:C.gold },
             { l:"Margin of Safety", v:signedPct(mos), accent:mos==null?C.dim:mos>=0?C.green:C.red },
