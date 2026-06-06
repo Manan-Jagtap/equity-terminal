@@ -371,10 +371,141 @@ function FinTable({ title, accent, rows, years }) {
 }
 
 /* ── Overview Tab ─────────────────────────────────────────────────── */
-function OverviewTab({ co, rec, cd, priceData }) {
+/* ── Generalized real-data Business sections (IndianAPI, all companies) ─── */
+function ShareholdingCard({ data }) {
+  if (!data?.length) return null;
+  const colorFor = n => {
+    const x = (n || "").toLowerCase();
+    if (x.includes("promoter")) return C.gold;
+    if (x.includes("fii") || x.includes("foreign")) return C.green;
+    if (x.includes("dii") || x.includes("institution")) return C.text200;
+    return C.faint;
+  };
+  return (
+    <Card>
+      <SectionLabel accent="LATEST QUARTER">SHAREHOLDING</SectionLabel>
+      <div style={{ display:"flex", flexDirection:"column", gap:11, marginTop:4 }}>
+        {data.map((s, i) => (
+          <div key={i}>
+            <div style={{ display:"flex", justifyContent:"space-between", ...sans, fontSize:12, marginBottom:4 }}>
+              <span style={{ color:C.text200 }}>{s.name}</span>
+              <span style={{ ...mono, color:C.text }}>{s.pct.toFixed(2)}%</span>
+            </div>
+            <div style={{ height:5, background:C.bg700, borderRadius:3, overflow:"hidden" }}>
+              <div style={{ width:`${Math.min(s.pct, 100)}%`, height:"100%", background:colorFor(s.name) }} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+function LeadershipCard({ data }) {
+  if (!data?.length) return null;
+  return (
+    <Card>
+      <SectionLabel>LEADERSHIP</SectionLabel>
+      <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+        {data.slice(0, 5).map((o, i) => (
+          <div key={i}>
+            <div style={{ ...sans, fontSize:13, color:C.text, fontWeight:500 }}>{o.name}</div>
+            <div style={{ ...sans, fontSize:11, color:C.dim, lineHeight:1.4 }}>{o.title}</div>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+function ProfileKeyFacts({ kf }) {
+  if (!kf) return null;
+  const cr = n => n == null ? null : Math.abs(n) >= 1e5 ? "₹" + (n/1e5).toFixed(2) + " L Cr" : "₹" + fmtN(n,0) + " Cr";
+  const rows = [
+    ["Industry", kf.industry],
+    ["Market Cap", cr(kf.market_cap_cr)],
+    ["52-Wk High", kf.year_high != null ? "₹" + fmtN(kf.year_high, 1) : null],
+    ["52-Wk Low", kf.year_low != null ? "₹" + fmtN(kf.year_low, 1) : null],
+    ["Risk", kf.risk],
+    ["Analyst View", kf.rating],
+    ["ISIN", kf.isin],
+    ["NSE / BSE", [kf.nse_code, kf.bse_code].filter(Boolean).join(" · ")],
+  ];
+  return (
+    <Card>
+      <SectionLabel>KEY FACTS</SectionLabel>
+      {rows.map(([k, v]) => v ? <KV key={k} label={k} value={v} /> : null)}
+    </Card>
+  );
+}
+
+function DocsCard({ profile }) {
+  if (!profile) return null;
+  const has = (profile.concalls?.length || profile.annual_reports?.length ||
+               profile.credit_ratings?.length || profile.announcements?.length);
+  if (!has) return null;
+  const Link = ({ href, children }) => !href ? null : (
+    <a href={href} target="_blank" rel="noopener noreferrer"
+       style={{ ...sans, fontSize:12.5, color:C.text200, textDecoration:"none", display:"flex", alignItems:"center", gap:7, lineHeight:1.5 }}
+       onMouseEnter={e => (e.currentTarget.style.color = C.gold)}
+       onMouseLeave={e => (e.currentTarget.style.color = C.text200)}>
+      <FileText size={12} color={C.faint} style={{ flexShrink:0 }} /> <span>{children}</span>
+    </a>
+  );
+  const Group = ({ title, children }) => (
+    <div style={{ marginBottom:14 }}>
+      <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.12em", color:C.gold, marginBottom:8 }}>{title}</div>
+      <div style={{ display:"flex", flexDirection:"column", gap:7 }}>{children}</div>
+    </div>
+  );
+  return (
+    <Card>
+      <SectionLabel accent="SOURCE DOCUMENTS">FILINGS &amp; REPORTS</SectionLabel>
+      {profile.concalls?.length > 0 && (
+        <Group title="Earnings Calls">
+          {profile.concalls.slice(0, 5).map((c, i) => (
+            <Link key={i} href={c.transcript || c.rec || c.ppt}>
+              {c.date} — {c.transcript ? "Transcript" : c.ppt ? "Presentation" : "Recording"}
+            </Link>
+          ))}
+        </Group>
+      )}
+      {profile.annual_reports?.length > 0 && (
+        <Group title="Annual Reports">
+          {profile.annual_reports.slice(0, 5).map((a, i) => (
+            <Link key={i} href={a.url}>FY{a.year} Annual Report</Link>
+          ))}
+        </Group>
+      )}
+      {profile.credit_ratings?.length > 0 && (
+        <Group title="Credit Ratings">
+          {profile.credit_ratings.slice(0, 4).map((c, i) => (
+            <Link key={i} href={c.url}>{c.date} — {c.title}</Link>
+          ))}
+        </Group>
+      )}
+      {profile.announcements?.length > 0 && (
+        <Group title="Recent Announcements">
+          {profile.announcements.slice(0, 5).map((a, i) => (
+            <Link key={i} href={a.link}>{(a.title || "").replace(/\s+\d+[dh]?\s+-\s+.*/, "").slice(0, 80) || "Announcement"}</Link>
+          ))}
+        </Group>
+      )}
+    </Card>
+  );
+}
+
+function OverviewTab({ co, rec, cd, priceData, API }) {
   const isMobile = useIsMobile();
   const f = rec.f;
   const t = rec.t;
+  const [profile, setProfile] = useState(null);
+  useEffect(() => {
+    if (!API || !co.ticker) return;
+    setProfile(null);
+    fetch(`${API}/api/companies/${co.ticker}/profile`)
+      .then(r => r.json()).then(setProfile).catch(() => setProfile(null));
+  }, [co.ticker, API]);
   const histPAT = cd?.pnl?.years?.slice(0, 5).map((y, i) => ({
     y,
     pat: cd.pnl.rows.find(r => r.metric === "PAT (Reported)")?.v[i],
@@ -394,7 +525,7 @@ function OverviewTab({ co, rec, cd, priceData }) {
           <SectionLabel accent="CONCALL SNAPSHOT">INVESTMENT THESIS</SectionLabel>
           <div style={{ ...sans, fontSize:14, lineHeight:1.75, color:C.text200 }}>
             <span style={{ ...serif, fontSize:36, float:"left", marginRight:10, lineHeight:1, color:C.gold }}>"</span>
-            {cd?.description || `${co.name} is a leading company in the ${co.sector} sector. Financial data is being populated — check back after running the bulk ingester.`}
+            {cd?.description || profile?.description || `${co.name} operates in the ${co.sector} sector. Profile data loading…`}
           </div>
           <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginTop:16 }}>
             {tagsFor(co, rec).map(({ t, tone }) => (
@@ -468,6 +599,12 @@ function OverviewTab({ co, rec, cd, priceData }) {
             </div>
           </Card>
         )}
+
+        {/* Shareholding — real IndianAPI data, all companies */}
+        <ShareholdingCard data={profile?.shareholding} />
+
+        {/* Filings & reports — concalls, annual reports, credit ratings */}
+        <DocsCard profile={profile} />
       </div>
 
       {/* RIGHT */}
@@ -517,7 +654,7 @@ function OverviewTab({ co, rec, cd, priceData }) {
           </div>
         </Card>
 
-        {(cd?.keyFacts || cd?.meta) && (
+        {(cd?.keyFacts || cd?.meta) ? (
           <Card>
             <SectionLabel>KEY FACTS</SectionLabel>
             {(cd.keyFacts || [
@@ -531,7 +668,12 @@ function OverviewTab({ co, rec, cd, priceData }) {
               ["Auditor", cd.meta.auditor],
             ]).map(([k, v]) => v ? <KV key={k} label={k} value={v} /> : null)}
           </Card>
+        ) : (
+          <ProfileKeyFacts kf={profile?.key_facts} />
         )}
+
+        {/* Leadership — real IndianAPI officers, all companies */}
+        <LeadershipCard data={profile?.leadership} />
 
         {cd?.guidance && (
           <Card>
@@ -1843,7 +1985,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
 
       {/* ── Tab content ───────────────────────────────────────── */}
       <main>
-        {tab==="overview"   && <OverviewTab    co={co2} rec={rec} cd={cd} priceData={priceChartWithSMA} />}
+        {tab==="overview"   && <OverviewTab    co={co2} rec={rec} cd={cd} priceData={priceChartWithSMA} API={API} />}
         {tab==="financials" && <FinancialsTab  co={co2} cd={cd} liveFinancials={liveFinancials} API={API} />}
         {tab==="ratios"     && <RatiosTab      co={co2} cd={cd} liveMetrics={liveMetrics} />}
         {tab==="dcf"        && <DCFModel       co={co2} a={assumptions} set={set} price={price} setPrice={setPrice} />}
