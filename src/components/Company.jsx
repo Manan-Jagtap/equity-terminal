@@ -793,8 +793,69 @@ function LiveStatementTable({ title, accent, statements, years, stmtKey, order }
   );
 }
 
-/* Quarterly results — last 5 quarters from IndianAPI /quarterly
-   (shape: {quarters:[...newest-last], metrics:{Sales:[...], ...}}). */
+/* Shared Screener-style income statement (quarterly OR annual) — both come
+   from /historical_stats in the SAME {periods, metrics} shape, so they render
+   identically. */
+const PL_SCREENER_ROWS = [
+  ["Sales", "Sales", "cr", true],
+  ["Expenses", "Expenses", "cr"],
+  ["Operating Profit", "Operating Profit", "cr", true],
+  ["OPM %", "OPM %", "pct"],
+  ["Other Income", "Other Income", "cr"],
+  ["Interest", "Interest", "cr"],
+  ["Depreciation", "Depreciation", "cr"],
+  ["Profit Before Tax", "Profit before tax", "cr", true],
+  ["Tax %", "Tax %", "pct"],
+  ["Net Profit", "Net Profit", "cr", true],
+  ["EPS (₹)", "EPS in Rs", "rs"],
+];
+const plScreenerCell = (v, kind) =>
+  v == null ? "—" : kind === "pct" ? Number(v).toFixed(0) + "%" : kind === "rs" ? "₹" + fmtN(v, 2) : fmtN(v, 0);
+
+function ScreenerIncomeTable({ accent, periods, metrics, kind }) {
+  const label = p => {
+    const a = String(p).split(" ");
+    return kind === "annual" ? "FY" + (a[1] || "").slice(-2) : a[0] + " '" + (a[1] || "").slice(-2);
+  };
+  const m = metrics || {};
+  return (
+    <Card noPad style={{ overflow:"hidden" }}>
+      <div style={{ padding:"16px 20px 8px", display:"flex", alignItems:"baseline", justifyContent:"space-between" }}>
+        <div>
+          <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.18em", color:C.dim }}>{accent}</div>
+          <div style={{ ...serif, fontSize:22, color:C.text, marginTop:2 }}>Income Statement</div>
+        </div>
+        <span style={{ ...sans, fontSize:10, textTransform:"uppercase", color:C.dim }}>₹ Crores</span>
+      </div>
+      <div style={{ overflowX:"auto" }}>
+        <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13, minWidth:520 }}>
+          <thead>
+            <tr style={{ borderTop:`1px solid ${C.line}`, borderBottom:`1px solid ${C.line}` }}>
+              <th style={{ ...sans, textAlign:"left", padding:"8px 20px", fontSize:10, textTransform:"uppercase", color:C.dim, fontWeight:500 }} />
+              {periods.map((p, i) => (
+                <th key={i} style={{ ...sans, textAlign:"right", padding:"8px", paddingRight:i===periods.length-1?"20px":"8px", fontSize:10, color:i===periods.length-1?C.gold:C.dim, fontWeight:500, whiteSpace:"nowrap" }}>{label(p)}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {PL_SCREENER_ROWS.map(([rl, key, kind2, bold], i) => (
+              <tr key={i} style={{ borderBottom:`1px solid ${C.line}`, background:bold?"rgba(58,53,40,0.3)":"transparent" }}>
+                <td style={{ ...sans, padding:"10px 20px", color:bold?C.text:C.text200, fontWeight:bold?500:400 }}>{rl}</td>
+                {periods.map((p, j) => (
+                  <td key={j} style={{ ...mono, textAlign:"right", padding:"10px 8px", paddingRight:j===periods.length-1?"20px":"8px", fontSize:12, color:j===periods.length-1?"#d4b96a":bold?C.text:C.text200 }}>
+                    {plScreenerCell(m[key]?.[j], kind2)}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Card>
+  );
+}
+
+/* Quarterly results — last 5 quarters from /quarterly. */
 function QuarterlyResults({ co, API }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -812,61 +873,25 @@ function QuarterlyResults({ co, API }) {
       Quarterly results not available yet for <b style={{ color:C.text }}>{co.ticker}</b>.
     </div></Card>
   );
+  return <ScreenerIncomeTable accent={`QUARTERLY RESULTS · LAST ${data.quarters.length} QUARTERS`}
+                              periods={data.quarters} metrics={data.metrics} kind="quarterly" />;
+}
 
-  const Q = data.quarters;
-  const m = data.metrics || {};
-  const ROWS = [
-    ["Sales", "Sales", "cr", true],
-    ["Expenses", "Expenses", "cr"],
-    ["Operating Profit", "Operating Profit", "cr", true],
-    ["OPM %", "OPM %", "pct"],
-    ["Other Income", "Other Income", "cr"],
-    ["Interest", "Interest", "cr"],
-    ["Depreciation", "Depreciation", "cr"],
-    ["Profit Before Tax", "Profit before tax", "cr", true],
-    ["Tax %", "Tax %", "pct"],
-    ["Net Profit", "Net Profit", "cr", true],
-    ["EPS (₹)", "EPS in Rs", "rs"],
-  ];
-  const cell = (v, kind) =>
-    v == null ? "—" : kind === "pct" ? Number(v).toFixed(0)+"%" : kind === "rs" ? "₹"+fmtN(v,2) : fmtN(v,0);
-  const qLabel = q => { const p = String(q).split(" "); return p[0] + " '" + (p[1] || "").slice(-2); };
+/* Annual income statement — last 5 years from /annual_pl, SAME format as
+   quarterly. Falls back to the legacy statement table if unavailable. */
+function AnnualIncomeStatement({ co, API, fallback }) {
+  const [data, setData] = useState(undefined);
+  useEffect(() => {
+    if (!API || !co.ticker) { setData(null); return; }
+    setData(undefined);
+    fetch(`${API}/api/companies/${co.ticker}/annual_pl`)
+      .then(r => r.json()).then(setData).catch(() => setData(null));
+  }, [co.ticker, API]);
 
-  return (
-    <Card noPad style={{ overflow:"hidden" }}>
-      <div style={{ padding:"16px 20px 8px", display:"flex", alignItems:"baseline", justifyContent:"space-between" }}>
-        <div>
-          <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.18em", color:C.dim }}>QUARTERLY RESULTS · LAST {Q.length} QUARTERS</div>
-          <div style={{ ...serif, fontSize:22, color:C.text, marginTop:2 }}>Income Statement</div>
-        </div>
-        <span style={{ ...sans, fontSize:10, textTransform:"uppercase", color:C.dim }}>₹ Crores</span>
-      </div>
-      <div style={{ overflowX:"auto" }}>
-        <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13, minWidth:520 }}>
-          <thead>
-            <tr style={{ borderTop:`1px solid ${C.line}`, borderBottom:`1px solid ${C.line}` }}>
-              <th style={{ ...sans, textAlign:"left", padding:"8px 20px", fontSize:10, textTransform:"uppercase", color:C.dim, fontWeight:500 }} />
-              {Q.map((q, i) => (
-                <th key={i} style={{ ...sans, textAlign:"right", padding:"8px", paddingRight:i===Q.length-1?"20px":"8px", fontSize:10, color:i===Q.length-1?C.gold:C.dim, fontWeight:500, whiteSpace:"nowrap" }}>{qLabel(q)}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {ROWS.map(([label, key, kind, bold], i) => (
-              <tr key={i} style={{ borderBottom:`1px solid ${C.line}`, background:bold?"rgba(58,53,40,0.3)":"transparent" }}>
-                <td style={{ ...sans, padding:"10px 20px", color:bold?C.text:C.text200, fontWeight:bold?500:400 }}>{label}</td>
-                {Q.map((q, j) => (
-                  <td key={j} style={{ ...mono, textAlign:"right", padding:"10px 8px", paddingRight:j===Q.length-1?"20px":"8px", fontSize:12, color:j===Q.length-1?"#d4b96a":bold?C.text:C.text200 }}>
-                    {cell(m[key]?.[j], kind)}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </Card>
-  );
+  if (data === undefined) return <div style={{ ...sans, color:C.dim, fontSize:13, padding:24 }}>Loading income statement…</div>;
+  if (!data?.has_data || !(data.periods || []).length) return fallback || null;
+  return <ScreenerIncomeTable accent={`ANNUAL RESULTS · LAST ${data.periods.length} YEARS`}
+                              periods={data.periods} metrics={data.metrics} kind="annual" />;
 }
 
 function FinancialsTab({ co, cd, liveFinancials, API }) {
@@ -886,7 +911,9 @@ function FinancialsTab({ co, cd, liveFinancials, API }) {
               Live statements — <span style={{ color:C.green, fontWeight:500 }}>{years.length} fiscal year{years.length>1?"s":""}</span> from IndianAPI. ₹ in crores.
             </div>
           </div>
-          <LiveStatementTable title="Income Statement" accent={isF?"P&L · NBFC TEMPLATE":"P&L · ₹ CR"} statements={statements} years={years} stmtKey="PL" order={plOrder} />
+          <AnnualIncomeStatement co={co} API={API} fallback={
+            <LiveStatementTable title="Income Statement" accent={isF?"P&L · NBFC TEMPLATE":"P&L · ₹ CR"} statements={statements} years={years} stmtKey="PL" order={plOrder} />
+          } />
           <LiveStatementTable title="Balance Sheet"    accent="BALANCE SHEET · YEAR-END"          statements={statements} years={years} stmtKey="BS" order={BS_ORDER} />
           <LiveStatementTable title="Cash Flow"        accent="CASH FLOW STATEMENT"               statements={statements} years={years} stmtKey="CF" order={CF_ORDER} />
         </div>
