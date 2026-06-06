@@ -793,55 +793,61 @@ function LiveStatementTable({ title, accent, statements, years, stmtKey, order }
   );
 }
 
-/* Quarterly results — latest declared quarter + TTM, from IndianAPI (latest_q
-   captured during ingestion). Shown via the Annual/Quarterly toggle below. */
+/* Quarterly results — last 5 quarters from IndianAPI /quarterly
+   (shape: {quarters:[...newest-last], metrics:{Sales:[...], ...}}). */
 function QuarterlyResults({ co, API }) {
-  const [q, setQ] = useState(null);
+  const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     if (!API || !co.ticker) { setLoading(false); return; }
     setLoading(true);
-    fetch(`${API}/api/companies/${co.ticker}/insights`)
-      .then(r => r.json()).then(d => setQ(d?.latest_q || null)).catch(() => setQ(null))
+    fetch(`${API}/api/companies/${co.ticker}/quarterly`)
+      .then(r => r.json()).then(setData).catch(() => setData(null))
       .finally(() => setLoading(false));
   }, [co.ticker, API]);
 
   if (loading) return <div style={{ ...sans, color:C.dim, fontSize:13, textAlign:"center", padding:40 }}>Loading quarterly results…</div>;
-  if (!q?.quarter) return (
+  if (!data?.has_data || !(data.quarters || []).length) return (
     <Card><div style={{ ...sans, color:C.dim, fontSize:13, textAlign:"center", padding:40, lineHeight:1.7 }}>
-      Quarterly results not available yet for <b style={{ color:C.text }}>{co.ticker}</b>.<br/>
-      They populate automatically as IndianAPI publishes each quarter.
+      Quarterly results not available yet for <b style={{ color:C.text }}>{co.ticker}</b>.
     </div></Card>
   );
 
+  const Q = data.quarters;
+  const m = data.metrics || {};
   const ROWS = [
-    ["Sales", "sales", "cr"], ["Expenses", "expenses", "cr"],
-    ["Operating Profit", "operating_profit", "cr", true], ["OPM", "opm", "pct"],
-    ["Other Income", "other_income", "cr"], ["Interest", "interest", "cr"],
-    ["Depreciation", "depreciation", "cr"], ["Profit Before Tax", "profit_before_tax", "cr", true],
-    ["Tax", "tax_percentage", "pct"], ["Net Profit", "net_profit", "cr", true],
-    ["EPS (₹)", "eps", "rs"],
+    ["Sales", "Sales", "cr", true],
+    ["Expenses", "Expenses", "cr"],
+    ["Operating Profit", "Operating Profit", "cr", true],
+    ["OPM %", "OPM %", "pct"],
+    ["Other Income", "Other Income", "cr"],
+    ["Interest", "Interest", "cr"],
+    ["Depreciation", "Depreciation", "cr"],
+    ["Profit Before Tax", "Profit before tax", "cr", true],
+    ["Tax %", "Tax %", "pct"],
+    ["Net Profit", "Net Profit", "cr", true],
+    ["EPS (₹)", "EPS in Rs", "rs"],
   ];
   const cell = (v, kind) =>
-    v == null ? "—" : kind === "pct" ? v.toFixed(0)+"%" : kind === "rs" ? "₹"+fmtN(v,2) : fmtN(v,0);
-  const cols = [["Latest Quarter", q.quarter], ["Trailing 12M", q.ttm]];
+    v == null ? "—" : kind === "pct" ? Number(v).toFixed(0)+"%" : kind === "rs" ? "₹"+fmtN(v,2) : fmtN(v,0);
+  const qLabel = q => { const p = String(q).split(" "); return p[0] + " '" + (p[1] || "").slice(-2); };
 
   return (
     <Card noPad style={{ overflow:"hidden" }}>
       <div style={{ padding:"16px 20px 8px", display:"flex", alignItems:"baseline", justifyContent:"space-between" }}>
         <div>
-          <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.18em", color:C.dim }}>QUARTERLY RESULTS · LATEST DECLARED</div>
+          <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.18em", color:C.dim }}>QUARTERLY RESULTS · LAST {Q.length} QUARTERS</div>
           <div style={{ ...serif, fontSize:22, color:C.text, marginTop:2 }}>Income Statement</div>
         </div>
         <span style={{ ...sans, fontSize:10, textTransform:"uppercase", color:C.dim }}>₹ Crores</span>
       </div>
       <div style={{ overflowX:"auto" }}>
-        <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
+        <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13, minWidth:520 }}>
           <thead>
             <tr style={{ borderTop:`1px solid ${C.line}`, borderBottom:`1px solid ${C.line}` }}>
               <th style={{ ...sans, textAlign:"left", padding:"8px 20px", fontSize:10, textTransform:"uppercase", color:C.dim, fontWeight:500 }} />
-              {cols.map(([label], i) => (
-                <th key={i} style={{ ...sans, textAlign:"right", padding:"8px", paddingRight:i===cols.length-1?"20px":"8px", fontSize:10, color:i===0?C.gold:C.dim, fontWeight:500 }}>{label}</th>
+              {Q.map((q, i) => (
+                <th key={i} style={{ ...sans, textAlign:"right", padding:"8px", paddingRight:i===Q.length-1?"20px":"8px", fontSize:10, color:i===Q.length-1?C.gold:C.dim, fontWeight:500, whiteSpace:"nowrap" }}>{qLabel(q)}</th>
               ))}
             </tr>
           </thead>
@@ -849,9 +855,9 @@ function QuarterlyResults({ co, API }) {
             {ROWS.map(([label, key, kind, bold], i) => (
               <tr key={i} style={{ borderBottom:`1px solid ${C.line}`, background:bold?"rgba(58,53,40,0.3)":"transparent" }}>
                 <td style={{ ...sans, padding:"10px 20px", color:bold?C.text:C.text200, fontWeight:bold?500:400 }}>{label}</td>
-                {cols.map(([, data], j) => (
-                  <td key={j} style={{ ...mono, textAlign:"right", padding:"10px 8px", paddingRight:j===cols.length-1?"20px":"8px", fontSize:12, color:j===0?"#d4b96a":bold?C.text:C.text200 }}>
-                    {cell(data?.[key], kind)}
+                {Q.map((q, j) => (
+                  <td key={j} style={{ ...mono, textAlign:"right", padding:"10px 8px", paddingRight:j===Q.length-1?"20px":"8px", fontSize:12, color:j===Q.length-1?"#d4b96a":bold?C.text:C.text200 }}>
+                    {cell(m[key]?.[j], kind)}
                   </td>
                 ))}
               </tr>
