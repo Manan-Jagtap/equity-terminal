@@ -495,17 +495,10 @@ function DocsCard({ profile }) {
   );
 }
 
-function OverviewTab({ co, rec, cd, priceData, API }) {
+function OverviewTab({ co, rec, cd, priceData, profile }) {
   const isMobile = useIsMobile();
   const f = rec.f;
   const t = rec.t;
-  const [profile, setProfile] = useState(null);
-  useEffect(() => {
-    if (!API || !co.ticker) return;
-    setProfile(null);
-    fetch(`${API}/api/companies/${co.ticker}/profile`)
-      .then(r => r.json()).then(setProfile).catch(() => setProfile(null));
-  }, [co.ticker, API]);
   const histPAT = cd?.pnl?.years?.slice(0, 5).map((y, i) => ({
     y,
     pat: cd.pnl.rows.find(r => r.metric === "PAT (Reported)")?.v[i],
@@ -1767,6 +1760,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
   const [tab, setTab] = useState("overview");
   const [liveFinancials, setLiveFinancials] = useState(null);
   const [liveMetrics,    setLiveMetrics]    = useState(null);
+  const [liveProfile,    setLiveProfile]    = useState(null);
 
   const hasRealPrices = (histPrices?.data?.length || 0) > 10;
   const co2 = useMemo(
@@ -1790,7 +1784,25 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
       fetch(`${API}/api/companies/${co.ticker}/financials`).then(r=>r.json()).catch(()=>null),
       fetch(`${API}/api/companies/${co.ticker}/metrics`).then(r=>r.json()).catch(()=>null),
     ]).then(([fins, mets]) => { setLiveFinancials(fins); setLiveMetrics(mets); });
+    // Profile (slow: 5 chained calls) fetched separately so it doesn't block the rest.
+    setLiveProfile(null);
+    fetch(`${API}/api/companies/${co.ticker}/profile`)
+      .then(r=>r.json()).then(setLiveProfile).catch(()=>setLiveProfile(null));
   }, [co.ticker, API]);
+
+  // Real ROA (PAT / total assets, latest year) + promoter holding for the snapshot.
+  const roaLive = useMemo(() => {
+    const st = liveFinancials?.statements;
+    if (!st) return null;
+    const yrs = Object.keys(st).sort();
+    const ly = st[yrs[yrs.length - 1]] || {};
+    const pat = ly.PL?.pat, ta = ly.BS?.total_assets;
+    return (pat != null && ta) ? pat / ta : null;
+  }, [liveFinancials]);
+  const promoterLive = useMemo(() => {
+    const p = (liveProfile?.shareholding || []).find(s => (s.name || "").toLowerCase().includes("promoter"));
+    return p?.pct ?? null;
+  }, [liveProfile]);
 
   // Price chart data — fetch real OHLCV with dates from API
   const priceChartData = useMemo(() => {
@@ -1950,9 +1962,9 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
             { l:"P / E (TTM)",      v:multiple(rec.f.pe, 2)         },
             { l:"P / B",            v:multiple(rec.f.pb, 2)         },
             { l:"ROE",              v:rec.f.roe!=null?fmtPa(rec.f.roe*100):"—", accent:C.green },
-            { l:"ROA",              v:co.nbfc?.roa!=null?fmtPa(co.nbfc.roa*100):"—" },
+            { l:"ROA",              v:roaLive!=null?fmtPa(roaLive*100):(co.nbfc?.roa!=null?fmtPa(co.nbfc.roa*100):"—") },
             { l:"NIM",              v:co.nbfc?.nim!=null?fmtPa(co.nbfc.nim*100):"—" },
-            { l:"Promoter Hold",    v:mktData.promoterPct!=null?fmtPa(mktData.promoterPct):"—", accent:C.gold },
+            { l:"Promoter Hold",    v:promoterLive!=null?fmtPa(promoterLive):(mktData.promoterPct!=null?fmtPa(mktData.promoterPct):"—"), accent:C.gold },
             { l:"Intrinsic Value",  v:inrOrDash(rec.iv,0), accent:C.gold },
             { l:"Margin of Safety", v:signedPct(mos), accent:mos==null?C.dim:mos>=0?C.green:C.red },
             { l:"Verdict",          v:verdictLabel, accent:verdictColor, large:true },
@@ -1985,7 +1997,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
 
       {/* ── Tab content ───────────────────────────────────────── */}
       <main>
-        {tab==="overview"   && <OverviewTab    co={co2} rec={rec} cd={cd} priceData={priceChartWithSMA} API={API} />}
+        {tab==="overview"   && <OverviewTab    co={co2} rec={rec} cd={cd} priceData={priceChartWithSMA} profile={liveProfile} />}
         {tab==="financials" && <FinancialsTab  co={co2} cd={cd} liveFinancials={liveFinancials} API={API} />}
         {tab==="ratios"     && <RatiosTab      co={co2} cd={cd} liveMetrics={liveMetrics} />}
         {tab==="dcf"        && <DCFModel       co={co2} a={assumptions} set={set} price={price} setPrice={setPrice} />}
