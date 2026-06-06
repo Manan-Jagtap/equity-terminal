@@ -19,6 +19,7 @@ import {
 import { Info } from "lucide-react";
 
 import { C, mono, sans, serif } from "../lib/theme.js";
+import { useIsMobile } from "../lib/useResponsive.js";
 import { fmt, inr, pct, cr } from "../lib/formatters.js";
 import {
   RF, ERP, DEFAULT_TAX, MAX_G,
@@ -99,6 +100,7 @@ const SCENARIOS = {
 
 /* ── Main component ─────────────────────────────────────────────── */
 export default function DCFModel({ co, a, set, price, setPrice }) {
+  const isMobile = useIsMobile();
   const isF = co.type === "financial" || ["NBFC","BANK","INSURANCE"].includes(co.template_code);
   const template = co.template_code || (isF ? "NBFC" : "MANUFACTURING");
 
@@ -204,7 +206,7 @@ export default function DCFModel({ co, a, set, price, setPrice }) {
   const fmtN  = (v, d=0) => v == null || !isFinite(v) ? "—" : Number(v).toLocaleString("en-IN", { maximumFractionDigits:d });
 
   return (
-    <div className="fadein" style={{ padding:32 }}>
+    <div className="fadein" style={{ padding: isMobile ? 16 : 32 }}>
       {/* Scenario selector */}
       <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:12, marginBottom:28 }}>
         {Object.entries(SCENARIOS).map(([id, s]) => (
@@ -222,7 +224,7 @@ export default function DCFModel({ co, a, set, price, setPrice }) {
         ))}
       </div>
 
-      <div style={{ display:"grid", gridTemplateColumns:"300px 1fr", gap:24 }}>
+      <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "300px 1fr", gap:24 }}>
         {/* ── LEFT PANEL ──────────────────────────────────────── */}
         <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
 
@@ -333,7 +335,7 @@ export default function DCFModel({ co, a, set, price, setPrice }) {
               backgroundSize:"56px 56px", opacity:0.5,
             }} />
             <div style={{ position:"relative" }}>
-              <div style={{ display:"grid", gridTemplateColumns:"1fr auto", gap:24, alignItems:"start", marginBottom:16 }}>
+              <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr auto", gap:24, alignItems:"start", marginBottom:16 }}>
                 <div>
                   <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.18em", color:"#857d65" }}>Blended Intrinsic Value · {scenario.toUpperCase()}</div>
                   <div style={{ ...serif, fontSize:72, color:C.text, lineHeight:1, letterSpacing:"-0.02em", marginTop:6 }}>₹{fmtN(iv)}</div>

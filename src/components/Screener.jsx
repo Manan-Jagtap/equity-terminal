@@ -100,8 +100,8 @@ export default function Screener({ companies, onOpen, loading }) {
         </div>
       </div>
 
-      <div style={{ border: `1px solid ${C.line}`, borderRadius: 10, overflow: "hidden", background: C.panel }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <div style={{ border: `1px solid ${C.line}`, borderRadius: 10, overflowX: "auto", background: C.panel }}>
+        <table style={{ width: "100%", minWidth: 720, borderCollapse: "collapse" }}>
           <thead style={{ background: C.panel2, borderBottom: `1px solid ${C.line}` }}>
             <tr>
               <th

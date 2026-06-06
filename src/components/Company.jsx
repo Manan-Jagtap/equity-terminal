@@ -20,6 +20,7 @@ import { fmt, inr, pct, cr, multiple, inrOrDash, signedPct } from "../lib/format
 import { recommend } from "../lib/recommend.js";
 import { fundamentals, isFinancial } from "../lib/valuation.js";
 import { technicals } from "../lib/technicals.js";
+import { useIsMobile } from "../lib/useResponsive.js";
 import DCFModel from "./DCFModel.jsx";
 
 /* Verdict → colour tone (single mapping, used in header + snapshot). */
@@ -369,6 +370,7 @@ function FinTable({ title, accent, rows, years }) {
 
 /* ── Overview Tab ─────────────────────────────────────────────────── */
 function OverviewTab({ co, rec, cd, priceData }) {
+  const isMobile = useIsMobile();
   const f = rec.f;
   const t = rec.t;
   const histPAT = cd?.pnl?.years?.slice(0, 5).map((y, i) => ({
@@ -383,7 +385,7 @@ function OverviewTab({ co, rec, cd, priceData }) {
     : chartData;
 
   return (
-    <div className="fadein" style={{ padding:"32px", display:"grid", gridTemplateColumns:"1fr 380px", gap:24 }}>
+    <div className="fadein" style={{ padding: isMobile ? 16 : 32, display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 380px", gap:24 }}>
       {/* LEFT */}
       <div style={{ display:"flex", flexDirection:"column", gap:24 }}>
         <Card>
@@ -734,6 +736,7 @@ function LiveMetricCard({ cat }) {
 }
 
 function RatiosTab({ co, cd, liveMetrics }) {
+  const isMobile = useIsMobile();
   // 1) Prefer live computed metrics (the 80+ ratio registry).
   const liveCats = (liveMetrics?.categories || []).filter(c => c.metrics.some(m => m.value != null));
   if (liveCats.length) {
@@ -745,7 +748,7 @@ function RatiosTab({ co, cd, liveMetrics }) {
             <span style={{ color:C.green, fontWeight:500 }}>{liveMetrics.populated_metrics}</span> of {liveMetrics.total_metrics} ratios computed live from ingested financials. Green = healthy, red = watch.
           </div>
         </div>
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20, alignItems:"start" }}>
+        <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap:20, alignItems:"start" }}>
           {liveCats.map(cat => <LiveMetricCard key={cat.name} cat={cat} />)}
         </div>
       </div>
@@ -1474,6 +1477,8 @@ function VerdictTab({ co, rec, cd, price }) {
 
 /* ── Main Company component ──────────────────────────────────────── */
 export default function Company({ co, assumptions, setAssumptions, price, setPrice, onBack, API, allCompanies, histPrices }) {
+  const isMobile = useIsMobile();
+  const PAD = isMobile ? 16 : 32;
   const [tab, setTab] = useState("overview");
   const [liveFinancials, setLiveFinancials] = useState(null);
   const [liveMetrics,    setLiveMetrics]    = useState(null);
@@ -1576,7 +1581,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
       <header style={{ borderBottom:`1px solid ${C.line}`, background:`linear-gradient(180deg,${C.bg900},${C.bg})`, position:"relative", ...gridBg }}>
         <div style={{ position:"absolute", inset:0, opacity:0.5, pointerEvents:"none",
           backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.85 0 0 0 0 0.78 0 0 0 0 0.55 0 0 0 0.025 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }} />
-        <div style={{ position:"relative", padding:"24px 32px 28px" }}>
+        <div style={{ position:"relative", padding: isMobile ? "16px 16px 20px" : "24px 32px 28px" }}>
           {/* Top bar */}
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:24 }}>
             <div style={{ display:"flex", alignItems:"center", gap:12 }}>
@@ -1616,9 +1621,9 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
           </div>
 
           {/* Company name + price block */}
-          <div style={{ display:"grid", gridTemplateColumns:"1fr auto", gap:32, alignItems:"flex-end" }}>
+          <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr auto", gap: isMobile ? 16 : 32, alignItems: isMobile ? "stretch" : "flex-end" }}>
             <div>
-              <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8, ...sans, fontSize:11, letterSpacing:"0.16em", textTransform:"uppercase", color:C.dim }}>
+              <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8, flexWrap:"wrap", ...sans, fontSize:11, letterSpacing:"0.16em", textTransform:"uppercase", color:C.dim }}>
                 <span>NSE: {co.ticker}</span>
                 <span style={{ color:C.bg500 }}>·</span>
                 <span>BSE: {cd?.meta?.bse || "—"}</span>
@@ -1627,15 +1632,15 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
                 <span style={{ color:C.bg500 }}>·</span>
                 <span style={{ color:C.gold }}>{mktData.sebiCap || "Large Cap"}</span>
               </div>
-              <div style={{ ...serif, fontSize:60, color:C.text, lineHeight:1, letterSpacing:"-0.02em" }}>{co.name}</div>
+              <div style={{ ...serif, fontSize: isMobile ? 34 : 60, color:C.text, lineHeight:1.05, letterSpacing:"-0.02em" }}>{co.name}</div>
               <div style={{ ...sans, fontSize:13, color:C.text200, marginTop:12, maxWidth:680, lineHeight:1.6 }}>
                 {cd?.description || `${co.name} operates in the ${co.sector} sector. Data is being populated.`}
               </div>
             </div>
-            <div style={{ textAlign:"right" }}>
+            <div style={{ textAlign: isMobile ? "left" : "right" }}>
               <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.18em", color:C.dim }}>Last Price</div>
-              <div style={{ display:"flex", alignItems:"baseline", gap:16, marginTop:4 }}>
-                <div style={{ ...mono, fontSize:56, color:C.text, lineHeight:1, letterSpacing:"-0.02em" }}>{fmtPx(displayPrice)}</div>
+              <div style={{ display:"flex", alignItems:"baseline", gap:16, marginTop:4, justifyContent: isMobile ? "flex-start" : "flex-start" }}>
+                <div style={{ ...mono, fontSize: isMobile ? 40 : 56, color:C.text, lineHeight:1, letterSpacing:"-0.02em" }}>{fmtPx(displayPrice)}</div>
                 <div style={{ ...mono, fontSize:14, fontWeight:500, color:chgPct>=0?C.green:C.red }}>
                   {chgPct>=0?"+":""}{fmtN(chgAmt,2)}  /  {chgPct>=0?"+":""}{fmtN(chgPct,2)}%
                 </div>
@@ -1653,7 +1658,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
 
       {/* ── Snapshot strip ─────────────────────────────────────── */}
       <div style={{ borderBottom:`1px solid ${C.line}`, background:C.bg900+"55" }}>
-        <div style={{ padding:"14px 32px", display:"grid", gridTemplateColumns:"repeat(11,1fr)", gap:8 }}>
+        <div style={{ padding:`14px ${PAD}px`, display:"grid", gridTemplateColumns: isMobile ? "repeat(3,1fr)" : "repeat(11,1fr)", gap: isMobile ? 14 : 8, rowGap: isMobile ? 16 : 8 }}>
           {[
             { l:"Market Cap",       v:"₹"+fmtCr(mcap)               },
             { l:"Enterprise Value", v:mktData.evCr ? "₹"+fmtCr(mktData.evCr) : "—" },
@@ -1676,8 +1681,8 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
       </div>
 
       {/* ── Tab navigation ─────────────────────────────────────── */}
-      <nav style={{ borderBottom:`1px solid ${C.line}`, background:C.bg+"dd", backdropFilter:"blur(8px)", position:"sticky", top:0, zIndex:30, padding:"0 32px" }}>
-        <div style={{ display:"flex", gap:28 }}>
+      <nav style={{ borderBottom:`1px solid ${C.line}`, background:C.bg+"dd", backdropFilter:"blur(8px)", position:"sticky", top:0, zIndex:30, padding:`0 ${PAD}px`, overflowX:"auto" }}>
+        <div style={{ display:"flex", gap: isMobile ? 18 : 28, whiteSpace:"nowrap" }}>
           {TABS.map(({ id, icon:Icon, label }) => (
             <button key={id} onClick={() => setTab(id)} style={{
               ...sans, position:"relative", display:"flex", alignItems:"center", gap:8,
