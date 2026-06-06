@@ -166,7 +166,21 @@ export default function AnalystTab({ co, API, price }) {
           {data.forward_pe ? (
             <>
               <div style={{ ...serif, fontSize: 34, lineHeight: 1, color: C.text }}>{multiple(data.forward_pe)}</div>
-              {data.forward_eps && <div style={{ ...sans, fontSize: 11, color: C.dim, marginTop: 8 }}>on est. EPS {inr(data.forward_eps, 1)}</div>}
+              {data.forward_eps && (
+                <div style={{ ...sans, fontSize: 11, color: C.dim, marginTop: 6 }}>
+                  on FY{String(data.forward_eps_year ?? "").slice(-2)} est. EPS {inr(data.forward_eps, 1)}
+                </div>
+              )}
+              {data.eps_estimates?.length > 0 && (
+                <div style={{ display: "flex", gap: 14, marginTop: 12, flexWrap: "wrap" }}>
+                  {data.eps_estimates.slice(0, 3).map((e, i) => (
+                    <div key={i}>
+                      <div style={{ ...sans, fontSize: 10, color: C.dim, textTransform: "uppercase", letterSpacing: "0.05em" }}>FY{String(e.year).slice(-2)}E</div>
+                      <div style={{ ...mono, fontSize: 13, color: C.text200 }}>{inr(e.mean, 0)}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </>
           ) : <Empty>Awaiting forward estimates.</Empty>}
         </div>
