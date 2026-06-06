@@ -136,6 +136,83 @@ const COMPANY_DATA = {
       { name:"Chola Inv.",     tkr:"CHOLAFIN",    mcap:135000, pe:28.3, pb:5.4, roe:21.0, roa:2.7, nim:7.5,  aumGr:33.5, gnpa:3.0, crar:18.5, divY:0.18, beta:1.15, target:1820 },
     ],
   },
+
+  /* ── RELIANCE INDUSTRIES — conglomerate (researched, FY25) ───────────────── */
+  RELIANCE: {
+    description: "India's largest company by revenue and market value — a conglomerate spanning Oil-to-Chemicals (O2C), Reliance Jio (digital & telecom), Reliance Retail, oil & gas exploration, and an emerging New Energy (solar / battery / green hydrogen) business. FY25 consolidated revenue crossed ₹10.7 lakh crore, and the consumer-facing arms (Jio + Retail) now contribute over half of consolidated EBITDA — shifting the profit engine from cyclical energy to consumer.",
+    keyFacts: [
+      ["Headquarters", "Mumbai, Maharashtra"],
+      ["Founded", "1966 · Listed 1977"],
+      ["Chairman & MD", "Mukesh D. Ambani"],
+      ["Employees", "~3.9 lakh"],
+      ["Core Businesses", "Jio · Retail · O2C · Oil & Gas · New Energy"],
+      ["Jio Subscribers", "~488 million"],
+      ["Retail Footprint", "~19,000 stores"],
+      ["Auditors", "S R B C & CO LLP · Chaturvedi & Shah"],
+    ],
+    segmentsAccent: "FY25 · SEGMENT REVENUE (≈)",
+    segmentCols: ["Segment", "Revenue (₹ Cr)", "Mix", "YoY Growth", "EBITDA Margin"],
+    segments: [
+      { name:"Oil-to-Chemicals (O2C)", vals:["~5,80,000", "51%", "+3%", "~11%"] },
+      { name:"Reliance Retail",        vals:["~3,30,000", "27%", "+16%", "~8%"] },
+      { name:"Jio / Digital Services", vals:["~1,55,000", "14%", "+18%", "~42%"] },
+      { name:"Oil & Gas (E&P)",        vals:["~24,000", "2%", "−2%", "~63%"] },
+      { name:"Others / New Energy",    vals:["~70,000", "6%", "—", "—"] },
+    ],
+    guidance: {
+      "New Energy ramp":  "Giga-factories (solar, battery, green H₂) scaling FY26–27",
+      "Retail":           "Store expansion + JioMart / quick-commerce push",
+      "Jio":              "Tariff hikes + 5G & home broadband (FWA) monetisation",
+      "O2C":              "Feedstock shift toward chemicals; capacity expansion",
+      "Balance sheet":    "Net debt broadly stable as capex moderates",
+    },
+    concallThemes: [
+      { h:"Consumer is the engine", t:"Jio + Retail now >50% of consolidated EBITDA; O2C remains cyclical." },
+      { h:"Jio ARPU uptick",        t:"Tariff hikes and 5G / FWA broadband driving digital EBITDA growth." },
+      { h:"Retail re-accelerating", t:"Footprint rationalised; growth picking up on grocery + fashion + quick-commerce." },
+      { h:"New Energy optionality", t:"Solar gigafactory and green hydrogen are the multi-year call option." },
+      { h:"O2C margin pressure",    t:"Weak transport-fuel cracks and chemical deltas compressed O2C margins." },
+    ],
+  },
+
+  /* ── TATA CONSULTANCY SERVICES — IT services (researched, FY26) ──────────── */
+  TCS: {
+    description: "India's largest IT services company and the flagship of the Tata Group. TCS delivers consulting, application development, cloud, AI and BPO services to global enterprises, with deep strength in Banking, Financial Services & Insurance (BFSI) and a North-America-led footprint. FY26 full-year order book (TCV) of ~$40.7 billion; one of the most profitable large-cap IT firms with operating margins in the mid-20s%.",
+    keyFacts: [
+      ["Headquarters", "Mumbai, Maharashtra"],
+      ["Founded", "1968 · Listed 2004"],
+      ["CEO & MD", "K. Krithivasan"],
+      ["Employees", "~5.85 lakh"],
+      ["Parent", "Tata Sons (~72%)"],
+      ["FY26 Order Book (TCV)", "~$40.7 billion"],
+      ["Operating Margin", "~26% (4-yr high)"],
+      ["Auditors", "B S R & Co. LLP"],
+    ],
+    segmentsAccent: "REVENUE BY VERTICAL (≈)",
+    segmentCols: ["Vertical", "Mix of Revenue", "Trend"],
+    segments: [
+      { name:"BFSI (Banking, Fin. Svcs, Insurance)", vals:["~32%", "Largest · stabilising"] },
+      { name:"Consumer Business / Retail",           vals:["~16%", "Steady"] },
+      { name:"Communication, Media & Tech",          vals:["~14%", "Soft"] },
+      { name:"Life Sciences & Healthcare",           vals:["~11%", "Resilient"] },
+      { name:"Manufacturing",                        vals:["~10%", "Growing"] },
+      { name:"Energy, Utilities & Public Services",  vals:["~17%", "Mixed"] },
+    ],
+    guidance: {
+      "Demand":        "Discretionary spend cautious; cost-takeout & AI deals strong",
+      "AI / GenAI":    "Scaling AI.Cloud unit; GenAI pipeline moving to production",
+      "Margins":       "Aspirational band ~26–28% via utilisation + pyramid",
+      "Geography":     "North America ~49% of revenue; UK & Europe steady",
+      "Capital return":"High payout via dividends + periodic buybacks",
+    },
+    concallThemes: [
+      { h:"TCV resilient",         t:"Full-year order book ~$40bn shows demand despite a cautious macro." },
+      { h:"BFSI stabilising",      t:"Largest vertical (~32%); North-America BFSI showing early recovery." },
+      { h:"AI at scale",           t:"GenAI moving from pilots to production; AI.Cloud unit expanding." },
+      { h:"Margins near 4-yr high",t:"Utilisation and pyramid lifted operating margin to multi-year highs." },
+      { h:"Attrition normalised",  t:"LTM attrition back to a comfortable low-teens range." },
+    ],
+  },
 };
 
 const TABS = [
@@ -325,24 +402,35 @@ function OverviewTab({ co, rec, cd, priceData }) {
         {cd?.segments && (
           <Card noPad style={{ overflow:"hidden" }}>
             <div style={{ padding:"16px 20px 8px" }}>
-              <SectionLabel accent="FY26 CONSOLIDATED · ₹ CRORES">BUSINESS SEGMENTS</SectionLabel>
+              <SectionLabel accent={cd.segmentsAccent || "CONSOLIDATED"}>BUSINESS SEGMENTS</SectionLabel>
             </div>
             <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
               <thead>
                 <tr style={{ borderTop:`1px solid ${C.line}`, borderBottom:`1px solid ${C.line}` }}>
-                  {["Vertical","AUM (₹ Cr)","Mix","YoY Growth","Yield"].map((h, i) => (
-                    <th key={i} style={{ ...sans, textAlign:i===0?"left":"right", padding:"8px", paddingLeft:i===0?"20px":"8px", paddingRight:i===4?"20px":"8px", fontSize:10, textTransform:"uppercase", color:C.dim, fontWeight:500 }}>{h}</th>
+                  {(cd.segmentCols || ["Vertical","AUM (₹ Cr)","Mix","YoY Growth","Yield"]).map((h, i, arr) => (
+                    <th key={i} style={{ ...sans, textAlign:i===0?"left":"right", padding:"8px", paddingLeft:i===0?"20px":"8px", paddingRight:i===arr.length-1?"20px":"8px", fontSize:10, textTransform:"uppercase", color:C.dim, fontWeight:500 }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {cd.segments.map((s, i) => (
                   <tr key={i} style={{ borderBottom:`1px solid ${C.line}` }}>
-                    <td style={{ ...sans, padding:"10px 20px", color:C.text200 }}>{s.name}</td>
-                    <td style={{ ...mono, textAlign:"right", padding:"10px 8px", color:C.text }}>{fmtN(s.aum, 0)}</td>
-                    <td style={{ ...mono, textAlign:"right", padding:"10px 8px", color:C.text200 }}>{fmtPa(s.share)}</td>
-                    <td style={{ ...mono, textAlign:"right", padding:"10px 8px", color:s.growth>=0?C.green:C.red }}>{fmtP(s.growth)}</td>
-                    <td style={{ ...mono, textAlign:"right", padding:"10px 20px", color:C.gold }}>{fmtPa(s.yld)}</td>
+                    {cd.segmentCols ? (
+                      <>
+                        <td style={{ ...sans, padding:"10px 20px", color:C.text200 }}>{s.name}</td>
+                        {s.vals.map((v, j, arr) => (
+                          <td key={j} style={{ ...mono, textAlign:"right", padding:"10px 8px", paddingRight:j===arr.length-1?"20px":"8px", color:j===arr.length-1?C.gold:C.text }}>{v}</td>
+                        ))}
+                      </>
+                    ) : (
+                      <>
+                        <td style={{ ...sans, padding:"10px 20px", color:C.text200 }}>{s.name}</td>
+                        <td style={{ ...mono, textAlign:"right", padding:"10px 8px", color:C.text }}>{fmtN(s.aum, 0)}</td>
+                        <td style={{ ...mono, textAlign:"right", padding:"10px 8px", color:C.text200 }}>{fmtPa(s.share)}</td>
+                        <td style={{ ...mono, textAlign:"right", padding:"10px 8px", color:s.growth>=0?C.green:C.red }}>{fmtP(s.growth)}</td>
+                        <td style={{ ...mono, textAlign:"right", padding:"10px 20px", color:C.gold }}>{fmtPa(s.yld)}</td>
+                      </>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -425,10 +513,10 @@ function OverviewTab({ co, rec, cd, priceData }) {
           </div>
         </Card>
 
-        {cd?.meta && (
+        {(cd?.keyFacts || cd?.meta) && (
           <Card>
             <SectionLabel>KEY FACTS</SectionLabel>
-            {[
+            {(cd.keyFacts || [
               ["HQ", cd.meta.hq],
               ["Founded", cd.meta.founded],
               ["MD / CEO", cd.meta.md],
@@ -437,7 +525,7 @@ function OverviewTab({ co, rec, cd, priceData }) {
               ["Gold Collateral", cd.meta.collateral],
               ["Daily Footfall", cd.meta.footfall],
               ["Auditor", cd.meta.auditor],
-            ].map(([k, v]) => <KV key={k} label={k} value={v} />)}
+            ]).map(([k, v]) => v ? <KV key={k} label={k} value={v} /> : null)}
           </Card>
         )}
 
