@@ -22,6 +22,7 @@ import { fundamentals, isFinancial } from "../lib/valuation.js";
 import { technicals } from "../lib/technicals.js";
 import { useIsMobile } from "../lib/useResponsive.js";
 import DCFModel from "./DCFModel.jsx";
+import AnalystTab from "./AnalystTab.jsx";
 
 /* Verdict → colour tone (single mapping, used in header + snapshot). */
 function verdictTone(v) {
@@ -221,6 +222,7 @@ const TABS = [
   { id:"financials", icon:FileText,   label:"Financials"    },
   { id:"ratios",     icon:Activity,   label:"Ratios & KPIs" },
   { id:"dcf",        icon:Calculator, label:"DCF Model"     },
+  { id:"analyst",    icon:Sparkles,   label:"Analyst & Forward" },
   { id:"peers",      icon:Users,      label:"Peer Universe" },
   { id:"news",       icon:Newspaper,  label:"News"          },
   { id:"thesis",     icon:Brain,      label:"AI Thesis"     },
@@ -1704,6 +1706,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
         {tab==="financials" && <FinancialsTab  co={co2} cd={cd} liveFinancials={liveFinancials} />}
         {tab==="ratios"     && <RatiosTab      co={co2} cd={cd} liveMetrics={liveMetrics} />}
         {tab==="dcf"        && <DCFModel       co={co2} a={assumptions} set={set} price={price} setPrice={setPrice} />}
+        {tab==="analyst"    && <AnalystTab     co={co2} API={API} price={price} />}
         {tab==="peers"      && <PeersTab       co={co2} cd={cd} allCompanies={allCompanies} />}
         {tab==="news"       && <NewsTab        co={co2} API={API} />}
         {tab==="thesis"     && <AIThesisTab    co={co2} API={API} />}
