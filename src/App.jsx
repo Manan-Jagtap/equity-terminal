@@ -3,11 +3,12 @@
    historical price data (with dates) down to Company. */
 
 import { useEffect, useMemo, useState } from "react";
-import { TrendingUp } from "lucide-react";
+import { TrendingUp, LayoutDashboard, List } from "lucide-react";
 import { C, mono, sans, serif, gridBg } from "./lib/theme.js";
 import { SEED, buildFromApi } from "./lib/seedData.js";
 import Screener from "./components/Screener.jsx";
 import Company  from "./components/Company.jsx";
+import MarketDashboard from "./components/MarketDashboard.jsx";
 
 /* ── TEMPORARY: focus the terminal on the Nifty 50 only ──────────────────────
    While we make the Nifty 50 pages 100% accurate, everything else is hidden.
@@ -27,7 +28,7 @@ export default function App() {
 
   const [companies,   setCompanies]   = useState(SEED);
   const [loading,     setLoading]     = useState(false);
-  const [view,        setView]        = useState("screener");
+  const [view,        setView]        = useState("dashboard");
   const [selectedId,  setSelectedId]  = useState(null);
   const [assumptions, setAssumptions] = useState(null);
   const [price,       setPrice]       = useState(0);
@@ -89,6 +90,38 @@ export default function App() {
       `}</style>
 
       <div style={{ maxWidth: 1440, margin: "0 auto" }}>
+        {view !== "company" && (
+          <header style={{
+            display: "flex", alignItems: "center", gap: 22, flexWrap: "wrap",
+            padding: "16px 32px", borderBottom: `1px solid ${C.line}`,
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
+              <TrendingUp size={20} color={C.gold} strokeWidth={1.8} />
+              <span style={{ ...serif, fontSize: 22, color: C.text }}>Equity Terminal</span>
+            </div>
+            <nav style={{ display: "flex", gap: 4 }}>
+              {[
+                { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+                { id: "screener",  label: "Screener",  icon: List },
+              ].map(({ id, label, icon: Icon }) => (
+                <button key={id} onClick={() => setView(id)} style={{
+                  ...sans, display: "flex", alignItems: "center", gap: 7,
+                  padding: "7px 13px", borderRadius: 8, cursor: "pointer",
+                  fontSize: 13, fontWeight: 500,
+                  border: `1px solid ${view === id ? C.line2 : "transparent"}`,
+                  background: view === id ? C.bg800 : "transparent",
+                  color: view === id ? C.gold : C.dim,
+                }}>
+                  <Icon size={15} strokeWidth={1.6} />{label}
+                </button>
+              ))}
+            </nav>
+          </header>
+        )}
+
+        {view === "dashboard" && (
+          <MarketDashboard API={API} companies={companies} onOpen={open} />
+        )}
         {view === "screener" && (
           <Screener companies={companies} onOpen={open} loading={loading} />
         )}
@@ -99,7 +132,7 @@ export default function App() {
             setAssumptions={setAssumptions}
             price={price}
             setPrice={setPrice}
-            onBack={() => setView("screener")}
+            onBack={() => setView("dashboard")}
             API={API}
             allCompanies={companies}
             histPrices={histPrices}
