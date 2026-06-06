@@ -469,35 +469,44 @@ function OverviewTab({ co, rec, cd, priceData }) {
 /* ── Financials Tab ──────────────────────────────────────────────── */
 /* ── Live financial-statement rendering ───────────────────────────── */
 const FIN_LABELS = {
-  interest_income:"Interest Income", interest_expense:"Interest / Finance Cost",
-  nii:"Net Interest Income", other_income:"Other Income", total_income:"Total Income",
-  opex:"Operating Expenses", provisions:"Provisions", pbt:"Profit Before Tax",
-  tax:"Tax", pat:"PAT (Net Profit)", roe:"ROE", roa:"ROA", nim:"NIM",
-  cost_to_income:"Cost to Income", revenue:"Revenue", raw_material:"Raw Material Cost",
-  gross_profit:"Gross Profit", ebitda:"EBITDA", ebitda_margin:"EBITDA Margin",
-  depreciation:"Depreciation", ebit:"EBIT", ebit_margin:"EBIT Margin", pat_margin:"PAT Margin",
-  equity:"Equity Capital", reserves:"Reserves", total_equity:"Total Equity", net_worth:"Net Worth",
+  // P&L — labels read like a standard Indian income statement
+  revenue:"Sales / Revenue", raw_material:"Cost of Materials", total_expenses:"Total Expenses",
+  opex:"Operating Expenses", gross_profit:"Gross Profit", ebitda:"Operating Profit (EBITDA)",
+  other_income:"Other Income", depreciation:"Depreciation & Amortisation", ebit:"EBIT",
+  interest_expense:"Finance Cost (Interest)", pbt:"Profit Before Tax", tax:"Tax", pat:"Net Profit (PAT)",
+  total_income:"Total Income",
+  interest_income:"Interest Income", nii:"Net Interest Income", provisions:"Provisions & Write-offs",
+  // Balance sheet
+  equity:"Share Capital", reserves:"Reserves & Surplus", total_equity:"Total Equity", net_worth:"Net Worth",
   lt_debt:"Long-Term Debt", st_debt:"Short-Term Debt", borrowings:"Total Borrowings",
   total_debt:"Total Debt", total_liabilities:"Total Liabilities", fixed_assets:"Fixed Assets",
   investments:"Investments", cash:"Cash & Equivalents", total_assets:"Total Assets",
-  aum:"AUM", gnpa:"GNPA", nnpa:"NNPA", crar:"CRAR",
-  operating_cf:"Operating Cash Flow", investing_cf:"Investing Cash Flow",
-  financing_cf:"Financing Cash Flow", capex:"Capex", fcf:"Free Cash Flow",
+  aum:"AUM", gnpa:"Gross NPA", nnpa:"Net NPA", crar:"CRAR",
+  // Cash flow
+  operating_cf:"Cash from Operations", investing_cf:"Cash from Investing",
+  financing_cf:"Cash from Financing", capex:"Capital Expenditure", fcf:"Free Cash Flow",
   dividends:"Dividends Paid", net_change_cash:"Net Change in Cash",
 };
 const prettyFin = k => FIN_LABELS[k] || k.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
-const pctItem  = k => /margin|^roe$|^roa$|nim|crar|gnpa|nnpa|cost_to_income/i.test(k);
-const boldItem = k => /^(pat|nii|revenue|ebitda|total_income|net_worth|total_assets|fcf|operating_cf|gross_profit)$/i.test(k);
-const PL_ORDER_FIN    = ["interest_income","interest_expense","nii","other_income","total_income","opex","provisions","pbt","tax","pat","roe","roa","nim","cost_to_income"];
-const PL_ORDER_NONFIN = ["revenue","other_income","total_income","raw_material","gross_profit","ebitda","ebitda_margin","depreciation","ebit","ebit_margin","interest_expense","pbt","tax","pat","pat_margin"];
-const BS_ORDER = ["equity","reserves","total_equity","net_worth","lt_debt","st_debt","borrowings","total_debt","total_liabilities","fixed_assets","investments","cash","total_assets","aum","gnpa","nnpa","crar"];
-const CF_ORDER = ["pat","depreciation","operating_cf","investing_cf","financing_cf","capex","fcf","dividends","net_change_cash"];
+// Bold the subtotal lines, the way a real statement emphasises them.
+const boldItem = k => /^(total_income|gross_profit|ebitda|ebit|pbt|pat|nii|net_worth|total_equity|total_assets|fcf|operating_cf)$/i.test(k);
+// Canonical statement order. ONLY keys listed here are shown, in this order —
+// margin %s and unmapped junk are deliberately excluded (margins live in Ratios),
+// so every company renders a clean, conventionally-sequenced statement.
+const PL_ORDER_FIN    = ["interest_income","interest_expense","nii","other_income","total_income","opex","provisions","pbt","tax","pat"];
+const PL_ORDER_NONFIN = ["revenue","other_income","total_income","raw_material","gross_profit","opex","total_expenses","ebitda","depreciation","ebit","interest_expense","pbt","tax","pat"];
+const BS_ORDER = ["equity","reserves","net_worth","total_equity","st_debt","lt_debt","total_debt","borrowings","total_liabilities","fixed_assets","investments","cash","total_assets","aum","gnpa","nnpa","crar"];
+const CF_ORDER = ["operating_cf","capex","fcf","investing_cf","financing_cf","dividends","net_change_cash"];
 
 function LiveStatementTable({ title, accent, statements, years, stmtKey, order }) {
   const present = new Set();
   years.forEach(y => Object.keys(statements[y]?.[stmtKey] || {}).forEach(k => present.add(k)));
   if (!present.size) return null;
-  const items = [...order.filter(k => present.has(k)), ...[...present].filter(k => !order.includes(k))];
+  // Only canonical line items, in canonical order. Anything not in `order`
+  // (margin %s, stray yfinance keys) is intentionally excluded so the statement
+  // reads cleanly, like a real income statement / balance sheet.
+  const items = order.filter(k => present.has(k));
+  if (!items.length) return null;
   return (
     <Card noPad style={{ overflow:"hidden" }}>
       <div style={{ padding:"16px 20px 8px", display:"flex", alignItems:"baseline", justifyContent:"space-between" }}>
@@ -505,7 +514,7 @@ function LiveStatementTable({ title, accent, statements, years, stmtKey, order }
           <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.18em", color:C.dim }}>{accent}</div>
           <div style={{ ...serif, fontSize:22, color:C.text, marginTop:2 }}>{title}</div>
         </div>
-        <span style={{ ...sans, fontSize:10, textTransform:"uppercase", color:C.dim }}>₹ Crores · % where noted</span>
+        <span style={{ ...sans, fontSize:10, textTransform:"uppercase", color:C.dim }}>₹ Crores</span>
       </div>
       <div style={{ overflowX:"auto" }}>
         <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
@@ -519,7 +528,7 @@ function LiveStatementTable({ title, accent, statements, years, stmtKey, order }
           </thead>
           <tbody>
             {items.map((k, i) => {
-              const isPct = pctItem(k), bold = boldItem(k);
+              const bold = boldItem(k);
               return (
                 <tr key={i} style={{ borderBottom:`1px solid ${C.line}`, background:bold?"rgba(58,53,40,0.3)":"transparent" }}>
                   <td style={{ ...sans, padding:"10px 20px", color:bold?C.text:C.text200, fontWeight:bold?500:400 }}>{prettyFin(k)}</td>
@@ -527,7 +536,7 @@ function LiveStatementTable({ title, accent, statements, years, stmtKey, order }
                     const v = statements[y]?.[stmtKey]?.[k];
                     return (
                       <td key={j} style={{ ...mono, textAlign:"right", padding:"10px 8px", paddingRight:j===years.length-1?"20px":"8px", fontSize:12, color:j===years.length-1?"#d4b96a":bold?C.text:C.text200 }}>
-                        {v == null ? "—" : isPct ? (v*100).toFixed(1)+"%" : fmtN(v, 0)}
+                        {v == null ? "—" : fmtN(v, 0)}
                       </td>
                     );
                   })}
