@@ -802,8 +802,10 @@ const _fmtStmtVal = (v, name) => {
   if (v == null || v === "") return "—";
   const n = Number(v);
   if (isNaN(n)) return String(v);
-  if (String(name).includes("%")) return n.toFixed(0) + "%";
-  if (/\beps\b/i.test(name)) return "₹" + fmtN(n, 2);
+  const nm = String(name);
+  if (nm.includes("%") || /days$/i.test(nm)) return fmtN(n, nm.includes("%") ? 0 : 0) + (nm.includes("%") ? "%" : "");
+  if (/\beps\b/i.test(nm)) return "₹" + fmtN(n, 2);
+  if (nm.includes("/")) return n.toFixed(2);            // ratio lines, e.g. CFO/OP
   return fmtN(n, 0);
 };
 
@@ -893,6 +895,23 @@ function AnnualIncomeStatement({ co, API, fallback }) {
                               periods={data.periods} metrics={data.metrics} order={data.order} kind="annual" />;
 }
 
+/* Generic annual statement (Balance Sheet / Cash Flow) — original IndianAPI
+   line items via /balance_sheet or /cash_flow. Falls back to the legacy table. */
+function PeriodicStatement({ co, API, endpoint, title, accent, fallback }) {
+  const [data, setData] = useState(undefined);
+  useEffect(() => {
+    if (!API || !co.ticker) { setData(null); return; }
+    setData(undefined);
+    fetch(`${API}/api/companies/${co.ticker}/${endpoint}`)
+      .then(r => r.json()).then(setData).catch(() => setData(null));
+  }, [co.ticker, API, endpoint]);
+
+  if (data === undefined) return <div style={{ ...sans, color:C.dim, fontSize:13, padding:24 }}>Loading {title.toLowerCase()}…</div>;
+  if (!data?.has_data || !(data.periods || []).length) return fallback || null;
+  return <ScreenerIncomeTable title={title} accent={accent || `${title.toUpperCase()} · LAST ${data.periods.length} YEARS`}
+                              periods={data.periods} metrics={data.metrics} order={data.order} kind="annual" />;
+}
+
 function FinancialsTab({ co, cd, liveFinancials, API }) {
   const [view, setView] = useState("annual");
   const isF = co.type === "financial";
@@ -913,8 +932,12 @@ function FinancialsTab({ co, cd, liveFinancials, API }) {
           <AnnualIncomeStatement co={co} API={API} fallback={
             <LiveStatementTable title="Income Statement" accent={isF?"P&L · NBFC TEMPLATE":"P&L · ₹ CR"} statements={statements} years={years} stmtKey="PL" order={plOrder} />
           } />
-          <LiveStatementTable title="Balance Sheet"    accent="BALANCE SHEET · YEAR-END"          statements={statements} years={years} stmtKey="BS" order={BS_ORDER} />
-          <LiveStatementTable title="Cash Flow"        accent="CASH FLOW STATEMENT"               statements={statements} years={years} stmtKey="CF" order={CF_ORDER} />
+          <PeriodicStatement co={co} API={API} endpoint="balance_sheet" title="Balance Sheet" fallback={
+            <LiveStatementTable title="Balance Sheet" accent="BALANCE SHEET · YEAR-END" statements={statements} years={years} stmtKey="BS" order={BS_ORDER} />
+          } />
+          <PeriodicStatement co={co} API={API} endpoint="cash_flow" title="Cash Flow" fallback={
+            <LiveStatementTable title="Cash Flow" accent="CASH FLOW STATEMENT" statements={statements} years={years} stmtKey="CF" order={CF_ORDER} />
+          } />
         </div>
       );
     }
@@ -981,61 +1004,90 @@ function LiveMetricCard({ cat }) {
   );
 }
 
-function RatiosTab({ co, cd, liveMetrics }) {
+function RatiosTab({ co, API }) {
   const isMobile = useIsMobile();
-  // 1) Prefer live computed metrics (the 80+ ratio registry).
-  const liveCats = (liveMetrics?.categories || []).filter(c => c.metrics.some(m => m.value != null));
-  if (liveCats.length) {
-    return (
-      <div className="fadein" style={{ padding:"32px", display:"flex", flexDirection:"column", gap:24 }}>
-        <div style={{ display:"flex", alignItems:"flex-start", gap:12, padding:16, background:C.green+"0a", border:`1px solid ${C.green}33` }}>
-          <Check size={16} color={C.green} style={{ flexShrink:0, marginTop:2 }} />
-          <div style={{ ...sans, fontSize:13, color:C.text200, lineHeight:1.6 }}>
-            <span style={{ color:C.green, fontWeight:500 }}>{liveMetrics.populated_metrics}</span> of {liveMetrics.total_metrics} ratios computed live from ingested financials. Green = healthy, red = watch.
-          </div>
-        </div>
-        <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap:20, alignItems:"start" }}>
-          {liveCats.map(cat => <LiveMetricCard key={cat.name} cat={cat} />)}
-        </div>
-      </div>
-    );
-  }
+  const [ratios, setRatios] = useState(undefined);
+  const [insights, setInsights] = useState(null);
+  useEffect(() => {
+    if (!API || !co.ticker) { setRatios(null); return; }
+    setRatios(undefined);
+    fetch(`${API}/api/companies/${co.ticker}/ratios_live`).then(r => r.json()).then(setRatios).catch(() => setRatios(null));
+    fetch(`${API}/api/companies/${co.ticker}/insights`).then(r => r.json()).then(setInsights).catch(() => setInsights(null));
+  }, [co.ticker, API]);
 
-  // 2) Fall back to curated seed ratios.
-  const years = cd?.pnl?.years || ["FY22","FY23","FY24","FY25","FY26","FY27E"];
-  const r = cd?.ratios;
-  if (r) {
-    return (
-      <div className="fadein" style={{ padding:"32px", display:"flex", flexDirection:"column", gap:24 }}>
-        {r.nbfc && (
-          <div style={{ position:"relative" }}>
-            <div style={{ position:"absolute", inset:-1, background:`linear-gradient(135deg,${C.gold}33,transparent)`, pointerEvents:"none" }} />
-            <div style={{ position:"relative" }}>
-              <RatioTable title="NBFC-Specific KPIs" rows={r.nbfc} years={years} accentColor={C.gold} />
-            </div>
-          </div>
-        )}
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:24 }}>
-          {r.growth && <RatioTable title="Growth"         rows={r.growth}        years={years} />}
-          {r.profitability && <RatioTable title="Profitability"  rows={r.profitability} years={years} />}
-          {r.returns && <RatioTable title="Return Ratios"  rows={r.returns}       years={years} />}
-          {r.leverage && <RatioTable title="Leverage"       rows={r.leverage}      years={years} />}
-          {r.perShare && <RatioTable title="Per-Share Data" rows={r.perShare}      years={years} />}
-          {r.valuation && <RatioTable title="Valuation"      rows={r.valuation}     years={years} />}
-        </div>
-      </div>
-    );
-  }
+  const sm = insights?.self_metrics;
+  const growth = insights?.growth;       // profit_loss_stats: {metric: {"10 Years:": "9%", ...}}
+  const pctR = (n, d = 1) => (n == null || isNaN(n)) ? "—" : Number(n).toFixed(d) + "%";
 
-  // 3) Honest empty state.
+  // Growth summary — published as-is over IndianAPI's own periods.
+  const growthCols = ["10 Years", "5 Years", "3 Years", "TTM"];
+  const growthVal = (vals, col) => {
+    if (!vals) return "—";
+    const want = col.toLowerCase();
+    for (const k of Object.keys(vals)) {
+      const kl = k.toLowerCase();
+      if (want === "ttm" && (kl.includes("ttm") || kl.includes("1 year") || kl.includes("last"))) return vals[k];
+      if (want !== "ttm" && kl.includes(want.split(" ")[0])) return vals[k];
+    }
+    return "—";
+  };
+
   return (
-    <div className="fadein" style={{ padding:32 }}>
-      <Card>
-        <div style={{ ...sans, color:C.dim, fontSize:13, textAlign:"center", padding:40, lineHeight:1.7 }}>
-          No ratios computed for <b style={{ color:C.text }}>{co.ticker}</b> yet.<br/>
-          Once fundamentals are ingested, the full ratio registry populates here.
-        </div>
-      </Card>
+    <div className="fadein" style={{ padding: isMobile ? 16 : 32, display:"flex", flexDirection:"column", gap:24 }}>
+      <div style={{ ...sans, fontSize:12, color:C.dim, display:"flex", alignItems:"center", gap:8 }}>
+        <Info size={13} color={C.faint} /> Ratios published as IndianAPI reports them — sector-specific, no standardised template.
+      </div>
+
+      {/* Valuation & returns — IndianAPI's own TTM multiples */}
+      {sm && (
+        <Card>
+          <SectionLabel accent="TTM · IndianAPI">VALUATION &amp; RETURNS</SectionLabel>
+          <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(5,1fr)", gap:16, marginTop:4 }}>
+            {[["P / E", multiple(sm.pe,1)],["P / B", multiple(sm.pb,1)],["ROE (TTM)", pctR(sm.roe_ttm)],
+              ["Net Margin", pctR(sm.npm_ttm)],["Dividend Yield", pctR(sm.div_yield)]].map(([l,v]) => (
+              <div key={l}>
+                <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.1em", color:C.dim }}>{l}</div>
+                <div style={{ ...mono, fontSize:18, color:C.text, marginTop:4 }}>{v}</div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {/* Operating ratios — original line items, time series, as-is */}
+      {ratios === undefined ? (
+        <div style={{ ...sans, color:C.dim, fontSize:13, padding:24 }}>Loading ratios…</div>
+      ) : (ratios?.has_data && (ratios.periods || []).length) ? (
+        <ScreenerIncomeTable title="Ratios" accent="OPERATING RATIOS · IndianAPI"
+                             periods={ratios.periods} metrics={ratios.metrics} order={ratios.order} kind="annual" />
+      ) : null}
+
+      {/* Growth & returns summary — profit_loss_stats, as-is */}
+      {growth && Object.keys(growth).length > 0 && (
+        <Card noPad style={{ overflow:"hidden" }}>
+          <div style={{ padding:"16px 20px 8px" }}><SectionLabel accent="COMPOUNDED · IndianAPI">GROWTH &amp; RETURNS</SectionLabel></div>
+          <div style={{ overflowX:"auto" }}>
+            <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13, minWidth:460 }}>
+              <thead>
+                <tr style={{ borderTop:`1px solid ${C.line}`, borderBottom:`1px solid ${C.line}` }}>
+                  <th style={{ ...sans, textAlign:"left", padding:"8px 20px", fontSize:10, textTransform:"uppercase", color:C.dim, fontWeight:500 }} />
+                  {growthCols.map(c => <th key={c} style={{ ...sans, textAlign:"right", padding:"8px 12px", fontSize:10, textTransform:"uppercase", color:C.dim, fontWeight:500 }}>{c}</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                {Object.entries(growth).map(([metric, vals], i) => (
+                  <tr key={i} style={{ borderBottom:`1px solid ${C.line}` }}>
+                    <td style={{ ...sans, padding:"10px 20px", color:C.text200 }}>{metric}</td>
+                    {growthCols.map(c => (
+                      <td key={c} style={{ ...mono, textAlign:"right", padding:"10px 12px", fontSize:12, color:C.text }}>{growthVal(vals, c)}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      )}
     </div>
   );
 }
@@ -2053,7 +2105,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
       <main>
         {tab==="overview"   && <OverviewTab    co={co2} rec={rec} cd={cd} priceData={priceChartWithSMA} profile={liveProfile} />}
         {tab==="financials" && <FinancialsTab  co={co2} cd={cd} liveFinancials={liveFinancials} API={API} />}
-        {tab==="ratios"     && <RatiosTab      co={co2} cd={cd} liveMetrics={liveMetrics} />}
+        {tab==="ratios"     && <RatiosTab      co={co2} API={API} />}
         {tab==="dcf"        && <DCFModel       co={co2} a={assumptions} set={set} price={price} setPrice={setPrice} />}
         {tab==="analyst"    && <AnalystTab     co={co2} API={API} price={price} />}
         {tab==="peers"      && <PeersTab       co={co2} cd={cd} allCompanies={allCompanies} API={API} />}
