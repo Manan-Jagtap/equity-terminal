@@ -1315,11 +1315,17 @@ function DynamicPeers({ co, allCompanies }) {
 /* ── Peers Tab ───────────────────────────────────────────────────── */
 /* Live peer comparison from IndianAPI — the company's actual named sector
    peers with current market multiples (P/E, P/B, ROE TTM, margins, div yield). */
-function IndianApiPeers({ co, peers }) {
+function IndianApiPeers({ co, peers, selfMetrics }) {
   const f = fundamentals(co);
+  const sm = selfMetrics || {};
   const pctR = (n, d = 1) => (n == null || isNaN(n)) ? "—" : Number(n).toFixed(d) + "%";
+  // Hero row uses the SAME IndianAPI multiples the company shows as a peer
+  // elsewhere (single source of truth); falls back to our computed values.
   const rows = [
-    { name: co.name, price: co.price, pe: f.pe, pb: f.pb, roe: f.roe != null ? f.roe * 100 : null, npm: null, divY: null, rating: null, hero: true },
+    { name: co.name, price: sm.price ?? co.price,
+      pe: sm.pe ?? f.pe, pb: sm.pb ?? f.pb,
+      roe: sm.roe_ttm ?? (f.roe != null ? f.roe * 100 : null),
+      npm: sm.npm_ttm ?? null, divY: sm.div_yield ?? null, rating: sm.rating ?? null, hero: true },
     ...peers.map(p => ({ name: p.name, price: p.price, pe: p.pe, pb: p.pb, roe: p.roe_ttm, npm: p.npm_ttm, divY: p.div_yield, rating: p.rating, hero: false })),
   ];
   return (
@@ -1364,18 +1370,18 @@ function IndianApiPeers({ co, peers }) {
 }
 
 function PeersTab({ co, cd, allCompanies, API }) {
-  const [iaPeers, setIaPeers] = useState(undefined); // undefined = loading
+  const [iaData, setIaData] = useState(undefined); // undefined = loading
   useEffect(() => {
-    if (!API || !co.ticker) { setIaPeers(null); return; }
-    setIaPeers(undefined);
+    if (!API || !co.ticker) { setIaData(null); return; }
+    setIaData(undefined);
     fetch(`${API}/api/companies/${co.ticker}/insights`)
-      .then(r => r.json()).then(d => setIaPeers(d?.peers || null)).catch(() => setIaPeers(null));
+      .then(r => r.json()).then(setIaData).catch(() => setIaData(null));
   }, [co.ticker, API]);
 
-  if (iaPeers === undefined)
+  if (iaData === undefined)
     return <div style={{ padding: 40, textAlign: "center", ...sans, color: C.dim, fontSize: 13 }}>Loading peers…</div>;
-  if (iaPeers && iaPeers.length)
-    return <IndianApiPeers co={co} peers={iaPeers} />;
+  if (iaData?.peers && iaData.peers.length)
+    return <IndianApiPeers co={co} peers={iaData.peers} selfMetrics={iaData.self_metrics} />;
 
   // Fallback: curated seed (e.g. Muthoot) → screener-universe comparison.
   const peers = cd?.peers;
@@ -1767,6 +1773,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
   const [liveFinancials, setLiveFinancials] = useState(null);
   const [liveMetrics,    setLiveMetrics]    = useState(null);
   const [liveProfile,    setLiveProfile]    = useState(null);
+  const [liveInsights,   setLiveInsights]   = useState(null);
 
   const hasRealPrices = (histPrices?.data?.length || 0) > 10;
   const co2 = useMemo(
@@ -1794,7 +1801,12 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
     setLiveProfile(null);
     fetch(`${API}/api/companies/${co.ticker}/profile`)
       .then(r=>r.json()).then(setLiveProfile).catch(()=>setLiveProfile(null));
+    // Insights carries self_metrics (the company's own IndianAPI multiples) for the snapshot.
+    fetch(`${API}/api/companies/${co.ticker}/insights`)
+      .then(r=>r.json()).then(setLiveInsights).catch(()=>setLiveInsights(null));
   }, [co.ticker, API]);
+
+  const sm = liveInsights?.self_metrics || null;
 
   // Real ROA (PAT / total assets, latest year) + promoter holding for the snapshot.
   const roaLive = useMemo(() => {
@@ -1965,9 +1977,9 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
           {[
             { l:"Market Cap",       v:"₹"+fmtCr(mcap)               },
             { l:"Enterprise Value", v:mktData.evCr ? "₹"+fmtCr(mktData.evCr) : "—" },
-            { l:"P / E (TTM)",      v:multiple(rec.f.pe, 2)         },
-            { l:"P / B",            v:multiple(rec.f.pb, 2)         },
-            { l:"ROE",              v:rec.f.roe!=null?fmtPa(rec.f.roe*100):"—", accent:C.green },
+            { l:"P / E (TTM)",      v:sm?.pe!=null?multiple(sm.pe,2):multiple(rec.f.pe, 2)         },
+            { l:"P / B",            v:sm?.pb!=null?multiple(sm.pb,2):multiple(rec.f.pb, 2)         },
+            { l:"ROE",              v:sm?.roe_ttm!=null?fmtPa(sm.roe_ttm):(rec.f.roe!=null?fmtPa(rec.f.roe*100):"—"), accent:C.green },
             { l:"ROA",              v:roaLive!=null?fmtPa(roaLive*100):(co.nbfc?.roa!=null?fmtPa(co.nbfc.roa*100):"—") },
             { l:"NIM",              v:co.nbfc?.nim!=null?fmtPa(co.nbfc.nim*100):"—" },
             { l:"Promoter Hold",    v:promoterLive!=null?fmtPa(promoterLive):(mktData.promoterPct!=null?fmtPa(mktData.promoterPct):"—"), accent:C.gold },
