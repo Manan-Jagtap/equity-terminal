@@ -469,13 +469,13 @@ function OverviewTab({ co, rec, cd, priceData }) {
 /* ── Financials Tab ──────────────────────────────────────────────── */
 /* ── Live financial-statement rendering ───────────────────────────── */
 const FIN_LABELS = {
-  // P&L — labels read like a standard Indian income statement
-  revenue:"Sales / Revenue", raw_material:"Cost of Materials", total_expenses:"Total Expenses",
-  opex:"Operating Expenses", gross_profit:"Gross Profit", ebitda:"Operating Profit (EBITDA)",
-  other_income:"Other Income", depreciation:"Depreciation & Amortisation", ebit:"EBIT",
-  interest_expense:"Finance Cost (Interest)", pbt:"Profit Before Tax", tax:"Tax", pat:"Net Profit (PAT)",
+  // P&L — Screener-style standard Indian income statement
+  revenue:"Sales", total_expenses:"Expenses", ebitda:"Operating Profit",
+  other_income:"Other Income", depreciation:"Depreciation", interest_expense:"Interest",
+  pbt:"Profit Before Tax", tax:"Tax", pat:"Net Profit",
   total_income:"Total Income",
   interest_income:"Interest Income", nii:"Net Interest Income", provisions:"Provisions & Write-offs",
+  opex:"Operating Expenses",
   // Balance sheet
   equity:"Share Capital", reserves:"Reserves & Surplus", total_equity:"Total Equity", net_worth:"Net Worth",
   lt_debt:"Long-Term Debt", st_debt:"Short-Term Debt", borrowings:"Total Borrowings",
@@ -494,13 +494,29 @@ const boldItem = k => /^(total_income|gross_profit|ebitda|ebit|pbt|pat|nii|net_w
 // margin %s and unmapped junk are deliberately excluded (margins live in Ratios),
 // so every company renders a clean, conventionally-sequenced statement.
 const PL_ORDER_FIN    = ["interest_income","interest_expense","nii","other_income","total_income","opex","provisions","pbt","tax","pat"];
-const PL_ORDER_NONFIN = ["revenue","other_income","total_income","raw_material","gross_profit","opex","total_expenses","ebitda","depreciation","ebit","interest_expense","pbt","tax","pat"];
+// Lean Screener-style P&L: Sales → Expenses → Operating Profit → Other Income
+// → Interest → Depreciation → PBT → Tax → Net Profit. No redundant sub-lines.
+const PL_ORDER_NONFIN = ["revenue","total_expenses","ebitda","other_income","interest_expense","depreciation","pbt","tax","pat"];
 const BS_ORDER = ["equity","reserves","net_worth","total_equity","st_debt","lt_debt","total_debt","borrowings","total_liabilities","fixed_assets","investments","cash","total_assets","aum","gnpa","nnpa","crar"];
 const CF_ORDER = ["operating_cf","capex","fcf","investing_cf","financing_cf","dividends","net_change_cash"];
+
+// Value for a line item in a given year, deriving a couple of standard lines
+// when the source omits them (Expenses = Sales − Operating Profit).
+function lineValue(statements, year, stmtKey, k) {
+  const s = statements[year]?.[stmtKey] || {};
+  if (s[k] != null) return s[k];
+  if (k === "total_expenses" && s.revenue != null && s.ebitda != null) return s.revenue - s.ebitda;
+  return null;
+}
 
 function LiveStatementTable({ title, accent, statements, years, stmtKey, order }) {
   const present = new Set();
   years.forEach(y => Object.keys(statements[y]?.[stmtKey] || {}).forEach(k => present.add(k)));
+  // "total_expenses" can be derived, so treat it as available if its inputs are.
+  if (stmtKey === "PL" && order.includes("total_expenses") &&
+      years.some(y => statements[y]?.PL?.revenue != null && statements[y]?.PL?.ebitda != null)) {
+    present.add("total_expenses");
+  }
   if (!present.size) return null;
   // Only canonical line items, in canonical order. Anything not in `order`
   // (margin %s, stray yfinance keys) is intentionally excluded so the statement
@@ -533,7 +549,7 @@ function LiveStatementTable({ title, accent, statements, years, stmtKey, order }
                 <tr key={i} style={{ borderBottom:`1px solid ${C.line}`, background:bold?"rgba(58,53,40,0.3)":"transparent" }}>
                   <td style={{ ...sans, padding:"10px 20px", color:bold?C.text:C.text200, fontWeight:bold?500:400 }}>{prettyFin(k)}</td>
                   {years.map((y, j) => {
-                    const v = statements[y]?.[stmtKey]?.[k];
+                    const v = lineValue(statements, y, stmtKey, k);
                     return (
                       <td key={j} style={{ ...mono, textAlign:"right", padding:"10px 8px", paddingRight:j===years.length-1?"20px":"8px", fontSize:12, color:j===years.length-1?"#d4b96a":bold?C.text:C.text200 }}>
                         {v == null ? "—" : fmtN(v, 0)}

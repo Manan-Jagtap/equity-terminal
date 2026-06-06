@@ -9,6 +9,19 @@ import { SEED, buildFromApi } from "./lib/seedData.js";
 import Screener from "./components/Screener.jsx";
 import Company  from "./components/Company.jsx";
 
+/* ── TEMPORARY: focus the terminal on the Nifty 50 only ──────────────────────
+   While we make the Nifty 50 pages 100% accurate, everything else is hidden.
+   To show all companies again, set NIFTY50_ONLY = false.
+   Index composition changes occasionally — edit this list if a name is wrong.   */
+const NIFTY50_ONLY = true;
+const NIFTY_50 = new Set([
+  "RELIANCE","HDFCBANK","BHARTIARTL","TCS","ICICIBANK","SBIN","INFY","BAJFINANCE","ITC","LT",
+  "HINDUNILVR","KOTAKBANK","AXISBANK","M&M","SUNPHARMA","MARUTI","NTPC","HCLTECH","ULTRACEMCO","TITAN",
+  "BAJAJFINSV","ONGC","ADANIENT","ADANIPORTS","POWERGRID","WIPRO","JSWSTEEL","NESTLEIND","COALINDIA","TATASTEEL",
+  "ASIANPAINT","BAJAJ-AUTO","TRENT","JIOFIN","BEL","GRASIM","HINDALCO","SBILIFE","TECHM","HDFCLIFE",
+  "SHRIRAMFIN","CIPLA","DRREDDY","EICHERMOT","BRITANNIA","APOLLOHOSP","TATACONSUM","HEROMOTOCO","ETERNAL","TATAMOTORS",
+]);
+
 export default function App() {
   const API = import.meta.env.VITE_API_URL;
 
@@ -25,7 +38,10 @@ export default function App() {
     setLoading(true);
     fetch(`${API}/api/companies`)
       .then(r => r.json())
-      .then(rows => setCompanies(rows.length > 0 ? rows.map(r => buildFromApi(r)) : SEED))
+      .then(rows => {
+        const visible = NIFTY50_ONLY ? rows.filter(r => NIFTY_50.has(r.ticker)) : rows;
+        setCompanies(visible.length > 0 ? visible.map(r => buildFromApi(r)) : SEED);
+      })
       .catch(() => setCompanies(SEED))
       .finally(() => setLoading(false));
   }, [API]);
