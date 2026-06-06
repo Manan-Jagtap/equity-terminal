@@ -809,12 +809,30 @@ const _fmtStmtVal = (v, name) => {
   return fmtN(n, 0);
 };
 
-function ScreenerIncomeTable({ accent, title = "Income Statement", periods, metrics, order, kind }) {
+function ScreenerIncomeTable({ accent, title = "Income Statement", periods, metrics, order, kind, growth = false }) {
   const m = metrics || {};
   const names = (order && order.length ? order : Object.keys(m));
+  const L = periods.length;
   const label = p => {
     const a = String(p).split(" ");
     return kind === "annual" ? "FY" + (a[1] || "").slice(-2) : a[0] + " '" + (a[1] || "").slice(-2);
+  };
+  // Computed growth columns on the latest period (reduces dependency / errors).
+  const gCols = [];
+  if (growth) {
+    if (kind === "annual" && L >= 2) gCols.push({ label: "YoY", cur: L - 1, prev: L - 2 });
+    else if (kind === "quarterly") {
+      if (L >= 2) gCols.push({ label: "QoQ", cur: L - 1, prev: L - 2 });
+      if (L >= 5) gCols.push({ label: "YoY", cur: L - 1, prev: L - 5 });
+    }
+  }
+  const gVal = (name, ci, pi) => {
+    const c = Number(m[name]?.[ci]), p = Number(m[name]?.[pi]);
+    if (isNaN(c) || isNaN(p)) return { txt: "—", tone: C.dim };
+    if (String(name).includes("%")) { const d = c - p; return { txt: (d >= 0 ? "+" : "") + d.toFixed(0) + " pp", tone: d >= 0 ? C.green : C.red }; }
+    if (p === 0) return { txt: "—", tone: C.dim };
+    const g = (c / p - 1) * 100;
+    return { txt: (g >= 0 ? "+" : "") + g.toFixed(0) + "%", tone: g >= 0 ? C.green : C.red };
   };
   return (
     <Card noPad style={{ overflow:"hidden" }}>
@@ -831,7 +849,10 @@ function ScreenerIncomeTable({ accent, title = "Income Statement", periods, metr
             <tr style={{ borderTop:`1px solid ${C.line}`, borderBottom:`1px solid ${C.line}` }}>
               <th style={{ ...sans, textAlign:"left", padding:"8px 20px", fontSize:10, textTransform:"uppercase", color:C.dim, fontWeight:500 }} />
               {periods.map((p, i) => (
-                <th key={i} style={{ ...sans, textAlign:"right", padding:"8px", paddingRight:i===periods.length-1?"20px":"8px", fontSize:10, color:i===periods.length-1?C.gold:C.dim, fontWeight:500, whiteSpace:"nowrap" }}>{label(p)}</th>
+                <th key={i} style={{ ...sans, textAlign:"right", padding:"8px", paddingRight:(i===L-1&&!gCols.length)?"20px":"8px", fontSize:10, color:i===L-1?C.gold:C.dim, fontWeight:500, whiteSpace:"nowrap" }}>{label(p)}</th>
+              ))}
+              {gCols.map((g, i) => (
+                <th key={"g"+i} style={{ ...sans, textAlign:"right", padding:"8px", paddingRight:i===gCols.length-1?"20px":"8px", fontSize:10, color:C.gold, fontWeight:500, whiteSpace:"nowrap", borderLeft:i===0?`1px solid ${C.line2}`:"none" }}>{g.label}</th>
               ))}
             </tr>
           </thead>
@@ -842,10 +863,18 @@ function ScreenerIncomeTable({ accent, title = "Income Statement", periods, metr
                 <tr key={i} style={{ borderBottom:`1px solid ${C.line}`, background:bold?"rgba(58,53,40,0.3)":"transparent" }}>
                   <td style={{ ...sans, padding:"10px 20px", color:bold?C.text:C.text200, fontWeight:bold?500:400 }}>{name}</td>
                   {periods.map((p, j) => (
-                    <td key={j} style={{ ...mono, textAlign:"right", padding:"10px 8px", paddingRight:j===periods.length-1?"20px":"8px", fontSize:12, color:j===periods.length-1?"#d4b96a":bold?C.text:C.text200 }}>
+                    <td key={j} style={{ ...mono, textAlign:"right", padding:"10px 8px", paddingRight:(j===L-1&&!gCols.length)?"20px":"8px", fontSize:12, color:j===L-1?"#d4b96a":bold?C.text:C.text200 }}>
                       {_fmtStmtVal(m[name]?.[j], name)}
                     </td>
                   ))}
+                  {gCols.map((g, k) => {
+                    const gv = gVal(name, g.cur, g.prev);
+                    return (
+                      <td key={"g"+k} style={{ ...mono, textAlign:"right", padding:"10px 8px", paddingRight:k===gCols.length-1?"20px":"8px", fontSize:12, color:gv.tone, borderLeft:k===0?`1px solid ${C.line2}`:"none" }}>
+                        {gv.txt}
+                      </td>
+                    );
+                  })}
                 </tr>
               );
             })}
@@ -875,7 +904,7 @@ function QuarterlyResults({ co, API }) {
     </div></Card>
   );
   return <ScreenerIncomeTable accent={`QUARTERLY RESULTS · LAST ${data.quarters.length} QUARTERS`}
-                              periods={data.quarters} metrics={data.metrics} order={data.order} kind="quarterly" />;
+                              periods={data.quarters} metrics={data.metrics} order={data.order} kind="quarterly" growth />;
 }
 
 /* Annual income statement — last 5 years from /annual_pl, SAME format as
@@ -892,7 +921,7 @@ function AnnualIncomeStatement({ co, API, fallback }) {
   if (data === undefined) return <div style={{ ...sans, color:C.dim, fontSize:13, padding:24 }}>Loading income statement…</div>;
   if (!data?.has_data || !(data.periods || []).length) return fallback || null;
   return <ScreenerIncomeTable accent={`ANNUAL RESULTS · LAST ${data.periods.length} YEARS`}
-                              periods={data.periods} metrics={data.metrics} order={data.order} kind="annual" />;
+                              periods={data.periods} metrics={data.metrics} order={data.order} kind="annual" growth />;
 }
 
 /* Generic annual statement (Balance Sheet / Cash Flow) — original IndianAPI
@@ -1004,10 +1033,11 @@ function LiveMetricCard({ cat }) {
   );
 }
 
-function RatiosTab({ co, API }) {
+function RatiosTab({ co, API, liveMetrics }) {
   const isMobile = useIsMobile();
   const [ratios, setRatios] = useState(undefined);
   const [insights, setInsights] = useState(null);
+  const liveCats = (liveMetrics?.categories || []).filter(c => c.metrics.some(m => m.value != null));
   useEffect(() => {
     if (!API || !co.ticker) { setRatios(null); return; }
     setRatios(undefined);
@@ -1052,6 +1082,13 @@ function RatiosTab({ co, API }) {
             ))}
           </div>
         </Card>
+      )}
+
+      {/* Comprehensive computed ratios by category (sector-aware engine) */}
+      {liveCats.length > 0 && (
+        <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap:20, alignItems:"start" }}>
+          {liveCats.map(cat => <LiveMetricCard key={cat.name} cat={cat} />)}
+        </div>
       )}
 
       {/* Operating ratios — original line items, time series, as-is */}
@@ -2105,7 +2142,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
       <main>
         {tab==="overview"   && <OverviewTab    co={co2} rec={rec} cd={cd} priceData={priceChartWithSMA} profile={liveProfile} />}
         {tab==="financials" && <FinancialsTab  co={co2} cd={cd} liveFinancials={liveFinancials} API={API} />}
-        {tab==="ratios"     && <RatiosTab      co={co2} API={API} />}
+        {tab==="ratios"     && <RatiosTab      co={co2} API={API} liveMetrics={liveMetrics} />}
         {tab==="dcf"        && <DCFModel       co={co2} a={assumptions} set={set} price={price} setPrice={setPrice} />}
         {tab==="analyst"    && <AnalystTab     co={co2} API={API} price={price} />}
         {tab==="peers"      && <PeersTab       co={co2} cd={cd} allCompanies={allCompanies} API={API} />}
