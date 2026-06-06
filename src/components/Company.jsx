@@ -1172,7 +1172,71 @@ function DynamicPeers({ co, allCompanies }) {
 }
 
 /* ── Peers Tab ───────────────────────────────────────────────────── */
-function PeersTab({ co, cd, allCompanies }) {
+/* Live peer comparison from IndianAPI — the company's actual named sector
+   peers with current market multiples (P/E, P/B, ROE TTM, margins, div yield). */
+function IndianApiPeers({ co, peers }) {
+  const f = fundamentals(co);
+  const pctR = (n, d = 1) => (n == null || isNaN(n)) ? "—" : Number(n).toFixed(d) + "%";
+  const rows = [
+    { name: co.name, price: co.price, pe: f.pe, pb: f.pb, roe: f.roe != null ? f.roe * 100 : null, npm: null, divY: null, rating: null, hero: true },
+    ...peers.map(p => ({ name: p.name, price: p.price, pe: p.pe, pb: p.pb, roe: p.roe_ttm, npm: p.npm_ttm, divY: p.div_yield, rating: p.rating, hero: false })),
+  ];
+  return (
+    <div className="fadein" style={{ padding: 32 }}>
+      <Card noPad style={{ overflow: "hidden" }}>
+        <div style={{ padding: "16px 20px 8px" }}>
+          <SectionLabel accent={`${co.ticker} · SECTOR PEERS · LIVE`}>PEER COMPARISON</SectionLabel>
+        </div>
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+            <thead>
+              <tr style={{ borderTop: `1px solid ${C.line}`, borderBottom: `1px solid ${C.line}` }}>
+                {["Company", "Price", "P/E", "P/B", "ROE", "Net Margin", "Div Yield", "Rating"].map((h, i) => (
+                  <th key={i} style={{ ...sans, textAlign: i === 0 ? "left" : "right", padding: "8px", paddingLeft: i === 0 ? "20px" : "8px", paddingRight: i === 7 ? "20px" : "8px", fontSize: 10, textTransform: "uppercase", color: C.dim, fontWeight: 500 }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((p, i) => (
+                <tr key={i} style={{ borderBottom: `1px solid ${C.line}`, background: p.hero ? C.gold + "0d" : "transparent" }}>
+                  <td style={{ ...sans, padding: "10px 20px", color: p.hero ? C.gold : C.text200, fontWeight: p.hero ? 500 : 400 }}>
+                    {p.hero && <span style={{ color: C.gold, marginRight: 6 }}>◆</span>}{p.name}
+                  </td>
+                  <td style={{ ...mono, textAlign: "right", padding: "10px 8px", color: C.text }}>{inrOrDash(p.price, 0)}</td>
+                  <td style={{ ...mono, textAlign: "right", padding: "10px 8px", color: C.text }}>{multiple(p.pe, 1)}</td>
+                  <td style={{ ...mono, textAlign: "right", padding: "10px 8px", color: C.text }}>{multiple(p.pb, 1)}</td>
+                  <td style={{ ...mono, textAlign: "right", padding: "10px 8px", color: C.green }}>{pctR(p.roe)}</td>
+                  <td style={{ ...mono, textAlign: "right", padding: "10px 8px", color: C.text }}>{pctR(p.npm)}</td>
+                  <td style={{ ...mono, textAlign: "right", padding: "10px 8px", color: C.text }}>{pctR(p.divY)}</td>
+                  <td style={{ ...sans, textAlign: "right", padding: "10px 20px", fontSize: 12, color: C.dim }}>{p.rating || "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div style={{ padding: "10px 20px", ...sans, fontSize: 11, color: C.faint }}>
+          Sector peers and market multiples via IndianAPI · ◆ marks {co.ticker} · ROE &amp; margins are TTM.
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function PeersTab({ co, cd, allCompanies, API }) {
+  const [iaPeers, setIaPeers] = useState(undefined); // undefined = loading
+  useEffect(() => {
+    if (!API || !co.ticker) { setIaPeers(null); return; }
+    setIaPeers(undefined);
+    fetch(`${API}/api/companies/${co.ticker}/insights`)
+      .then(r => r.json()).then(d => setIaPeers(d?.peers || null)).catch(() => setIaPeers(null));
+  }, [co.ticker, API]);
+
+  if (iaPeers === undefined)
+    return <div style={{ padding: 40, textAlign: "center", ...sans, color: C.dim, fontSize: 13 }}>Loading peers…</div>;
+  if (iaPeers && iaPeers.length)
+    return <IndianApiPeers co={co} peers={iaPeers} />;
+
+  // Fallback: curated seed (e.g. Muthoot) → screener-universe comparison.
   const peers = cd?.peers;
   if (!peers) return <DynamicPeers co={co} allCompanies={allCompanies} />;
   const sorted = [...peers].sort((a, b) => b.aumGr - a.aumGr);
@@ -1784,7 +1848,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
         {tab==="ratios"     && <RatiosTab      co={co2} cd={cd} liveMetrics={liveMetrics} />}
         {tab==="dcf"        && <DCFModel       co={co2} a={assumptions} set={set} price={price} setPrice={setPrice} />}
         {tab==="analyst"    && <AnalystTab     co={co2} API={API} price={price} />}
-        {tab==="peers"      && <PeersTab       co={co2} cd={cd} allCompanies={allCompanies} />}
+        {tab==="peers"      && <PeersTab       co={co2} cd={cd} allCompanies={allCompanies} API={API} />}
         {tab==="news"       && <NewsTab        co={co2} API={API} />}
         {tab==="thesis"     && <AIThesisTab    co={co2} API={API} />}
         {tab==="verdict"    && <VerdictTab     co={co2} rec={rec} cd={cd} price={price} />}
