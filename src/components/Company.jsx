@@ -671,7 +671,7 @@ function FinancialsTab({ co, cd, liveFinancials }) {
         <div style={{ display:"flex", alignItems:"flex-start", gap:12, padding:16, background:C.green+"0a", border:`1px solid ${C.green}33` }}>
           <Check size={16} color={C.green} style={{ flexShrink:0, marginTop:2 }} />
           <div style={{ ...sans, fontSize:13, color:C.text200, lineHeight:1.6 }}>
-            Live statements — <span style={{ color:C.green, fontWeight:500 }}>{years.length} fiscal year{years.length>1?"s":""}</span> ingested from XBRL / yfinance. ₹ in crores.
+            Live statements — <span style={{ color:C.green, fontWeight:500 }}>{years.length} fiscal year{years.length>1?"s":""}</span> from IndianAPI. ₹ in crores.
           </div>
         </div>
         <LiveStatementTable title="Income Statement" accent={isF?"P&L · NBFC TEMPLATE":"P&L · ₹ CR"} statements={statements} years={years} stmtKey="PL" order={plOrder} />
