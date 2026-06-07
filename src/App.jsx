@@ -50,6 +50,8 @@ export default function App() {
             iv: r.intrinsic, mos: r.mos, verdict: r.verdict, composite: r.composite,
             reliable: r.reliable, confidence: r.confidence,
             roe: r.roe, pb: r.pb, pe: r.pe,
+            analystTarget: r.analyst_target, analystUpside: r.analyst_upside,
+            analystRating: r.analyst_rating,
           },
         }));
         setCompanies(built.length > 0 ? built : SEED);

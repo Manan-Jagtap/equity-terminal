@@ -2317,6 +2317,16 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
     : /strong buy|buy/i.test(consensus) ? C.green
     : /hold/i.test(consensus) ? C.gold : C.red;
 
+  // Model's BLENDED fair value, upside vs CMP, and verdict (backend canonical —
+  // identical to the screener and the Valuation tab's base case).
+  const apiRecHead   = apiVal?.recommendation;
+  const fairValue    = apiRecHead?.blended ?? apiRecHead?.intrinsic ?? null;
+  const fairUpside   = apiRecHead?.mos ?? null;
+  const modelVerdict = apiRecHead?.verdict || null;
+  const modelVerdictColor = !modelVerdict ? C.dim
+    : /buy|accumulate/i.test(modelVerdict) ? C.green
+    : /hold/i.test(modelVerdict) ? C.gold : C.red;
+
   // Real ROA (PAT / total assets, latest year) + promoter holding for the snapshot.
   const roaLive = useMemo(() => {
     const st = liveFinancials?.statements;
@@ -2502,9 +2512,9 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
             { l:"ROA",              v:roaLive!=null?fmtPa(roaLive*100):(co.nbfc?.roa!=null?fmtPa(co.nbfc.roa*100):"—") },
             { l:"Div Yield",        v:sm?.div_yield!=null?fmtPa(sm.div_yield):"—" },
             { l:"Promoter Hold",    v:promoterLive!=null?fmtPa(promoterLive):(mktData.promoterPct!=null?fmtPa(mktData.promoterPct):"—"), accent:C.gold },
-            { l:"Analyst Target",   v:tgt?.mean!=null?inrOrDash(tgt.mean,0):"—", accent:C.gold },
-            { l:"Upside",           v:tgtUpside!=null?signedPct(tgtUpside):"—", accent:tgtUpside==null?C.dim:tgtUpside>=0?C.green:C.red },
-            { l:"Consensus",        v:consensus||"—", accent:consensusColor, large:true },
+            { l:"Fair Value",       v:fairValue!=null?inrOrDash(fairValue,0):"—", accent:C.gold },
+            { l:"Upside",           v:fairUpside!=null?signedPct(fairUpside):"—", accent:fairUpside==null?C.dim:fairUpside>=0?C.green:C.red },
+            { l:"Verdict",          v:modelVerdict||"—", accent:modelVerdictColor, large:true },
           ].map(s => (
             <div key={s.l}>
               <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.12em", color:C.dim, fontWeight:500 }}>{s.l}</div>

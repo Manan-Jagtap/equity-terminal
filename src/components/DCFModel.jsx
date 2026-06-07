@@ -11,7 +11,7 @@
  *   7. Sensitivity grid (discount rate × terminal growth)
  */
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef } from "react";
 import {
   ComposedChart, BarChart, Bar, Line, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Cell,
@@ -187,6 +187,15 @@ export default function DCFModel({ co, a, set, price, setPrice, apiVal }) {
   const iv    = blend.blended;
   const mos   = (iv - price) / price;
 
+  // Has the user changed ANY assumption yet? Until they do, the headline shows
+  // the backend's canonical blended value (identical to the screener and the
+  // company header) — so there is exactly ONE blended number. The moment a
+  // slider moves, the headline recomputes live and tracks the sliders.
+  const assumptionsKey = JSON.stringify(assumptions);
+  const baseKeyRef = useRef(null);
+  if (baseKeyRef.current === null) baseKeyRef.current = assumptionsKey;
+  const touched = assumptionsKey !== baseKeyRef.current;
+
   // Monte Carlo (deferred until user toggles — expensive)
   const [showMC,  setShowMC]  = useState(false);
   const [mcResult, setMcResult] = useState(null);
@@ -218,9 +227,7 @@ export default function DCFModel({ co, a, set, price, setPrice, apiVal }) {
   const fmtP  = v => v == null ? "—" : (v * 100).toFixed(2) + "%";
   const fmtN  = (v, d=0) => v == null || !isFinite(v) ? "—" : Number(v).toLocaleString("en-IN", { maximumFractionDigits:d });
 
-  // ── Backend's authoritative BLENDED fair value (matches the screener) ──
-  // This is the one number shown on the screener: the intrinsic model blended
-  // with the relative cross-checks. Components carries each method + weight.
+  // ── Backend's canonical BLENDED fair value (matches screener + header) ──
   const apiRec    = apiVal?.recommendation;
   const apiIv     = apiRec?.blended ?? apiRec?.intrinsic;
   const apiMos    = apiRec?.mos;
@@ -231,38 +238,56 @@ export default function DCFModel({ co, a, set, price, setPrice, apiVal }) {
   const verdColor = v => !v ? C.dim
     : /buy|accumulate/i.test(v) ? C.green : /hold/i.test(v) ? C.gold : C.red;
 
+  // ── The ONE headline blended value shown on this tab ──
+  // Untouched → the backend canonical number (no client/server drift, matches
+  // the screener exactly). Touched → live client recompute that moves with the
+  // sliders. Either way there is a single blended figure, never two.
+  const liveVerdict = mos > 0.15 ? "BUY" : mos > 0.05 ? "ACCUMULATE"
+                    : mos >= -0.10 ? "HOLD" : mos >= -0.25 ? "REDUCE" : "AVOID";
+  const showApi   = apiIv > 0 && !touched;
+  const headIv    = showApi ? apiIv : iv;
+  const headMos   = showApi ? apiMos : mos;
+  const headVerd  = showApi ? apiVerd : liveVerdict;
+  const headComps = (showApi ? apiComps : blend.components) || [];
+  const headKe    = showApi && apiKe != null ? apiKe : ke;
+
   return (
     <div className="fadein" style={{ padding: isMobile ? 16 : 32 }}>
-      {apiIv > 0 && (
+      {headIv > 0 && (
         <Card style={{ marginBottom:24, borderColor:`${C.gold}3d`, position:"relative", overflow:"hidden" }}>
-          {/* Headline — blended fair value */}
+          {/* Headline — the ONE blended fair value (moves with the sliders below) */}
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", flexWrap:"wrap", gap:16 }}>
             <div>
               <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.18em", color:"#857d65" }}>
                 Valuation · Blended Fair Value
+                <span style={{ color: touched ? C.gold : "#3a3528", marginLeft:8 }}>
+                  · {touched ? "your assumptions" : "base case"}
+                </span>
               </div>
               <div style={{ display:"flex", alignItems:"baseline", gap:16, marginTop:8, flexWrap:"wrap" }}>
-                <span style={{ ...serif, fontSize:64, color:C.text, lineHeight:1, letterSpacing:"-0.02em" }}>₹{fmtN(apiIv)}</span>
-                <span style={{ ...sans, fontSize:16, fontWeight:600, color: apiMos>=0?C.green:C.red }}>
-                  {apiMos>=0?"+":""}{(apiMos*100).toFixed(1)}% MoS
+                <span style={{ ...serif, fontSize:64, color:C.text, lineHeight:1, letterSpacing:"-0.02em" }}>₹{fmtN(headIv)}</span>
+                <span style={{ ...sans, fontSize:16, fontWeight:600, color: headMos>=0?C.green:C.red }}>
+                  {headMos>=0?"+":""}{(headMos*100).toFixed(1)}% MoS
                 </span>
                 <span style={{ ...sans, fontSize:13, fontWeight:600, padding:"4px 12px", borderRadius:6,
-                  color:verdColor(apiVerd), border:`1px solid ${verdColor(apiVerd)}55` }}>{apiVerd}</span>
+                  color:verdColor(headVerd), border:`1px solid ${verdColor(headVerd)}55` }}>{headVerd}</span>
               </div>
               <div style={{ ...sans, fontSize:11, color:"#5b5440", marginTop:10, lineHeight:1.6, maxWidth:600 }}>
-                Ke {apiKe!=null?(apiKe*100).toFixed(1):"—"}% · triangulated from this company's own history
+                Ke {headKe!=null?(headKe*100).toFixed(1):"—"}% · triangulated from this company's own history
                 {apiDrv.rev_growth ? ` (growth ${apiDrv.rev_growth}${apiDrv.ebit_margin?`, margin ${apiDrv.ebit_margin}`:""}${apiDrv.reinvest_rate?`, reinvest ${apiDrv.reinvest_rate}`:""})` : ""}.
-                This is the figure shown on the screener — one engine, no client/server drift.
+                {touched
+                  ? " Reflecting your slider changes — reset by reloading. Base case matches the screener & header."
+                  : " This is the figure shown on the screener and the company header — one engine, no drift."}
               </div>
             </div>
           </div>
 
           {/* Method breakdown — each method · weight · value, then the blend */}
-          {apiComps.length > 0 && (
+          {headComps.length > 0 && (
             <div style={{ display:"grid",
-              gridTemplateColumns: isMobile ? "1fr 1fr" : `repeat(${apiComps.length + 1}, 1fr)`,
+              gridTemplateColumns: isMobile ? "1fr 1fr" : `repeat(${headComps.length + 1}, 1fr)`,
               gap:12, marginTop:22 }}>
-              {apiComps.map(c => (
+              {headComps.map(c => (
                 <div key={c.method} style={{ background:"rgba(10,9,7,0.45)", border:"1px solid rgba(220,213,193,.08)", padding:"14px 16px" }}>
                   <div style={{ ...sans, fontSize:11, color:"#857d65", textTransform:"uppercase", letterSpacing:"0.05em" }}>{c.method}</div>
                   <div style={{ ...serif, fontSize:32, color: c.value>0 ? C.text : "#4a4537", marginTop:6, lineHeight:1 }}>
@@ -279,11 +304,22 @@ export default function DCFModel({ co, a, set, price, setPrice, apiVal }) {
               {/* Blended result */}
               <div style={{ background:C.gold+"14", border:`1px solid ${C.gold}55`, padding:"14px 16px", display:"flex", flexDirection:"column", justifyContent:"space-between" }}>
                 <div style={{ ...sans, fontSize:11, color:C.gold, textTransform:"uppercase", letterSpacing:"0.05em" }}>Blended</div>
-                <div style={{ ...serif, fontSize:32, color:C.gold, marginTop:6, lineHeight:1 }}>₹{fmtN(apiIv)}</div>
+                <div style={{ ...serif, fontSize:32, color:C.gold, marginTop:6, lineHeight:1 }}>₹{fmtN(headIv)}</div>
                 <div style={{ ...sans, fontSize:10, color:"#857d65", marginTop:10 }}>weighted fair value</div>
               </div>
             </div>
           )}
+
+          {/* Sanity line — TV share / discount rate / returns (moves with sliders) */}
+          <div style={{ display:"flex", gap:24, flexWrap:"wrap", ...mono, fontSize:11, color:"#857d65", marginTop:18, paddingTop:14, borderTop:"1px solid rgba(220,213,193,.07)" }}>
+            <span>TV = {v.tvPct?.toFixed(1) ?? "—"}% of total</span>
+            {isF
+              ? <span>Ke = {fmtP(ke)} · Justified P/B = {(v.justifiedPB??0).toFixed(2)}x</span>
+              : <span>WACC = {fmtP(wacc)} · Current ROIC = {fmtP(v.currentROIC)}</span>}
+            <span style={{ color:v.tvPct>80||v.tvPct<40 ? C.red : C.green }}>
+              {v.tvPct>80?"⚠ TV heavy — reduce terminal growth":v.tvPct<40?"ℹ TV light — long growth runway":"✓ TV% in range"}
+            </span>
+          </div>
         </Card>
       )}
       <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "300px 1fr", gap:24 }}>
@@ -389,56 +425,8 @@ export default function DCFModel({ co, a, set, price, setPrice, apiVal }) {
         {/* ── RIGHT PANEL ─────────────────────────────────────── */}
         <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
 
-          {/* Hero blended value */}
-          <Card style={{ position:"relative", overflow:"hidden" }}>
-            <div style={{
-              position:"absolute", inset:0, pointerEvents:"none",
-              backgroundImage:`linear-gradient(rgba(220,213,193,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(220,213,193,.025) 1px,transparent 1px)`,
-              backgroundSize:"56px 56px", opacity:0.5,
-            }} />
-            <div style={{ position:"relative" }}>
-              <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr auto", gap:24, alignItems:"start", marginBottom:16 }}>
-                <div>
-                  <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.18em", color:"#857d65" }}>Interactive Scenario · {scenario.toUpperCase()} <span style={{ color:"#3a3528" }}>· your assumptions</span></div>
-                  <div style={{ ...serif, fontSize:72, color:C.text, lineHeight:1, letterSpacing:"-0.02em", marginTop:6 }}>₹{fmtN(iv)}</div>
-                  <div style={{ ...sans, fontSize:14, marginTop:8, color:mos>=0?C.green:C.red }}>
-                    <span style={{ fontWeight:600 }}>{mos>=0?"+":""}{(mos*100).toFixed(1)}%</span>
-                    <span style={{ color:"#857d65", marginLeft:8 }}>margin of safety vs ₹{fmtN(price)} CMP</span>
-                  </div>
-                  <div style={{ ...sans, fontSize:11, color:"#5b5440", marginTop:10, lineHeight:1.5, maxWidth:340 }}>
-                    Your own scenario — drag the sliders to stress-test the assumptions behind the blended fair value above.
-                  </div>
-                </div>
-                {/* Method breakdown */}
-                <div style={{ minWidth:220 }}>
-                  {blend.components.map(c => (
-                    <div key={c.method} style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", padding:"6px 0", borderBottom:`1px solid rgba(220,213,193,.07)` }}>
-                      <div>
-                        <div style={{ ...sans, fontSize:11, color:"#857d65" }}>{c.method}</div>
-                        <div style={{ ...sans, fontSize:10, color:"#3a3528" }}>{(c.weight*100).toFixed(0)}% weight</div>
-                      </div>
-                      <span style={{ ...mono, fontSize:13, color:C.text }}>₹{fmtN(c.value)}</span>
-                    </div>
-                  ))}
-                  <div style={{ display:"flex", justifyContent:"space-between", padding:"8px 0 0", alignItems:"baseline" }}>
-                    <span style={{ ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.1em", color:C.gold }}>Blended</span>
-                    <span style={{ ...serif, fontSize:22, color:C.gold }}>₹{fmtN(iv)}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* TV% check */}
-              <div style={{ display:"flex", gap:24, ...mono, fontSize:11, color:"#857d65" }}>
-                <span>TV = {v.tvPct?.toFixed(1) ?? "—"}% of total</span>
-                {isF
-                  ? <span>Ke = {fmtP(ke)} · Justified P/B = {(v.justifiedPB??0).toFixed(2)}x</span>
-                  : <span>WACC = {fmtP(wacc)} · Current ROIC = {fmtP(v.currentROIC)}</span>}
-                <span style={{ color:v.tvPct>80||v.tvPct<40 ? C.red : C.green }}>
-                  {v.tvPct>80?"⚠ TV heavy — reduce terminal growth":v.tvPct<40?"ℹ TV light — long growth runway":"✓ TV% in range"}
-                </span>
-              </div>
-            </div>
-          </Card>
+          {/* Note: the single blended fair value lives in the banner at the top of
+              this tab and recomputes live from the sliders on the left. */}
 
           {/* Reverse DCF — market-implied expectations */}
           <Card>
