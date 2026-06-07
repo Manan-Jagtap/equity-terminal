@@ -103,7 +103,7 @@ const SCENARIOS = {
 };
 
 /* ── Main component ─────────────────────────────────────────────── */
-export default function DCFModel({ co, a, set, price, setPrice }) {
+export default function DCFModel({ co, a, set, price, setPrice, apiVal }) {
   const isMobile = useIsMobile();
   const isF = co.type === "financial" || ["NBFC","BANK","INSURANCE"].includes(co.template_code);
   const template = co.template_code || (isF ? "NBFC" : "MANUFACTURING");
@@ -218,8 +218,69 @@ export default function DCFModel({ co, a, set, price, setPrice }) {
   const fmtP  = v => v == null ? "—" : (v * 100).toFixed(2) + "%";
   const fmtN  = (v, d=0) => v == null || !isFinite(v) ? "—" : Number(v).toLocaleString("en-IN", { maximumFractionDigits:d });
 
+  // ── Backend's authoritative INDEPENDENT valuation (matches the screener) ──
+  const apiRec   = apiVal?.recommendation;
+  const apiIv    = apiRec?.intrinsic;
+  const apiMos   = apiRec?.mos;
+  const apiVerd  = apiRec?.verdict;
+  const apiKe    = apiRec?.valuation?.ke;
+  const apiAn    = apiVal?.analyst;
+  const apiDrv   = apiRec?.drivers || {};
+  const verdColor = v => !v ? C.dim
+    : /buy|accumulate/i.test(v) ? C.green : /hold/i.test(v) ? C.gold : C.red;
+
   return (
     <div className="fadein" style={{ padding: isMobile ? 16 : 32 }}>
+      {apiIv > 0 && (
+        <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap:16, marginBottom:24 }}>
+          {/* Independent model — straight from the backend */}
+          <Card style={{ borderColor:"rgba(220,213,193,0.18)" }}>
+            <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.16em", color:"#857d65" }}>
+              Independent Model · {apiRec?.valuation?.method || "DCF"}
+            </div>
+            <div style={{ display:"flex", alignItems:"baseline", gap:14, marginTop:6, flexWrap:"wrap" }}>
+              <span style={{ ...serif, fontSize:46, color:C.text, lineHeight:1 }}>₹{fmtN(apiIv)}</span>
+              <span style={{ ...sans, fontSize:14, fontWeight:600, color: apiMos>=0?C.green:C.red }}>
+                {apiMos>=0?"+":""}{(apiMos*100).toFixed(1)}% MoS
+              </span>
+              <span style={{ ...sans, fontSize:12, fontWeight:600, padding:"3px 10px", borderRadius:6,
+                color:verdColor(apiVerd), border:`1px solid ${verdColor(apiVerd)}55` }}>{apiVerd}</span>
+            </div>
+            <div style={{ ...sans, fontSize:11, color:"#5b5440", marginTop:10, lineHeight:1.6 }}>
+              Ke {apiKe!=null?(apiKe*100).toFixed(1):"—"}% · derived from this company's own history:
+              {apiDrv.rev_growth ? ` growth ${apiDrv.rev_growth};` : ""}{apiDrv.ebit_margin ? ` margin ${apiDrv.ebit_margin};` : ""}{apiDrv.reinvest_rate ? ` reinvest ${apiDrv.reinvest_rate}` : ""}
+            </div>
+            <div style={{ ...sans, fontSize:10, color:"#3a3528", marginTop:6 }}>This is the value shown on the screener — same engine, no client/server drift.</div>
+          </Card>
+          {/* Analyst consensus — separate, never blended */}
+          <Card style={{ borderColor:"rgba(220,213,193,0.10)" }}>
+            <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.16em", color:"#857d65" }}>Analyst Consensus</div>
+            {apiAn?.target > 0 ? (
+              <>
+                <div style={{ display:"flex", alignItems:"baseline", gap:14, marginTop:6, flexWrap:"wrap" }}>
+                  <span style={{ ...serif, fontSize:46, color:C.text, lineHeight:1 }}>₹{fmtN(apiAn.target)}</span>
+                  {apiAn.upside!=null && (
+                    <span style={{ ...sans, fontSize:14, fontWeight:600, color: apiAn.upside>=0?C.green:C.red }}>
+                      {apiAn.upside>=0?"+":""}{(apiAn.upside*100).toFixed(1)}% upside
+                    </span>
+                  )}
+                  {apiAn.rating && <span style={{ ...sans, fontSize:12, color: /buy/i.test(apiAn.rating)?C.green:/hold/i.test(apiAn.rating)?C.gold:C.red }}>{apiAn.rating}</span>}
+                </div>
+                <div style={{ ...sans, fontSize:11, color:"#5b5440", marginTop:10 }}>
+                  Range ₹{fmtN(apiAn.low)}–₹{fmtN(apiAn.high)}{apiAn.n ? ` · ${Math.round(apiAn.n)} analysts` : ""}
+                </div>
+                {apiIv > 0 && apiAn.target > 0 && (
+                  <div style={{ ...sans, fontSize:11, marginTop:6, color:(apiIv/apiAn.target-1)>=0?C.green:C.red }}>
+                    Model is {(apiIv/apiAn.target-1)>=0?"+":""}{((apiIv/apiAn.target-1)*100).toFixed(0)}% vs the Street — independent view, shown side by side.
+                  </div>
+                )}
+              </>
+            ) : (
+              <div style={{ ...sans, fontSize:12, color:C.faint, marginTop:10 }}>No analyst coverage for this name.</div>
+            )}
+          </Card>
+        </div>
+      )}
       <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "300px 1fr", gap:24 }}>
         {/* ── LEFT PANEL ──────────────────────────────────────── */}
         <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
@@ -333,7 +394,7 @@ export default function DCFModel({ co, a, set, price, setPrice }) {
             <div style={{ position:"relative" }}>
               <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr auto", gap:24, alignItems:"start", marginBottom:16 }}>
                 <div>
-                  <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.18em", color:"#857d65" }}>Independent Intrinsic Value · {scenario.toUpperCase()}</div>
+                  <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.18em", color:"#857d65" }}>Interactive Scenario · {scenario.toUpperCase()} <span style={{ color:"#3a3528" }}>· your assumptions</span></div>
                   <div style={{ ...serif, fontSize:72, color:C.text, lineHeight:1, letterSpacing:"-0.02em", marginTop:6 }}>₹{fmtN(iv)}</div>
                   <div style={{ ...sans, fontSize:14, marginTop:8, color:mos>=0?C.green:C.red }}>
                     <span style={{ fontWeight:600 }}>{mos>=0?"+":""}{(mos*100).toFixed(1)}%</span>

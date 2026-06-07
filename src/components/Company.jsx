@@ -2049,13 +2049,15 @@ function AIThesisTab({ co, profile, insights, cd, price }) {
    consensus, and a quality scorecard — rather than relying on the DCF MoS alone.
    This stops a fundamentally-strong but richly-valued name from being branded
    "AVOID" purely because a fundamentals DCF won't pay a 50× multiple. */
-function VerdictTab({ co, rec, cd, price, insights }) {
+function VerdictTab({ co, rec, cd, price, insights, apiVal }) {
   const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
   const f = rec.f;
 
-  // 1) DCF — corrected blended intrinsic (today's fair value)
-  const dcfIv  = rec.iv;
-  const dcfMos = rec.mos;                       // fraction
+  // 1) DCF — prefer the BACKEND's authoritative independent intrinsic (the same
+  //    number the screener shows); fall back to the client recompute.
+  const apiRec = apiVal?.recommendation;
+  const dcfIv  = apiRec?.intrinsic ?? rec.iv;
+  const dcfMos = apiRec?.mos ?? rec.mos;        // fraction
 
   // 2) Analyst consensus
   const tgt       = insights?.target?.mean ?? null;
@@ -2098,6 +2100,9 @@ function VerdictTab({ co, rec, cd, price, insights }) {
   else if (expRet >= -0.07)                              verdict = "HOLD";
   else if (expRet >= -0.20)                              verdict = "REDUCE";
   else                                                   verdict = "AVOID";
+  // The BACKEND's independent verdict is authoritative (matches the screener);
+  // the blended expected-return read above remains the supporting rationale.
+  if (apiRec?.verdict) verdict = apiRec.verdict;
   const verdictColor = /BUY|ACCUM/.test(verdict) ? C.green : /HOLD|DATA/.test(verdict) ? C.gold : C.red;
 
   const risks = (cd?.risks || rec.reasons.filter(r => r.bad).map(r => r.note)).slice(0, 5);
@@ -2239,6 +2244,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
   const [liveProfile,    setLiveProfile]    = useState(null);
   const [liveInsights,   setLiveInsights]   = useState(null);
   const [liveStatement,  setLiveStatement]  = useState(null); // real latest-FY operating figures
+  const [apiVal,         setApiVal]         = useState(null); // backend INDEPENDENT valuation (authoritative)
 
   const hasRealPrices = (histPrices?.data?.length || 0) > 10;
   const co2 = useMemo(() => {
@@ -2294,6 +2300,12 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
     setLiveStatement(null);
     fetch(`${API}/api/companies/${co.ticker}/annual_pl`)
       .then(r=>r.json()).then(d=>setLiveStatement(parseLatestPL(d))).catch(()=>setLiveStatement(null));
+    // Backend INDEPENDENT valuation (history-derived DCF/RI + analyst block). This
+    // is the authoritative number the screener also shows, so the DCF & Verdict
+    // tabs display exactly what the backend computed — no client/server drift.
+    setApiVal(null);
+    fetch(`${API}/api/companies/${co.ticker}`)
+      .then(r=>r.json()).then(setApiVal).catch(()=>setApiVal(null));
   }, [co.ticker, API]);
 
   const sm = liveInsights?.self_metrics || null;
@@ -2525,13 +2537,13 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
         {tab==="overview"   && <OverviewTab    co={co2} rec={rec} cd={cd} priceData={priceChartWithSMA} profile={liveProfile} />}
         {tab==="financials" && <FinancialsTab  co={co2} cd={cd} liveFinancials={liveFinancials} API={API} />}
         {tab==="ratios"     && <RatiosTab      co={co2} API={API} liveMetrics={liveMetrics} />}
-        {tab==="dcf"        && <DCFModel       co={co2} a={assumptions} set={set} price={price} setPrice={setPrice} />}
+        {tab==="dcf"        && <DCFModel       co={co2} a={assumptions} set={set} price={price} setPrice={setPrice} apiVal={apiVal} />}
         {tab==="analyst"    && <AnalystTab     co={co2} API={API} price={price} />}
         {tab==="peers"      && <PeersTab       co={co2} cd={cd} allCompanies={allCompanies} API={API} />}
         {tab==="ownership"  && <OwnershipTab   profile={liveProfile} />}
         {tab==="news"       && <NewsTab        co={co2} API={API} profile={liveProfile} />}
         {tab==="thesis"     && <AIThesisTab    co={co2} profile={liveProfile} insights={liveInsights} cd={cd} price={price} />}
-        {tab==="verdict"    && <VerdictTab     co={co2} rec={rec} cd={cd} price={price} insights={liveInsights} />}
+        {tab==="verdict"    && <VerdictTab     co={co2} rec={rec} cd={cd} price={price} insights={liveInsights} apiVal={apiVal} />}
       </main>
 
       <footer style={{ borderTop:`1px solid ${C.line}`, padding:"20px 32px", display:"flex", justifyContent:"space-between", ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.1em", color:C.dim+"99", marginTop:48 }}>
