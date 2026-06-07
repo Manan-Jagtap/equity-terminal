@@ -1789,7 +1789,7 @@ function NewsTab({ co, API, profile }) {
     <div className="fadein" style={{ padding:32 }}>
       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20 }}>
         <div>
-          <div style={{ ...serif, fontSize:22, color:C.text }}>{co.name} — News &amp; Filings</div>
+          <div style={{ ...serif, fontSize:22, color:C.text }}>{co.name} — Latest News</div>
           <div style={{ ...sans, fontSize:12, color:C.dim, marginTop:4 }}>
             {news ? `${news.count} items · Sources: ${(news.sources||[]).join(", ")} · refreshes every 30 min` : "Loading…"}
           </div>
@@ -1867,12 +1867,6 @@ function NewsTab({ co, API, profile }) {
         </div>
       )}
 
-      {/* Filings & reports — moved here from Ownership; documents live with news */}
-      {profile && (
-        <div style={{ marginTop:28 }}>
-          <DocsCard profile={profile} />
-        </div>
-      )}
     </div>
   );
 }
@@ -2033,23 +2027,9 @@ function AIThesisTab({ co, profile, insights, cd, price }) {
         </div>
       </div>
 
-      {/* Sidebar — real grounding sources + method note */}
+      {/* Sidebar — the actual source documents this thesis is grounded in */}
       <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
-        <Card>
-          <SectionLabel>GROUNDING SOURCES</SectionLabel>
-          {[
-            ["Earnings concalls", `${(profile?.concalls||[]).length} on file · IndianAPI`],
-            ["Annual reports", `${(profile?.annual_reports||[]).length} years`],
-            ["Credit ratings", `${(profile?.credit_ratings||[]).length} updates`],
-            ["Analyst consensus", an?.num_analysts ? `${an.num_analysts} analysts` : "IndianAPI"],
-            ["Financials & growth", "IndianAPI historical"],
-          ].map(([k,v]) => (
-            <div key={k} style={{ display:"flex", alignItems:"flex-start", gap:10, padding:"8px 0", borderBottom:`1px solid ${C.line}` }}>
-              <FileText size={12} color={C.gold500} style={{ flexShrink:0, marginTop:2 }} />
-              <div><div style={{ ...sans, color:C.text, fontSize:12 }}>{k}</div><div style={{ ...sans, color:C.dim, fontSize:10 }}>{v}</div></div>
-            </div>
-          ))}
-        </Card>
+        <DocsCard profile={profile} />
         <Card>
           <SectionLabel>METHOD</SectionLabel>
           {["Assembled from IndianAPI — no LLM tokens used","Concall summaries are IndianAPI's own AI output","Bull/bear derived from reported facts","Consensus & target from analyst feed"].map((s, i) => (
