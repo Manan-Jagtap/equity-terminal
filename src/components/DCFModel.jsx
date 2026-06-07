@@ -220,23 +220,6 @@ export default function DCFModel({ co, a, set, price, setPrice }) {
 
   return (
     <div className="fadein" style={{ padding: isMobile ? 16 : 32 }}>
-      {/* Scenario selector */}
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:12, marginBottom:28 }}>
-        {Object.entries(SCENARIOS).map(([id, s]) => (
-          <button key={id} onClick={() => applyScenario(id)} style={{
-            padding:"14px 18px", border:`1px solid ${scenario===id?C.gold+"99":"rgba(220,213,193,.1)"}`,
-            background:scenario===id?C.gold+"18":"rgba(16,14,10,.5)",
-            cursor:"pointer", textAlign:"left",
-          }}>
-            <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.18em", color:scenario===id?C.gold:"#857d65", marginBottom:4 }}>{id}</div>
-            <div style={{ ...serif, fontSize:17, color:scenario===id?C.text:"#b8b09a" }}>
-              {isF ? `ROE ${(s.forecastROE*100).toFixed(0)}% → ${(s.terminalROE*100).toFixed(0)}%` : `Growth ${(s.revGrowth1*100).toFixed(0)}% → ${(s.terminalGrowth*100).toFixed(0)}%`}
-            </div>
-            <div style={{ ...sans, fontSize:11, color:"#5b5440", marginTop:3 }}>{s.sub}</div>
-          </button>
-        ))}
-      </div>
-
       <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "300px 1fr", gap:24 }}>
         {/* ── LEFT PANEL ──────────────────────────────────────── */}
         <div style={{ display:"flex", flexDirection:"column", gap:16 }}>

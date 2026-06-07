@@ -660,9 +660,6 @@ function OverviewTab({ co, rec, cd, priceData, profile }) {
           <ProfileKeyFacts kf={profile?.key_facts} />
         )}
 
-        {/* Leadership — real IndianAPI officers, all companies */}
-        <LeadershipCard data={profile?.leadership} />
-
         {cd?.guidance && (
           <Card>
             <SectionLabel accent="MANAGEMENT · FY27">GUIDANCE</SectionLabel>
@@ -710,28 +707,57 @@ function CorporateActionsCard({ data }) {
   );
 }
 
+function ShareholdingTrendCard({ trend }) {
+  if (!trend?.periods?.length || !trend?.rows?.length) return null;
+  const periods = trend.periods;
+  const label = d => { const s = String(d); return s.length > 8 ? s.slice(0, 7) : s; };
+  const order = ["promoter", "fii", "fpi", "foreign", "dii", "mutual", "mf", "insurance", "institution", "public", "other"];
+  const rank = n => { const x = (n || "").toLowerCase(); const i = order.findIndex(o => x.includes(o)); return i < 0 ? 99 : i; };
+  const rows = [...trend.rows].sort((a, b) => rank(a.name) - rank(b.name));
+  return (
+    <Card noPad style={{ overflow:"hidden" }}>
+      <div style={{ padding:"14px 18px 8px" }}><SectionLabel accent="QUARTERLY">SHAREHOLDING TREND</SectionLabel></div>
+      <div style={{ overflowX:"auto" }}>
+        <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12.5 }}>
+          <thead>
+            <tr style={{ borderTop:`1px solid ${C.line}`, borderBottom:`1px solid ${C.line2}` }}>
+              <th style={{ ...sans, textAlign:"left", padding:"8px 18px", fontSize:10, textTransform:"uppercase", color:C.dim, fontWeight:500 }} />
+              {periods.map((p, i) => <th key={i} style={{ ...sans, textAlign:"right", padding:"8px 10px", fontSize:10, color:i===periods.length-1?C.gold:C.dim, fontWeight:600, whiteSpace:"nowrap" }}>{label(p)}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r, i) => (
+              <tr key={i} style={{ borderBottom:`1px solid ${C.line}`, background:i%2?"rgba(220,213,193,0.015)":"transparent" }}>
+                <td style={{ ...sans, padding:"8px 18px", color:C.text200 }}>{r.name}</td>
+                {r.values.map((v, j) => <td key={j} style={{ ...mono, textAlign:"right", padding:"8px 10px", color:j===r.values.length-1?"#d4b96a":C.text200 }}>{v==null?"—":v.toFixed(2)+"%"}</td>)}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Card>
+  );
+}
+
 function OwnershipTab({ profile }) {
   const isMobile = useIsMobile();
   if (!profile) {
-    return <div style={{ padding:40, ...sans, color:C.dim, fontSize:13 }}>Loading ownership & filings…</div>;
+    return <div style={{ padding:40, ...sans, color:C.dim, fontSize:13 }}>Loading ownership…</div>;
   }
-  const hasShare = profile.shareholding?.length;
-  const hasDocs = (profile.concalls?.length || profile.annual_reports?.length ||
-                   profile.credit_ratings?.length || profile.announcements?.length);
-  const hasCA = profile.corporate_actions?.length;
-  if (!hasShare && !hasDocs && !hasCA) {
-    return <div style={{ padding:40, ...sans, color:C.dim, fontSize:13 }}>No ownership or filings data available for this company.</div>;
+  const hasAny = profile.shareholding?.length || profile.corporate_actions?.length ||
+                 profile.shareholding_trend?.rows?.length || profile.leadership?.length;
+  if (!hasAny) {
+    return <div style={{ padding:40, ...sans, color:C.dim, fontSize:13 }}>No ownership data available for this company.</div>;
   }
   return (
     <div className="fadein" style={{ padding: isMobile ? 16 : 32, display:"grid", gridTemplateColumns: isMobile ? "1fr" : "360px 1fr", gap:24, alignItems:"start" }}>
-      {/* LEFT — ownership */}
       <div style={{ display:"flex", flexDirection:"column", gap:24 }}>
         <ShareholdingCard data={profile.shareholding} />
         <CorporateActionsCard data={profile.corporate_actions} />
       </div>
-      {/* RIGHT — filings */}
       <div style={{ display:"flex", flexDirection:"column", gap:24 }}>
-        <DocsCard profile={profile} />
+        <ShareholdingTrendCard trend={profile.shareholding_trend} />
+        <LeadershipCard data={profile.leadership} />
       </div>
     </div>
   );
@@ -1132,55 +1158,64 @@ function RatiosTab({ co, API, liveMetrics }) {
         <Info size={13} color={C.faint} /> Ratios published as IndianAPI reports them — sector-specific, no standardised template.
       </div>
 
-      {/* Valuation & returns — IndianAPI's own TTM multiples */}
-      {sm && (
-        <Card>
-          <SectionLabel accent="TTM · IndianAPI">VALUATION &amp; RETURNS</SectionLabel>
-          <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(5,1fr)", gap:16, marginTop:4 }}>
-            {[["P / E", multiple(sm.pe,1)],["P / B", multiple(sm.pb,1)],["ROE (TTM)", pctR(sm.roe_ttm)],
-              ["Net Margin", pctR(sm.npm_ttm)],["Dividend Yield", pctR(sm.div_yield)]].map(([l,v]) => (
-              <div key={l}>
-                <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.1em", color:C.dim }}>{l}</div>
-                <div style={{ ...mono, fontSize:18, color:C.text, marginTop:4 }}>{v}</div>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
+      {/* Valuation & returns — IndianAPI's own TTM multiples (same card style) */}
+      <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap:20, alignItems:"start" }}>
+        {sm && (
+          <Card noPad style={{ overflow:"hidden" }}>
+            <div style={{ padding:"14px 18px 10px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+              <span style={{ ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.16em", color:C.gold, fontWeight:600 }}>VALUATION &amp; RETURNS</span>
+              <span style={{ ...sans, fontSize:10, color:C.dim }}>TTM · IndianAPI</span>
+            </div>
+            <div style={{ borderTop:`1px solid ${C.line2}` }}>
+              {[["P / E", multiple(sm.pe,1)],["P / B", multiple(sm.pb,1)],["ROE (TTM)", pctR(sm.roe_ttm)],
+                ["Net Margin", pctR(sm.npm_ttm)],["Dividend Yield", pctR(sm.div_yield)]].map(([l,v],i,arr) => (
+                <div key={l} style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", padding:"9px 18px",
+                                      borderBottom:i<arr.length-1?`1px solid ${C.line}`:"none", background:i%2?"rgba(220,213,193,0.015)":"transparent" }}>
+                  <span style={{ ...sans, color:C.text200, fontSize:12.5 }}>{l}</span>
+                  <span style={{ ...mono, fontSize:13, color:C.text, fontWeight:500 }}>{v}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+        {/* Comprehensive computed ratios by category (sector-aware engine) */}
+        {liveCats.map(cat => <LiveMetricCard key={cat.name} cat={cat} />)}
+      </div>
 
-      {/* Comprehensive computed ratios by category (sector-aware engine) */}
-      {liveCats.length > 0 && (
-        <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap:20, alignItems:"start" }}>
-          {liveCats.map(cat => <LiveMetricCard key={cat.name} cat={cat} />)}
-        </div>
-      )}
-
-      {/* Operating ratios — original line items, time series, as-is */}
+      {/* Operating ratios — original line items, capped to the latest 5 years */}
       {ratios === undefined ? (
         <div style={{ ...sans, color:C.dim, fontSize:13, padding:24 }}>Loading ratios…</div>
       ) : (ratios?.has_data && (ratios.periods || []).length) ? (
         <ScreenerIncomeTable title="Ratios" accent="OPERATING RATIOS · IndianAPI"
-                             periods={ratios.periods} metrics={ratios.metrics} order={ratios.order} kind="annual" />
+                             periods={ratios.periods.slice(-5)}
+                             metrics={Object.fromEntries(Object.entries(ratios.metrics || {}).map(([k, v]) => [k, (v || []).slice(-5)]))}
+                             order={ratios.order} kind="annual" />
       ) : null}
 
-      {/* Growth & returns summary — profit_loss_stats, as-is */}
+      {/* Growth & returns — styled to match the financials / operating tables */}
       {growth && Object.keys(growth).length > 0 && (
         <Card noPad style={{ overflow:"hidden" }}>
-          <div style={{ padding:"16px 20px 8px" }}><SectionLabel accent="COMPOUNDED · IndianAPI">GROWTH &amp; RETURNS</SectionLabel></div>
+          <div style={{ padding:"16px 20px 8px", display:"flex", alignItems:"baseline", justifyContent:"space-between" }}>
+            <div>
+              <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.18em", color:C.dim }}>COMPOUNDED · IndianAPI</div>
+              <div style={{ ...serif, fontSize:22, color:C.text, marginTop:2 }}>Growth &amp; Returns</div>
+            </div>
+          </div>
           <div style={{ overflowX:"auto" }}>
-            <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13, minWidth:460 }}>
+            <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13, minWidth:460, tableLayout:"fixed" }}>
+              <colgroup><col style={{ width:"32%" }} />{growthCols.map((c,i)=><col key={i} style={{ width:(68/growthCols.length)+"%" }} />)}</colgroup>
               <thead>
-                <tr style={{ borderTop:`1px solid ${C.line}`, borderBottom:`1px solid ${C.line}` }}>
-                  <th style={{ ...sans, textAlign:"left", padding:"8px 20px", fontSize:10, textTransform:"uppercase", color:C.dim, fontWeight:500 }} />
-                  {growthCols.map(c => <th key={c} style={{ ...sans, textAlign:"right", padding:"8px 12px", fontSize:10, textTransform:"uppercase", color:C.dim, fontWeight:500 }}>{c}</th>)}
+                <tr style={{ borderTop:`1px solid ${C.line}`, borderBottom:`1px solid ${C.line2}` }}>
+                  <th style={{ ...sans, textAlign:"left", padding:"9px 20px", fontSize:10, textTransform:"uppercase", color:C.dim, fontWeight:500 }} />
+                  {growthCols.map((c,i) => <th key={c} style={{ ...sans, textAlign:"right", padding:"9px 12px", fontSize:10.5, textTransform:"uppercase", color:i===growthCols.length-1?C.gold:C.dim, fontWeight:600, letterSpacing:"0.03em" }}>{c}</th>)}
                 </tr>
               </thead>
               <tbody>
                 {Object.entries(growth).map(([metric, vals], i) => (
-                  <tr key={i} style={{ borderBottom:`1px solid ${C.line}` }}>
-                    <td style={{ ...sans, padding:"10px 20px", color:C.text200 }}>{metric}</td>
-                    {growthCols.map(c => (
-                      <td key={c} style={{ ...mono, textAlign:"right", padding:"10px 12px", fontSize:12, color:C.text }}>{growthVal(vals, c)}</td>
+                  <tr key={i} style={{ borderBottom:`1px solid ${C.line}`, background:i%2?"rgba(220,213,193,0.015)":"transparent" }}>
+                    <td style={{ ...sans, padding:"9px 20px", color:C.text200 }}>{metric}</td>
+                    {growthCols.map((c,j) => (
+                      <td key={c} style={{ ...mono, textAlign:"right", padding:"9px 12px", fontSize:12, color:j===growthCols.length-1?"#d4b96a":C.text200 }}>{growthVal(vals, c)}</td>
                     ))}
                   </tr>
                 ))}
@@ -1505,9 +1540,12 @@ function IndianApiPeers({ co, peers, selfMetrics, universe }) {
     key: p.name, name: p.name, price: p.price, pe: p.pe, pb: p.pb,
     roe: p.roe_ttm, npm: p.npm_ttm, divY: p.div_yield, rating: p.rating, src: "peer",
   }));
-  const curatedNames = new Set(curated.map(c => c.name));
+  // Dedup by NORMALISED name so "HCL Technologies" (curated) and "HCL
+  // Technologies Ltd." (universe) collapse to one row.
+  const norm = s => (s || "").toLowerCase().replace(/\b(ltd|limited|inc|corp|co|company|industries)\b\.?/g, "").replace(/[^a-z0-9]/g, "");
+  const seen = new Set([norm(co.name), ...curated.map(c => norm(c.name))]);
   const extra = (universe || [])
-    .filter(u => u.sector && co.sector && u.sector === co.sector && u.name !== co.name && !curatedNames.has(u.name))
+    .filter(u => u.sector && co.sector && u.sector === co.sector && !seen.has(norm(u.name)))
     .map(u => ({ key: u.ticker || u.name, name: u.name, price: u.price, pe: u.pe, pb: u.pb,
                  roe: u.roe_ttm, npm: u.npm_ttm, divY: u.div_yield, rating: u.rating, src: "sector" }));
   const candidates = [...curated, ...extra];
@@ -1551,7 +1589,7 @@ function IndianApiPeers({ co, peers, selfMetrics, universe }) {
     <tr style={{ borderTop: `1px solid ${C.line2}`, background: "rgba(212,169,62,0.06)" }}>
       <td style={{ padding: "9px 8px" }} />
       <td style={{ ...sans, padding: "9px 20px", color: C.gold, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600 }}>{label}</td>
-      <td style={{ ...mono, textAlign: "right", padding: "9px 8px", color: C.gold }}>{(() => { const v = agg("price", fn); return v == null ? "—" : inrOrDash(v, 0); })()}</td>
+      <td style={{ padding: "9px 8px" }} />
       <td style={{ ...mono, textAlign: "right", padding: "9px 8px", color: C.gold }}>{multiple(agg("pe", fn), 1)}</td>
       <td style={{ ...mono, textAlign: "right", padding: "9px 8px", color: C.gold }}>{multiple(agg("pb", fn), 1)}</td>
       <td style={{ ...mono, textAlign: "right", padding: "9px 8px", color: C.gold }}>{pctR(agg("roe", fn))}</td>
@@ -1722,7 +1760,7 @@ function PeersTab({ co, cd, allCompanies, API }) {
 }
 
 /* ── News Tab ────────────────────────────────────────────────────── */
-function NewsTab({ co, API }) {
+function NewsTab({ co, API, profile }) {
   const [news, setNews]       = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState(null);
@@ -1751,7 +1789,7 @@ function NewsTab({ co, API }) {
     <div className="fadein" style={{ padding:32 }}>
       <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:20 }}>
         <div>
-          <div style={{ ...serif, fontSize:22, color:C.text }}>{co.name} — Latest News</div>
+          <div style={{ ...serif, fontSize:22, color:C.text }}>{co.name} — News &amp; Filings</div>
           <div style={{ ...sans, fontSize:12, color:C.dim, marginTop:4 }}>
             {news ? `${news.count} items · Sources: ${(news.sources||[]).join(", ")} · refreshes every 30 min` : "Loading…"}
           </div>
@@ -1828,79 +1866,183 @@ function NewsTab({ co, API }) {
           ))}
         </div>
       )}
+
+      {/* Filings & reports — moved here from Ownership; documents live with news */}
+      {profile && (
+        <div style={{ marginTop:28 }}>
+          <DocsCard profile={profile} />
+        </div>
+      )}
     </div>
   );
 }
 
 /* ── AI Thesis Tab ───────────────────────────────────────────────── */
-function AIThesisTab({ co, API }) {
-  const [thesis, setThesis] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError]   = useState(null);
-  const [cached, setCached] = useState(false);
+/* AI Thesis — assembled entirely from IndianAPI data (concall AI summaries,
+   consensus, growth track record, key metrics). No LLM call / no API tokens. */
+function AIThesisTab({ co, profile, insights, cd, price }) {
+  const isMobile = useIsMobile();
+  const sm  = insights?.self_metrics || {};
+  const an  = insights?.analyst || null;
+  const tgt = insights?.target || null;
+  const growth = insights?.growth || {};
+  const concalls = (profile?.concalls || []).filter(c => c && (c.ai_summary || "").trim().length > 30);
+  const anns = (profile?.announcements || []).slice(0, 6);
+  const desc = cd?.description || profile?.description;
+  const upside = (tgt?.mean && price) ? (tgt.mean / price - 1) : null;
+  const fwdEps = insights?.eps_estimates?.[0]?.mean ?? null;
+  const fwdPe  = (fwdEps && price) ? price / fwdEps : null;
+  const pctS = (n, d = 1) => (n == null || isNaN(n)) ? "—" : Number(n).toFixed(d) + "%";
 
-  const generate = async (force = false) => {
-    if (!API) { setError("API not configured — set VITE_API_URL in Vercel environment variables."); return; }
-    setLoading(true); setError(null);
-    try {
-      const res = await fetch(`${API}/api/companies/${co.ticker}/thesis${force?"?force_refresh=true":""}`, { method:"POST" });
-      const data = await res.json();
-      if (data.error) setError(data.thesis);
-      else { setThesis(data.thesis); setCached(data.cached||false); }
-    } catch(e) { setError("Network error — "+e.message); }
-    finally { setLoading(false); }
+  // Read a compounded-growth metric (e.g. "5 Years") from IndianAPI's growth block.
+  const gv = (metric, want) => {
+    const m = growth[metric]; if (!m) return null;
+    for (const k of Object.keys(m)) if (k.toLowerCase().includes(want)) return m[k];
+    return null;
   };
+  const sales5 = gv("Compounded Sales Growth", "5 year");
+  const profit5 = gv("Compounded Profit Growth", "5 year");
+  const roeLast = gv("Return on Equity", "last") || gv("Return on Equity", "3 year");
 
-  const renderMd = (md) => md.split("\n").map((l, i) => {
-    if (l.startsWith("## ")) return <div key={i} style={{ ...serif, fontSize:24, color:C.gold, marginTop:24, marginBottom:8 }}>{l.replace("## ","")}</div>;
-    if (l.startsWith("# "))  return null;
-    if (l.trim().startsWith("- ")) return <div key={i} style={{ ...sans, fontSize:13, color:C.text200, lineHeight:1.75, paddingLeft:20, marginBottom:4 }}>• {l.trim().slice(2)}</div>;
-    if (!l.trim()) return <div key={i} style={{ height:8 }} />;
-    return <div key={i} style={{ ...sans, fontSize:13, color:C.text200, lineHeight:1.75, marginBottom:4 }}>{l}</div>;
-  });
+  // Data-derived bull / bear points (no opinion invented — thresholds on facts).
+  const bull = [], bear = [];
+  if (sm.roe_ttm >= 18) bull.push(`Capital-efficient: ROE of ${pctS(sm.roe_ttm)} (TTM).`);
+  if (profit5 && parseFloat(profit5) >= 15) bull.push(`Strong compounding: 5-yr profit CAGR ${profit5}.`);
+  if (an && /buy/i.test(an.rating || "")) bull.push(`Street is constructive: ${an.num_analysts || ""} analysts, consensus ${an.rating}${an.bullish_pct ? ` (${an.bullish_pct.toFixed(0)}% bullish)` : ""}.`);
+  if (upside != null && upside > 0.1) bull.push(`Consensus target ₹${fmtN(tgt.mean,0)} implies ${pctS(upside*100,0)} upside.`);
+  if (sm.npm_ttm >= 15) bull.push(`High-quality earnings: ${pctS(sm.npm_ttm)} net margin.`);
+
+  if (sm.pe >= 35) bear.push(`Rich valuation: ${multiple(sm.pe,1)} trailing P/E${fwdPe?` (${multiple(fwdPe,1)} forward)`:""} leaves little margin for error.`);
+  else if (fwdPe && fwdPe >= 30) bear.push(`Demanding multiple: ${multiple(fwdPe,1)} forward P/E.`);
+  if (upside != null && upside < 0) bear.push(`Trading above consensus target ₹${fmtN(tgt.mean,0)} (${pctS(upside*100,0)}).`);
+  if (sm.div_yield != null && sm.div_yield < 1 && sm.pe >= 30) bear.push(`Thin ${pctS(sm.div_yield)} dividend yield — return depends on continued growth.`);
+  if (sales5 && parseFloat(sales5) < 8) bear.push(`Modest top-line: 5-yr sales CAGR ${sales5}.`);
+  if (!bear.length) bear.push("No major valuation or quality red flags in the data.");
+  if (!bull.length) bull.push("Limited positive signals in the available data.");
+
+  const Stat = ({ l, v, tone }) => (
+    <div>
+      <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.1em", color:C.dim }}>{l}</div>
+      <div style={{ ...mono, fontSize:18, color:tone || C.text, marginTop:4 }}>{v}</div>
+    </div>
+  );
+  const Sec = ({ accent, title, children }) => (
+    <div style={{ marginBottom:6 }}>
+      <SectionLabel accent={accent}>{title}</SectionLabel>
+      {children}
+    </div>
+  );
 
   return (
-    <div className="fadein" style={{ padding:32, display:"grid", gridTemplateColumns:"1fr 320px", gap:24 }}>
-      <Card style={{ minHeight:500 }}>
-        <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:20 }}>
-          <div>
-            <div style={{ display:"flex", alignItems:"center", gap:8, ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.18em", color:C.gold, marginBottom:6 }}>
-              <Sparkles size={12} /><span>AI Research Note · Claude Sonnet 4</span>
-              {cached && <span style={{ background:C.blue+"33", color:"#8ab4f8", border:"1px solid #8ab4f833", padding:"2px 8px", borderRadius:99, fontSize:10 }}>Cached</span>}
-            </div>
-            <div style={{ ...serif, fontSize:28, color:C.text }}>Live Investment Thesis</div>
-            <div style={{ ...sans, fontSize:12, color:C.dim, marginTop:4 }}>Grounded in concall transcript, FY26 actuals, peer set and consensus.</div>
+    <div className="fadein" style={{ padding: isMobile ? 16 : 32, display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 320px", gap:24, alignItems:"start" }}>
+      <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
+        {/* Header */}
+        <Card>
+          <div style={{ display:"flex", alignItems:"center", gap:8, ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.18em", color:C.gold, marginBottom:6 }}>
+            <Sparkles size={12} /><span>Research Note · assembled from IndianAPI</span>
           </div>
-          <button onClick={() => generate(!!thesis)} disabled={loading} style={{
-            ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.16em", fontWeight:500,
-            padding:"10px 20px", border:`1px solid ${loading?C.line2:C.gold+"99"}`,
-            color:loading?C.dim:C.gold, background:loading?"transparent":C.gold+"0d", cursor:loading?"wait":"pointer",
-          }}>
-            {loading ? <><Loader2 size={13} style={{ display:"inline",marginRight:6 }} />Generating…</> : thesis ? "Regenerate" : "Generate Thesis"}
-          </button>
-        </div>
+          <div style={{ ...serif, fontSize:26, color:C.text }}>Investment Thesis</div>
+          <div style={{ ...sans, fontSize:13, lineHeight:1.7, color:C.text200, marginTop:10 }}>
+            {desc || `${co.name} operates in the ${co.sector} sector.`}
+          </div>
+        </Card>
 
-        {!thesis && !loading && !error && (
-          <div style={{ height:360, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", textAlign:"center" }}>
-            <div style={{ ...serif, fontSize:56, color:C.dim+"66", marginBottom:16 }}>"</div>
-            <div style={{ ...sans, fontSize:13, color:C.text200, maxWidth:420, lineHeight:1.7 }}>
-              Press <span style={{ color:C.gold }}>Generate Thesis</span> to produce an institutional-grade research note. Grounded in {co.name}'s latest results, peer set and management commentary.
-            </div>
-            <div style={{ ...sans, fontSize:11, color:C.dim, textTransform:"uppercase", letterSpacing:"0.1em", marginTop:12 }}>No assumptions — only ground truth</div>
+        {/* Consensus & valuation */}
+        <Card>
+          <Sec accent="STREET VIEW" title="CONSENSUS & VALUATION" />
+          <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4,1fr)", gap:16 }}>
+            <Stat l="Consensus" v={an?.rating || "—"} tone={an && /buy/i.test(an.rating||"")?C.green:an && /sell/i.test(an.rating||"")?C.red:C.gold} />
+            <Stat l="Target" v={tgt?.mean!=null?"₹"+fmtN(tgt.mean,0):"—"} tone={C.gold} />
+            <Stat l="Upside" v={upside!=null?(upside>=0?"+":"")+(upside*100).toFixed(0)+"%":"—"} tone={upside==null?C.dim:upside>=0?C.green:C.red} />
+            <Stat l="Fwd P/E" v={fwdPe!=null?multiple(fwdPe,1):"—"} />
           </div>
+        </Card>
+
+        {/* Growth track record */}
+        {(sales5 || profit5 || roeLast) && (
+          <Card>
+            <Sec accent="COMPOUNDED · IndianAPI" title="GROWTH & QUALITY" />
+            <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4,1fr)", gap:16 }}>
+              <Stat l="Sales CAGR (5y)" v={sales5 || "—"} />
+              <Stat l="Profit CAGR (5y)" v={profit5 || "—"} />
+              <Stat l="ROE" v={roeLast || pctS(sm.roe_ttm)} tone={C.green} />
+              <Stat l="Net Margin" v={pctS(sm.npm_ttm)} />
+            </div>
+          </Card>
         )}
-        {loading && <div style={{ height:360, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:16 }}>
-          <Loader2 size={32} color={C.gold} style={{ animation:"spin 1s linear infinite" }} />
-          <div style={{ ...sans, fontSize:12, color:C.dim, textTransform:"uppercase", letterSpacing:"0.1em" }}>Synthesising from P&L, peer set…</div>
-        </div>}
-        {error && <div style={{ ...sans, color:C.red, fontSize:13, padding:16, background:C.red+"18", border:`1px solid ${C.red}44` }}>{error}</div>}
-        {thesis && <div>{renderMd(thesis)}</div>}
-      </Card>
 
+        {/* Management commentary — IndianAPI concall AI summaries */}
+        <Card>
+          <Sec accent="EARNINGS CALLS · IndianAPI AI" title="WHAT MANAGEMENT SAID" />
+          {concalls.length ? (
+            <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+              {concalls.slice(0, 3).map((c, i) => (
+                <div key={i} style={{ borderLeft:`2px solid ${C.gold}66`, paddingLeft:14 }}>
+                  <div style={{ ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.1em", color:C.gold, marginBottom:4 }}>{c.date || `Call ${i+1}`}</div>
+                  <div style={{ ...sans, fontSize:13, color:C.text200, lineHeight:1.7 }}>{c.ai_summary}</div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div style={{ ...sans, fontSize:13, color:C.dim, lineHeight:1.7 }}>
+              IndianAPI hasn't published an AI concall summary for {co.ticker} yet. Earnings-call transcripts are linked in the News &amp; Filings tab.
+            </div>
+          )}
+        </Card>
+
+        {/* Recent developments */}
+        {anns.length > 0 && (
+          <Card>
+            <Sec accent="EXCHANGE FILINGS" title="RECENT DEVELOPMENTS" />
+            <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+              {anns.map((a, i) => (
+                <div key={i} style={{ display:"flex", gap:9, alignItems:"flex-start" }}>
+                  <FileText size={12} color={C.faint} style={{ flexShrink:0, marginTop:3 }} />
+                  <span style={{ ...sans, fontSize:12.5, color:C.text200, lineHeight:1.5 }}>{(a.title || "").replace(/\s+\d+[dh]?\s+-\s+.*/, "").slice(0, 110) || "Announcement"}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {/* Bull vs Bear */}
+        <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap:20 }}>
+          <Card>
+            <Sec accent="THE CASE FOR" title="BULL POINTS" />
+            <div style={{ display:"flex", flexDirection:"column", gap:9 }}>
+              {bull.map((b, i) => (
+                <div key={i} style={{ display:"flex", gap:9, alignItems:"flex-start" }}>
+                  <TrendingUp size={13} color={C.green} style={{ flexShrink:0, marginTop:3 }} />
+                  <span style={{ ...sans, fontSize:12.5, color:C.text200, lineHeight:1.6 }}>{b}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+          <Card>
+            <Sec accent="THE CASE AGAINST" title="BEAR POINTS" />
+            <div style={{ display:"flex", flexDirection:"column", gap:9 }}>
+              {bear.map((b, i) => (
+                <div key={i} style={{ display:"flex", gap:9, alignItems:"flex-start" }}>
+                  <TrendingDown size={13} color={C.red} style={{ flexShrink:0, marginTop:3 }} />
+                  <span style={{ ...sans, fontSize:12.5, color:C.text200, lineHeight:1.6 }}>{b}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+      </div>
+
+      {/* Sidebar — real grounding sources + method note */}
       <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
         <Card>
           <SectionLabel>GROUNDING SOURCES</SectionLabel>
-          {[["Q4FY26 Results","BSE / NSE filings"],["Earnings Concall","DAM Capital, May 2026"],["FY26 Annual Report","Investor Relations"],["Shareholding Pattern","Q4FY26 BSE filing"],["Peer financials","Screener consolidated"]].map(([k,v]) => (
+          {[
+            ["Earnings concalls", `${(profile?.concalls||[]).length} on file · IndianAPI`],
+            ["Annual reports", `${(profile?.annual_reports||[]).length} years`],
+            ["Credit ratings", `${(profile?.credit_ratings||[]).length} updates`],
+            ["Analyst consensus", an?.num_analysts ? `${an.num_analysts} analysts` : "IndianAPI"],
+            ["Financials & growth", "IndianAPI historical"],
+          ].map(([k,v]) => (
             <div key={k} style={{ display:"flex", alignItems:"flex-start", gap:10, padding:"8px 0", borderBottom:`1px solid ${C.line}` }}>
               <FileText size={12} color={C.gold500} style={{ flexShrink:0, marginTop:2 }} />
               <div><div style={{ ...sans, color:C.text, fontSize:12 }}>{k}</div><div style={{ ...sans, color:C.dim, fontSize:10 }}>{v}</div></div>
@@ -1908,11 +2050,11 @@ function AIThesisTab({ co, API }) {
           ))}
         </Card>
         <Card>
-          <SectionLabel>GUARDRAILS</SectionLabel>
-          {["Numbers validated against DB","No invented price targets","Concall paraphrased, never verbatim","Output cached 6 hours"].map((s, i) => (
+          <SectionLabel>METHOD</SectionLabel>
+          {["Assembled from IndianAPI — no LLM tokens used","Concall summaries are IndianAPI's own AI output","Bull/bear derived from reported facts","Consensus & target from analyst feed"].map((s, i) => (
             <div key={i} style={{ display:"flex", alignItems:"flex-start", gap:8, padding:"6px 0" }}>
               <Check size={12} color={C.green} style={{ flexShrink:0, marginTop:2 }} />
-              <span style={{ ...sans, fontSize:12, color:C.text200 }}>{s}</span>
+              <span style={{ ...sans, fontSize:12, color:C.text200, lineHeight:1.5 }}>{s}</span>
             </div>
           ))}
         </Card>
@@ -2406,8 +2548,8 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
         {tab==="analyst"    && <AnalystTab     co={co2} API={API} price={price} />}
         {tab==="peers"      && <PeersTab       co={co2} cd={cd} allCompanies={allCompanies} API={API} />}
         {tab==="ownership"  && <OwnershipTab   profile={liveProfile} />}
-        {tab==="news"       && <NewsTab        co={co2} API={API} />}
-        {tab==="thesis"     && <AIThesisTab    co={co2} API={API} />}
+        {tab==="news"       && <NewsTab        co={co2} API={API} profile={liveProfile} />}
+        {tab==="thesis"     && <AIThesisTab    co={co2} profile={liveProfile} insights={liveInsights} cd={cd} price={price} />}
         {tab==="verdict"    && <VerdictTab     co={co2} rec={rec} cd={cd} price={price} insights={liveInsights} />}
       </main>
 
