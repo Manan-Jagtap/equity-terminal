@@ -1886,7 +1886,8 @@ function AIThesisTab({ co, profile, insights, cd, price }) {
   const an  = insights?.analyst || null;
   const tgt = insights?.target || null;
   const growth = insights?.growth || {};
-  const concalls = (profile?.concalls || []).filter(c => c && (c.ai_summary || "").trim().length > 30);
+  const concalls = (profile?.concalls || []).filter(c =>
+    c && typeof c.ai_summary === "string" && !c.ai_summary.startsWith("/") && c.ai_summary.trim().length > 40);
   const anns = (profile?.announcements || []).slice(0, 6);
   const desc = cd?.description || profile?.description;
   const upside = (tgt?.mean && price) ? (tgt.mean / price - 1) : null;
