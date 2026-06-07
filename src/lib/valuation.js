@@ -288,10 +288,13 @@ export function fcffDCF(co, a) {
     rows.push({ year: t, stage: 1, g: g1, nopat, roic, rr, fcff, df, pv, cumPv: pvSum });
   }
 
-  // Stage 2 (fade)
+  // Stage 2 (fade) — growth starts at the FADE-PERIOD growth (g2, the slider)
+  // and converges to terminal gT over N2 years. Previously this faded from g1
+  // straight to gT and ignored g2 entirely, so the Fade-period growth slider had
+  // no effect on the valuation.
   for (let j = 1; j <= N2; j++) {
     const t   = N1 + j;
-    const g   = g1 + (gT - g1) * (j / N2);
+    const g   = g2 + (gT - g2) * (j / N2);
     nopat    *= (1 + g);
     const roic = currentROIC + (terminalROIC - currentROIC) * (t / (N1 + N2));
     const reinvestROIC = Math.max(roic, terminalROIC);
@@ -501,12 +504,15 @@ export function blendedValuation(co, a) {
   const isF = isFinancial(co);
 
   // ── Forward-growth seeding ──────────────────────────────────────────────
-  // When analyst forward estimates exist, the explicit-period growth is the
-  // CONSENSUS growth the market is actually pricing — not a generic sector
-  // default. This is the single biggest reason a bottom-up DCF was landing far
-  // below consensus for fast growers (Titan/Maruti): it was fed ~10% growth
-  // when the Street expects ~15–19%.
-  const ag = (co.analystGrowth != null && isFinite(co.analystGrowth))
+  // When analyst forward estimates exist AND the caller hasn't set an explicit
+  // growth, seed the explicit-period growth from consensus (the growth the
+  // market is actually pricing) rather than a generic sector default.
+  // CRITICAL: this must NOT fire when growth is explicitly provided — otherwise
+  // it silently clobbers the DCF tab's Revenue-growth / Fade-growth sliders, so
+  // moving them does nothing. The interactive tab always passes revGrowth1, so
+  // gating on `a.revGrowth1 == null` lets the sliders win there while still
+  // seeding consensus growth for base-case callers that omit it.
+  const ag = (co.analystGrowth != null && isFinite(co.analystGrowth) && a.revGrowth1 == null)
     ? Math.max(0.03, Math.min(co.analystGrowth, 0.30)) : null;
   const aa = ag != null
     ? { ...a, revGrowth1: ag, revGrowth2: Math.max(0.03, Math.min(ag * 0.72, 0.20)),
