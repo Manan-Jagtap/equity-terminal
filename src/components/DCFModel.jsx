@@ -20,6 +20,7 @@ import { Info } from "lucide-react";
 
 import { C, mono, sans, serif } from "../lib/theme.js";
 import { useIsMobile } from "../lib/useResponsive.js";
+import SegmentSOTP from "./SegmentSOTP.jsx";
 import { fmt, inr, pct, cr } from "../lib/formatters.js";
 import {
   RF, ERP, DEFAULT_TAX, MAX_G,
@@ -253,6 +254,8 @@ export default function DCFModel({ co, a, set, price, setPrice, apiVal }) {
 
   return (
     <div className="fadein" style={{ padding: isMobile ? 16 : 32 }}>
+      {/* Conglomerates: a single DCF can't value them — offer an editable SOTP. */}
+      <SegmentSOTP ticker={co.ticker} price={price} isMobile={isMobile} />
       {headIv > 0 && (
         <Card style={{ marginBottom:24, borderColor:`${C.gold}3d`, position:"relative", overflow:"hidden" }}>
           {/* Headline — the ONE blended fair value (moves with the sliders below) */}
@@ -340,7 +343,12 @@ export default function DCFModel({ co, a, set, price, setPrice, apiVal }) {
 
             {!isF && (
               <>
-                <SliderRow label="Cost of Debt (pre-tax)" value={kd} setValue={setKd} min={0.06} max={0.16} step={0.005} />
+                {/* Cost of debt only matters when the firm actually carries net
+                    debt. For net-cash names (TCS, Maruti…) the debt weight is 0,
+                    so the slider would be inert — hide it rather than look broken. */}
+                {(co.netDebt ?? 0) > 0 && (
+                  <SliderRow label="Cost of Debt (pre-tax)" value={kd} setValue={setKd} min={0.06} max={0.16} step={0.005} />
+                )}
                 <SliderRow label="Tax rate" value={taxRate} setValue={setTaxRate} min={0.15} max={0.35} step={0.005} />
               </>
             )}
