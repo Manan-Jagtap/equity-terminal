@@ -203,6 +203,34 @@ export default function AnalystTab({ co, API, price }) {
         </Panel>
       )}
 
+      {/* Valuation band — current P/E vs its own multi-year range */}
+      {data.pe_band && (() => {
+        const b = data.pe_band;
+        const span = Math.max(b.max - b.min, 1e-6);
+        const at = v => Math.max(0, Math.min(100, ((v - b.min) / span) * 100));
+        const tone = b.percentile < 35 ? C.green : b.percentile > 65 ? C.red : C.gold;
+        const label = b.percentile < 35 ? "cheap vs its own history"
+                    : b.percentile > 65 ? "expensive vs its own history" : "mid-range vs its own history";
+        return (
+          <Panel title="Valuation vs Own History" icon={TrendingUp} note={`P/E · ${b.n} pts`}>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 16 }}>
+              <span style={{ ...serif, fontSize: 30, color: tone }}>{b.current}×</span>
+              <span style={{ ...sans, fontSize: 13, color: tone }}>{b.percentile}th percentile — {label}</span>
+            </div>
+            <div style={{ position: "relative", height: 10, borderRadius: 5, background: `linear-gradient(90deg, ${C.green}55, ${C.gold}55, ${C.red}55)` }}>
+              <div title={`median ${b.median}×`} style={{ position: "absolute", left: `${at(b.median)}%`, top: -4, width: 2, height: 18, background: C.dim }} />
+              <div title={`current ${b.current}×`} style={{ position: "absolute", left: `${at(b.current)}%`, top: -6, transform: "translateX(-50%)", width: 12, height: 22, borderRadius: 3, background: tone, border: `2px solid ${C.bg900}` }} />
+            </div>
+            <div style={{ display: "flex", justifyContent: "space-between", marginTop: 9, ...mono, fontSize: 11, color: C.dim }}>
+              <span>min {b.min}×</span><span>median {b.median}×</span><span>max {b.max}×</span>
+            </div>
+            <div style={{ ...sans, fontSize: 11, color: C.dim, marginTop: 12, display: "flex", alignItems: "center", gap: 7 }}>
+              <Info size={12} color={C.faint} /> Current P/E within its multi-year range. Low percentile = cheap vs its own history; high = expensive. Not a sector comparison.
+            </div>
+          </Panel>
+        );
+      })()}
+
       {/* Forward estimates — unique forward-looking content */}
       {estRows.length > 0 && (
         <Panel title="Forward Estimates" icon={TrendingUp} note="analyst consensus">
