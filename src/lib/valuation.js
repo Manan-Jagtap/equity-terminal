@@ -543,10 +543,16 @@ export function blendedValuation(co, a) {
   if (an && an.target > 0) {
     const sectorPE = SECTOR_PE[co.template_code] ?? 18;
     const fwdPEval = (an.fwdEps > 0) ? an.fwdEps * sectorPE : null;
+    // Clamp each fundamental component into the analyst's own target band so a
+    // structurally-wrong sector multiple or a too-conservative DCF can't drag
+    // fair value far below where the analyst set actually sits.
+    const clo = an.low > 0 ? an.low : null, chi = an.high > 0 ? an.high : null;
+    const clampC = v => (v == null || !isFinite(v)) ? v
+      : (clo != null && chi != null) ? Math.max(clo, Math.min(v, chi)) : v;
     const parts = [
-      { method:"Analyst Consensus", value:an.target,                    weight:0.60 },
-      { method:"Forward P/E",       value:fwdPEval,                     weight:0.20 },
-      { method:"Fundamental DCF",   value:(fund > 0 ? fund : null),     weight:0.20 },
+      { method:"Analyst Consensus", value:an.target,                       weight:0.60 },
+      { method:"Forward P/E",       value:clampC(fwdPEval),                weight:0.20 },
+      { method:"Fundamental DCF",   value:clampC(fund > 0 ? fund : null),  weight:0.20 },
     ].filter(p => p.value != null && isFinite(p.value) && p.value > 0);
     if (parts.length) {
       const wsum = parts.reduce((s, p) => s + p.weight, 0);
