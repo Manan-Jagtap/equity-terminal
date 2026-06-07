@@ -218,68 +218,73 @@ export default function DCFModel({ co, a, set, price, setPrice, apiVal }) {
   const fmtP  = v => v == null ? "—" : (v * 100).toFixed(2) + "%";
   const fmtN  = (v, d=0) => v == null || !isFinite(v) ? "—" : Number(v).toLocaleString("en-IN", { maximumFractionDigits:d });
 
-  // ── Backend's authoritative INDEPENDENT valuation (matches the screener) ──
-  const apiRec   = apiVal?.recommendation;
-  const apiIv    = apiRec?.intrinsic;
-  const apiMos   = apiRec?.mos;
-  const apiVerd  = apiRec?.verdict;
-  const apiKe    = apiRec?.valuation?.ke;
-  const apiAn    = apiVal?.analyst;
-  const apiDrv   = apiRec?.drivers || {};
+  // ── Backend's authoritative BLENDED fair value (matches the screener) ──
+  // This is the one number shown on the screener: the intrinsic model blended
+  // with the relative cross-checks. Components carries each method + weight.
+  const apiRec    = apiVal?.recommendation;
+  const apiIv     = apiRec?.blended ?? apiRec?.intrinsic;
+  const apiMos    = apiRec?.mos;
+  const apiVerd   = apiRec?.verdict;
+  const apiKe     = apiRec?.valuation?.ke;
+  const apiComps  = apiRec?.components || [];
+  const apiDrv    = apiRec?.drivers || {};
   const verdColor = v => !v ? C.dim
     : /buy|accumulate/i.test(v) ? C.green : /hold/i.test(v) ? C.gold : C.red;
 
   return (
     <div className="fadein" style={{ padding: isMobile ? 16 : 32 }}>
       {apiIv > 0 && (
-        <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap:16, marginBottom:24 }}>
-          {/* Independent model — straight from the backend */}
-          <Card style={{ borderColor:"rgba(220,213,193,0.18)" }}>
-            <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.16em", color:"#857d65" }}>
-              Independent Model · {apiRec?.valuation?.method || "DCF"}
+        <Card style={{ marginBottom:24, borderColor:`${C.gold}3d`, position:"relative", overflow:"hidden" }}>
+          {/* Headline — blended fair value */}
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", flexWrap:"wrap", gap:16 }}>
+            <div>
+              <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.18em", color:"#857d65" }}>
+                Valuation · Blended Fair Value
+              </div>
+              <div style={{ display:"flex", alignItems:"baseline", gap:16, marginTop:8, flexWrap:"wrap" }}>
+                <span style={{ ...serif, fontSize:64, color:C.text, lineHeight:1, letterSpacing:"-0.02em" }}>₹{fmtN(apiIv)}</span>
+                <span style={{ ...sans, fontSize:16, fontWeight:600, color: apiMos>=0?C.green:C.red }}>
+                  {apiMos>=0?"+":""}{(apiMos*100).toFixed(1)}% MoS
+                </span>
+                <span style={{ ...sans, fontSize:13, fontWeight:600, padding:"4px 12px", borderRadius:6,
+                  color:verdColor(apiVerd), border:`1px solid ${verdColor(apiVerd)}55` }}>{apiVerd}</span>
+              </div>
+              <div style={{ ...sans, fontSize:11, color:"#5b5440", marginTop:10, lineHeight:1.6, maxWidth:600 }}>
+                Ke {apiKe!=null?(apiKe*100).toFixed(1):"—"}% · triangulated from this company's own history
+                {apiDrv.rev_growth ? ` (growth ${apiDrv.rev_growth}${apiDrv.ebit_margin?`, margin ${apiDrv.ebit_margin}`:""}${apiDrv.reinvest_rate?`, reinvest ${apiDrv.reinvest_rate}`:""})` : ""}.
+                This is the figure shown on the screener — one engine, no client/server drift.
+              </div>
             </div>
-            <div style={{ display:"flex", alignItems:"baseline", gap:14, marginTop:6, flexWrap:"wrap" }}>
-              <span style={{ ...serif, fontSize:46, color:C.text, lineHeight:1 }}>₹{fmtN(apiIv)}</span>
-              <span style={{ ...sans, fontSize:14, fontWeight:600, color: apiMos>=0?C.green:C.red }}>
-                {apiMos>=0?"+":""}{(apiMos*100).toFixed(1)}% MoS
-              </span>
-              <span style={{ ...sans, fontSize:12, fontWeight:600, padding:"3px 10px", borderRadius:6,
-                color:verdColor(apiVerd), border:`1px solid ${verdColor(apiVerd)}55` }}>{apiVerd}</span>
-            </div>
-            <div style={{ ...sans, fontSize:11, color:"#5b5440", marginTop:10, lineHeight:1.6 }}>
-              Ke {apiKe!=null?(apiKe*100).toFixed(1):"—"}% · derived from this company's own history:
-              {apiDrv.rev_growth ? ` growth ${apiDrv.rev_growth};` : ""}{apiDrv.ebit_margin ? ` margin ${apiDrv.ebit_margin};` : ""}{apiDrv.reinvest_rate ? ` reinvest ${apiDrv.reinvest_rate}` : ""}
-            </div>
-            <div style={{ ...sans, fontSize:10, color:"#3a3528", marginTop:6 }}>This is the value shown on the screener — same engine, no client/server drift.</div>
-          </Card>
-          {/* Analyst consensus — separate, never blended */}
-          <Card style={{ borderColor:"rgba(220,213,193,0.10)" }}>
-            <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.16em", color:"#857d65" }}>Analyst Consensus</div>
-            {apiAn?.target > 0 ? (
-              <>
-                <div style={{ display:"flex", alignItems:"baseline", gap:14, marginTop:6, flexWrap:"wrap" }}>
-                  <span style={{ ...serif, fontSize:46, color:C.text, lineHeight:1 }}>₹{fmtN(apiAn.target)}</span>
-                  {apiAn.upside!=null && (
-                    <span style={{ ...sans, fontSize:14, fontWeight:600, color: apiAn.upside>=0?C.green:C.red }}>
-                      {apiAn.upside>=0?"+":""}{(apiAn.upside*100).toFixed(1)}% upside
-                    </span>
-                  )}
-                  {apiAn.rating && <span style={{ ...sans, fontSize:12, color: /buy/i.test(apiAn.rating)?C.green:/hold/i.test(apiAn.rating)?C.gold:C.red }}>{apiAn.rating}</span>}
-                </div>
-                <div style={{ ...sans, fontSize:11, color:"#5b5440", marginTop:10 }}>
-                  Range ₹{fmtN(apiAn.low)}–₹{fmtN(apiAn.high)}{apiAn.n ? ` · ${Math.round(apiAn.n)} analysts` : ""}
-                </div>
-                {apiIv > 0 && apiAn.target > 0 && (
-                  <div style={{ ...sans, fontSize:11, marginTop:6, color:(apiIv/apiAn.target-1)>=0?C.green:C.red }}>
-                    Model is {(apiIv/apiAn.target-1)>=0?"+":""}{((apiIv/apiAn.target-1)*100).toFixed(0)}% vs the Street — independent view, shown side by side.
+          </div>
+
+          {/* Method breakdown — each method · weight · value, then the blend */}
+          {apiComps.length > 0 && (
+            <div style={{ display:"grid",
+              gridTemplateColumns: isMobile ? "1fr 1fr" : `repeat(${apiComps.length + 1}, 1fr)`,
+              gap:12, marginTop:22 }}>
+              {apiComps.map(c => (
+                <div key={c.method} style={{ background:"rgba(10,9,7,0.45)", border:"1px solid rgba(220,213,193,.08)", padding:"14px 16px" }}>
+                  <div style={{ ...sans, fontSize:11, color:"#857d65", textTransform:"uppercase", letterSpacing:"0.05em" }}>{c.method}</div>
+                  <div style={{ ...serif, fontSize:32, color: c.value>0 ? C.text : "#4a4537", marginTop:6, lineHeight:1 }}>
+                    {c.value>0 ? "₹"+fmtN(c.value) : "N/A"}
                   </div>
-                )}
-              </>
-            ) : (
-              <div style={{ ...sans, fontSize:12, color:C.faint, marginTop:10 }}>No analyst coverage for this name.</div>
-            )}
-          </Card>
-        </div>
+                  <div style={{ display:"flex", alignItems:"center", gap:8, marginTop:10 }}>
+                    <div style={{ flex:1, height:4, background:"rgba(220,213,193,.08)", borderRadius:2, overflow:"hidden" }}>
+                      <div style={{ width:`${c.weight*100}%`, height:"100%", background: c.value>0 ? C.gold+"aa" : "#4a4537" }} />
+                    </div>
+                    <span style={{ ...mono, fontSize:11, color:"#857d65" }}>{(c.weight*100).toFixed(0)}%</span>
+                  </div>
+                </div>
+              ))}
+              {/* Blended result */}
+              <div style={{ background:C.gold+"14", border:`1px solid ${C.gold}55`, padding:"14px 16px", display:"flex", flexDirection:"column", justifyContent:"space-between" }}>
+                <div style={{ ...sans, fontSize:11, color:C.gold, textTransform:"uppercase", letterSpacing:"0.05em" }}>Blended</div>
+                <div style={{ ...serif, fontSize:32, color:C.gold, marginTop:6, lineHeight:1 }}>₹{fmtN(apiIv)}</div>
+                <div style={{ ...sans, fontSize:10, color:"#857d65", marginTop:10 }}>weighted fair value</div>
+              </div>
+            </div>
+          )}
+        </Card>
       )}
       <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "300px 1fr", gap:24 }}>
         {/* ── LEFT PANEL ──────────────────────────────────────── */}
@@ -400,19 +405,9 @@ export default function DCFModel({ co, a, set, price, setPrice, apiVal }) {
                     <span style={{ fontWeight:600 }}>{mos>=0?"+":""}{(mos*100).toFixed(1)}%</span>
                     <span style={{ color:"#857d65", marginLeft:8 }}>margin of safety vs ₹{fmtN(price)} CMP</span>
                   </div>
-                  {blend.consensusValue > 0 && (
-                    <div style={{ ...sans, fontSize:12, marginTop:10, color:"#857d65" }}>
-                      Analyst consensus <span style={{ ...mono, color:C.text }}>₹{fmtN(blend.consensusValue)}</span>
-                      {iv > 0 && (
-                        <span style={{ marginLeft:8, color:(iv/blend.consensusValue-1)>=0?C.green:C.red }}>
-                          · model {(iv/blend.consensusValue-1)>=0?"+":""}{((iv/blend.consensusValue-1)*100).toFixed(0)}% vs Street
-                        </span>
-                      )}
-                      <div style={{ fontSize:10, color:"#5b5440", marginTop:3 }}>
-                        Independent model — not anchored to the analyst target. See the Analyst &amp; Forward tab for the full consensus.
-                      </div>
-                    </div>
-                  )}
+                  <div style={{ ...sans, fontSize:11, color:"#5b5440", marginTop:10, lineHeight:1.5, maxWidth:340 }}>
+                    Your own scenario — drag the sliders to stress-test the assumptions behind the blended fair value above.
+                  </div>
                 </div>
                 {/* Method breakdown */}
                 <div style={{ minWidth:220 }}>

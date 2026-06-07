@@ -221,7 +221,7 @@ const TABS = [
   { id:"overview",   icon:Building2,  label:"Business"      },
   { id:"financials", icon:FileText,   label:"Financials"    },
   { id:"ratios",     icon:Activity,   label:"Ratios & KPIs" },
-  { id:"dcf",        icon:Calculator, label:"DCF Model"     },
+  { id:"dcf",        icon:Calculator, label:"Valuation"     },
   { id:"analyst",    icon:Sparkles,   label:"Analyst & Forward" },
   { id:"peers",      icon:Users,      label:"Peer Universe" },
   { id:"ownership",  icon:PieChart,   label:"Ownership"     },
