@@ -41,7 +41,18 @@ export default function App() {
       .then(r => r.json())
       .then(rows => {
         const visible = NIFTY50_ONLY ? rows.filter(r => NIFTY_50.has(r.ticker)) : rows;
-        setCompanies(visible.length > 0 ? visible.map(r => buildFromApi(r)) : SEED);
+        // Carry the backend's CONSENSUS-ANCHORED screener metrics onto each
+        // company so the Screener displays them directly instead of recomputing
+        // a bare DCF (which has no analyst data on the list page).
+        const built = visible.map(r => ({
+          ...buildFromApi(r),
+          api: {
+            iv: r.intrinsic, mos: r.mos, verdict: r.verdict, composite: r.composite,
+            reliable: r.reliable, confidence: r.confidence,
+            roe: r.roe, pb: r.pb, pe: r.pe,
+          },
+        }));
+        setCompanies(built.length > 0 ? built : SEED);
       })
       .catch(() => setCompanies(SEED))
       .finally(() => setLoading(false));

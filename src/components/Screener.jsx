@@ -13,8 +13,9 @@ const confColor = lvl => lvl === "high" ? C.green : lvl === "medium" ? C.gold : 
 
 export default function Screener({ companies, onOpen, loading }) {
   const [q, setQ] = useState("");
-  const [sort, setSort] = useState("composite");
+  const [sort, setSort] = useState("rank");
   const [sf, setSf] = useState("All");
+  const VRANK = { BUY: 5, ACCUMULATE: 4, HOLD: 3, REDUCE: 2, TRIM: 2, AVOID: 1 };
 
   const sectors = useMemo(() => {
     const s = new Set(companies.map(c => {
@@ -34,9 +35,23 @@ export default function Screener({ companies, onOpen, loading }) {
 
   const rows = useMemo(() => companies
     .map(co => {
-      const r = recommend(co, co.assumptions);
       const f = fundamentals(co);
-      // mos can be null (no clean intrinsic); use -Infinity for sort stability
+      const a = co.api;
+      // Prefer the backend's CONSENSUS-ANCHORED screener metrics (these include
+      // the analyst overlay). Only fall back to a local recompute for seed/offline
+      // rows that never came from the API.
+      if (a && a.iv != null) {
+        return {
+          co,
+          iv: a.iv, mos: a.mos, verdict: a.verdict,
+          composite: a.composite ?? 0,
+          reliable: a.reliable !== false,
+          confidence: { level: a.confidence || "medium", flags: [] },
+          pb: a.pb ?? f.pb, pe: a.pe ?? f.pe, roe: a.roe ?? f.roe,
+          sortMos: a.mos ?? -Infinity,
+        };
+      }
+      const r = recommend(co, co.assumptions);
       return { co, ...r, pb: f.pb, pe: f.pe, roe: f.roe, sortMos: r.mos ?? -Infinity };
     })
     .filter(r => {
@@ -54,6 +69,10 @@ export default function Screener({ companies, onOpen, loading }) {
       return mQ;
     })
     .sort((a, b) => {
+      if (sort === "rank") {
+        const d = (VRANK[b.verdict] || 0) - (VRANK[a.verdict] || 0);
+        return d !== 0 ? d : (b.sortMos - a.sortMos);
+      }
       if (sort === "composite") return b.composite - a.composite;
       if (sort === "mos")       return b.sortMos - a.sortMos;
       if (sort === "roe")       return (b.roe || 0) - (a.roe || 0);
