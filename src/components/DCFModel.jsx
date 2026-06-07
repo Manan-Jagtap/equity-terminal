@@ -333,12 +333,25 @@ export default function DCFModel({ co, a, set, price, setPrice }) {
             <div style={{ position:"relative" }}>
               <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr auto", gap:24, alignItems:"start", marginBottom:16 }}>
                 <div>
-                  <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.18em", color:"#857d65" }}>Blended Intrinsic Value · {scenario.toUpperCase()}</div>
+                  <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.18em", color:"#857d65" }}>Independent Intrinsic Value · {scenario.toUpperCase()}</div>
                   <div style={{ ...serif, fontSize:72, color:C.text, lineHeight:1, letterSpacing:"-0.02em", marginTop:6 }}>₹{fmtN(iv)}</div>
                   <div style={{ ...sans, fontSize:14, marginTop:8, color:mos>=0?C.green:C.red }}>
                     <span style={{ fontWeight:600 }}>{mos>=0?"+":""}{(mos*100).toFixed(1)}%</span>
                     <span style={{ color:"#857d65", marginLeft:8 }}>margin of safety vs ₹{fmtN(price)} CMP</span>
                   </div>
+                  {blend.consensusValue > 0 && (
+                    <div style={{ ...sans, fontSize:12, marginTop:10, color:"#857d65" }}>
+                      Analyst consensus <span style={{ ...mono, color:C.text }}>₹{fmtN(blend.consensusValue)}</span>
+                      {iv > 0 && (
+                        <span style={{ marginLeft:8, color:(iv/blend.consensusValue-1)>=0?C.green:C.red }}>
+                          · model {(iv/blend.consensusValue-1)>=0?"+":""}{((iv/blend.consensusValue-1)*100).toFixed(0)}% vs Street
+                        </span>
+                      )}
+                      <div style={{ fontSize:10, color:"#5b5440", marginTop:3 }}>
+                        Independent model — not anchored to the analyst target. See the Analyst &amp; Forward tab for the full consensus.
+                      </div>
+                    </div>
+                  )}
                 </div>
                 {/* Method breakdown */}
                 <div style={{ minWidth:220 }}>

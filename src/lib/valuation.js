@@ -533,41 +533,27 @@ export function blendedValuation(co, a) {
     fund = r.blended; fundComponents = r.components;
   }
 
-  // ── Consensus overlay + guardrails ──────────────────────────────────────
-  // When analyst coverage exists, triangulate the fundamental DCF with the
-  // consensus target and a forward-P/E value, then HARD-CLAMP into the analyst
-  // target range. This keeps the headline fair value honest vs the Street while
-  // still grounding it in fundamentals, and surfaces a flag whenever the pure
-  // DCF diverges materially from consensus (priced-for-growth vs cheap).
+  // ── Independent headline + a SEPARATE consensus comparison ──────────────
+  // The headline fair value is the model's OWN fundamental view (DCF/RI + exit
+  // multiple + P/E) — it is NOT anchored or clamped to the analyst target, so
+  // the terminal can legitimately disagree with the Street. The analyst
+  // consensus is returned alongside (consensusValue) for a side-by-side display
+  // and a divergence flag, never blended into `blended`.
   const an = co.analyst;
+  let consensusValue = null;
+  const flags = [];
   if (an && an.target > 0) {
-    const sectorPE = SECTOR_PE[co.template_code] ?? 18;
-    const fwdPEval = (an.fwdEps > 0) ? an.fwdEps * sectorPE : null;
-    // Clamp each fundamental component into the analyst's own target band so a
-    // structurally-wrong sector multiple or a too-conservative DCF can't drag
-    // fair value far below where the analyst set actually sits.
-    const clo = an.low > 0 ? an.low : null, chi = an.high > 0 ? an.high : null;
-    const clampC = v => (v == null || !isFinite(v)) ? v
-      : (clo != null && chi != null) ? Math.max(clo, Math.min(v, chi)) : v;
-    const parts = [
-      { method:"Analyst Consensus", value:an.target,                       weight:0.60 },
-      { method:"Forward P/E",       value:clampC(fwdPEval),                weight:0.20 },
-      { method:"Fundamental DCF",   value:clampC(fund > 0 ? fund : null),  weight:0.20 },
-    ].filter(p => p.value != null && isFinite(p.value) && p.value > 0);
-    if (parts.length) {
-      const wsum = parts.reduce((s, p) => s + p.weight, 0);
-      let fv = parts.reduce((s, p) => s + p.value * (p.weight / wsum), 0);
-      const flags = [];
-      const lo = an.low > 0 ? an.low * 0.95 : null;
-      const hi = an.high > 0 ? an.high * 1.05 : null;
-      if (lo != null && fv < lo) { flags.push("clamped_to_consensus_low");  fv = lo; }
-      if (hi != null && fv > hi) { flags.push("clamped_to_consensus_high"); fv = hi; }
-      if (fund > 0 && Math.abs(fund / an.target - 1) > 0.35) flags.push("dcf_diverges_from_consensus");
-      return { v, blended: fv, components: parts, fundamental: fund, analyst: an, flags };
+    consensusValue = an.target;
+    if (fund > 0) {
+      const gap = fund / an.target - 1;
+      if (gap < -0.15) flags.push("model_below_consensus");
+      else if (gap > 0.15) flags.push("model_above_consensus");
     }
   }
-
-  return { v, blended: fund, components: fundComponents, fundamental: fund, flags: [] };
+  return {
+    v, blended: fund, components: fundComponents, fundamental: fund,
+    analyst: an || null, consensusValue, flags,
+  };
 }
 
 // ── Monte Carlo simulation ──────────────────────────────────────────────────
