@@ -93,6 +93,15 @@ export default function AnalystTab({ co, API, price }) {
   (data.rev_estimates || []).forEach(r => { estByYear[r.year] = { ...(estByYear[r.year] || {}), year: r.year, rev: r.mean_cr }; });
   const estRows = Object.values(estByYear).sort((x, y) => x.year - y.year);
 
+  // Consensus target as it stood at earlier points (aggregate, not per-broker).
+  const AGE_ORDER = { ThreeMonthsAgo: 0, TwoMonthsAgo: 1, OneMonthAgo: 2, OneWeekAgo: 3 };
+  const AGE_LABEL = { ThreeMonthsAgo: "3M ago", TwoMonthsAgo: "2M ago", OneMonthAgo: "1M ago", OneWeekAgo: "1W ago", Now: "Now" };
+  const trend = [
+    ...(data.target?.snapshots || []).filter(s => s.mean != null)
+      .sort((p, q) => (AGE_ORDER[p.age] ?? 9) - (AGE_ORDER[q.age] ?? 9)),
+    ...(tgt?.mean != null ? [{ age: "Now", mean: tgt.mean }] : []),
+  ];
+
   return (
     <div style={{ padding: `28px ${isMobile ? 16 : 32}px 60px` }}>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
@@ -165,6 +174,34 @@ export default function AnalystTab({ co, API, price }) {
           ) : <Empty>Awaiting forward estimates.</Empty>}
         </div>
       </div>
+
+      {/* Consensus target trend over time (aggregate — not per-broker) */}
+      {trend.length > 1 && (
+        <Panel title="Consensus Target Trend" icon={TrendingUp} note="aggregate consensus">
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            {trend.map((s, i) => {
+              const prev = i > 0 ? trend[i - 1].mean : null;
+              const dir = prev != null ? s.mean - prev : 0;
+              const isNow = s.age === "Now";
+              return (
+                <div key={i} style={{ flex: "1 1 96px", minWidth: 96, border: `1px solid ${isNow ? C.gold + "66" : C.line}`, borderRadius: 8, padding: "10px 12px", background: isNow ? C.gold + "14" : C.bg800 }}>
+                  <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", color: C.dim }}>{AGE_LABEL[s.age] || s.age}</div>
+                  <div style={{ ...serif, fontSize: 20, color: isNow ? C.gold : C.text, marginTop: 4 }}>{inr(s.mean)}</div>
+                  {prev != null && dir !== 0 && (
+                    <div style={{ ...mono, fontSize: 11, color: dir > 0 ? C.green : C.red, marginTop: 2 }}>
+                      {dir > 0 ? "▲" : "▼"} {inr(Math.abs(dir), 0)}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <div style={{ ...sans, fontSize: 11, color: C.dim, marginTop: 12, display: "flex", alignItems: "center", gap: 7 }}>
+            <Info size={12} color={C.faint} />
+            How the Street's mean target has moved. This is aggregate consensus — IndianAPI doesn't expose individual broker names or their targets.
+          </div>
+        </Panel>
+      )}
 
       {/* Forward estimates — unique forward-looking content */}
       {estRows.length > 0 && (
