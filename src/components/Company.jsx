@@ -7,7 +7,7 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import {
   ArrowLeft, Building2, FileText, Activity, Calculator,
   Users, Brain, Shield, Sparkles, Check, AlertTriangle,
-  Info, Loader2, TrendingUp, TrendingDown, Newspaper, Download,
+  Info, Loader2, TrendingUp, TrendingDown, Newspaper, Download, PieChart,
 } from "lucide-react";
 import {
   ComposedChart, AreaChart, Area, BarChart, Bar, LineChart, Line,
@@ -224,6 +224,7 @@ const TABS = [
   { id:"dcf",        icon:Calculator, label:"DCF Model"     },
   { id:"analyst",    icon:Sparkles,   label:"Analyst & Forward" },
   { id:"peers",      icon:Users,      label:"Peer Universe" },
+  { id:"ownership",  icon:PieChart,   label:"Ownership"     },
   { id:"news",       icon:Newspaper,  label:"News"          },
   { id:"thesis",     icon:Brain,      label:"AI Thesis"     },
   { id:"verdict",    icon:Shield,     label:"Verdict"       },
@@ -592,12 +593,6 @@ function OverviewTab({ co, rec, cd, priceData, profile }) {
             </div>
           </Card>
         )}
-
-        {/* Shareholding — real IndianAPI data, all companies */}
-        <ShareholdingCard data={profile?.shareholding} />
-
-        {/* Filings & reports — concalls, annual reports, credit ratings */}
-        <DocsCard profile={profile} />
       </div>
 
       {/* RIGHT */}
@@ -688,6 +683,55 @@ function OverviewTab({ co, rec, cd, priceData, profile }) {
             </div>
           </Card>
         )}
+      </div>
+    </div>
+  );
+}
+
+/* ── Ownership & Filings Tab ──────────────────────────────────────── */
+function CorporateActionsCard({ data }) {
+  if (!data?.length) return null;
+  return (
+    <Card>
+      <SectionLabel accent="DIVIDENDS · SPLITS · BONUS">CORPORATE ACTIONS</SectionLabel>
+      <div style={{ display:"flex", flexDirection:"column", gap:9, marginTop:4 }}>
+        {data.slice(0, 8).map((a, i) => (
+          <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", gap:12,
+                                 borderBottom:i<data.length-1?`1px solid ${C.line}`:"none", paddingBottom:8 }}>
+            <div>
+              <span style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.08em", color:C.gold }}>{a.type}</span>
+              <div style={{ ...sans, fontSize:12.5, color:C.text200, lineHeight:1.4, marginTop:2 }}>{a.detail || "—"}</div>
+            </div>
+            <span style={{ ...mono, fontSize:11, color:C.dim, flexShrink:0 }}>{a.date || ""}</span>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+function OwnershipTab({ profile }) {
+  const isMobile = useIsMobile();
+  if (!profile) {
+    return <div style={{ padding:40, ...sans, color:C.dim, fontSize:13 }}>Loading ownership & filings…</div>;
+  }
+  const hasShare = profile.shareholding?.length;
+  const hasDocs = (profile.concalls?.length || profile.annual_reports?.length ||
+                   profile.credit_ratings?.length || profile.announcements?.length);
+  const hasCA = profile.corporate_actions?.length;
+  if (!hasShare && !hasDocs && !hasCA) {
+    return <div style={{ padding:40, ...sans, color:C.dim, fontSize:13 }}>No ownership or filings data available for this company.</div>;
+  }
+  return (
+    <div className="fadein" style={{ padding: isMobile ? 16 : 32, display:"grid", gridTemplateColumns: isMobile ? "1fr" : "360px 1fr", gap:24, alignItems:"start" }}>
+      {/* LEFT — ownership */}
+      <div style={{ display:"flex", flexDirection:"column", gap:24 }}>
+        <ShareholdingCard data={profile.shareholding} />
+        <CorporateActionsCard data={profile.corporate_actions} />
+      </div>
+      {/* RIGHT — filings */}
+      <div style={{ display:"flex", flexDirection:"column", gap:24 }}>
+        <DocsCard profile={profile} />
       </div>
     </div>
   );
@@ -809,7 +853,7 @@ const _fmtStmtVal = (v, name) => {
   return fmtN(n, 0);
 };
 
-function ScreenerIncomeTable({ accent, title = "Income Statement", periods, metrics, order, kind, growth = false }) {
+function ScreenerIncomeTable({ accent, title = "Income Statement", periods, metrics, order, kind, growth = false, padCols = 0 }) {
   const m = metrics || {};
   const names = (order && order.length ? order : Object.keys(m));
   const L = periods.length;
@@ -844,42 +888,60 @@ function ScreenerIncomeTable({ accent, title = "Income Statement", periods, metr
         <span style={{ ...sans, fontSize:10, textTransform:"uppercase", color:C.dim }}>₹ Crores</span>
       </div>
       <div style={{ overflowX:"auto" }}>
-        <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13, minWidth:520 }}>
-          <thead>
-            <tr style={{ borderTop:`1px solid ${C.line}`, borderBottom:`1px solid ${C.line}` }}>
-              <th style={{ ...sans, textAlign:"left", padding:"8px 20px", fontSize:10, textTransform:"uppercase", color:C.dim, fontWeight:500 }} />
-              {periods.map((p, i) => (
-                <th key={i} style={{ ...sans, textAlign:"right", padding:"8px", paddingRight:(i===L-1&&!gCols.length)?"20px":"8px", fontSize:10, color:i===L-1?C.gold:C.dim, fontWeight:500, whiteSpace:"nowrap" }}>{label(p)}</th>
-              ))}
-              {gCols.map((g, i) => (
-                <th key={"g"+i} style={{ ...sans, textAlign:"right", padding:"8px", paddingRight:i===gCols.length-1?"20px":"8px", fontSize:10, color:C.gold, fontWeight:500, whiteSpace:"nowrap", borderLeft:i===0?`1px solid ${C.line2}`:"none" }}>{g.label}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {names.map((name, i) => {
-              const bold = _isBoldLine(name);
-              return (
-                <tr key={i} style={{ borderBottom:`1px solid ${C.line}`, background:bold?"rgba(58,53,40,0.3)":"transparent" }}>
-                  <td style={{ ...sans, padding:"10px 20px", color:bold?C.text:C.text200, fontWeight:bold?500:400 }}>{name}</td>
-                  {periods.map((p, j) => (
-                    <td key={j} style={{ ...mono, textAlign:"right", padding:"10px 8px", paddingRight:(j===L-1&&!gCols.length)?"20px":"8px", fontSize:12, color:j===L-1?"#d4b96a":bold?C.text:C.text200 }}>
-                      {_fmtStmtVal(m[name]?.[j], name)}
-                    </td>
+        {(() => {
+          // Fixed geometry so FY columns line up vertically across the stacked
+          // Income / Balance Sheet / Cash Flow tables. Every table reserves the
+          // same number of trailing slots (growth cols on Income; pad cols on the
+          // others) → identical column positions.
+          const dataCols = L + gCols.length + padCols;
+          const dataW = (72 / dataCols).toFixed(3) + "%";
+          const pad = Array.from({ length: padCols });
+          return (
+            <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13, minWidth:560, tableLayout:"fixed" }}>
+              <colgroup>
+                <col style={{ width:"28%" }} />
+                {Array.from({ length: dataCols }).map((_, i) => <col key={i} style={{ width:dataW }} />)}
+              </colgroup>
+              <thead>
+                <tr style={{ borderTop:`1px solid ${C.line}`, borderBottom:`1px solid ${C.line2}` }}>
+                  <th style={{ ...sans, textAlign:"left", padding:"9px 20px", fontSize:10, textTransform:"uppercase", color:C.dim, fontWeight:500 }} />
+                  {periods.map((p, i) => (
+                    <th key={i} style={{ ...sans, textAlign:"right", padding:"9px 8px", fontSize:10.5, color:i===L-1?C.gold:C.dim, fontWeight:600, whiteSpace:"nowrap", letterSpacing:"0.03em" }}>{label(p)}</th>
                   ))}
-                  {gCols.map((g, k) => {
-                    const gv = gVal(name, g.cur, g.prev);
-                    return (
-                      <td key={"g"+k} style={{ ...mono, textAlign:"right", padding:"10px 8px", paddingRight:k===gCols.length-1?"20px":"8px", fontSize:12, color:gv.tone, borderLeft:k===0?`1px solid ${C.line2}`:"none" }}>
-                        {gv.txt}
-                      </td>
-                    );
-                  })}
+                  {gCols.map((g, i) => (
+                    <th key={"g"+i} style={{ ...sans, textAlign:"right", padding:"9px 8px", paddingRight:i===gCols.length-1?"20px":"8px", fontSize:10, color:C.gold, fontWeight:600, whiteSpace:"nowrap", borderLeft:i===0?`1px solid ${C.line2}`:"none" }}>{g.label}</th>
+                  ))}
+                  {pad.map((_, i) => <th key={"p"+i} style={{ paddingRight:i===padCols-1?"20px":"8px" }} />)}
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
+              </thead>
+              <tbody>
+                {names.map((name, i) => {
+                  const bold = _isBoldLine(name);
+                  const bg = bold ? "rgba(58,53,40,0.32)" : (i % 2 ? "rgba(220,213,193,0.015)" : "transparent");
+                  return (
+                    <tr key={i} style={{ borderBottom:`1px solid ${C.line}`, background:bg }}>
+                      <td style={{ ...sans, padding:"9px 20px", color:bold?C.text:C.text200, fontWeight:bold?600:400, lineHeight:1.35 }}>{name}</td>
+                      {periods.map((p, j) => (
+                        <td key={j} style={{ ...mono, textAlign:"right", padding:"9px 8px", fontSize:12, color:j===L-1?"#d4b96a":bold?C.text:C.text200, fontWeight:bold?600:400 }}>
+                          {_fmtStmtVal(m[name]?.[j], name)}
+                        </td>
+                      ))}
+                      {gCols.map((g, k) => {
+                        const gv = gVal(name, g.cur, g.prev);
+                        return (
+                          <td key={"g"+k} style={{ ...mono, textAlign:"right", padding:"9px 8px", paddingRight:k===gCols.length-1?"20px":"8px", fontSize:12, color:gv.tone, borderLeft:k===0?`1px solid ${C.line2}`:"none" }}>
+                            {gv.txt}
+                          </td>
+                        );
+                      })}
+                      {pad.map((_, k) => <td key={"p"+k} style={{ paddingRight:k===padCols-1?"20px":"8px" }} />)}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          );
+        })()}
       </div>
     </Card>
   );
@@ -938,7 +1000,7 @@ function PeriodicStatement({ co, API, endpoint, title, accent, fallback }) {
   if (data === undefined) return <div style={{ ...sans, color:C.dim, fontSize:13, padding:24 }}>Loading {title.toLowerCase()}…</div>;
   if (!data?.has_data || !(data.periods || []).length) return fallback || null;
   return <ScreenerIncomeTable title={title} accent={accent || `${title.toUpperCase()} · LAST ${data.periods.length} YEARS`}
-                              periods={data.periods} metrics={data.metrics} order={data.order} kind="annual" />;
+                              periods={data.periods} metrics={data.metrics} order={data.order} kind="annual" padCols={1} />;
 }
 
 function FinancialsTab({ co, cd, liveFinancials, API }) {
@@ -1017,15 +1079,17 @@ function LiveMetricCard({ cat }) {
   return (
     <Card noPad style={{ overflow:"hidden" }}>
       <div style={{ padding:"14px 18px 10px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-        <span style={{ ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.16em", color:C.gold, fontWeight:500 }}>{cat.name}</span>
-        <span style={{ ...sans, fontSize:10, color:C.dim }}>{rows.length} metrics</span>
+        <span style={{ ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.16em", color:C.gold, fontWeight:600 }}>{cat.name}</span>
+        <span style={{ ...sans, fontSize:10, color:C.dim }}>{rows.length} metric{rows.length>1?"s":""}</span>
       </div>
-      <div style={{ borderTop:`1px solid ${C.line}` }}>
+      <div style={{ borderTop:`1px solid ${C.line2}` }}>
         {rows.map((m, i) => (
-          <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", padding:"9px 18px", borderBottom:`1px solid ${C.line}` }}
+          <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", padding:"9px 18px",
+                                borderBottom:i<rows.length-1?`1px solid ${C.line}`:"none",
+                                background:i%2?"rgba(220,213,193,0.015)":"transparent" }}
                title={m.note || ""}>
             <span style={{ ...sans, color:C.text200, fontSize:12.5 }}>{m.label}</span>
-            <span style={{ ...mono, fontSize:13, color:m.good===true?C.green:m.good===false?C.red:C.text }}>{metricFmt(m)}</span>
+            <span style={{ ...mono, fontSize:13, color:C.text, fontWeight:500 }}>{metricFmt(m)}</span>
           </div>
         ))}
       </div>
@@ -1430,54 +1494,122 @@ function DynamicPeers({ co, allCompanies }) {
 /* ── Peers Tab ───────────────────────────────────────────────────── */
 /* Live peer comparison from IndianAPI — the company's actual named sector
    peers with current market multiples (P/E, P/B, ROE TTM, margins, div yield). */
-function IndianApiPeers({ co, peers, selfMetrics }) {
+function IndianApiPeers({ co, peers, selfMetrics, universe }) {
   const f = fundamentals(co);
   const sm = selfMetrics || {};
   const pctR = (n, d = 1) => (n == null || isNaN(n)) ? "—" : Number(n).toFixed(d) + "%";
-  // Hero row uses the SAME IndianAPI multiples the company shows as a peer
-  // elsewhere (single source of truth); falls back to our computed values.
-  const rows = [
-    { name: co.name, price: sm.price ?? co.price,
-      pe: sm.pe ?? f.pe, pb: sm.pb ?? f.pb,
-      roe: sm.roe_ttm ?? (f.roe != null ? f.roe * 100 : null),
-      npm: sm.npm_ttm ?? null, divY: sm.div_yield ?? null, rating: sm.rating ?? null, hero: true },
-    ...peers.map(p => ({ name: p.name, price: p.price, pe: p.pe, pb: p.pb, roe: p.roe_ttm, npm: p.npm_ttm, divY: p.div_yield, rating: p.rating, hero: false })),
-  ];
+
+  // Candidate peers: IndianAPI's curated sector peers, PLUS any other company in
+  // the same sector from the full universe (consistent multiples). Deduped by name.
+  const curated = (peers || []).map(p => ({
+    key: p.name, name: p.name, price: p.price, pe: p.pe, pb: p.pb,
+    roe: p.roe_ttm, npm: p.npm_ttm, divY: p.div_yield, rating: p.rating, src: "peer",
+  }));
+  const curatedNames = new Set(curated.map(c => c.name));
+  const extra = (universe || [])
+    .filter(u => u.sector && co.sector && u.sector === co.sector && u.name !== co.name && !curatedNames.has(u.name))
+    .map(u => ({ key: u.ticker || u.name, name: u.name, price: u.price, pe: u.pe, pb: u.pb,
+                 roe: u.roe_ttm, npm: u.npm_ttm, divY: u.div_yield, rating: u.rating, src: "sector" }));
+  const candidates = [...curated, ...extra];
+
+  // Selection — curated peers on by default; user toggles any row in/out of the
+  // comparison and the median/average.
+  const [sel, setSel] = useState(() => new Set(curated.map(c => c.key)));
+  const toggle = (k) => setSel(prev => { const n = new Set(prev); n.has(k) ? n.delete(k) : n.add(k); return n; });
+
+  const chosen = candidates.filter(c => sel.has(c.key));
+  const agg = (key, fn) => {
+    const vals = chosen.map(c => c[key]).filter(x => x != null && isFinite(x));
+    if (!vals.length) return null;
+    if (fn === "med") { const v = [...vals].sort((a, b) => a - b); const n = v.length; return n % 2 ? v[(n - 1) / 2] : (v[n / 2 - 1] + v[n / 2]) / 2; }
+    return vals.reduce((s, x) => s + x, 0) / vals.length;
+  };
+
+  const hero = { name: co.name, price: sm.price ?? co.price, pe: sm.pe ?? f.pe, pb: sm.pb ?? f.pb,
+                 roe: sm.roe_ttm ?? (f.roe != null ? f.roe * 100 : null), npm: sm.npm_ttm ?? null,
+                 divY: sm.div_yield ?? null, rating: sm.rating ?? null };
+
+  // Hero first, selected next, then the rest — alpha within each band.
+  const ordered = [...candidates].sort((a, b) => {
+    const sa = sel.has(a.key), sb = sel.has(b.key);
+    if (sa !== sb) return sa ? -1 : 1;
+    return (a.name || "").localeCompare(b.name || "");
+  });
+
+  const cols = ["P/E", "P/B", "ROE", "Net Margin", "Div Yield", "Rating"];
+  const cell = (p) => ([
+    <td key="px" style={{ ...mono, textAlign: "right", padding: "9px 8px", color: C.text }}>{inrOrDash(p.price, 0)}</td>,
+    <td key="pe" style={{ ...mono, textAlign: "right", padding: "9px 8px", color: C.text }}>{multiple(p.pe, 1)}</td>,
+    <td key="pb" style={{ ...mono, textAlign: "right", padding: "9px 8px", color: C.text }}>{multiple(p.pb, 1)}</td>,
+    <td key="roe" style={{ ...mono, textAlign: "right", padding: "9px 8px", color: C.green }}>{pctR(p.roe)}</td>,
+    <td key="npm" style={{ ...mono, textAlign: "right", padding: "9px 8px", color: C.text }}>{pctR(p.npm)}</td>,
+    <td key="dy" style={{ ...mono, textAlign: "right", padding: "9px 8px", color: C.text }}>{pctR(p.divY)}</td>,
+    <td key="rt" style={{ ...sans, textAlign: "right", padding: "9px 20px", fontSize: 12, color: C.dim }}>{p.rating || "—"}</td>,
+  ]);
+
+  const StatRow = ({ label, fn }) => (
+    <tr style={{ borderTop: `1px solid ${C.line2}`, background: "rgba(212,169,62,0.06)" }}>
+      <td style={{ padding: "9px 8px" }} />
+      <td style={{ ...sans, padding: "9px 20px", color: C.gold, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600 }}>{label}</td>
+      <td style={{ ...mono, textAlign: "right", padding: "9px 8px", color: C.gold }}>{(() => { const v = agg("price", fn); return v == null ? "—" : inrOrDash(v, 0); })()}</td>
+      <td style={{ ...mono, textAlign: "right", padding: "9px 8px", color: C.gold }}>{multiple(agg("pe", fn), 1)}</td>
+      <td style={{ ...mono, textAlign: "right", padding: "9px 8px", color: C.gold }}>{multiple(agg("pb", fn), 1)}</td>
+      <td style={{ ...mono, textAlign: "right", padding: "9px 8px", color: C.gold }}>{pctR(agg("roe", fn))}</td>
+      <td style={{ ...mono, textAlign: "right", padding: "9px 8px", color: C.gold }}>{pctR(agg("npm", fn))}</td>
+      <td style={{ ...mono, textAlign: "right", padding: "9px 8px", color: C.gold }}>{pctR(agg("divY", fn))}</td>
+      <td style={{ padding: "9px 20px" }} />
+    </tr>
+  );
+
   return (
     <div className="fadein" style={{ padding: 32 }}>
       <Card noPad style={{ overflow: "hidden" }}>
-        <div style={{ padding: "16px 20px 8px" }}>
+        <div style={{ padding: "16px 20px 10px", display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
           <SectionLabel accent={`${co.ticker} · SECTOR PEERS · LIVE`}>PEER COMPARISON</SectionLabel>
+          <span style={{ ...sans, fontSize: 11, color: C.dim }}>
+            {chosen.length} of {candidates.length} selected · tick rows to include in the median
+          </span>
         </div>
         <div style={{ overflowX: "auto" }}>
           <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
             <thead>
               <tr style={{ borderTop: `1px solid ${C.line}`, borderBottom: `1px solid ${C.line}` }}>
-                {["Company", "Price", "P/E", "P/B", "ROE", "Net Margin", "Div Yield", "Rating"].map((h, i) => (
-                  <th key={i} style={{ ...sans, textAlign: i === 0 ? "left" : "right", padding: "8px", paddingLeft: i === 0 ? "20px" : "8px", paddingRight: i === 7 ? "20px" : "8px", fontSize: 10, textTransform: "uppercase", color: C.dim, fontWeight: 500 }}>{h}</th>
+                <th style={{ width: 34 }} />
+                <th style={{ ...sans, textAlign: "left", padding: "8px 20px", fontSize: 10, textTransform: "uppercase", color: C.dim, fontWeight: 500 }}>Company</th>
+                <th style={{ ...sans, textAlign: "right", padding: "8px", fontSize: 10, textTransform: "uppercase", color: C.dim, fontWeight: 500 }}>Price</th>
+                {cols.map((h, i) => (
+                  <th key={i} style={{ ...sans, textAlign: "right", padding: "8px", paddingRight: i === cols.length - 1 ? "20px" : "8px", fontSize: 10, textTransform: "uppercase", color: C.dim, fontWeight: 500 }}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {rows.map((p, i) => (
-                <tr key={i} style={{ borderBottom: `1px solid ${C.line}`, background: p.hero ? C.gold + "0d" : "transparent" }}>
-                  <td style={{ ...sans, padding: "10px 20px", color: p.hero ? C.gold : C.text200, fontWeight: p.hero ? 500 : 400 }}>
-                    {p.hero && <span style={{ color: C.gold, marginRight: 6 }}>◆</span>}{p.name}
-                  </td>
-                  <td style={{ ...mono, textAlign: "right", padding: "10px 8px", color: C.text }}>{inrOrDash(p.price, 0)}</td>
-                  <td style={{ ...mono, textAlign: "right", padding: "10px 8px", color: C.text }}>{multiple(p.pe, 1)}</td>
-                  <td style={{ ...mono, textAlign: "right", padding: "10px 8px", color: C.text }}>{multiple(p.pb, 1)}</td>
-                  <td style={{ ...mono, textAlign: "right", padding: "10px 8px", color: C.green }}>{pctR(p.roe)}</td>
-                  <td style={{ ...mono, textAlign: "right", padding: "10px 8px", color: C.text }}>{pctR(p.npm)}</td>
-                  <td style={{ ...mono, textAlign: "right", padding: "10px 8px", color: C.text }}>{pctR(p.divY)}</td>
-                  <td style={{ ...sans, textAlign: "right", padding: "10px 20px", fontSize: 12, color: C.dim }}>{p.rating || "—"}</td>
-                </tr>
-              ))}
+              {/* Hero */}
+              <tr style={{ borderBottom: `1px solid ${C.line}`, background: C.gold + "12" }}>
+                <td style={{ textAlign: "center" }}><span style={{ color: C.gold }}>◆</span></td>
+                <td style={{ ...sans, padding: "9px 20px", color: C.gold, fontWeight: 600 }}>{co.name}</td>
+                {cell(hero)}
+              </tr>
+              {ordered.map((p) => {
+                const on = sel.has(p.key);
+                return (
+                  <tr key={p.key} onClick={() => toggle(p.key)} style={{ borderBottom: `1px solid ${C.line}`, cursor: "pointer", opacity: on ? 1 : 0.5 }}>
+                    <td style={{ textAlign: "center" }}>
+                      <input type="checkbox" checked={on} readOnly style={{ accentColor: C.gold, cursor: "pointer" }} />
+                    </td>
+                    <td style={{ ...sans, padding: "9px 20px", color: C.text200 }}>
+                      {p.name}{p.src === "sector" && <span style={{ ...sans, fontSize: 9, color: C.faint, marginLeft: 6, textTransform: "uppercase" }}>sector</span>}
+                    </td>
+                    {cell(p)}
+                  </tr>
+                );
+              })}
+              {chosen.length > 0 && <StatRow label="Median" fn="med" />}
+              {chosen.length > 0 && <StatRow label="Average" fn="avg" />}
             </tbody>
           </table>
         </div>
         <div style={{ padding: "10px 20px", ...sans, fontSize: 11, color: C.faint }}>
-          Sector peers and market multiples via IndianAPI · ◆ marks {co.ticker} · ROE &amp; margins are TTM.
+          Market multiples via IndianAPI (one consistent basis) · ◆ marks {co.ticker} · ROE &amp; margins are TTM · Median/Average computed over selected peers only.
         </div>
       </Card>
     </div>
@@ -1486,17 +1618,22 @@ function IndianApiPeers({ co, peers, selfMetrics }) {
 
 function PeersTab({ co, cd, allCompanies, API }) {
   const [iaData, setIaData] = useState(undefined); // undefined = loading
+  const [universe, setUniverse] = useState(null);
   useEffect(() => {
     if (!API || !co.ticker) { setIaData(null); return; }
     setIaData(undefined);
     fetch(`${API}/api/companies/${co.ticker}/insights`)
       .then(r => r.json()).then(setIaData).catch(() => setIaData(null));
   }, [co.ticker, API]);
+  useEffect(() => {
+    if (!API) return;
+    fetch(`${API}/api/peer_universe`).then(r => r.json()).then(setUniverse).catch(() => setUniverse(null));
+  }, [API]);
 
   if (iaData === undefined)
     return <div style={{ padding: 40, textAlign: "center", ...sans, color: C.dim, fontSize: 13 }}>Loading peers…</div>;
   if (iaData?.peers && iaData.peers.length)
-    return <IndianApiPeers co={co} peers={iaData.peers} selfMetrics={iaData.self_metrics} />;
+    return <IndianApiPeers co={co} peers={iaData.peers} selfMetrics={iaData.self_metrics} universe={universe} />;
 
   // Fallback: curated seed (e.g. Muthoot) → screener-universe comparison.
   const peers = cd?.peers;
@@ -1785,24 +1922,68 @@ function AIThesisTab({ co, API }) {
 }
 
 /* ── Verdict Tab ─────────────────────────────────────────────────── */
-function VerdictTab({ co, rec, cd, price }) {
+/* Verdict combines THREE independent signals — the corrected DCF, the analyst
+   consensus, and a quality scorecard — rather than relying on the DCF MoS alone.
+   This stops a fundamentally-strong but richly-valued name from being branded
+   "AVOID" purely because a fundamentals DCF won't pay a 50× multiple. */
+function VerdictTab({ co, rec, cd, price, insights }) {
+  const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
   const f = rec.f;
-  // Single source of truth: the canonical blended intrinsic + gated verdict
-  // from recommend(). No re-deriving a different verdict here.
-  const intrinsic = rec.iv;
-  const mos = rec.mos != null ? rec.mos * 100 : null;
-  const verdict = rec.verdict;
-  const verdictColor = verdictTone(verdict);
 
-  const quality = cd?.quality || [
-    { k:"Profitability", s:8.0, n:"ROE "+((f.roe||0)*100).toFixed(1)+"%" },
-    { k:"Valuation MoS",  s:mos==null?5.0:mos>0?7.5:4.0, n:mos==null?"Intrinsic unavailable":mos.toFixed(1)+"% MoS" },
-    { k:"Growth",        s:7.0, n:"Based on DCF projections" },
-    { k:"Balance Sheet", s:7.5, n:"Leverage and capital adequacy" },
+  // 1) DCF — corrected blended intrinsic (today's fair value)
+  const dcfIv  = rec.iv;
+  const dcfMos = rec.mos;                       // fraction
+
+  // 2) Analyst consensus
+  const tgt       = insights?.target?.mean ?? null;
+  const analyst   = insights?.analyst || null;
+  const analystUp = (tgt != null && price > 0) ? tgt / price - 1 : null;
+  const dist      = analyst?.distribution || [];
+  const distTotal = dist.reduce((s, d) => s + (d.count || 0), 0);
+  const bullPct   = distTotal ? dist.filter(d => /buy/i.test(d.rating)).reduce((s, d) => s + (d.count || 0), 0) / distTotal : null;
+
+  // 3) Reconciled expected return — average of the DCF margin-of-safety and the
+  //    analyst upside (each is an independent "is it cheap?" read).
+  const sig = [];
+  if (dcfMos != null)   sig.push(dcfMos);
+  if (analystUp != null) sig.push(analystUp);
+  const expRet = sig.length ? sig.reduce((a, b) => a + b, 0) / sig.length : null;
+
+  // Fair-value range spanning the DCF and the analyst target
+  const fvVals = [dcfIv, tgt].filter(v => v != null && isFinite(v));
+  const fvLo = fvVals.length ? Math.min(...fvVals) : null;
+  const fvHi = fvVals.length ? Math.max(...fvVals) : null;
+
+  // Quality scorecard (0–10 each)
+  const roe = f.roe ?? null;
+  const g1  = co.assumptions?.revGrowth1 ?? co.assumptions?.forecastROE ?? 0.10;
+  const lev = co.assumptions?.debtWeight ?? (co.netDebt && co.equity ? Math.max(0, co.netDebt) / (co.equity + Math.max(0, co.netDebt)) : 0.2);
+  const sc = [
+    { k:"Valuation",        s: expRet == null ? 5 : clamp(5 + expRet * 20, 0, 10), n: expRet == null ? "No fair-value signal" : signedPct(expRet) + " blended expected return" },
+    { k:"Profitability",    s: roe == null ? 5 : clamp((roe - 0.08) / 0.22 * 10, 0, 10), n: roe == null ? "ROE unavailable" : "ROE " + (roe * 100).toFixed(1) + "%" },
+    { k:"Growth",           s: clamp((g1 - 0.04) / 0.16 * 10, 1, 10), n: "Stage-1 driver " + (g1 * 100).toFixed(0) + "%" },
+    { k:"Balance Sheet",    s: clamp((0.5 - lev) / 0.5 * 10, 1, 10), n: lev < 0.05 ? "Net cash / minimal debt" : "Debt weight " + (lev * 100).toFixed(0) + "%" },
+    { k:"Analyst Conviction", s: bullPct == null ? 5 : clamp(bullPct * 10, 0, 10), n: bullPct == null ? "No consensus data" : (bullPct * 100).toFixed(0) + "% rate Buy" + (analyst?.num_analysts ? " · " + analyst.num_analysts + " analysts" : "") },
   ];
-  const totalScore = quality.reduce((s, q) => s + q.s, 0) / quality.length;
+  const qComposite = sc.reduce((s, q) => s + q.s, 0) / sc.length;
 
-  const risks = cd?.risks || rec.reasons.filter(r => r.bad).map(r => r.note);
+  // Final verdict — expected-return led, quality-gated, consensus-aware
+  let verdict;
+  if (expRet == null)                                    verdict = "NO DATA";
+  else if (expRet >= 0.15 && qComposite >= 6.0 && (bullPct == null || bullPct >= 0.35)) verdict = "BUY";
+  else if (expRet >= 0.06)                               verdict = "ACCUMULATE";
+  else if (expRet >= -0.07)                              verdict = "HOLD";
+  else if (expRet >= -0.20)                              verdict = "REDUCE";
+  else                                                   verdict = "AVOID";
+  const verdictColor = /BUY|ACCUM/.test(verdict) ? C.green : /HOLD|DATA/.test(verdict) ? C.gold : C.red;
+
+  const risks = (cd?.risks || rec.reasons.filter(r => r.bad).map(r => r.note)).slice(0, 5);
+
+  const Bar = ({ v }) => (
+    <div style={{ height:6, background:C.bg600, position:"relative", overflow:"hidden" }}>
+      <div style={{ position:"absolute", inset:"0 auto 0 0", width:(v*10)+"%", background:`linear-gradient(90deg,${C.gold500},${C.gold})` }} />
+    </div>
+  );
 
   return (
     <div className="fadein" style={{ padding:32, display:"grid", gridTemplateColumns:"1fr 1fr", gap:24 }}>
@@ -1813,12 +1994,17 @@ function VerdictTab({ co, rec, cd, price }) {
           <div style={{ position:"relative", display:"grid", gridTemplateColumns:"1fr 1fr", gap:32 }}>
             <div>
               <div style={{ ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.18em", color:C.gold, marginBottom:8 }}>Equity Terminal · Final Verdict</div>
-              <div style={{ ...serif, fontSize:96, color:verdictColor, lineHeight:1 }}>{verdict}</div>
-              <div style={{ display:"flex", gap:32, marginTop:16 }}>
-                {[["Fair Value",inrOrDash(intrinsic,0)],["CMP","₹"+fmtN(price,0)],["Upside",mos==null?"—":(mos>=0?"+":"")+fmtN(mos,1)+"%"],["Horizon","12M"]].map(([l,v],i) => (
+              <div style={{ ...serif, fontSize:88, color:verdictColor, lineHeight:1 }}>{verdict}</div>
+              <div style={{ display:"flex", gap:28, marginTop:16, flexWrap:"wrap" }}>
+                {[
+                  ["Fair-Value Range", fvLo==null?"—":"₹"+fmtN(fvLo,0)+" – ₹"+fmtN(fvHi,0), C.gold],
+                  ["CMP", "₹"+fmtN(price,0), C.text],
+                  ["Exp. Return", expRet==null?"—":signedPct(expRet), expRet==null?C.dim:expRet>=0?C.green:C.red],
+                  ["Horizon", "12M", C.text],
+                ].map(([l,v,cl]) => (
                   <div key={l}>
                     <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.1em", color:C.dim }}>{l}</div>
-                    <div style={{ ...mono, fontSize:24, color:i===2?(mos!=null&&mos>=0?C.green:mos!=null?C.red:C.dim):i===0?C.gold:C.text, marginTop:4 }}>{v}</div>
+                    <div style={{ ...mono, fontSize:22, color:cl, marginTop:4 }}>{v}</div>
                   </div>
                 ))}
               </div>
@@ -1826,11 +2012,13 @@ function VerdictTab({ co, rec, cd, price }) {
             <div>
               <div style={{ ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.18em", color:C.dim, marginBottom:8 }}>Quality Composite</div>
               <div style={{ display:"flex", alignItems:"baseline", gap:8, marginBottom:12 }}>
-                <span style={{ ...serif, fontSize:56, color:C.gold }}>{totalScore.toFixed(1)}</span>
+                <span style={{ ...serif, fontSize:56, color:C.gold }}>{qComposite.toFixed(1)}</span>
                 <span style={{ ...sans, fontSize:18, color:C.dim }}>/ 10</span>
               </div>
-              <div style={{ height:6, background:C.bg600, position:"relative", overflow:"hidden" }}>
-                <div style={{ position:"absolute", inset:"0 auto 0 0", width:totalScore*10+"%", background:`linear-gradient(90deg,${C.gold500},${C.gold})` }} />
+              <Bar v={qComposite} />
+              <div style={{ ...sans, fontSize:11, color:C.dim, marginTop:14, lineHeight:1.6 }}>
+                Blends the corrected DCF, the analyst consensus, and a 5-factor quality score —
+                no single model drives the call.
               </div>
             </div>
           </div>
@@ -1839,20 +2027,29 @@ function VerdictTab({ co, rec, cd, price }) {
 
       {/* Quality scorecard */}
       <Card>
-        <SectionLabel accent="8-FACTOR FRAMEWORK">QUALITY SCORECARD</SectionLabel>
-        {quality.map((q, i) => (
-          <div key={i} style={{ display:"grid", gridTemplateColumns:"140px 32px 1fr 1fr", alignItems:"center", gap:12, marginBottom:14 }}>
-            <span style={{ ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.1em", color:C.text200, fontWeight:500 }}>{q.k}</span>
+        <SectionLabel accent="5-FACTOR FRAMEWORK">QUALITY SCORECARD</SectionLabel>
+        {sc.map((q, i) => (
+          <div key={i} style={{ display:"grid", gridTemplateColumns:"150px 34px 1fr 1.1fr", alignItems:"center", gap:12, marginBottom:14 }}>
+            <span style={{ ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.08em", color:C.text200, fontWeight:500 }}>{q.k}</span>
             <span style={{ ...mono, fontSize:14, color:C.gold }}>{q.s.toFixed(1)}</span>
-            <div style={{ height:6, background:C.bg600, position:"relative", overflow:"hidden" }}>
-              <div style={{ position:"absolute", inset:"0 auto 0 0", width:q.s*10+"%", background:`linear-gradient(90deg,${C.gold500},${C.gold})` }} />
-            </div>
+            <Bar v={q.s} />
             <span style={{ ...sans, fontSize:11, color:C.dim }}>{q.n}</span>
           </div>
         ))}
       </Card>
 
       <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
+        {/* Rating drivers — transparent reconciliation of the two valuations */}
+        <Card>
+          <SectionLabel accent="HOW THE CALL IS BUILT">RATING DRIVERS</SectionLabel>
+          <KV label="DCF fair value (today)" value={inrOrDash(dcfIv,0)} tone="gold" />
+          <KV label="DCF margin of safety" value={dcfMos==null?"—":signedPct(dcfMos)} tone={dcfMos==null?"neutral":dcfMos>=0?"pos":"neg"} />
+          <KV label="Analyst target (12M)" value={tgt==null?"—":"₹"+fmtN(tgt,0)} tone="gold" />
+          <KV label="Analyst upside" value={analystUp==null?"—":signedPct(analystUp)} tone={analystUp==null?"neutral":analystUp>=0?"pos":"neg"} />
+          <KV label="Consensus" value={analyst?.rating || "—"} tone="neutral" />
+          <KV label="Blended expected return" value={expRet==null?"—":signedPct(expRet)} tone={expRet==null?"neutral":expRet>=0?"pos":"neg"} bold />
+        </Card>
+
         {risks.length > 0 && (
           <Card>
             <SectionLabel>PRINCIPAL RISKS</SectionLabel>
@@ -1868,16 +2065,45 @@ function VerdictTab({ co, rec, cd, price }) {
           <SectionLabel>ACTION FRAMEWORK</SectionLabel>
           {[
             { l:"Entry Zone",      v:"₹"+fmtN(price*0.95,0)+" — ₹"+fmtN(price,0), tone:"gold" },
-            { l:"12M Base Target", v:"₹"+fmtN(intrinsic,0),                        tone:"pos"  },
-            { l:"Stretch (Bull)",  v:"₹"+fmtN(intrinsic*1.15,0),                   tone:"pos"  },
-            { l:"Stop Loss",       v:"₹"+fmtN(price*0.85,0),                        tone:"neg"  },
-            { l:"Risk-Reward",     v:"1 : "+fmtN(Math.max((intrinsic-price)/(price*0.15),1),1), tone:"gold" },
-            { l:"Position Sizing", v:"4–6% of equity book",                         tone:"neutral" },
+            { l:"DCF Fair Value",  v:inrOrDash(dcfIv,0),                          tone:"pos"  },
+            { l:"Analyst Target",  v:tgt==null?"—":"₹"+fmtN(tgt,0),               tone:"pos"  },
+            { l:"Stop Loss",       v:"₹"+fmtN(price*0.85,0),                       tone:"neg"  },
+            { l:"Risk-Reward",     v:(fvHi!=null && fvHi>price) ? "1 : "+fmtN(Math.max((fvHi-price)/(price*0.15),0.1),1) : "—", tone:"gold" },
+            { l:"Position Sizing", v:"4–6% of equity book",                        tone:"neutral" },
           ].map(row => <KV key={row.l} label={row.l} value={row.v} tone={row.tone} />)}
         </Card>
       </div>
     </div>
   );
+}
+
+/* Parse the latest fiscal year of /annual_pl into the operating figures the DCF
+   engine needs — REAL EBITDA / EBIT / revenue / net profit — so capital-heavy
+   sectors (metals, telecom, utilities, cement) value off actual operating cash
+   generation instead of a net-margin proxy that collapses when depreciation and
+   interest are large. */
+function parseLatestPL(d) {
+  if (!d || !d.metrics) return null;
+  const m = d.metrics;
+  const last = arr => {
+    if (!Array.isArray(arr)) return null;
+    for (let i = arr.length - 1; i >= 0; i--) { const x = Number(arr[i]); if (arr[i] != null && isFinite(x)) return x; }
+    return null;
+  };
+  const pick = names => {
+    const keys = Object.keys(m);
+    for (const n of names) { const k = keys.find(k => k.toLowerCase() === n); if (k) return last(m[k]); }
+    for (const n of names) { const k = keys.find(k => k.toLowerCase().includes(n)); if (k) return last(m[k]); }
+    return null;
+  };
+  const revenue   = pick(["sales", "revenue", "total income", "total revenue"]);
+  const ebitda    = pick(["operating profit", "ebitda", "financing profit"]);
+  const dep       = pick(["depreciation"]);
+  const netProfit = pick(["net profit", "profit after tax", "profit for the period", "pat"]);
+  const taxPct    = pick(["tax %"]);
+  const ebit      = (ebitda != null && dep != null) ? ebitda - dep : ebitda;
+  const taxRate   = (taxPct != null && taxPct > 0 && taxPct < 60) ? taxPct / 100 : null;
+  return { revenue, ebitda, ebit, netProfit, taxRate };
 }
 
 /* ── Main Company component ──────────────────────────────────────── */
@@ -1889,12 +2115,34 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
   const [liveMetrics,    setLiveMetrics]    = useState(null);
   const [liveProfile,    setLiveProfile]    = useState(null);
   const [liveInsights,   setLiveInsights]   = useState(null);
+  const [liveStatement,  setLiveStatement]  = useState(null); // real latest-FY operating figures
 
   const hasRealPrices = (histPrices?.data?.length || 0) > 10;
-  const co2 = useMemo(
-    () => ({ ...co, price, assumptions, syntheticSeries: !hasRealPrices }),
-    [co, price, assumptions, hasRealPrices]
-  );
+  const co2 = useMemo(() => {
+    const base = { ...co, price, assumptions, syntheticSeries: !hasRealPrices };
+    if (liveStatement) {
+      // Net profit applies to all; operating lines only to non-financials
+      // (banks/insurers use the Residual-Income model on equity & ROE).
+      if (liveStatement.netProfit != null) base.netProfit = liveStatement.netProfit;
+      if (co.type !== "financial") {
+        if (liveStatement.revenue != null) base.revenue = liveStatement.revenue;
+        if (liveStatement.ebit   != null)  base.ebit    = liveStatement.ebit;
+        if (liveStatement.ebitda != null)  base.ebitda  = liveStatement.ebitda;
+      }
+    }
+    // Analyst-consensus overlay: target range + forward EPS + the consensus
+    // growth the Street is pricing → the engine triangulates & guardrails to this.
+    const tgt = liveInsights?.target;
+    const ests = liveInsights?.eps_estimates || [];
+    if (tgt?.mean > 0) {
+      base.analyst = { target: tgt.mean, low: tgt.low, high: tgt.high, fwdEps: ests[0]?.mean ?? null };
+      if (ests.length >= 2) {
+        const f = ests[0]?.mean, l = ests[ests.length - 1]?.mean, n = ests.length - 1;
+        if (f > 0 && l > 0) base.analystGrowth = Math.pow(l / f, 1 / n) - 1;
+      }
+    }
+    return base;
+  }, [co, price, assumptions, hasRealPrices, liveStatement, liveInsights]);
   const rec  = useMemo(() => recommend(co2, assumptions), [co2, assumptions]);
   const set  = useCallback(k => val => setAssumptions(prev => ({ ...prev, [k]: val })), [setAssumptions]);
 
@@ -1919,9 +2167,20 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
     // Insights carries self_metrics (the company's own IndianAPI multiples) for the snapshot.
     fetch(`${API}/api/companies/${co.ticker}/insights`)
       .then(r=>r.json()).then(setLiveInsights).catch(()=>setLiveInsights(null));
+    // Real latest-FY operating figures → fed into the DCF/Verdict engine.
+    setLiveStatement(null);
+    fetch(`${API}/api/companies/${co.ticker}/annual_pl`)
+      .then(r=>r.json()).then(d=>setLiveStatement(parseLatestPL(d))).catch(()=>setLiveStatement(null));
   }, [co.ticker, API]);
 
   const sm = liveInsights?.self_metrics || null;
+  // Analyst-driven headline (preferred over the DCF intrinsic at the top).
+  const tgt = liveInsights?.target || null;
+  const tgtUpside = (tgt?.mean && price) ? (tgt.mean / price - 1) : null;
+  const consensus = liveInsights?.analyst?.rating || null;
+  const consensusColor = !consensus ? C.dim
+    : /strong buy|buy/i.test(consensus) ? C.green
+    : /hold/i.test(consensus) ? C.gold : C.red;
 
   // Real ROA (PAT / total assets, latest year) + promoter holding for the snapshot.
   const roaLive = useMemo(() => {
@@ -2108,9 +2367,9 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
             { l:"ROA",              v:roaLive!=null?fmtPa(roaLive*100):(co.nbfc?.roa!=null?fmtPa(co.nbfc.roa*100):"—") },
             { l:"Div Yield",        v:sm?.div_yield!=null?fmtPa(sm.div_yield):"—" },
             { l:"Promoter Hold",    v:promoterLive!=null?fmtPa(promoterLive):(mktData.promoterPct!=null?fmtPa(mktData.promoterPct):"—"), accent:C.gold },
-            { l:"Intrinsic Value",  v:inrOrDash(rec.iv,0), accent:C.gold },
-            { l:"Margin of Safety", v:signedPct(mos), accent:mos==null?C.dim:mos>=0?C.green:C.red },
-            { l:"Verdict",          v:verdictLabel, accent:verdictColor, large:true },
+            { l:"Analyst Target",   v:tgt?.mean!=null?inrOrDash(tgt.mean,0):"—", accent:C.gold },
+            { l:"Upside",           v:tgtUpside!=null?signedPct(tgtUpside):"—", accent:tgtUpside==null?C.dim:tgtUpside>=0?C.green:C.red },
+            { l:"Consensus",        v:consensus||"—", accent:consensusColor, large:true },
           ].map(s => (
             <div key={s.l}>
               <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.12em", color:C.dim, fontWeight:500 }}>{s.l}</div>
@@ -2146,9 +2405,10 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
         {tab==="dcf"        && <DCFModel       co={co2} a={assumptions} set={set} price={price} setPrice={setPrice} />}
         {tab==="analyst"    && <AnalystTab     co={co2} API={API} price={price} />}
         {tab==="peers"      && <PeersTab       co={co2} cd={cd} allCompanies={allCompanies} API={API} />}
+        {tab==="ownership"  && <OwnershipTab   profile={liveProfile} />}
         {tab==="news"       && <NewsTab        co={co2} API={API} />}
         {tab==="thesis"     && <AIThesisTab    co={co2} API={API} />}
-        {tab==="verdict"    && <VerdictTab     co={co2} rec={rec} cd={cd} price={price} />}
+        {tab==="verdict"    && <VerdictTab     co={co2} rec={rec} cd={cd} price={price} insights={liveInsights} />}
       </main>
 
       <footer style={{ borderTop:`1px solid ${C.line}`, padding:"20px 32px", display:"flex", justifyContent:"space-between", ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.1em", color:C.dim+"99", marginTop:48 }}>

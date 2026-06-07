@@ -96,6 +96,15 @@ export function buildFromApi(r) {
     if (r.equity != null)   merged.equity    = r.equity;
     if (r.net_profit != null) merged.netProfit = r.net_profit;
     if (r.net_debt != null) merged.netDebt   = r.net_debt;
+    // Refresh cost-of-capital to the current calibration (seeds predate it) and
+    // backfill template_code so every name uses the same engine basis.
+    merged.assumptions = { ...(seed.assumptions || {}), rf: 0.069, erp: 0.050 };
+    if (!merged.template_code) {
+      const fh = `${seed.sector || ""} ${seed.name || ""}`;
+      merged.template_code = seed.type === "financial"
+        ? (/insurance/i.test(fh) ? "INSURANCE" : /\bbank\b/i.test(fh) ? "BANK" : "NBFC")
+        : sectorParams(seed.sector).template;
+    }
     // If the live price diverges sharply from the seeded basis and the API did
     // not supply a fresh share count, the per-share data is probably stale
     // (corporate action). Flag it so the confidence layer can down-weight it.
@@ -127,9 +136,15 @@ export function buildFromApi(r) {
   // cause of uniform, inflated intrinsic values across the screener.
 
   if (r.type === "financial") {
+    // Detect bank/insurer from sector OR name — IndianAPI tags many banks simply
+    // as "Financial Services", so the name ("HDFC Bank Ltd.") is the tell.
+    const fhint = `${r.sector || ""} ${r.name || ""}`;
+    const finTemplate = /insurance/i.test(fhint) ? "INSURANCE"
+      : /\bbank\b/i.test(fhint) ? "BANK" : "NBFC";
     return {
       id: r.ticker, name: r.name, ticker: r.ticker,
       type: "financial", sector: r.sector,
+      template_code: finTemplate,
       price: r.price, shares, equity, netProfit,
       revenue: null, netDebt: null,
       syntheticSeries: true,
@@ -143,7 +158,7 @@ export function buildFromApi(r) {
         pledge: 0,
       },
       assumptions: {
-        beta: 1.1, rf: 0.071, erp: 0.085,
+        rf: 0.069, erp: 0.050,
         forecastROE: r.roe != null ? r.roe : 0.14,
         terminalROE: Math.max((r.roe != null ? r.roe : 0.14) * 0.75, 0.11),
         payout: 0.20, stage1Years: 5, stage2Years: 5, terminalGrowth: 0.05,
@@ -169,17 +184,18 @@ export function buildFromApi(r) {
   return {
     id: r.ticker, name: r.name, ticker: r.ticker,
     type: "nonfinancial", sector: r.sector,
+    template_code: sp.template,           // drives sector betas / ROIC / multiples
     price: r.price, shares, equity, netProfit,
     revenue, netDebt,
     syntheticSeries: true,
     assumptions: {
-      beta: 1.0, rf: 0.071, erp: 0.085,
+      rf: 0.069, erp: 0.050,              // India 10Y G-Sec + mature-style ERP
       ebitMargin,
       taxRate:      sp.taxRate,
       revGrowth1:   sp.revGrowth,
-      revGrowth2:   sp.revGrowth * 0.6,
+      revGrowth2:   sp.revGrowth * 0.65,
       stage1Years: 5, stage2Years: 5,
-      terminalGrowth: Math.min(sp.revGrowth * 0.4, 0.06),
+      terminalGrowth: Math.min(Math.max(sp.revGrowth * 0.6, 0.05), 0.06),
     },
     series,
   };

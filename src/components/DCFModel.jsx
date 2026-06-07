@@ -23,7 +23,7 @@ import { useIsMobile } from "../lib/useResponsive.js";
 import { fmt, inr, pct, cr } from "../lib/formatters.js";
 import {
   RF, ERP, DEFAULT_TAX, MAX_G,
-  SECTOR_UNLEVERED_BETAS, SECTOR_EV_EBITDA,
+  SECTOR_UNLEVERED_BETAS, SECTOR_EV_EBITDA, SECTOR_PE,
   calcKe, buildWACC, blendedValuation, monteCarlo, sensitivityGrid,
   releveredBeta, safeDiv, reverseDCF, isFinancial,
 } from "../lib/valuation.js";
@@ -73,28 +73,32 @@ function KV({ label, value, tone, bold, border=true }) {
   );
 }
 
-/* ── Scenario presets ───────────────────────────────────────────── */
+/* ── Scenario presets ───────────────────────────────────────────────
+   Growth / ROE are absolute; MARGIN and MULTIPLES are expressed relative to the
+   company's own data (marginDelta in pp, multFactor × sector multiple) so the
+   BASE case anchors to the firm's actual profitability and sector multiples
+   rather than a generic 12% margin / 15x P/E. */
 const SCENARIOS = {
   bear: {
     label:"Bear",
-    sub:"Growth disappointment · NIM/margin compression",
-    revGrowth1:0.08, revGrowth2:0.05, terminalGrowth:0.04,
-    forecastROE:0.15, terminalROE:0.12,
-    ebitMargin:0.08, peMultiple:12,
+    sub:"Growth disappointment · margin compression",
+    revGrowth1:0.05, revGrowth2:0.03, terminalGrowth:0.04,
+    forecastROE:0.13, terminalROE:0.11,
+    marginDelta:-0.03, multFactor:0.80,
   },
   base: {
     label:"Base",
-    sub:"Management guidance · Stable spreads",
-    revGrowth1:0.18, revGrowth2:0.11, terminalGrowth:0.05,
-    forecastROE:0.22, terminalROE:0.15,
-    ebitMargin:0.12, peMultiple:15,
+    sub:"Steady execution · sector-median multiples",
+    revGrowth1:0.10, revGrowth2:0.07, terminalGrowth:0.05,
+    forecastROE:0.18, terminalROE:0.14,
+    marginDelta:0.0, multFactor:1.00,
   },
   bull: {
     label:"Bull",
-    sub:"Market share gain · Margin expansion",
-    revGrowth1:0.28, revGrowth2:0.17, terminalGrowth:0.055,
-    forecastROE:0.28, terminalROE:0.18,
-    ebitMargin:0.16, peMultiple:18,
+    sub:"Share gains · margin expansion",
+    revGrowth1:0.16, revGrowth2:0.11, terminalGrowth:0.055,
+    forecastROE:0.24, terminalROE:0.17,
+    marginDelta:0.03, multFactor:1.15,
   },
 };
 
@@ -103,6 +107,13 @@ export default function DCFModel({ co, a, set, price, setPrice }) {
   const isMobile = useIsMobile();
   const isF = co.type === "financial" || ["NBFC","BANK","INSURANCE"].includes(co.template_code);
   const template = co.template_code || (isF ? "NBFC" : "MANUFACTURING");
+
+  // Data-driven anchors — the BASE case is built around the firm's own margin
+  // and its sector's trading multiples, not a generic preset.
+  const sectorPE   = SECTOR_PE[template] ?? 18;
+  const sectorEV   = SECTOR_EV_EBITDA[template] ?? 12;
+  // Prefer the REAL EBIT margin (from the live statement) when available.
+  const dataMargin = (co.ebit != null && co.revenue) ? co.ebit / co.revenue : (a?.ebitMargin ?? 0.15);
 
   // Scenario state
   const [scenario,   setScenario]  = useState("base");
@@ -138,18 +149,20 @@ export default function DCFModel({ co, a, set, price, setPrice }) {
   const [terminalROE, setTerminalROE] = useState(a?.terminalROE ?? sc.terminalROE);
   const [payout,      setPayout]      = useState(a?.payout ?? 0.25);
 
-  // Non-financial
-  const [ebitMargin,  setEbitMargin]  = useState(a?.ebitMargin ?? sc.ebitMargin);
-  const [peMultiple,  setPeMultiple]  = useState(a?.peMultiple ?? sc.peMultiple);
-  const [evMultiple,  setEvMultiple]  = useState(a?.evEbitdaMultiple ?? SECTOR_EV_EBITDA[template] ?? 12);
+  // Non-financial — anchored to the company's data margin and sector multiples
+  const [ebitMargin,  setEbitMargin]  = useState(dataMargin);
+  const [peMultiple,  setPeMultiple]  = useState(a?.peMultiple ?? sectorPE);
+  const [evMultiple,  setEvMultiple]  = useState(a?.evEbitdaMultiple ?? sectorEV);
 
-  // Apply scenario preset
+  // Apply scenario preset — margin/multiples flex around the data anchors
   const applyScenario = (id) => {
     setScenario(id);
     const s = SCENARIOS[id];
     setG1(s.revGrowth1); setG2(s.revGrowth2); setGT(s.terminalGrowth);
     setForecastROE(s.forecastROE); setTerminalROE(s.terminalROE);
-    setEbitMargin(s.ebitMargin); setPeMultiple(s.peMultiple);
+    setEbitMargin(Math.max(0.02, dataMargin + s.marginDelta));
+    setPeMultiple(+(sectorPE * s.multFactor).toFixed(1));
+    setEvMultiple(+(sectorEV * s.multFactor).toFixed(1));
   };
 
   // Derived WACC / Ke
@@ -234,8 +247,8 @@ export default function DCFModel({ co, a, set, price, setPrice }) {
 
             <SliderRow label="10Y G-Sec (Rf)" value={rf} setValue={setRf} min={0.04} max={0.10} step={0.001}
               hint="RBI 10-year benchmark yield" />
-            <SliderRow label="India ERP" value={erp} setValue={setErp} min={0.05} max={0.12} step={0.005}
-              hint="Damodaran India ERP Jan 2025 = 8.5%" />
+            <SliderRow label="Equity Risk Premium" value={erp} setValue={setErp} min={0.04} max={0.10} step={0.0025}
+              hint="Mature ERP added to the G-Sec (already embeds country risk). ~5% → Ke ≈ Damodaran India 7.46% on default-adjusted Rf." />
             <SliderRow label="Beta (β)" value={beta} setValue={setBeta} min={0.4} max={2.0} step={0.05}
               display={v => v.toFixed(2) + "x"}
               hint={`Damodaran ${template} sector βU = ${(SECTOR_UNLEVERED_BETAS[template]??0.90).toFixed(2)}, relevered`} />
@@ -609,7 +622,7 @@ export default function DCFModel({ co, a, set, price, setPrice }) {
             <div style={{ ...sans, fontSize:12, color:"#857d65", lineHeight:1.7 }}>
               <strong style={{ color:C.text }}>Methodology.</strong>{" "}
               {isF
-                ? "Residual Income (Excess Return) model — appropriate for financial firms where debt is an operating input. Ke from CAPM using Damodaran India ERP (8.5%). ROE fades to terminal ROE over explicit horizon. Terminal RI = (ROE − Ke) × BV / (Ke − g)."
+                ? "Residual Income (Excess Return) model — appropriate for financial firms where debt is an operating input. Ke from CAPM (India 10Y G-Sec ~6.9% + β × ~5% ERP). ROE fades to terminal ROE over the explicit horizon. Terminal RI = (ROE − Ke) × BV / (Ke − g)."
                 : "3-Stage FCFF DCF. FCFF = NOPAT × (1 − RR), where RR = g/ROIC (reinvestment rate). ROIC converges from current to sector median (Damodaran India). WACC = Ke × E% + Kd(1−t) × D%. Terminal value capped when ROIC = WACC."}{" "}
               Exit multiple uses Damodaran India sector EV/EBITDA medians (Jan 2025).
             </div>

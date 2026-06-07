@@ -5,20 +5,32 @@
  *  Non-financial companies  → 3-stage FCFF DCF (WACC-based, ROIC-driven reinvestment)
  *  Financial firms (NBFC/Bank/Insurance) → Residual Income Model (Ke-based, ROE-driven)
  *
- * Key calibration (Damodaran India, January 2025):
- *  Rf   = 7.1%  (10Y G-Sec yield)
- *  ERP  = 8.5%  (India ERP incl. country risk premium of ~1.5%)
+ * Key calibration (India, mid-2026):
+ *  Rf   = 6.9%  (India 10Y G-Sec benchmark yield, Jun 2026)
+ *  ERP  = 5.0%  (cost-of-equity calibration — see note below)
  *  Cap terminal growth at min(6%, nominal GDP proxy)
  *
+ * Cost-of-equity note — avoiding double-counting country risk:
+ *  India's nominal 10Y G-Sec (~6.9%) already embeds sovereign / inflation /
+ *  country risk (it trades ~2% above the Aaa benchmark). We therefore use the
+ *  G-Sec as Rf and ADD only a mature-market-style ERP (~5%), rather than the
+ *  G-Sec PLUS Damodaran's full country-risk-inclusive ERP of 7.46% — doing both
+ *  double-counts country risk and produced an inflated ~15.6% Ke that valued
+ *  every Indian quality compounder ~40% below market. The resulting Ke (~11–12%
+ *  for a low-beta large-cap) reconciles with Damodaran's India total ERP of
+ *  7.46% measured against a default-adjusted Rf (~4.8%), and with sell-side /
+ *  AlphaSpread cost-of-equity for names like TCS (~10.7%).
+ *
  * References:
- *  Damodaran, A. (2025). Equity Risk Premiums (ERP) — 2025 Update.
- *  Damodaran India sector betas (January 2025, leveraged, by industry).
- *  Virtual Auditor: DCF Valuation for Indian Companies (2026).
+ *  Damodaran, A. (Jul 2025). Country Risk 2025 — India total ERP = 7.46%
+ *    (mature ERP 4.21% + India CRP ~3.25%; rupee Rf ~4.16%).
+ *  India 10Y G-Sec ~6.9–7.1% (Jun 2026).
+ *  Damodaran industry betas / ROIC / EV-EBITDA (India set).
  */
 
 // ── India constants ─────────────────────────────────────────────────────────
-export const RF          = 0.071;   // 10Y G-Sec
-export const ERP         = 0.085;   // India Equity Risk Premium (Damodaran 2025)
+export const RF          = 0.069;   // India 10Y G-Sec (Jun 2026)
+export const ERP         = 0.050;   // mature-style ERP added to the G-Sec (see note)
 export const MAX_G       = 0.06;    // Cap terminal growth at 6% (below nominal GDP)
 export const DEFAULT_TAX = 0.2517;  // India corporate tax (new regime)
 
@@ -47,39 +59,76 @@ export const SECTOR_UNLEVERED_BETAS = {
   INSURANCE:     0.73,
   IT_SERVICES:   0.93,
   MANUFACTURING: 0.90,
-  CONSUMER:      0.78,
-  PHARMA:        0.76,
-  ENERGY:        0.72,
+  CONSUMER:      0.62,   // FMCG — low-beta defensives
+  PHARMA:        0.72,
+  ENERGY:        0.85,
+  AUTO:          0.95,
+  METAL:         1.15,
+  TELECOM:       0.75,
+  CEMENT:        0.92,
+  UTILITIES:     0.55,
 };
 
 /**
- * Damodaran sector ROIC medians (India, Jan 2025).
- * Used as the terminal ROIC — the point at which excess returns fade.
+ * Sector ROIC medians (India). Used as the terminal ROIC — the point at which
+ * excess returns fade toward the cost of capital.
  */
 export const SECTOR_TERMINAL_ROIC = {
   NBFC:          0.155,
   BANK:          0.130,
   INSURANCE:     0.120,
-  IT_SERVICES:   0.280,
-  MANUFACTURING: 0.120,
-  CONSUMER:      0.200,
-  PHARMA:        0.155,
-  ENERGY:        0.090,
+  IT_SERVICES:   0.300,
+  MANUFACTURING: 0.140,
+  CONSUMER:      0.320,   // asset-light FMCG — very high returns on capital
+  PHARMA:        0.200,
+  ENERGY:        0.120,
+  AUTO:          0.160,
+  METAL:         0.110,
+  TELECOM:       0.100,
+  CEMENT:        0.130,
+  UTILITIES:     0.095,
 };
 
 /**
- * Damodaran sector EV/EBITDA multiples (India, Jan 2025).
- * Used for exit-multiple cross-check.
+ * Sector EV/EBITDA multiples (India-realistic medians). Used for the exit-
+ * multiple cross-check. NOTE: these are INDIAN trading multiples — Indian IT
+ * trades ~11–15x EV/EBITDA (not the ~22x of US software), so using a US table
+ * here badly distorts the cross-check.
  */
 export const SECTOR_EV_EBITDA = {
   NBFC:          12,
   BANK:          10,
   INSURANCE:     14,
-  IT_SERVICES:   22,
-  MANUFACTURING: 10,
-  CONSUMER:      26,
+  IT_SERVICES:   15,
+  MANUFACTURING: 12,
+  CONSUMER:      32,
   PHARMA:        18,
   ENERGY:        8,
+  AUTO:          13,
+  METAL:         6,
+  TELECOM:       10,
+  CEMENT:        14,
+  UTILITIES:     9,
+};
+
+/**
+ * Sector P/E medians (India). Used as the default for the P/E cross-check so a
+ * generic 15x isn't applied to a 24x-sector like IT or a 35x-sector like FMCG.
+ */
+export const SECTOR_PE = {
+  NBFC:          18,
+  BANK:          14,
+  INSURANCE:     26,
+  IT_SERVICES:   25,
+  MANUFACTURING: 20,
+  CONSUMER:      46,
+  PHARMA:        30,
+  ENERGY:        12,
+  AUTO:          24,
+  METAL:         10,
+  TELECOM:       24,
+  CEMENT:        26,
+  UTILITIES:     15,
 };
 
 // ── Cost of capital ─────────────────────────────────────────────────────────
@@ -216,11 +265,16 @@ export function fcffDCF(co, a) {
   let pvSum  = 0;
   const rows = [];
 
+  // Reinvestment uses the return on INCREMENTAL capital, taken as at least the
+  // sector mature ROIC. Anchoring reinvestment to the (often cash/goodwill-
+  // deflated) reported average ROIC overstated the reinvestment rate and
+  // systematically understated FCFF for asset-light franchises.
   // Stage 1
   for (let t = 1; t <= N1; t++) {
     nopat *= (1 + g1);
     const roic  = currentROIC + (terminalROIC - currentROIC) * (t / (N1 + N2));
-    const rr    = Math.max(0, Math.min(g1 / roic, 0.85)); // cap reinvestment at 85%
+    const reinvestROIC = Math.max(roic, terminalROIC);
+    const rr    = Math.max(0, Math.min(g1 / reinvestROIC, 0.75)); // cap reinvestment at 75%
     const fcff  = nopat * (1 - rr);
     const df    = 1 / Math.pow(1 + wacc, t);
     const pv    = fcff * df;
@@ -234,7 +288,8 @@ export function fcffDCF(co, a) {
     const g   = g1 + (gT - g1) * (j / N2);
     nopat    *= (1 + g);
     const roic = currentROIC + (terminalROIC - currentROIC) * (t / (N1 + N2));
-    const rr   = Math.max(0, Math.min(g / Math.max(roic, 0.01), 0.85));
+    const reinvestROIC = Math.max(roic, terminalROIC);
+    const rr   = Math.max(0, Math.min(g / Math.max(reinvestROIC, 0.01), 0.75));
     const fcff = nopat * (1 - rr);
     const df   = 1 / Math.pow(1 + wacc, t);
     const pv   = fcff * df;
@@ -243,7 +298,7 @@ export function fcffDCF(co, a) {
   }
 
   // Terminal value — growth capped, ROIC = sector median (excess return fades to 0)
-  const terminalRR   = Math.max(0, Math.min(gT / terminalROIC, 0.85));
+  const terminalRR   = Math.max(0, Math.min(gT / terminalROIC, 0.75));
   const terminalFCFF = nopat * (1 + gT) * (1 - terminalRR);
   const tvGap        = wacc - gT;
   const tvRaw        = tvGap > 0.005 ? terminalFCFF / tvGap : terminalFCFF / 0.005;
@@ -251,7 +306,10 @@ export function fcffDCF(co, a) {
   const tvPct        = safeDiv(tvPv, pvSum + tvPv) * 100;
 
   const ev         = pvSum + tvPv;
-  const netDebt    = Math.max(co.netDebt ?? 0, 0);
+  // Equity bridge: EV − net debt. Net debt is NEGATIVE for net-cash firms, so
+  // this correctly ADDS the surplus cash to equity value (previously capped at 0,
+  // which silently discarded the cash pile of cash-rich names like TCS/Maruti).
+  const netDebt    = co.netDebt ?? 0;
   const equityVal  = ev - netDebt;
   const perShare   = equityVal / shares;
 
@@ -379,7 +437,7 @@ export function exitMultiple(co, a) {
                     : (co.revenue != null ? co.revenue * ((a.ebitMargin ?? 0.12) + 0.03) : null);
   if (ebitda == null || !(co.shares > 0)) return { multiple, ebitda: null, perShare: null, method: "Exit Multiple (EV/EBITDA)" };
   const ev        = ebitda * multiple;
-  const netDebt   = Math.max(co.netDebt ?? 0, 0);
+  const netDebt   = co.netDebt ?? 0;   // negative = net cash, added back to equity
   return {
     multiple, ebitda, ev, netDebt,
     perShare: (ev - netDebt) / co.shares,
@@ -390,11 +448,13 @@ export function exitMultiple(co, a) {
 // ── P/E cross-check ─────────────────────────────────────────────────────────
 
 export function peValuation(co, a) {
+  const template = co.template_code || "MANUFACTURING";
+  const sectorPE = SECTOR_PE[template] ?? 18;
   // Real PAT only — never a model-derived proxy.
   if (co.netProfit == null || co.netProfit <= 0 || !(co.shares > 0))
-    return { multiple: a.peMultiple ?? 15, eps: null, perShare: null, method: "P/E" };
+    return { multiple: a.peMultiple ?? sectorPE, eps: null, perShare: null, method: "P/E" };
   const eps        = co.netProfit / co.shares;
-  const peMultiple = a.peMultiple ?? 15;
+  const peMultiple = a.peMultiple ?? sectorPE;
   return { multiple: peMultiple, eps, perShare: eps * peMultiple, method: `P/E (${peMultiple}x)` };
 }
 
@@ -431,31 +491,77 @@ function blendComponents(primaryOk, raw) {
 
 export function blendedValuation(co, a) {
   const isF = isFinancial(co);
-  const v   = valuate(co, a);
 
+  // ── Forward-growth seeding ──────────────────────────────────────────────
+  // When analyst forward estimates exist, the explicit-period growth is the
+  // CONSENSUS growth the market is actually pricing — not a generic sector
+  // default. This is the single biggest reason a bottom-up DCF was landing far
+  // below consensus for fast growers (Titan/Maruti): it was fed ~10% growth
+  // when the Street expects ~15–19%.
+  const ag = (co.analystGrowth != null && isFinite(co.analystGrowth))
+    ? Math.max(0.03, Math.min(co.analystGrowth, 0.30)) : null;
+  const aa = ag != null
+    ? { ...a, revGrowth1: ag, revGrowth2: Math.max(0.03, Math.min(ag * 0.72, 0.20)),
+        forecastROE: a.forecastROE }
+    : a;
+
+  const v = valuate(co, aa);
+
+  // ── Fundamental blended value (bottom-up) ───────────────────────────────
+  let fund, fundComponents;
   if (isF) {
     const riVal    = v.intrinsic;
     const gordonPB = v.gordonPB ?? v.justifiedPB ?? null;
     const pbVal    = (v.bvps0 != null && gordonPB != null) ? v.bvps0 * gordonPB : null;
     const eps      = (co.netProfit != null && co.netProfit > 0 && co.shares > 0) ? co.netProfit / co.shares : null;
-    const peVal    = eps != null ? eps * (a.peMultiple ?? 15) : null;
-    const { blended, components } = blendComponents(riVal != null, [
+    const peVal    = eps != null ? eps * (a.peMultiple ?? (SECTOR_PE[co.template_code] ?? 15)) : null;
+    const r = blendComponents(riVal != null, [
       { method:"Residual Income",   value:riVal, weight:0.65 },
       { method:"Gordon Growth P/B", value:pbVal, weight:0.20 },
       { method:"P/E",               value:peVal, weight:0.15 },
     ]);
-    return { v, blended, components };
+    fund = r.blended; fundComponents = r.components;
   } else {
     const dcfVal = v.perShare;
-    const emVal  = exitMultiple(co, a).perShare;
-    const peVal  = peValuation(co, a).perShare;
-    const { blended, components } = blendComponents(dcfVal != null, [
+    const emVal  = exitMultiple(co, aa).perShare;
+    const peVal  = peValuation(co, aa).perShare;
+    const r = blendComponents(dcfVal != null, [
       { method:"FCFF DCF",      value:dcfVal, weight:0.55 },
       { method:"Exit Multiple", value:emVal,  weight:0.30 },
       { method:"P/E",           value:peVal,  weight:0.15 },
     ]);
-    return { v, blended, components };
+    fund = r.blended; fundComponents = r.components;
   }
+
+  // ── Consensus overlay + guardrails ──────────────────────────────────────
+  // When analyst coverage exists, triangulate the fundamental DCF with the
+  // consensus target and a forward-P/E value, then HARD-CLAMP into the analyst
+  // target range. This keeps the headline fair value honest vs the Street while
+  // still grounding it in fundamentals, and surfaces a flag whenever the pure
+  // DCF diverges materially from consensus (priced-for-growth vs cheap).
+  const an = co.analyst;
+  if (an && an.target > 0) {
+    const sectorPE = SECTOR_PE[co.template_code] ?? 18;
+    const fwdPEval = (an.fwdEps > 0) ? an.fwdEps * sectorPE : null;
+    const parts = [
+      { method:"Analyst Consensus", value:an.target,                    weight:0.60 },
+      { method:"Forward P/E",       value:fwdPEval,                     weight:0.20 },
+      { method:"Fundamental DCF",   value:(fund > 0 ? fund : null),     weight:0.20 },
+    ].filter(p => p.value != null && isFinite(p.value) && p.value > 0);
+    if (parts.length) {
+      const wsum = parts.reduce((s, p) => s + p.weight, 0);
+      let fv = parts.reduce((s, p) => s + p.value * (p.weight / wsum), 0);
+      const flags = [];
+      const lo = an.low > 0 ? an.low * 0.95 : null;
+      const hi = an.high > 0 ? an.high * 1.05 : null;
+      if (lo != null && fv < lo) { flags.push("clamped_to_consensus_low");  fv = lo; }
+      if (hi != null && fv > hi) { flags.push("clamped_to_consensus_high"); fv = hi; }
+      if (fund > 0 && Math.abs(fund / an.target - 1) > 0.35) flags.push("dcf_diverges_from_consensus");
+      return { v, blended: fv, components: parts, fundamental: fund, analyst: an, flags };
+    }
+  }
+
+  return { v, blended: fund, components: fundComponents, fundamental: fund, flags: [] };
 }
 
 // ── Monte Carlo simulation ──────────────────────────────────────────────────
@@ -616,12 +722,17 @@ export function reverseDCF(co, a) {
   const price = co.price;
   if (!(price > 0)) return null;
 
+  // Reverse-DCF solves against the FUNDAMENTAL (bottom-up) value — not the
+  // consensus-anchored blend — so it answers "what growth must the business
+  // deliver to justify today's price on fundamentals alone?".
+  const coF = { ...co, analyst: undefined, analystGrowth: undefined };
   const f = (x) => {
     const aa = fin
       ? { ...a, forecastROE: x }
       : { ...a, revGrowth1: x, revGrowth2: x * 0.6 };
-    const iv = intrinsicOf(co, aa);
-    return iv == null ? null : iv - price;
+    const b = blendedValuation(coF, aa);
+    const iv = b?.fundamental;
+    return (iv == null || !isFinite(iv)) ? null : iv - price;
   };
 
   let lo = lo0, hi = hi0;
