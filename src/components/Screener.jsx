@@ -48,7 +48,6 @@ export default function Screener({ companies, onOpen, loading }) {
           reliable: a.reliable !== false,
           confidence: { level: a.confidence || "medium", flags: [] },
           pb: a.pb ?? f.pb, pe: a.pe ?? f.pe, roe: a.roe ?? f.roe,
-          analystTarget: a.analystTarget, analystUpside: a.analystUpside,
           sortMos: a.mos ?? -Infinity,
         };
       }
@@ -135,8 +134,6 @@ export default function Screener({ companies, onOpen, loading }) {
               >Company</th>
               <Th k="mos">CMP / Intrinsic</Th>
               <Th k="mos">MoS</Th>
-              <Th>Analyst Tgt</Th>
-              <Th>Upside</Th>
               <Th k="roe">ROE</Th>
               <Th>P/B</Th>
               <Th>P/E</Th>
@@ -147,7 +144,7 @@ export default function Screener({ companies, onOpen, loading }) {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={11} style={{ ...sans, textAlign: "center", padding: 40, color: C.faint }}>Loading live data…</td></tr>
+              <tr><td colSpan={9} style={{ ...sans, textAlign: "center", padding: 40, color: C.faint }}>Loading live data…</td></tr>
             ) : rows.map((r, idx) => (
               <tr
                 key={r.co.ticker || r.co.id}
@@ -170,8 +167,6 @@ export default function Screener({ companies, onOpen, loading }) {
                   {inr(r.co.price)} <span style={{ color: C.faint }}>/</span> <span style={{ color: C.gold }}>{inrOrDash(r.iv)}</span>
                 </td>
                 <td style={{ ...mono, textAlign: "right", padding: "11px 12px", fontSize: 12, color: r.mos == null ? C.faint : r.mos >= 0 ? C.green : C.red }}>{signedPct(r.mos)}</td>
-                <td style={{ ...mono, textAlign: "right", padding: "11px 12px", fontSize: 12, color: C.gold }}>{r.analystTarget != null ? inrOrDash(r.analystTarget, 0) : "—"}</td>
-                <td style={{ ...mono, textAlign: "right", padding: "11px 12px", fontSize: 12, color: r.analystUpside == null ? C.faint : r.analystUpside >= 0 ? C.green : C.red }}>{r.analystUpside == null ? "—" : signedPct(r.analystUpside)}</td>
                 <td style={{ ...mono, textAlign: "right", padding: "11px 12px", fontSize: 12, color: C.text }}>{pct(r.roe)}</td>
                 <td style={{ ...mono, textAlign: "right", padding: "11px 12px", fontSize: 12, color: C.text }}>{multiple(r.pb, 2)}</td>
                 <td style={{ ...mono, textAlign: "right", padding: "11px 12px", fontSize: 12, color: C.text }}>{multiple(r.pe, 1)}</td>
@@ -191,8 +186,8 @@ export default function Screener({ companies, onOpen, loading }) {
       }}>
         <Database size={14} color={C.gold} />
         <span style={{ ...sans, color: C.dim, fontSize: 12 }}>
-          Intrinsic = blended fair value (DCF / Residual-Income + relative cross-checks) · Analyst Tgt / Upside = sell-side consensus, shown separately ·
-          the dot shows data confidence (green = high, amber = medium, red = low) · click a row for the full model
+          Intrinsic = blended fair value (DCF / Residual-Income + relative cross-checks) · the dot shows data confidence
+          (green = high, amber = medium, red = low) · score &amp; verdict are suppressed when data is insufficient · click a row for the full model
         </span>
       </div>
     </div>

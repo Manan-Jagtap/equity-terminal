@@ -208,7 +208,10 @@ export function buildWACC(co, a) {
   const debtWeight   = Math.min(deRatio / (1 + deRatio), 0.75);
   const equityWeight = 1 - debtWeight;
 
-  const beta = releveredBeta(betaU, deRatio, a.taxRate ?? DEFAULT_TAX);
+  // Honour an explicit beta (the DCF tab's Beta slider) when provided; otherwise
+  // relever the sector unlevered beta for the company's capital structure. Without
+  // this, the Beta slider moved the displayed Ke but NOT the actual valuation.
+  const beta = a.beta != null ? a.beta : releveredBeta(betaU, deRatio, a.taxRate ?? DEFAULT_TAX);
   const ke   = calcKe(beta, a.rf ?? RF, a.erp ?? ERP);
   const kd   = a.kd ?? costOfDebt(co.interestExpense, debt);
   const waccRate = calcWACC({ ke, kd, taxRate: a.taxRate ?? DEFAULT_TAX, debtWeight });
@@ -236,12 +239,15 @@ export function fcffDCF(co, a) {
   const taxRate   = a.taxRate ?? DEFAULT_TAX;
   const shares    = co.shares;
 
-  // Base NOPAT must come from REAL operating data (EBIT, or revenue × margin).
-  // If neither exists, we refuse to value rather than invent a revenue proxy
-  // from book equity (the old `co.equity * 2` fabrication that produced
-  // confidently-wrong intrinsics). Returning perShare: null → UI shows N/M.
-  const baseEBIT  = co.ebit != null ? co.ebit
-                    : (co.revenue != null ? co.revenue * (a.ebitMargin ?? 0.12) : null);
+  // Base EBIT = revenue × EBIT-margin when both exist, so the EBIT-margin slider
+  // actually drives the DCF (and this matches the backend, which always uses
+  // revenue × margin — eliminating client/server drift). The slider's DEFAULT is
+  // seeded to the firm's real EBIT/revenue, so the base case is unchanged; moving
+  // it now flexes the projection. Falls back to reported EBIT, then to null
+  // (refuse to value) rather than inventing a proxy from book equity.
+  const baseEBIT  = (a.ebitMargin != null && co.revenue != null) ? co.revenue * a.ebitMargin
+                    : (co.ebit != null ? co.ebit
+                    : (co.revenue != null ? co.revenue * 0.12 : null));
   if (baseEBIT == null || !(shares > 0)) {
     return { rows: [], perShare: null, ev: null, equityVal: null, tvPct: null,
              wacc, ke, kd, beta, betaU, debtWeight, equityWeight, deRatio,
@@ -335,7 +341,9 @@ export function fcffDCF(co, a) {
 export function residualIncomeDCF(co, a) {
   const template  = co.template_code || "NBFC";
   const betaU     = SECTOR_UNLEVERED_BETAS[template] ?? 0.86;
-  const beta      = betaU; // financial firms: use unlevered beta (leverage is operational)
+  // Honour the Beta slider when provided; else use the sector beta (financials:
+  // leverage is operational, so the unlevered sector beta is the default).
+  const beta      = a.beta != null ? a.beta : betaU;
   const ke        = calcKe(beta, a.rf ?? RF, a.erp ?? ERP);
 
   // Refuse to value without real book equity and a share count.
