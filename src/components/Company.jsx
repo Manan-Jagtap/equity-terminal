@@ -3,7 +3,7 @@
    giant price header, 12-stat snapshot strip, editorial tabs.
    All 7 tabs fully wired to live API data with rich fallbacks. */
 
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import {
   ArrowLeft, Building2, FileText, Activity, Calculator,
   Users, Brain, Shield, Sparkles, Check, AlertTriangle,
@@ -2308,6 +2308,38 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
       .then(r=>r.json()).then(setApiVal).catch(()=>setApiVal(null));
   }, [co.ticker, API]);
 
+  // Seed the interactive DCF sliders from the backend's OWN history-derived
+  // assumptions (apiVal.assumptions) rather than generic scenario defaults — so
+  // the sliders open AT the numbers behind the headline and the first touch moves
+  // smoothly from the backend base value (previously the recompute started from
+  // default growth/beta and the figure jumped ~10-15% on first interaction).
+  // Seeded once per company; never after the user has started editing.
+  const seededTickerRef = useRef(null);
+  useEffect(() => {
+    const ba = apiVal?.assumptions;
+    if (!ba || seededTickerRef.current === co.ticker) return;
+    seededTickerRef.current = co.ticker;
+    const fade = ba.fade_years ?? 8;
+    setAssumptions(prev => ({
+      ...prev,
+      beta:           ba.beta,
+      rf:             ba.risk_free,
+      erp:            ba.erp,
+      taxRate:        ba.tax_rate,
+      ebitMargin:     ba.ebit_margin,
+      revGrowth1:     ba.rev_growth,
+      revGrowth2:     ba.rev_growth != null ? +(ba.rev_growth * 0.6).toFixed(4) : prev?.revGrowth2,
+      terminalGrowth: ba.terminal_growth,
+      debtWeight:     ba.debt_weight,
+      kd:             ba.cost_debt,
+      forecastROE:    ba.forecast_roe,
+      terminalROE:    ba.terminal_roe,
+      payout:         ba.payout,
+      stage1Years:    Math.max(3, Math.round(fade / 2)),
+      stage2Years:    Math.max(3, Math.round(fade / 2)),
+    }));
+  }, [apiVal, co.ticker, setAssumptions]);
+
   const sm = liveInsights?.self_metrics || null;
   // Analyst-driven headline (preferred over the DCF intrinsic at the top).
   const tgt = liveInsights?.target || null;
@@ -2547,7 +2579,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
         {tab==="overview"   && <OverviewTab    co={co2} rec={rec} cd={cd} priceData={priceChartWithSMA} profile={liveProfile} />}
         {tab==="financials" && <FinancialsTab  co={co2} cd={cd} liveFinancials={liveFinancials} API={API} />}
         {tab==="ratios"     && <RatiosTab      co={co2} API={API} liveMetrics={liveMetrics} />}
-        {tab==="dcf"        && <DCFModel       co={co2} a={assumptions} set={set} price={price} setPrice={setPrice} apiVal={apiVal} />}
+        {tab==="dcf"        && <DCFModel       key={`dcf-${co.ticker}-${apiVal?.assumptions ? "seeded" : "base"}`} co={co2} a={assumptions} set={set} price={price} setPrice={setPrice} apiVal={apiVal} />}
         {tab==="analyst"    && <AnalystTab     co={co2} API={API} price={price} />}
         {tab==="peers"      && <PeersTab       co={co2} cd={cd} allCompanies={allCompanies} API={API} />}
         {tab==="ownership"  && <OwnershipTab   profile={liveProfile} />}

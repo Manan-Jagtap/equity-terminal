@@ -589,7 +589,6 @@ export function monteCarlo(co, a, N = 500) {
 
   const g1Base   = a.revGrowth1  ?? a.revGrowth  ?? 0.15;
   const gTBase   = a.terminalGrowth ?? 0.05;
-  const wBase    = isF ? calcKe(SECTOR_UNLEVERED_BETAS[co.template_code ?? "NBFC"] ?? 0.86) : null;
 
   for (let i = 0; i < N; i++) {
     try {
