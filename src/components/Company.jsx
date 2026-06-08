@@ -8,6 +8,7 @@ import {
   ArrowLeft, Building2, FileText, Activity, Calculator,
   Users, Brain, Shield, Sparkles, Check, AlertTriangle,
   Info, Loader2, TrendingUp, TrendingDown, Newspaper, Download, PieChart,
+  ShieldAlert,
 } from "lucide-react";
 import {
   ComposedChart, AreaChart, Area, BarChart, Bar, LineChart, Line,
@@ -227,6 +228,7 @@ const TABS = [
   { id:"ownership",  icon:PieChart,   label:"Ownership"     },
   { id:"news",       icon:Newspaper,  label:"News"          },
   { id:"thesis",     icon:Brain,      label:"AI Thesis"     },
+  { id:"forensics",  icon:ShieldAlert,label:"Forensics"     },
   { id:"verdict",    icon:Shield,     label:"Verdict"       },
 ];
 
@@ -2049,6 +2051,164 @@ function AIThesisTab({ co, profile, insights, cd, price }) {
    consensus, and a quality scorecard — rather than relying on the DCF MoS alone.
    This stops a fundamentally-strong but richly-valued name from being branded
    "AVOID" purely because a fundamentals DCF won't pay a 50× multiple. */
+/* Forensics — accounting-quality red-flags from the backend /forensics route
+   (Piotroski F, Sloan accruals, cash conversion, interest coverage, net-debt/
+   EBITDA, leverage trend), each red/amber/green, plus a 0-100 composite grade.
+   Classic Beneish M / Altman Z'' appear under "pending" until the ingester
+   captures receivables / working capital / SG&A. */
+const FLAG_C = { green: "#3fb27f", amber: "#caa64a", red: "#c4554d" };
+function flagColor(f) { return FLAG_C[f] || C.dim; }
+
+const FORENSIC_META = {
+  piotroski:         { label: "Piotroski F-Score",        accent: "FUNDAMENTAL STRENGTH" },
+  accrual_ratio:     { label: "Accrual Ratio (Sloan)",    accent: "EARNINGS QUALITY" },
+  cash_conversion:   { label: "Cash Conversion · CFO/PAT", accent: "EARNINGS QUALITY" },
+  interest_coverage: { label: "Interest Coverage",        accent: "SOLVENCY" },
+  net_debt_ebitda:   { label: "Net Debt / EBITDA",        accent: "SOLVENCY" },
+  leverage_trend:    { label: "Leverage Trend · D/E",     accent: "SOLVENCY" },
+};
+const FORENSIC_ORDER = ["piotroski", "accrual_ratio", "cash_conversion",
+                        "interest_coverage", "net_debt_ebitda", "leverage_trend"];
+
+function ForensicsTab({ co, API }) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    if (!API || !co.ticker) { setLoading(false); return; }
+    let live = true;
+    setLoading(true);
+    fetch(`${API}/api/companies/${co.ticker}/forensics`)
+      .then(r => r.json())
+      .then(d => { if (live) { setData(d); setLoading(false); } })
+      .catch(() => { if (live) { setData(null); setLoading(false); } });
+    return () => { live = false; };
+  }, [co.ticker, API]);
+
+  if (loading) return (
+    <div className="fadein" style={{ padding:48, display:"flex", alignItems:"center", gap:10, color:C.dim, ...sans, fontSize:13 }}>
+      <Loader2 size={16} style={{ animation:"spin 1s linear infinite" }} /> Computing forensic checks…
+    </div>
+  );
+  if (!data || data.available === false) return (
+    <div className="fadein" style={{ padding:32 }}>
+      <Card>
+        <SectionLabel accent="ACCOUNTING QUALITY">FORENSICS</SectionLabel>
+        <div style={{ ...sans, fontSize:13, color:C.dim, lineHeight:1.6 }}>
+          {data?.note || "Not enough statement history to run forensic analysis for this company yet."}
+        </div>
+      </Card>
+    </div>
+  );
+
+  const { composite, grade, metrics = {}, flags = [], pending = [], is_financial, note } = data;
+  const gradeColor = grade === "A" ? C.green : grade === "B" ? "#7fae5f" : grade === "C" ? C.gold : C.red;
+  const present = FORENSIC_ORDER.filter(k => metrics[k]);
+
+  const Bar = ({ v, color }) => (
+    <div style={{ height:6, background:C.bg600, position:"relative", overflow:"hidden" }}>
+      <div style={{ position:"absolute", inset:"0 auto 0 0", width:Math.max(0,Math.min(100,v))+"%", background:color || `linear-gradient(90deg,${C.gold500},${C.gold})` }} />
+    </div>
+  );
+  const Dot = ({ f }) => <span style={{ width:8, height:8, borderRadius:0, background:flagColor(f), flexShrink:0, display:"inline-block" }} />;
+
+  return (
+    <div className="fadein" style={{ padding:32, display:"grid", gridTemplateColumns:"1fr 1fr", gap:24 }}>
+      {/* Hero */}
+      <div style={{ gridColumn:"1/-1" }}>
+        <Card style={{ position:"relative", overflow:"hidden", padding:32 }}>
+          <div style={{ position:"absolute", inset:0, ...gridBg, opacity:0.4, pointerEvents:"none" }} />
+          <div style={{ position:"relative", display:"grid", gridTemplateColumns:"1fr 1fr", gap:32, alignItems:"center" }}>
+            <div>
+              <div style={{ ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.18em", color:C.gold, marginBottom:8 }}>Equity Terminal · Forensic Screen</div>
+              <div style={{ display:"flex", alignItems:"baseline", gap:14 }}>
+                <span style={{ ...serif, fontSize:88, color:gradeColor, lineHeight:1 }}>{grade || "—"}</span>
+                <div>
+                  <div style={{ ...mono, fontSize:30, color:C.text }}>{composite==null?"—":composite.toFixed(0)}<span style={{ ...sans, fontSize:15, color:C.dim }}> / 100</span></div>
+                  <div style={{ ...sans, fontSize:11, color:C.dim, marginTop:2 }}>Accounting-quality composite</div>
+                </div>
+              </div>
+              <div style={{ marginTop:16, maxWidth:320 }}><Bar v={composite ?? 0} color={gradeColor} /></div>
+            </div>
+            <div style={{ ...sans, fontSize:11.5, color:C.dim, lineHeight:1.7 }}>
+              Computed entirely from this company's own filed statements — independent of price.
+              Each check is red / amber / green; the grade blends Piotroski strength, accrual &
+              cash-conversion quality, and balance-sheet solvency.
+              {is_financial && note ? <span style={{ display:"block", marginTop:10, color:C.gold }}>{note}</span> : null}
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Flags */}
+      <Card>
+        <SectionLabel accent={flags.length ? `${flags.length} FLAGGED` : "CLEAN"}>RED FLAGS</SectionLabel>
+        {flags.length === 0 ? (
+          <div style={{ display:"flex", alignItems:"center", gap:10, ...sans, fontSize:13, color:C.green }}>
+            <Check size={15} /> No accounting red flags detected.
+          </div>
+        ) : flags.map((f, i) => (
+          <div key={i} style={{ display:"flex", alignItems:"flex-start", gap:10, padding:"7px 0", borderBottom:i<flags.length-1?`1px solid ${C.bg600}`:"none" }}>
+            <span style={{ marginTop:5 }}><Dot f={f.level} /></span>
+            <div>
+              <div style={{ ...sans, fontSize:12.5, color:flagColor(f.level), fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em" }}>{f.label}</div>
+              <div style={{ ...sans, fontSize:12, color:C.text200, lineHeight:1.55, marginTop:2 }}>{f.note}</div>
+            </div>
+          </div>
+        ))}
+      </Card>
+
+      {/* Metric scorecard */}
+      <Card>
+        <SectionLabel accent="PER-CHECK DETAIL">SCORECARD</SectionLabel>
+        {present.map((k) => {
+          const m = metrics[k];
+          const meta = FORENSIC_META[k];
+          const val = k === "piotroski"
+            ? `${m.score}/${m.max}  (≈${m.normalized}/9)`
+            : (m.value != null ? m.value : "—");
+          return (
+            <div key={k} style={{ padding:"9px 0", borderBottom:`1px solid ${C.bg600}` }}>
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:10 }}>
+                <span style={{ ...sans, fontSize:11.5, textTransform:"uppercase", letterSpacing:"0.06em", color:C.text200, fontWeight:500 }}>{meta.label}</span>
+                <span style={{ display:"flex", alignItems:"center", gap:7, ...mono, fontSize:13, color:flagColor(m.flag) }}>
+                  {val} <Dot f={m.flag} />
+                </span>
+              </div>
+              <div style={{ ...sans, fontSize:11, color:C.dim, marginTop:3, lineHeight:1.5 }}>{m.note}</div>
+              {k === "piotroski" && Array.isArray(m.tests) && (
+                <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginTop:7 }}>
+                  {m.tests.map((t, j) => (
+                    <span key={j} title={t.note} style={{ ...sans, fontSize:9.5, textTransform:"uppercase", letterSpacing:"0.04em",
+                      color: t.pass ? C.green : C.red, border:`1px solid ${(t.pass?C.green:C.red)}44`, borderRadius:3, padding:"2px 6px" }}>
+                      {t.pass ? "✓" : "✗"} {t.name}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+        {present.length === 0 && <div style={{ ...sans, fontSize:12, color:C.dim }}>No computable checks for this company.</div>}
+      </Card>
+
+      {/* Pending classic scores */}
+      {pending.length > 0 && (
+        <Card style={{ gridColumn:"1/-1" }}>
+          <SectionLabel accent="INGESTION EXPANSION IN PROGRESS">CLASSIC SCORES · COMING SOON</SectionLabel>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))", gap:12 }}>
+            {pending.map((p, i) => (
+              <div key={i} style={{ display:"flex", alignItems:"flex-start", gap:8 }}>
+                <Info size={13} style={{ color:C.dim, marginTop:2, flexShrink:0 }} />
+                <span style={{ ...sans, fontSize:11.5, color:C.dim, lineHeight:1.5 }}>{p}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+    </div>
+  );
+}
+
 function VerdictTab({ co, rec, cd, price, insights, apiVal }) {
   const apiRec = apiVal?.recommendation;
 
@@ -2576,6 +2736,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
         {tab==="ownership"  && <OwnershipTab   profile={liveProfile} />}
         {tab==="news"       && <NewsTab        co={co2} API={API} profile={liveProfile} />}
         {tab==="thesis"     && <AIThesisTab    co={co2} profile={liveProfile} insights={liveInsights} cd={cd} price={price} />}
+        {tab==="forensics"  && <ForensicsTab   co={co2} API={API} />}
         {tab==="verdict"    && <VerdictTab     co={co2} rec={rec} cd={cd} price={price} insights={liveInsights} apiVal={apiVal} />}
       </main>
 
