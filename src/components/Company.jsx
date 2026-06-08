@@ -2050,66 +2050,48 @@ function AIThesisTab({ co, profile, insights, cd, price }) {
    This stops a fundamentally-strong but richly-valued name from being branded
    "AVOID" purely because a fundamentals DCF won't pay a 50× multiple. */
 function VerdictTab({ co, rec, cd, price, insights, apiVal }) {
-  const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
-  const f = rec.f;
-
-  // 1) DCF — prefer the BACKEND's authoritative independent intrinsic (the same
-  //    number the screener shows); fall back to the client recompute.
   const apiRec = apiVal?.recommendation;
-  const dcfIv  = apiRec?.intrinsic ?? rec.iv;
-  const dcfMos = apiRec?.mos ?? rec.mos;        // fraction
 
-  // 2) Analyst consensus
+  // UNIFIED ENGINE: every figure here is the backend recommendation (the same
+  // engine that drives the screener, the header and the now-unified DCF tab).
+  // The client recompute (`rec`) is only a graceful fallback while apiVal loads.
+  const f        = apiRec?.fundamentals ?? rec.f ?? {};
+  const dcfIv    = apiRec?.blended ?? apiRec?.intrinsic ?? rec.iv;
+  const dcfMos   = apiRec?.mos ?? rec.mos;            // fraction
+  const reasons  = apiRec?.reasons ?? rec.reasons ?? [];
+  const composite = apiRec?.composite ?? null;        // 0–100 (engine composite)
+  const conf      = apiRec?.confidence ?? null;       // {score, level, flags}
+
+  // Analyst consensus — shown ALONGSIDE the engine, never blended into the call.
   const tgt       = insights?.target?.mean ?? null;
   const analyst   = insights?.analyst || null;
   const analystUp = (tgt != null && price > 0) ? tgt / price - 1 : null;
-  const dist      = analyst?.distribution || [];
-  const distTotal = dist.reduce((s, d) => s + (d.count || 0), 0);
-  const bullPct   = distTotal ? dist.filter(d => /buy/i.test(d.rating)).reduce((s, d) => s + (d.count || 0), 0) / distTotal : null;
 
-  // 3) Reconciled expected return — average of the DCF margin-of-safety and the
-  //    analyst upside (each is an independent "is it cheap?" read).
-  const sig = [];
-  if (dcfMos != null)   sig.push(dcfMos);
-  if (analystUp != null) sig.push(analystUp);
-  const expRet = sig.length ? sig.reduce((a, b) => a + b, 0) / sig.length : null;
-
-  // Fair-value range spanning the DCF and the analyst target
+  // Fair-value range spanning the model's blended value and the analyst target.
   const fvVals = [dcfIv, tgt].filter(v => v != null && isFinite(v));
   const fvLo = fvVals.length ? Math.min(...fvVals) : null;
   const fvHi = fvVals.length ? Math.max(...fvVals) : null;
 
-  // Quality scorecard (0–10 each)
-  const roe = f.roe ?? null;
-  const g1  = co.assumptions?.revGrowth1 ?? co.assumptions?.forecastROE ?? 0.10;
-  const lev = co.assumptions?.debtWeight ?? (co.netDebt && co.equity ? Math.max(0, co.netDebt) / (co.equity + Math.max(0, co.netDebt)) : 0.2);
-  const sc = [
-    { k:"Valuation",        s: expRet == null ? 5 : clamp(5 + expRet * 20, 0, 10), n: expRet == null ? "No fair-value signal" : signedPct(expRet) + " blended expected return" },
-    { k:"Profitability",    s: roe == null ? 5 : clamp((roe - 0.08) / 0.22 * 10, 0, 10), n: roe == null ? "ROE unavailable" : "ROE " + (roe * 100).toFixed(1) + "%" },
-    { k:"Growth",           s: clamp((g1 - 0.04) / 0.16 * 10, 1, 10), n: "Stage-1 driver " + (g1 * 100).toFixed(0) + "%" },
-    { k:"Balance Sheet",    s: clamp((0.5 - lev) / 0.5 * 10, 1, 10), n: lev < 0.05 ? "Net cash / minimal debt" : "Debt weight " + (lev * 100).toFixed(0) + "%" },
-    { k:"Analyst Conviction", s: bullPct == null ? 5 : clamp(bullPct * 10, 0, 10), n: bullPct == null ? "No consensus data" : (bullPct * 100).toFixed(0) + "% rate Buy" + (analyst?.num_analysts ? " · " + analyst.num_analysts + " analysts" : "") },
-  ];
-  const qComposite = sc.reduce((s, q) => s + q.s, 0) / sc.length;
+  // Verdict — the engine's own independent call (identical to the screener/header).
+  const verdict = apiRec?.verdict ?? rec.verdict ?? "NO DATA";
+  const verdictColor = /BUY|ACCUM/.test(verdict) ? C.green : /HOLD|CONF|DATA/.test(verdict) ? C.gold : C.red;
+  const confColor = conf?.level === "high" ? C.green : conf?.level === "medium" ? C.gold : C.red;
 
-  // Final verdict — expected-return led, quality-gated, consensus-aware
-  let verdict;
-  if (expRet == null)                                    verdict = "NO DATA";
-  else if (expRet >= 0.15 && qComposite >= 6.0 && (bullPct == null || bullPct >= 0.35)) verdict = "BUY";
-  else if (expRet >= 0.06)                               verdict = "ACCUMULATE";
-  else if (expRet >= -0.07)                              verdict = "HOLD";
-  else if (expRet >= -0.20)                              verdict = "REDUCE";
-  else                                                   verdict = "AVOID";
-  // The BACKEND's independent verdict is authoritative (matches the screener);
-  // the blended expected-return read above remains the supporting rationale.
-  if (apiRec?.verdict) verdict = apiRec.verdict;
-  const verdictColor = /BUY|ACCUM/.test(verdict) ? C.green : /HOLD|DATA/.test(verdict) ? C.gold : C.red;
+  // Scorecard = the engine's OWN factor scores (Valuation / Quality / Momentum /
+  // Risk, 0–100). This is the transparent reasoning behind the verdict, not a
+  // separate second model.
+  const sc = reasons.map(r => ({ k: r.label, s: r.score ?? 50, n: r.note, good: r.good, bad: r.bad }));
 
-  const risks = (cd?.risks || rec.reasons.filter(r => r.bad).map(r => r.note)).slice(0, 5);
+  // Principal risks: the engine's flagged-bad factors + any data-quality flags.
+  const risks = [
+    ...reasons.filter(r => r.bad).map(r => r.note),
+    ...((conf?.flags) || []),
+    ...((cd?.risks) || []),
+  ].filter(Boolean).slice(0, 6);
 
   const Bar = ({ v }) => (
     <div style={{ height:6, background:C.bg600, position:"relative", overflow:"hidden" }}>
-      <div style={{ position:"absolute", inset:"0 auto 0 0", width:(v*10)+"%", background:`linear-gradient(90deg,${C.gold500},${C.gold})` }} />
+      <div style={{ position:"absolute", inset:"0 auto 0 0", width:Math.max(0,Math.min(100,v))+"%", background:`linear-gradient(90deg,${C.gold500},${C.gold})` }} />
     </div>
   );
 
@@ -2121,14 +2103,14 @@ function VerdictTab({ co, rec, cd, price, insights, apiVal }) {
           <div style={{ position:"absolute", inset:0, ...gridBg, opacity:0.4, pointerEvents:"none" }} />
           <div style={{ position:"relative", display:"grid", gridTemplateColumns:"1fr 1fr", gap:32 }}>
             <div>
-              <div style={{ ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.18em", color:C.gold, marginBottom:8 }}>Equity Terminal · Final Verdict</div>
+              <div style={{ ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.18em", color:C.gold, marginBottom:8 }}>Equity Terminal · Independent Verdict</div>
               <div style={{ ...serif, fontSize:88, color:verdictColor, lineHeight:1 }}>{verdict}</div>
               <div style={{ display:"flex", gap:28, marginTop:16, flexWrap:"wrap" }}>
                 {[
                   ["Fair-Value Range", fvLo==null?"—":"₹"+fmtN(fvLo,0)+" – ₹"+fmtN(fvHi,0), C.gold],
                   ["CMP", "₹"+fmtN(price,0), C.text],
-                  ["Exp. Return", expRet==null?"—":signedPct(expRet), expRet==null?C.dim:expRet>=0?C.green:C.red],
-                  ["Horizon", "12M", C.text],
+                  ["Margin of Safety", dcfMos==null?"—":signedPct(dcfMos), dcfMos==null?C.dim:dcfMos>=0?C.green:C.red],
+                  ["Analyst Upside", analystUp==null?"—":signedPct(analystUp), analystUp==null?C.dim:analystUp>=0?C.green:C.red],
                 ].map(([l,v,cl]) => (
                   <div key={l}>
                     <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.1em", color:C.dim }}>{l}</div>
@@ -2138,28 +2120,37 @@ function VerdictTab({ co, rec, cd, price, insights, apiVal }) {
               </div>
             </div>
             <div>
-              <div style={{ ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.18em", color:C.dim, marginBottom:8 }}>Quality Composite</div>
-              <div style={{ display:"flex", alignItems:"baseline", gap:8, marginBottom:12 }}>
-                <span style={{ ...serif, fontSize:56, color:C.gold }}>{qComposite.toFixed(1)}</span>
-                <span style={{ ...sans, fontSize:18, color:C.dim }}>/ 10</span>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
+                <span style={{ ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.18em", color:C.dim }}>Composite Score</span>
+                {conf?.level && (
+                  <span style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.1em", color:confColor, border:`1px solid ${confColor}55`, borderRadius:4, padding:"2px 8px" }}>
+                    {conf.level} confidence
+                  </span>
+                )}
               </div>
-              <Bar v={qComposite} />
+              <div style={{ display:"flex", alignItems:"baseline", gap:8, marginBottom:12 }}>
+                <span style={{ ...serif, fontSize:56, color:C.gold }}>{composite==null?"—":composite.toFixed(0)}</span>
+                <span style={{ ...sans, fontSize:18, color:C.dim }}>/ 100</span>
+              </div>
+              <Bar v={composite ?? 0} />
               <div style={{ ...sans, fontSize:11, color:C.dim, marginTop:14, lineHeight:1.6 }}>
-                Blends the corrected DCF, the analyst consensus, and a 5-factor quality score —
-                no single model drives the call.
+                The independent engine's own score — 42% valuation · 28% quality · 16% momentum · 14% risk,
+                scaled by data confidence. The analyst consensus is shown beside it, never blended in.
               </div>
             </div>
           </div>
         </Card>
       </div>
 
-      {/* Quality scorecard */}
+      {/* Engine factor scorecard */}
       <Card>
-        <SectionLabel accent="5-FACTOR FRAMEWORK">QUALITY SCORECARD</SectionLabel>
-        {sc.map((q, i) => (
-          <div key={i} style={{ display:"grid", gridTemplateColumns:"150px 34px 1fr 1.1fr", alignItems:"center", gap:12, marginBottom:14 }}>
+        <SectionLabel accent="ENGINE REASONING">FACTOR SCORECARD</SectionLabel>
+        {sc.length === 0 ? (
+          <div style={{ ...sans, fontSize:12, color:C.dim }}>Computing…</div>
+        ) : sc.map((q, i) => (
+          <div key={i} style={{ display:"grid", gridTemplateColumns:"130px 34px 1fr 1.3fr", alignItems:"center", gap:12, marginBottom:14 }}>
             <span style={{ ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.08em", color:C.text200, fontWeight:500 }}>{q.k}</span>
-            <span style={{ ...mono, fontSize:14, color:C.gold }}>{q.s.toFixed(1)}</span>
+            <span style={{ ...mono, fontSize:14, color: q.good?C.green:q.bad?C.red:C.gold }}>{q.s.toFixed(0)}</span>
             <Bar v={q.s} />
             <span style={{ ...sans, fontSize:11, color:C.dim }}>{q.n}</span>
           </div>
@@ -2167,15 +2158,15 @@ function VerdictTab({ co, rec, cd, price, insights, apiVal }) {
       </Card>
 
       <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
-        {/* Rating drivers — transparent reconciliation of the two valuations */}
+        {/* Rating drivers — the engine value beside the Street's */}
         <Card>
-          <SectionLabel accent="HOW THE CALL IS BUILT">RATING DRIVERS</SectionLabel>
-          <KV label="DCF fair value (today)" value={inrOrDash(dcfIv,0)} tone="gold" />
-          <KV label="DCF margin of safety" value={dcfMos==null?"—":signedPct(dcfMos)} tone={dcfMos==null?"neutral":dcfMos>=0?"pos":"neg"} />
+          <SectionLabel accent="MODEL vs STREET">RATING DRIVERS</SectionLabel>
+          <KV label="Blended fair value (today)" value={inrOrDash(dcfIv,0)} tone="gold" />
+          <KV label="Margin of safety" value={dcfMos==null?"—":signedPct(dcfMos)} tone={dcfMos==null?"neutral":dcfMos>=0?"pos":"neg"} />
+          <KV label="Engine verdict" value={verdict} tone={/BUY|ACCUM/.test(verdict)?"pos":/HOLD|CONF|DATA/.test(verdict)?"neutral":"neg"} />
           <KV label="Analyst target (12M)" value={tgt==null?"—":"₹"+fmtN(tgt,0)} tone="gold" />
           <KV label="Analyst upside" value={analystUp==null?"—":signedPct(analystUp)} tone={analystUp==null?"neutral":analystUp>=0?"pos":"neg"} />
-          <KV label="Consensus" value={analyst?.rating || "—"} tone="neutral" />
-          <KV label="Blended expected return" value={expRet==null?"—":signedPct(expRet)} tone={expRet==null?"neutral":expRet>=0?"pos":"neg"} bold />
+          <KV label="Consensus rating" value={analyst?.rating || insights?.analyst?.rating || "—"} tone="neutral" bold />
         </Card>
 
         {risks.length > 0 && (
