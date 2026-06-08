@@ -2060,6 +2060,8 @@ const FLAG_C = { green: "#3fb27f", amber: "#caa64a", red: "#c4554d" };
 function flagColor(f) { return FLAG_C[f] || C.dim; }
 
 const FORENSIC_META = {
+  beneish_m:         { label: "Beneish M-Score",          accent: "MANIPULATION" },
+  altman_z:          { label: "Altman Z″ (distress)",     accent: "BANKRUPTCY RISK" },
   piotroski:         { label: "Piotroski F-Score",        accent: "FUNDAMENTAL STRENGTH" },
   accrual_ratio:     { label: "Accrual Ratio (Sloan)",    accent: "EARNINGS QUALITY" },
   cash_conversion:   { label: "Cash Conversion · CFO/PAT", accent: "EARNINGS QUALITY" },
@@ -2067,8 +2069,8 @@ const FORENSIC_META = {
   net_debt_ebitda:   { label: "Net Debt / EBITDA",        accent: "SOLVENCY" },
   leverage_trend:    { label: "Leverage Trend · D/E",     accent: "SOLVENCY" },
 };
-const FORENSIC_ORDER = ["piotroski", "accrual_ratio", "cash_conversion",
-                        "interest_coverage", "net_debt_ebitda", "leverage_trend"];
+const FORENSIC_ORDER = ["beneish_m", "altman_z", "piotroski", "accrual_ratio",
+                        "cash_conversion", "interest_coverage", "net_debt_ebitda", "leverage_trend"];
 
 function ForensicsTab({ co, API }) {
   const [data, setData] = useState(null);
@@ -2183,6 +2185,16 @@ function ForensicsTab({ co, API }) {
                       {t.pass ? "✓" : "✗"} {t.name}
                     </span>
                   ))}
+                </div>
+              )}
+              {k === "beneish_m" && m.components && (
+                <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginTop:7 }}>
+                  {Object.entries(m.components).map(([name, v]) => (
+                    <span key={name} style={{ ...mono, fontSize:9.5, color:C.dim, border:`1px solid ${C.bg600}`, borderRadius:3, padding:"2px 6px" }}>
+                      {name} {v}
+                    </span>
+                  ))}
+                  {m.sgai_neutral && <span style={{ ...sans, fontSize:9.5, color:C.faint, alignSelf:"center" }}>SGAI held neutral (SG&A not reported)</span>}
                 </div>
               )}
             </div>
