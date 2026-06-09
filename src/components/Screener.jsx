@@ -2,7 +2,7 @@
    Click row → opens Company detail. */
 
 import { useMemo, useState } from "react";
-import { Search, ChevronRight, Database } from "lucide-react";
+import { Search, ChevronRight, Database, Star } from "lucide-react";
 import { C, mono, sans } from "../lib/theme.js";
 import { fmt, inr, pct, multiple, inrOrDash, signedPct } from "../lib/formatters.js";
 import { fundamentals } from "../lib/valuation.js";
@@ -11,7 +11,8 @@ import { VerdictBadge } from "./primitives.jsx";
 
 const confColor = lvl => lvl === "high" ? C.green : lvl === "medium" ? C.gold : C.red;
 
-export default function Screener({ companies, onOpen, loading }) {
+export default function Screener({ companies, onOpen, loading, watched, onToggleWatch }) {
+  const isWatched = t => watched && watched.has(t);
   const [q, setQ] = useState("");
   const [sort, setSort] = useState("rank");
   const [sf, setSf] = useState("All");
@@ -155,6 +156,14 @@ export default function Screener({ companies, onOpen, loading }) {
               >
                 <td style={{ padding: "11px 16px" }}>
                   <div style={{ display:"flex", alignItems:"center", gap:7 }}>
+                    {onToggleWatch && (
+                      <button title={isWatched(r.co.ticker) ? "Remove from watchlist" : "Add to watchlist"}
+                        onClick={e => { e.stopPropagation(); onToggleWatch(r.co.ticker); }}
+                        style={{ background:"transparent", border:"none", cursor:"pointer", padding:2, lineHeight:0, flexShrink:0 }}>
+                        <Star size={14} color={isWatched(r.co.ticker) ? C.gold : C.faint}
+                          fill={isWatched(r.co.ticker) ? C.gold : "none"} />
+                      </button>
+                    )}
                     <span title={`Data confidence: ${r.confidence.level}${r.confidence.flags.length ? " — " + r.confidence.flags.join("; ") : ""}`}
                       style={{ width:7, height:7, borderRadius:"50%", background:confColor(r.confidence.level), flexShrink:0 }} />
                     <div>

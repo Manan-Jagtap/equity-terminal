@@ -2,13 +2,15 @@
    Step 7: updated fonts (Instrument Serif + Inter) and passes
    historical price data (with dates) down to Company. */
 
-import { useEffect, useMemo, useState } from "react";
-import { TrendingUp, LayoutDashboard, List } from "lucide-react";
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { TrendingUp, LayoutDashboard, List, Star } from "lucide-react";
 import { C, mono, sans, serif, gridBg } from "./lib/theme.js";
 import { SEED, buildFromApi } from "./lib/seedData.js";
 import Screener from "./components/Screener.jsx";
 import Company  from "./components/Company.jsx";
 import MarketDashboard from "./components/MarketDashboard.jsx";
+import Watchlist from "./components/Watchlist.jsx";
+import { fetchWatchlist, saveWatch, removeWatch } from "./lib/watchlist.js";
 
 /* ── TEMPORARY: focus the terminal on the Nifty 50 only ──────────────────────
    While we make the Nifty 50 pages 100% accurate, everything else is hidden.
@@ -33,6 +35,36 @@ export default function App() {
   const [assumptions, setAssumptions] = useState(null);
   const [price,       setPrice]       = useState(0);
   const [histPrices,  setHistPrices]  = useState(null);
+
+  // Watchlist membership (set of tickers) + a live alert count for the nav badge.
+  const [watched,     setWatched]     = useState(() => new Set());
+  const [watchAlerts, setWatchAlerts] = useState(0);
+
+  const reloadWatched = useCallback(() => {
+    if (!API) return;
+    fetchWatchlist(API)
+      .then(d => {
+        setWatched(new Set((d.items || []).map(i => i.ticker)));
+        setWatchAlerts(d.triggered || 0);
+      })
+      .catch(() => {});
+  }, [API]);
+  useEffect(() => { reloadWatched(); }, [reloadWatched]);
+
+  const toggleWatch = useCallback(async (ticker) => {
+    if (!API || !ticker) return;
+    const has = watched.has(ticker);
+    // optimistic
+    setWatched(prev => {
+      const n = new Set(prev);
+      has ? n.delete(ticker) : n.add(ticker);
+      return n;
+    });
+    try {
+      has ? await removeWatch(API, ticker) : await saveWatch(API, ticker, {});
+    } catch { /* revert on failure */ reloadWatched(); return; }
+    reloadWatched();
+  }, [API, watched, reloadWatched]);
 
   useEffect(() => {
     if (!API) return;
@@ -116,16 +148,22 @@ export default function App() {
               {[
                 { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
                 { id: "screener",  label: "Screener",  icon: List },
+                { id: "watchlist", label: "Watchlist", icon: Star },
               ].map(({ id, label, icon: Icon }) => (
                 <button key={id} onClick={() => setView(id)} style={{
                   ...sans, display: "flex", alignItems: "center", gap: 7,
                   padding: "7px 13px", borderRadius: 8, cursor: "pointer",
-                  fontSize: 13, fontWeight: 500,
+                  fontSize: 13, fontWeight: 500, position: "relative",
                   border: `1px solid ${view === id ? C.line2 : "transparent"}`,
                   background: view === id ? C.bg800 : "transparent",
                   color: view === id ? C.gold : C.dim,
                 }}>
                   <Icon size={15} strokeWidth={1.6} />{label}
+                  {id === "watchlist" && watchAlerts > 0 && (
+                    <span style={{ ...sans, fontSize: 10, fontWeight: 700, color: C.bg, background: C.gold,
+                      borderRadius: 99, minWidth: 16, height: 16, padding: "0 4px", display: "inline-flex",
+                      alignItems: "center", justifyContent: "center", marginLeft: 2 }}>{watchAlerts}</span>
+                  )}
                 </button>
               ))}
             </nav>
@@ -136,7 +174,11 @@ export default function App() {
           <MarketDashboard API={API} companies={companies} onOpen={open} />
         )}
         {view === "screener" && (
-          <Screener companies={companies} onOpen={open} loading={loading} />
+          <Screener companies={companies} onOpen={open} loading={loading}
+                    watched={watched} onToggleWatch={toggleWatch} />
+        )}
+        {view === "watchlist" && (
+          <Watchlist API={API} onOpen={open} onChanged={reloadWatched} />
         )}
         {view === "company" && selected && assumptions && (
           <Company
@@ -149,6 +191,8 @@ export default function App() {
             API={API}
             allCompanies={companies}
             histPrices={histPrices}
+            isWatched={watched.has(selected.ticker)}
+            onToggleWatch={toggleWatch}
           />
         )}
       </div>

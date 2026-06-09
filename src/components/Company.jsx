@@ -8,7 +8,7 @@ import {
   ArrowLeft, Building2, FileText, Activity, Calculator,
   Users, Brain, Shield, Sparkles, Check, AlertTriangle,
   Info, Loader2, TrendingUp, TrendingDown, Newspaper, Download, PieChart,
-  ShieldAlert,
+  ShieldAlert, Star,
 } from "lucide-react";
 import {
   ComposedChart, AreaChart, Area, BarChart, Bar, LineChart, Line,
@@ -2398,7 +2398,7 @@ function parseLatestPL(d) {
 }
 
 /* ── Main Company component ──────────────────────────────────────── */
-export default function Company({ co, assumptions, setAssumptions, price, setPrice, onBack, API, allCompanies, histPrices }) {
+export default function Company({ co, assumptions, setAssumptions, price, setPrice, onBack, API, allCompanies, histPrices, isWatched, onToggleWatch }) {
   const isMobile = useIsMobile();
   const PAD = isMobile ? 16 : 32;
   const [tab, setTab] = useState("overview");
@@ -2631,6 +2631,16 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
               <span style={{ ...sans, fontSize:11, color:C.dim, textTransform:"uppercase", letterSpacing:"0.14em" }}>India · {co.type==="financial"?"NBFC":"Equity"} · {co.sector}</span>
             </div>
             <div style={{ display:"flex", alignItems:"center", gap:12, ...sans, fontSize:12, color:C.dim }}>
+              {onToggleWatch && (
+                <button onClick={() => onToggleWatch(co.ticker)}
+                  title={isWatched ? "Remove from watchlist" : "Add to watchlist"}
+                  style={{ ...sans, display:"flex", alignItems:"center", gap:6, cursor:"pointer",
+                    background:"transparent", border:`1px solid ${isWatched ? C.gold+"66" : C.line2}`,
+                    borderRadius:8, padding:"5px 10px", color:isWatched ? C.gold : C.dim, fontSize:12 }}>
+                  <Star size={13} color={isWatched ? C.gold : C.dim} fill={isWatched ? C.gold : "none"} />
+                  {isWatched ? "Watching" : "Watch"}
+                </button>
+              )}
               <div style={{ display:"flex", alignItems:"center", gap:6 }}>
                 <span className="blink" style={{ width:6, height:6, borderRadius:"50%", background:C.green, display:"inline-block" }} />
                 <span style={{ letterSpacing:"0.1em" }}>LIVE · {cd?.meta?.asOf || new Date().toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})}</span>
