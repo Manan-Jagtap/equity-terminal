@@ -4,6 +4,7 @@
    All 7 tabs fully wired to live API data with rich fallbacks. */
 
 import { useEffect, useMemo, useState, useCallback, useRef } from "react";
+import Logo from "./Logo.jsx";
 import {
   ArrowLeft, Building2, FileText, Activity, Calculator,
   Users, Brain, Shield, Sparkles, Check, AlertTriangle,
@@ -2681,7 +2682,10 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
                 <span style={{ color:C.bg500 }}>·</span>
                 <span style={{ color:C.gold }}>{mktData.sebiCap || "Large Cap"}</span>
               </div>
-              <div style={{ ...serif, fontSize: isMobile ? 34 : 60, color:C.text, lineHeight:1.05, letterSpacing:"-0.02em" }}>{co.name}</div>
+              <div style={{ display:"flex", alignItems:"center", gap:14 }}>
+                <Logo ticker={co.ticker} name={co.name} size={isMobile ? 36 : 48} radius={10} />
+                <div style={{ ...serif, fontSize: isMobile ? 34 : 60, color:C.text, lineHeight:1.05, letterSpacing:"-0.02em" }}>{co.name}</div>
+              </div>
               <div style={{ ...sans, fontSize:13, color:C.text200, marginTop:12, maxWidth:680, lineHeight:1.6 }}>
                 {cd?.description || `${co.name} operates in the ${co.sector} sector. Data is being populated.`}
               </div>

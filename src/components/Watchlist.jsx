@@ -5,6 +5,7 @@ import { useEffect, useState, useCallback } from "react";
 import { Star, Bell, Trash2, Settings2, Loader2, Check, X } from "lucide-react";
 import { C, sans, serif, mono, gridBg } from "../lib/theme.js";
 import { VerdictBadge } from "./primitives.jsx";
+import Logo from "./Logo.jsx";
 import { fetchWatchlist, saveWatch, removeWatch } from "../lib/watchlist.js";
 
 const inr = v => v == null ? "—" : "₹" + Number(v).toLocaleString("en-IN", { maximumFractionDigits: 0 });
@@ -150,6 +151,7 @@ export default function Watchlist({ API, onOpen, onChanged }) {
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
               <div onClick={() => onOpen(it.ticker)} style={{ cursor: "pointer", flex: 1 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <Logo ticker={it.ticker} name={it.name} size={30} />
                   <span style={{ ...serif, fontSize: 20, color: C.text }}>{it.name}</span>
                   <VerdictBadge verdict={it.verdict} />
                 </div>
