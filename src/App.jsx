@@ -3,7 +3,7 @@
    historical price data (with dates) down to Company. */
 
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { TrendingUp, LayoutDashboard, List, Star, GitCompare, CalendarClock, Landmark } from "lucide-react";
+import { TrendingUp, LayoutDashboard, List, Star, GitCompare, CalendarClock, Landmark, Gauge } from "lucide-react";
 import { C, mono, sans, serif, gridBg } from "./lib/theme.js";
 import { SEED, buildFromApi } from "./lib/seedData.js";
 import Screener from "./components/Screener.jsx";
@@ -13,6 +13,7 @@ import Watchlist from "./components/Watchlist.jsx";
 import Compare from "./components/Compare.jsx";
 import Results from "./components/Results.jsx";
 import Ownership from "./components/Ownership.jsx";
+import Operations from "./components/Operations.jsx";
 import { fetchWatchlist, saveWatch, removeWatch } from "./lib/watchlist.js";
 
 /* ── TEMPORARY: focus the terminal on the Nifty 50 only ──────────────────────
@@ -155,6 +156,7 @@ export default function App() {
                 { id: "compare",   label: "Compare",   icon: GitCompare },
                 { id: "results",   label: "Results",   icon: CalendarClock },
                 { id: "ownership", label: "Ownership", icon: Landmark },
+                { id: "operations", label: "Operations", icon: Gauge },
               ].map(({ id, label, icon: Icon }) => (
                 <button key={id} onClick={() => setView(id)} style={{
                   ...sans, display: "flex", alignItems: "center", gap: 7,
@@ -194,6 +196,9 @@ export default function App() {
         )}
         {view === "ownership" && (
           <Ownership API={API} onOpen={open} />
+        )}
+        {view === "operations" && (
+          <Operations API={API} onOpen={open} />
         )}
         {view === "company" && selected && assumptions && (
           <Company

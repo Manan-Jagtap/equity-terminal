@@ -32,6 +32,45 @@ const PRESETS = {
       { name: "Mining, IRM & Others", ev: 80000 },
     ],
   },
+  "M&M": {
+    netDebt: 0, shares: 122.37,
+    segments: [
+      { name: "Automotive (SUVs + LCVs)", ev: 220000 },
+      { name: "Farm Equipment (tractors)", ev: 150000 },
+      { name: "Mahindra Finance (stake)", ev: 35000 },
+      { name: "Tech Mahindra (stake)", ev: 40000 },
+      { name: "Growth Gems + Other (realty, hospitality, EV)", ev: 45000 },
+    ],
+  },
+  BAJAJFINSV: {
+    netDebt: 0, shares: 322.45,
+    segments: [
+      { name: "Bajaj Finance (lending, ~52% stake)", ev: 320000 },
+      { name: "Bajaj Allianz Life Insurance", ev: 70000 },
+      { name: "Bajaj Allianz General Insurance", ev: 80000 },
+      { name: "Bajaj Finserv Direct + Other", ev: 20000 },
+    ],
+  },
+  GRASIM: {
+    netDebt: 25000, shares: 140.85,
+    segments: [
+      { name: "UltraTech Cement (stake)", ev: 280000 },
+      { name: "Aditya Birla Capital (stake)", ev: 60000 },
+      { name: "Viscose (VSF + filament)", ev: 45000 },
+      { name: "Chemicals (caustic soda)", ev: 25000 },
+      { name: "Paints (Birla Opus) + B2B + Other", ev: 50000 },
+    ],
+  },
+  LT: {
+    netDebt: 0, shares: 163.92,
+    segments: [
+      { name: "Infrastructure & Construction E&C", ev: 300000 },
+      { name: "IT services (LTIMindtree + LTTS stakes)", ev: 220000 },
+      { name: "Financial holdings (LTF)", ev: 35000 },
+      { name: "Hi-Tech Mfg + Energy (hydrocarbon, green)", ev: 80000 },
+      { name: "Realty, Hyderabad Metro & Other", ev: 40000 },
+    ],
+  },
 };
 
 export default function SegmentSOTP({ ticker, price, isMobile }) {
