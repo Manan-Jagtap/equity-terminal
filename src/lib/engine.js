@@ -88,15 +88,21 @@ export function residualIncome(co, a) {
 }
 
 export function fcffDcf(co, a) {
+  // Two-stage growth, mirroring app/engines.py exactly: hold the derived
+  // stage-1 rate for the franchise phase (N1 = N//2), then fade linearly to
+  // terminal growth, landing on g_t in year N. The horizon N is the company's
+  // competitive-advantage period (derive.py sets fade_years from ROIC quality).
   const ke = costOfEquity(a);
   const ew = 1 - a.debt_weight;
   const wacc = ew * ke + a.debt_weight * a.cost_debt * (1 - a.tax_rate);
   const N = Math.max(3, pyRound(a.fade_years));
+  const N1 = Math.max(1, Math.floor(N / 2));
   const gT = a.terminal_growth;
+  const g1 = a.rev_growth;
   let rev = co.revenue, pv = 0, nopat = 0;
   const rows = [];
   for (let t = 1; t <= N; t++) {
-    const g = a.rev_growth + (gT - a.rev_growth) * (t / N);
+    const g = t <= N1 ? g1 : g1 + (gT - g1) * ((t - N1) / (N - N1));
     rev = rev * (1 + g);
     const ebit = rev * a.ebit_margin;
     nopat = ebit * (1 - a.tax_rate);
