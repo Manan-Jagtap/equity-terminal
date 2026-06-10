@@ -53,11 +53,14 @@ export default function AnalystTab({ co, API, price }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!API || !co.ticker) return;
+    // Without this, a missing API/ticker left `loading` true forever (spinner never cleared).
+    if (!API || !co.ticker) { setData(null); setLoading(false); return; }
+    let live = true;
     setLoading(true);
     fetch(`${API}/api/companies/${co.ticker}/insights`)
-      .then(r => r.json()).then(setData).catch(() => setData(null))
-      .finally(() => setLoading(false));
+      .then(r => r.json()).then(d => { if (live) setData(d); }).catch(() => { if (live) setData(null); })
+      .finally(() => { if (live) setLoading(false); });
+    return () => { live = false; };
   }, [co.ticker, API]);
 
   const cmp = data?.price ?? price ?? co.price;

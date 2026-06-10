@@ -31,6 +31,12 @@ export const C = {
   green500:"#5a8f5a",   // pos-500
   red:     "#c46f65",   // neg-400
   red500:  "#a85148",   // neg-500
+  blue:    "#7d97ad",   // info-400 (announcements, FCF lines)
+
+  // Panel surfaces (referenced by Screener/primitives — were missing, which
+  // silently rendered `background: undefined` and broke row-hover highlights)
+  panel:   "#100e0a",   // = bg900
+  panel2:  "#181510",   // = bg800
 
   // Borders
   line:    "rgba(220,213,193,0.08)",   // hairline

@@ -610,11 +610,16 @@ export function monteCarlo(co, a, N = 500) {
       // discarded, which truncated the right tail and biased the mean/percentiles
       // downward — an honest distribution must not filter its own outliers.
       // We only drop non-finite / non-positive results and obvious blow-ups.
-      if (isFinite(val) && val > 0 && val < co.price * 200) results.push(val);
+      // Guard the blow-up filter against a missing price: `val < null * 200`
+      // is `val < NaN` → false, which silently rejected EVERY draw.
+      if (isFinite(val) && val > 0 && (!(co.price > 0) || val < co.price * 200)) results.push(val);
     } catch { /* skip bad scenarios */ }
   }
 
   results.sort((a, b) => a - b);
+  if (!results.length)
+    return { simulations: 0, p10: null, p25: null, p50: null, p75: null, p90: null,
+             mean: null, probUpside: null, histogram: [] };
   const pct = (p) => results[Math.floor(p * results.length / 100)] ?? null;
 
   return {
@@ -682,8 +687,11 @@ export function fundamentals(co) {
   // P/E and P/B are "not meaningful" when the denominator is ≤ 0 (loss-making
   // or negative book value). Return null in those cases so the UI shows N/M
   // instead of a misleading negative or near-zero multiple.
-  const pe  = eps != null && eps > 0 ? co.price / eps : null;
-  const pb  = bvps != null && bvps > 0 ? co.price / bvps : null;
+  // Also require a real positive price: in JS `null / eps === 0`, so a missing
+  // price was silently rendering P/E 0.0x / P/B 0.0x instead of "—".
+  const px  = co.price > 0 ? co.price : null;
+  const pe  = px != null && eps != null && eps > 0 ? px / eps : null;
+  const pb  = px != null && bvps != null && bvps > 0 ? px / bvps : null;
   const roe = pat != null && equity > 0 ? pat / equity : null;
   return { bvps, eps, pb, pe, roe };
 }

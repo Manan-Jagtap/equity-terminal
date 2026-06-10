@@ -35,8 +35,10 @@ const GROUPS = [
     { k: "mos",         label: "Margin of safety", dir: "up", fmt: signed },
   ]},
   { title: "Multiples", rows: [
-    { k: "pe",          label: "P / E",            dir: "down", fmt: v => mlt(v, 1) },
-    { k: "pb",          label: "P / B",            dir: "down", fmt: v => mlt(v, 2) },
+    // posOnly: a negative P/E (loss-maker) / negative P/B (negative book) is not
+    // meaningful and must never be highlighted as "best" just because it's low.
+    { k: "pe",          label: "P / E",            dir: "down", posOnly: true, fmt: v => mlt(v, 1) },
+    { k: "pb",          label: "P / B",            dir: "down", posOnly: true, fmt: v => mlt(v, 2) },
     { k: "roe",         label: "ROE",              dir: "up",   fmt: pct },
   ]},
   { title: "Analyst consensus", rows: [
@@ -57,6 +59,7 @@ function bestIndex(items, row) {
   const score = (it) => {
     const v = it[row.k];
     if (v == null) return null;
+    if (row.posOnly && !(v > 0)) return null;
     if (row.dir === "grade")   return GRADE_RANK[v] ?? null;
     if (row.dir === "verdict") return VERDICT_RANK[v] ?? null;
     if (row.dir === "down")    return -v;

@@ -23,6 +23,15 @@ function AlertChip({ a }) {
   );
 }
 
+/* Row is defined OUTSIDE SettingsPanel: when it was declared inside, a new
+   component type was created on every render, so React unmounted/remounted the
+   subtree on each keystroke and the number inputs lost focus after one char. */
+const Row = ({ label, children }) => (
+  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "5px 0" }}>
+    <span style={{ ...sans, fontSize: 12, color: C.dim }}>{label}</span>{children}
+  </div>
+);
+
 function SettingsPanel({ item, onSave, onClose }) {
   const [tgt, setTgt]   = useState(item.target_price ?? "");
   const [mos, setMos]   = useState(item.mos_threshold != null ? (item.mos_threshold * 100) : 15);
@@ -33,11 +42,6 @@ function SettingsPanel({ item, onSave, onClose }) {
   });
   const [busy, setBusy] = useState(false);
 
-  const Row = ({ label, children }) => (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "5px 0" }}>
-      <span style={{ ...sans, fontSize: 12, color: C.dim }}>{label}</span>{children}
-    </div>
-  );
   const num = (v, set, suffix) => (
     <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
       <input type="number" value={v} onChange={e => set(e.target.value)} style={{

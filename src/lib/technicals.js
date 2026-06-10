@@ -11,6 +11,9 @@ export function sma(arr, n) {
 }
 
 export function rsiCalc(arr, n = 14) {
+  // Need at least n+1 closes for Wilder's RSI; anything less crashed on
+  // arr[i].close of undefined. Return a neutral 50 instead.
+  if (!Array.isArray(arr) || arr.length < n + 1) return 50;
   let g = 0, l = 0;
   for (let i = 1; i <= n; i++) {
     const c = arr[i].close - arr[i - 1].close;
@@ -26,14 +29,19 @@ export function rsiCalc(arr, n = 14) {
 }
 
 export function technicals(co) {
-  let s = sma(co.series, 20);
+  const series = co.series || [];
+  if (series.length === 0) {
+    // No price history at all — neutral, non-crashing defaults.
+    return { data: [], rsi: 50, hi: null, lo: null, last: null, aboveSMA50: false, aboveSMA20: false };
+  }
+  let s = sma(series, 20);
   s = sma(s, 50);
   const last = s[s.length - 1];
   return {
     data: s,
-    rsi: rsiCalc(co.series),
-    hi: Math.max(...co.series.map(d => d.close)),
-    lo: Math.min(...co.series.map(d => d.close)),
+    rsi: rsiCalc(series),
+    hi: Math.max(...series.map(d => d.close)),
+    lo: Math.min(...series.map(d => d.close)),
     last: last.close,
     aboveSMA50: last.sma50 ? last.close > last.sma50 : false,
     aboveSMA20: last.sma20 ? last.close > last.sma20 : false,

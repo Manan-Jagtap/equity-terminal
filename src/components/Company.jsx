@@ -393,10 +393,10 @@ function ShareholdingCard({ data }) {
           <div key={i}>
             <div style={{ display:"flex", justifyContent:"space-between", ...sans, fontSize:12, marginBottom:4 }}>
               <span style={{ color:C.text200 }}>{s.name}</span>
-              <span style={{ ...mono, color:C.text }}>{s.pct.toFixed(2)}%</span>
+              <span style={{ ...mono, color:C.text }}>{s.pct != null ? s.pct.toFixed(2) + "%" : "—"}</span>
             </div>
             <div style={{ height:5, background:C.bg700, borderRadius:3, overflow:"hidden" }}>
-              <div style={{ width:`${Math.min(s.pct, 100)}%`, height:"100%", background:colorFor(s.name) }} />
+              <div style={{ width:`${Math.min(s.pct || 0, 100)}%`, height:"100%", background:colorFor(s.name) }} />
             </div>
           </div>
         ))}
@@ -1771,6 +1771,7 @@ function NewsTab({ co, API, profile }) {
   useEffect(() => {
     if (!API) { setLoading(false); return; }
     setLoading(true);
+    setError(null); // clear any stale error from a previous ticker/fetch
     fetch(`${API}/api/companies/${co.ticker}/news`)
       .then(r => r.json())
       .then(d => { setNews(d); setLoading(false); })
@@ -1782,10 +1783,11 @@ function NewsTab({ co, API, profile }) {
 
   const fmtDate = pub => {
     if (!pub) return "—";
-    try {
-      const d = new Date(pub);
-      return d.toLocaleDateString("en-IN", { day:"numeric", month:"short", year:"numeric" });
-    } catch { return pub.slice(0, 10); }
+    // new Date() never throws — it returns an Invalid Date, which would have
+    // rendered the literal string "Invalid Date". Check validity explicitly.
+    const d = new Date(pub);
+    if (isNaN(d.getTime())) return String(pub).slice(0, 10);
+    return d.toLocaleDateString("en-IN", { day:"numeric", month:"short", year:"numeric" });
   };
 
   return (
@@ -2449,27 +2451,31 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
 
   useEffect(() => {
     if (!API || !co.ticker) return;
+    // Stale-response guard: if the ticker changes (or the component unmounts)
+    // before a response lands, that response must NOT overwrite newer data.
+    let live = true;
     Promise.all([
       fetch(`${API}/api/companies/${co.ticker}/financials`).then(r=>r.json()).catch(()=>null),
       fetch(`${API}/api/companies/${co.ticker}/metrics`).then(r=>r.json()).catch(()=>null),
-    ]).then(([fins, mets]) => { setLiveFinancials(fins); setLiveMetrics(mets); });
+    ]).then(([fins, mets]) => { if (live) { setLiveFinancials(fins); setLiveMetrics(mets); } });
     // Profile (slow: 5 chained calls) fetched separately so it doesn't block the rest.
     setLiveProfile(null);
     fetch(`${API}/api/companies/${co.ticker}/profile`)
-      .then(r=>r.json()).then(setLiveProfile).catch(()=>setLiveProfile(null));
+      .then(r=>r.json()).then(d=>{ if (live) setLiveProfile(d); }).catch(()=>{ if (live) setLiveProfile(null); });
     // Insights carries self_metrics (the company's own IndianAPI multiples) for the snapshot.
     fetch(`${API}/api/companies/${co.ticker}/insights`)
-      .then(r=>r.json()).then(setLiveInsights).catch(()=>setLiveInsights(null));
+      .then(r=>r.json()).then(d=>{ if (live) setLiveInsights(d); }).catch(()=>{ if (live) setLiveInsights(null); });
     // Real latest-FY operating figures → fed into the DCF/Verdict engine.
     setLiveStatement(null);
     fetch(`${API}/api/companies/${co.ticker}/annual_pl`)
-      .then(r=>r.json()).then(d=>setLiveStatement(parseLatestPL(d))).catch(()=>setLiveStatement(null));
+      .then(r=>r.json()).then(d=>{ if (live) setLiveStatement(parseLatestPL(d)); }).catch(()=>{ if (live) setLiveStatement(null); });
     // Backend INDEPENDENT valuation (history-derived DCF/RI + analyst block). This
     // is the authoritative number the screener also shows, so the DCF & Verdict
     // tabs display exactly what the backend computed — no client/server drift.
     setApiVal(null);
     fetch(`${API}/api/companies/${co.ticker}`)
-      .then(r=>r.json()).then(setApiVal).catch(()=>setApiVal(null));
+      .then(r=>r.json()).then(d=>{ if (live) setApiVal(d); }).catch(()=>{ if (live) setApiVal(null); });
+    return () => { live = false; };
   }, [co.ticker, API]);
 
   // Seed the interactive DCF sliders from the backend's OWN history-derived

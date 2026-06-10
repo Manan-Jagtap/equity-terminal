@@ -2,7 +2,7 @@
    Step 7: updated fonts (Instrument Serif + Inter) and passes
    historical price data (with dates) down to Company. */
 
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { TrendingUp, LayoutDashboard, List, Star, GitCompare, CalendarClock, Landmark, Gauge } from "lucide-react";
 import { C, mono, sans, serif, gridBg } from "./lib/theme.js";
 import { SEED, buildFromApi } from "./lib/seedData.js";
@@ -44,11 +44,18 @@ export default function App() {
   const [watched,     setWatched]     = useState(() => new Set());
   const [watchAlerts, setWatchAlerts] = useState(0);
 
+  // Ref mirror of `watched` so toggleWatch never captures a stale Set
+  // (rapid toggles / memoized children would otherwise act on old state).
+  const watchedRef = useRef(watched);
+  useEffect(() => { watchedRef.current = watched; }, [watched]);
+
   const reloadWatched = useCallback(() => {
     if (!API) return;
     fetchWatchlist(API)
       .then(d => {
-        setWatched(new Set((d.items || []).map(i => i.ticker)));
+        const next = new Set((d.items || []).map(i => i.ticker));
+        watchedRef.current = next;
+        setWatched(next);
         setWatchAlerts(d.triggered || 0);
       })
       .catch(() => {});
@@ -57,18 +64,18 @@ export default function App() {
 
   const toggleWatch = useCallback(async (ticker) => {
     if (!API || !ticker) return;
-    const has = watched.has(ticker);
-    // optimistic
-    setWatched(prev => {
-      const n = new Set(prev);
-      has ? n.delete(ticker) : n.add(ticker);
-      return n;
-    });
+    const has = watchedRef.current.has(ticker);
+    // optimistic — update the ref synchronously so back-to-back toggles
+    // always see the latest membership, then mirror into state.
+    const next = new Set(watchedRef.current);
+    has ? next.delete(ticker) : next.add(ticker);
+    watchedRef.current = next;
+    setWatched(next);
     try {
       has ? await removeWatch(API, ticker) : await saveWatch(API, ticker, {});
     } catch { /* revert on failure */ reloadWatched(); return; }
     reloadWatched();
-  }, [API, watched, reloadWatched]);
+  }, [API, reloadWatched]);
 
   useEffect(() => {
     if (!API) return;
@@ -101,6 +108,10 @@ export default function App() {
     [companies, selectedId]
   );
 
+  // Guards the history fetch against races: if the user opens company A and
+  // then B before A's response lands, A's stale payload must not overwrite B's.
+  const histReqRef = useRef(null);
+
   const open = id => {
     const co = companies.find(c => (c.ticker || c.id) === id);
     if (!co) return;
@@ -108,13 +119,15 @@ export default function App() {
     setAssumptions({ ...co.assumptions });
     setPrice(co.price);
     setHistPrices(null);
+    histReqRef.current = co.ticker || null;
 
     // Fetch historical prices with real dates
     if (API && co.ticker) {
-      fetch(`${API}/api/companies/${co.ticker}/history`)
+      const ticker = co.ticker;
+      fetch(`${API}/api/companies/${ticker}/history`)
         .then(r => r.json())
-        .then(d => setHistPrices(d))
-        .catch(() => setHistPrices(null));
+        .then(d => { if (histReqRef.current === ticker) setHistPrices(d); })
+        .catch(() => { if (histReqRef.current === ticker) setHistPrices(null); });
     }
     setView("company");
   };
@@ -135,6 +148,7 @@ export default function App() {
         .fadein { animation: fadein .3s ease-out both; }
         @keyframes blink { 0%,100%{opacity:.4;}50%{opacity:1;} }
         .blink { animation: blink 1.6s ease-in-out infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
         select option { background: ${C.bg800} }
       `}</style>
 
