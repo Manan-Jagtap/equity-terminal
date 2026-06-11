@@ -24,7 +24,7 @@ const VERDICT_ORDER = [
   { id: "BUY",        col: C.green    },
   { id: "ACCUMULATE", col: C.green500 },
   { id: "HOLD",       col: C.gold     },
-  { id: "TRIM",       col: C.red500   },
+  { id: "REDUCE",     col: C.red500   },
   { id: "AVOID",      col: C.red      },
 ];
 
@@ -65,7 +65,7 @@ export default function Sectors({ API, onOpen }) {
     return Array.from(groups.entries()).map(([name, cos]) => {
       const counts = {};
       cos.forEach(c => {
-        const v = c.verdict === "REDUCE" ? "TRIM" : c.verdict;
+        const v = c.verdict === "TRIM" ? "REDUCE" : c.verdict;  // normalize legacy name
         if (v) counts[v] = (counts[v] || 0) + 1;
       });
       const withMos = cos.filter(c => c.mos != null && isFinite(c.mos));
