@@ -9,11 +9,10 @@ import { inr, signedPct } from "../lib/formatters.js";
 import { VerdictBadge } from "./primitives.jsx";
 
 const pnlColor = v => v == null ? C.dim : v >= 0 ? C.green : C.red;
-// pnl_pct / weight / mos arrive as percents-or-fractions? Backend contract sends
-// pnl_pct and weight as percents alongside ₹ amounts; mos as fraction like the
-// rest of the app. Format defensively: numbers are shown as given.
-const pctNum = (v, d = 1) => v == null || !isFinite(v) ? "—" : (v >= 0 ? "+" : "") + Number(v).toFixed(d) + "%";
-const pctPlain = (v, d = 1) => v == null || !isFinite(v) ? "—" : Number(v).toFixed(d) + "%";
+// Backend sends pnl_pct, weight AND mos all as FRACTIONS (0.124 = 12.4%),
+// consistent with the rest of the API. Multiply by 100 for display.
+const pctNum = (v, d = 1) => v == null || !isFinite(v) ? "—" : (v >= 0 ? "+" : "") + (Number(v) * 100).toFixed(d) + "%";
+const pctPlain = (v, d = 1) => v == null || !isFinite(v) ? "—" : (Number(v) * 100).toFixed(d) + "%";
 
 export default function Portfolio({ API, onOpen }) {
   const [data, setData]       = useState(null);
