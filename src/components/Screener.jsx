@@ -2,7 +2,7 @@
    Click row → opens Company detail. */
 
 import { useMemo, useState } from "react";
-import { Search, ChevronRight, Database, Star } from "lucide-react";
+import { Search, ChevronRight, Database, Star, Download } from "lucide-react";
 import { C, mono, sans } from "../lib/theme.js";
 import { fmt, inr, pct, multiple, inrOrDash, signedPct } from "../lib/formatters.js";
 import { fundamentals } from "../lib/valuation.js";
@@ -12,7 +12,7 @@ import Logo from "./Logo.jsx";
 
 const confColor = lvl => lvl === "high" ? C.green : lvl === "medium" ? C.gold : C.red;
 
-export default function Screener({ companies, onOpen, loading, watched, onToggleWatch }) {
+export default function Screener({ companies, onOpen, loading, watched, onToggleWatch, API }) {
   const isWatched = t => watched && watched.has(t);
   const [q, setQ] = useState("");
   const [sort, setSort] = useState("rank");
@@ -119,6 +119,16 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
         <div style={{ ...sans, color: C.faint, fontSize: 12 }}>
           {loading ? "Loading…" : `${rows.length} companies`}
         </div>
+        {API && (
+          <a href={`${API}/api/export/screener.xlsx`} title="Download screener as Excel" style={{
+            ...sans, display: "flex", alignItems: "center", gap: 6, marginLeft: "auto",
+            fontSize: 12, fontWeight: 500, textDecoration: "none",
+            padding: "8px 14px", borderRadius: 8, cursor: "pointer",
+            border: `1px solid ${C.gold}66`, color: C.gold, background: C.gold + "0d",
+          }}>
+            <Download size={13} /> Excel
+          </a>
+        )}
       </div>
 
       <div style={{ border: `1px solid ${C.line}`, borderRadius: 10, overflowX: "auto", background: C.panel }}>

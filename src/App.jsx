@@ -3,7 +3,7 @@
    historical price data (with dates) down to Company. */
 
 import { useEffect, useMemo, useState, useCallback, useRef } from "react";
-import { TrendingUp, LayoutDashboard, List, Star, GitCompare, CalendarClock, Landmark, Gauge, History } from "lucide-react";
+import { TrendingUp, LayoutDashboard, List, Star, GitCompare, CalendarClock, Landmark, Gauge, History, Layers, Briefcase, Search } from "lucide-react";
 import { C, mono, sans, serif, gridBg } from "./lib/theme.js";
 import { SEED, buildFromApi } from "./lib/seedData.js";
 import Screener from "./components/Screener.jsx";
@@ -15,6 +15,9 @@ import Results from "./components/Results.jsx";
 import Ownership from "./components/Ownership.jsx";
 import Operations from "./components/Operations.jsx";
 import TrackRecord from "./components/TrackRecord.jsx";
+import Sectors from "./components/Sectors.jsx";
+import Portfolio from "./components/Portfolio.jsx";
+import CommandPalette from "./components/CommandPalette.jsx";
 import { fetchWatchlist, saveWatch, removeWatch } from "./lib/watchlist.js";
 
 /* ── TEMPORARY: focus the terminal on the Nifty 50 only ──────────────────────
@@ -40,6 +43,7 @@ export default function App() {
   const [assumptions, setAssumptions] = useState(null);
   const [price,       setPrice]       = useState(0);
   const [histPrices,  setHistPrices]  = useState(null);
+  const [paletteOpen, setPaletteOpen] = useState(false);
 
   // Watchlist membership (set of tickers) + a live alert count for the nav badge.
   const [watched,     setWatched]     = useState(() => new Set());
@@ -172,6 +176,8 @@ export default function App() {
                 { id: "results",   label: "Results",   icon: CalendarClock },
                 { id: "ownership", label: "Ownership", icon: Landmark },
                 { id: "operations", label: "Operations", icon: Gauge },
+                { id: "sectors",   label: "Sectors",   icon: Layers },
+                { id: "portfolio", label: "Portfolio", icon: Briefcase },
                 { id: "track",     label: "Track Record", icon: History },
               ].map(({ id, label, icon: Icon }) => (
                 <button key={id} onClick={() => setView(id)} style={{
@@ -191,6 +197,16 @@ export default function App() {
                 </button>
               ))}
             </nav>
+            <button onClick={() => setPaletteOpen(true)} title="Search companies (⌘K)" style={{
+              ...sans, display: "flex", alignItems: "center", gap: 7, marginLeft: "auto",
+              padding: "7px 13px", borderRadius: 8, cursor: "pointer",
+              fontSize: 13, fontWeight: 500,
+              border: `1px solid ${C.line2}`, background: "transparent", color: C.dim,
+            }}>
+              <Search size={15} strokeWidth={1.6} />Search
+              <span style={{ ...mono, fontSize: 10, color: C.faint, border: `1px solid ${C.line}`,
+                borderRadius: 4, padding: "1px 5px" }}>⌘K</span>
+            </button>
           </header>
         )}
 
@@ -199,7 +215,7 @@ export default function App() {
         )}
         {view === "screener" && (
           <Screener companies={companies} onOpen={open} loading={loading}
-                    watched={watched} onToggleWatch={toggleWatch} />
+                    watched={watched} onToggleWatch={toggleWatch} API={API} />
         )}
         {view === "watchlist" && (
           <Watchlist API={API} onOpen={open} onChanged={reloadWatched} />
@@ -215,6 +231,12 @@ export default function App() {
         )}
         {view === "operations" && (
           <Operations API={API} onOpen={open} />
+        )}
+        {view === "sectors" && (
+          <Sectors API={API} onOpen={open} />
+        )}
+        {view === "portfolio" && (
+          <Portfolio API={API} onOpen={open} />
         )}
         {view === "track" && (
           <TrackRecord API={API} onOpen={open} />
@@ -235,6 +257,13 @@ export default function App() {
           />
         )}
       </div>
+
+      <CommandPalette
+        open={paletteOpen}
+        setOpen={setPaletteOpen}
+        companies={companies}
+        onOpenCompany={open}
+      />
     </div>
   );
 }

@@ -9,7 +9,7 @@ import {
   ArrowLeft, Building2, FileText, Activity, Calculator,
   Users, Brain, Shield, Sparkles, Check, AlertTriangle,
   Info, Loader2, TrendingUp, TrendingDown, Newspaper, Download, PieChart,
-  ShieldAlert, Star,
+  ShieldAlert, Star, FolderOpen, FileSpreadsheet, ExternalLink,
 } from "lucide-react";
 import {
   ComposedChart, AreaChart, Area, BarChart, Bar, LineChart, Line,
@@ -228,6 +228,7 @@ const TABS = [
   { id:"peers",      icon:Users,      label:"Peer Universe" },
   { id:"ownership",  icon:PieChart,   label:"Ownership"     },
   { id:"news",       icon:Newspaper,  label:"News"          },
+  { id:"docs",       icon:FolderOpen, label:"Docs"          },
   { id:"thesis",     icon:Brain,      label:"AI Thesis"     },
   { id:"forensics",  icon:ShieldAlert,label:"Forensics"     },
   { id:"verdict",    icon:Shield,     label:"Verdict"       },
@@ -1876,6 +1877,217 @@ function NewsTab({ co, API, profile }) {
   );
 }
 
+/* ── Docs Tab ────────────────────────────────────────────────────── */
+/* Company documents (concalls, annual reports, credit ratings,
+   announcements) + an on-demand AI research note from the backend. */
+function DocsTab({ co, API }) {
+  const [docs, setDocs]         = useState(null);
+  const [loading, setLoading]   = useState(true);
+  const [note, setNote]         = useState(null);    // { status, thesis?, reason? }
+  const [noteBusy, setNoteBusy] = useState(false);
+
+  useEffect(() => {
+    setNote(null); setNoteBusy(false);
+    if (!API) { setLoading(false); return; }
+    let live = true;
+    setLoading(true);
+    fetch(`${API}/api/companies/${co.ticker}/documents`)
+      .then(r => r.json())
+      .then(d => { if (live) { setDocs(d || {}); setLoading(false); } })
+      .catch(() => { if (live) { setDocs(null); setLoading(false); } });
+    return () => { live = false; };
+  }, [co.ticker, API]);
+
+  const generateNote = () => {
+    if (!API || noteBusy) return;
+    setNoteBusy(true);
+    fetch(`${API}/api/companies/${co.ticker}/thesis`)
+      .then(r => r.json())
+      .then(d => { setNote(d); setNoteBusy(false); })
+      .catch(e => { setNote({ status: "error", reason: e.message }); setNoteBusy(false); });
+  };
+
+  const concalls = docs?.concalls || [];
+  const reports  = docs?.annual_reports || [];
+  const ratings  = docs?.credit_ratings || [];
+  const anns     = docs?.announcements || [];
+  const empty    = !loading && concalls.length === 0 && reports.length === 0 && ratings.length === 0 && anns.length === 0;
+
+  const fmtDocDate = d => {
+    if (!d) return "—";
+    const dt = new Date(d);
+    if (isNaN(dt.getTime())) return String(d).slice(0, 10);
+    return dt.toLocaleDateString("en-IN", { day:"numeric", month:"short", year:"numeric" });
+  };
+
+  const DocLink = ({ href, label }) => href ? (
+    <a href={href} target="_blank" rel="noopener noreferrer"
+      onMouseEnter={e => e.currentTarget.style.borderColor = C.gold + "99"}
+      onMouseLeave={e => e.currentTarget.style.borderColor = C.line2}
+      style={{ ...sans, display:"inline-flex", alignItems:"center", gap:5, fontSize:11,
+        color:C.gold, textDecoration:"none", border:`1px solid ${C.line2}`,
+        borderRadius:6, padding:"3px 9px" }}>
+      {label} <ExternalLink size={10} />
+    </a>
+  ) : null;
+
+  const SectionHead = ({ title, count }) => (
+    <div style={{ display:"flex", alignItems:"baseline", gap:10, marginBottom:12 }}>
+      <span style={{ ...serif, fontSize:19, color:C.text }}>{title}</span>
+      <span style={{ ...mono, fontSize:11, color:C.faint }}>{count}</span>
+    </div>
+  );
+
+  return (
+    <div className="fadein" style={{ padding:32 }}>
+      <div style={{ marginBottom:24 }}>
+        <div style={{ ...serif, fontSize:22, color:C.text }}>{co.name} — Documents &amp; Research</div>
+        <div style={{ ...sans, fontSize:12, color:C.dim, marginTop:4 }}>
+          Concall transcripts, annual reports, credit ratings, exchange announcements — plus an AI-written research note.
+        </div>
+      </div>
+
+      {/* ── Research note ─────────────────────────────────────── */}
+      <Card style={{ marginBottom:24 }}>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:16, flexWrap:"wrap" }}>
+          <div>
+            <div style={{ ...sans, fontSize:11, letterSpacing:"0.14em", textTransform:"uppercase", color:C.gold }}>Research Note</div>
+            <div style={{ ...sans, fontSize:12, color:C.dim, marginTop:4 }}>
+              A model-written note on {co.name}: business, valuation, risks — generated from the terminal's data.
+            </div>
+          </div>
+          <button onClick={generateNote} disabled={noteBusy} style={{
+            ...sans, display:"flex", alignItems:"center", gap:7,
+            fontSize:11, letterSpacing:"0.12em", textTransform:"uppercase", fontWeight:500,
+            padding:"8px 16px", border:`1px solid ${C.gold}66`, color:C.gold,
+            background:C.gold+"0d", cursor:noteBusy?"wait":"pointer", opacity:noteBusy?0.7:1,
+          }}>
+            {noteBusy
+              ? <Loader2 size={13} style={{ animation:"spin 1s linear infinite" }} />
+              : <Brain size={13} />}
+            {noteBusy ? "Writing…" : note?.status === "ok" ? "Regenerate research note" : "Generate research note"}
+          </button>
+        </div>
+
+        {noteBusy && (
+          <div style={{ ...sans, display:"flex", alignItems:"center", gap:10, marginTop:18, color:C.dim, fontSize:13 }}>
+            <Loader2 size={15} color={C.gold} style={{ animation:"spin 1s linear infinite" }} />
+            Reading filings and writing the note — this can take a minute…
+          </div>
+        )}
+
+        {!noteBusy && note?.status === "ok" && (
+          <div style={{
+            ...serif, fontSize:16, lineHeight:1.75, color:C.text,
+            whiteSpace:"pre-wrap", maxWidth:760, marginTop:20,
+            paddingTop:20, borderTop:`1px solid ${C.line}`,
+          }}>
+            {note.thesis}
+          </div>
+        )}
+
+        {!noteBusy && note && note.status === "unavailable" && (
+          <div style={{ ...sans, fontSize:12, color:C.dim, marginTop:16, fontStyle:"italic" }}>
+            Set ANTHROPIC_API_KEY on the backend to enable AI research notes
+          </div>
+        )}
+
+        {!noteBusy && note && note.status === "error" && (
+          <div style={{ ...sans, fontSize:12, color:C.red, marginTop:16 }}>
+            Could not generate the note{note.reason ? `: ${note.reason}` : ""}. Try again.
+          </div>
+        )}
+      </Card>
+
+      {loading && (
+        <div style={{ display:"flex", alignItems:"center", gap:12, padding:40, ...sans, color:C.dim, fontSize:13 }}>
+          <Loader2 size={20} color={C.gold} style={{ animation:"spin 1s linear infinite" }} />
+          Fetching documents…
+        </div>
+      )}
+
+      {empty && (
+        <Card>
+          <div style={{ ...sans, color:C.dim, fontSize:13, padding:40, textAlign:"center" }}>
+            No documents found for {co.ticker} yet. Concalls, annual reports, ratings and announcements
+            appear here once the backend's document ingestion has run for this company.
+          </div>
+        </Card>
+      )}
+
+      {!loading && !empty && (
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(340px, 1fr))", gap:20 }}>
+          {/* Concalls */}
+          <Card>
+            <SectionHead title="Concalls" count={concalls.length} />
+            {concalls.length === 0 && <div style={{ ...sans, fontSize:12, color:C.faint }}>No concall documents.</div>}
+            {concalls.map((c, i) => (
+              <div key={i} style={{ display:"flex", alignItems:"center", gap:10, flexWrap:"wrap",
+                padding:"10px 0", borderTop: i ? `1px solid ${C.line}` : "none" }}>
+                <span style={{ ...mono, fontSize:12, color:C.text200, minWidth:92 }}>{fmtDocDate(c.date)}</span>
+                <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
+                  <DocLink href={c.transcript} label="Transcript" />
+                  <DocLink href={c.ppt}        label="PPT" />
+                  <DocLink href={c.summary}    label="Summary" />
+                </div>
+              </div>
+            ))}
+          </Card>
+
+          {/* Annual reports */}
+          <Card>
+            <SectionHead title="Annual Reports" count={reports.length} />
+            {reports.length === 0 && <div style={{ ...sans, fontSize:12, color:C.faint }}>No annual reports.</div>}
+            {reports.map((r, i) => (
+              <div key={i} style={{ display:"flex", alignItems:"center", justifyContent:"space-between",
+                padding:"10px 0", borderTop: i ? `1px solid ${C.line}` : "none" }}>
+                <span style={{ ...mono, fontSize:12, color:C.text200 }}>FY {r.year}</span>
+                <DocLink href={r.url} label="Annual Report" />
+              </div>
+            ))}
+          </Card>
+
+          {/* Credit ratings */}
+          <Card>
+            <SectionHead title="Credit Ratings" count={ratings.length} />
+            {ratings.length === 0 && <div style={{ ...sans, fontSize:12, color:C.faint }}>No credit rating documents.</div>}
+            {ratings.map((r, i) => (
+              <div key={i} style={{ padding:"10px 0", borderTop: i ? `1px solid ${C.line}` : "none" }}>
+                <div style={{ display:"flex", alignItems:"center", gap:10, justifyContent:"space-between" }}>
+                  <div style={{ minWidth:0 }}>
+                    <div style={{ ...sans, fontSize:12, color:C.text, fontWeight:500 }}>{r.title || "Rating update"}</div>
+                    <div style={{ ...mono, fontSize:10, color:C.faint, marginTop:2 }}>
+                      {fmtDocDate(r.date)}{r.source ? ` · ${r.source}` : ""}
+                    </div>
+                  </div>
+                  <DocLink href={r.url} label="Open" />
+                </div>
+              </div>
+            ))}
+          </Card>
+
+          {/* Announcements */}
+          <Card>
+            <SectionHead title="Announcements" count={anns.length} />
+            {anns.length === 0 && <div style={{ ...sans, fontSize:12, color:C.faint }}>No exchange announcements.</div>}
+            {anns.map((a, i) => (
+              <div key={i} style={{ padding:"10px 0", borderTop: i ? `1px solid ${C.line}` : "none" }}>
+                <div style={{ display:"flex", alignItems:"center", gap:10, justifyContent:"space-between" }}>
+                  <div style={{ minWidth:0 }}>
+                    <div style={{ ...sans, fontSize:12, color:C.text, fontWeight:500 }}>{a.title}</div>
+                    <div style={{ ...mono, fontSize:10, color:C.faint, marginTop:2 }}>{fmtDocDate(a.date)}</div>
+                  </div>
+                  <DocLink href={a.url} label="Open" />
+                </div>
+              </div>
+            ))}
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ── AI Thesis Tab ───────────────────────────────────────────────── */
 /* AI Thesis — assembled entirely from IndianAPI data (concall AI summaries,
    consensus, growth track record, key metrics). No LLM call / no API tokens. */
@@ -2673,6 +2885,17 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
               }}>
                 <Download size={12} /> One-Pager PDF
               </button>
+              {API && (
+                <a href={`${API}/api/export/${co.ticker}.xlsx`} title="Download Excel model" style={{
+                  ...sans, display:"flex", alignItems:"center", gap:6,
+                  fontSize:11, letterSpacing:"0.12em", textTransform:"uppercase",
+                  fontWeight:500, padding:"6px 12px", textDecoration:"none",
+                  border:`1px solid ${C.gold}66`, color:C.gold,
+                  background:C.gold+"0d", cursor:"pointer",
+                }}>
+                  <FileSpreadsheet size={12} /> Excel
+                </a>
+              )}
             </div>
           </div>
 
@@ -2767,6 +2990,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
         {tab==="peers"      && <PeersTab       co={co2} cd={cd} allCompanies={allCompanies} API={API} />}
         {tab==="ownership"  && <OwnershipTab   profile={liveProfile} />}
         {tab==="news"       && <NewsTab        co={co2} API={API} profile={liveProfile} />}
+        {tab==="docs"       && <DocsTab        co={co2} API={API} />}
         {tab==="thesis"     && <AIThesisTab    co={co2} profile={liveProfile} insights={liveInsights} cd={cd} price={price} />}
         {tab==="forensics"  && <ForensicsTab   co={co2} API={API} />}
         {tab==="verdict"    && <VerdictTab     co={co2} rec={rec} cd={cd} price={price} insights={liveInsights} apiVal={apiVal} />}
