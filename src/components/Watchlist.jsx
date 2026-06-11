@@ -2,7 +2,7 @@
    Reads /api/watchlist (verdict / MoS / price / 1-day move + triggered alerts),
    lets you tune per-name alert thresholds, and opens a name on click. */
 import { useEffect, useState, useCallback } from "react";
-import { Star, Bell, Trash2, Settings2, Loader2, Check, X } from "lucide-react";
+import { Star, Bell, Trash2, Settings2, Loader2, Check, X, Lock } from "lucide-react";
 import { C, sans, serif, mono, gridBg } from "../lib/theme.js";
 import { VerdictBadge } from "./primitives.jsx";
 import Logo from "./Logo.jsx";
@@ -96,17 +96,43 @@ function SettingsPanel({ item, onSave, onClose }) {
   );
 }
 
-export default function Watchlist({ API, onOpen, onChanged }) {
+/* Centered, brand-styled gate shown when the user is signed out. */
+export function SignInGate({ requestAuth, what }) {
+  return (
+    <div className="fadein" style={{
+      minHeight: "55vh", display: "flex", flexDirection: "column",
+      alignItems: "center", justifyContent: "center", textAlign: "center", padding: 32,
+    }}>
+      <div style={{
+        width: 56, height: 56, borderRadius: "50%", display: "flex",
+        alignItems: "center", justifyContent: "center", marginBottom: 18,
+        background: C.bg800, border: `1px solid ${C.gold}66`, boxShadow: `0 0 0 1px ${C.gold}1a`,
+      }}>
+        <Lock size={22} color={C.gold} strokeWidth={1.6} />
+      </div>
+      <div style={{ ...serif, fontSize: 26, color: C.text, marginBottom: 8 }}>Sign in to continue</div>
+      <div style={{ ...sans, fontSize: 13, color: C.dim, maxWidth: 380, lineHeight: 1.6, marginBottom: 22 }}>
+        Sign in to use your {what} — your data is private to your account.
+      </div>
+      <button onClick={requestAuth} style={{
+        ...sans, fontSize: 13, fontWeight: 600, color: C.bg, background: C.gold,
+        border: "none", borderRadius: 8, padding: "10px 26px", cursor: "pointer",
+      }}>Sign in</button>
+    </div>
+  );
+}
+
+export default function Watchlist({ API, onOpen, onChanged, user, requestAuth }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
 
   const load = useCallback(() => {
-    if (!API) { setLoading(false); return; }
+    if (!API || !user) { setData(null); setLoading(false); return; }
     setLoading(true);
     fetchWatchlist(API).then(d => { setData(d); setLoading(false); })
       .catch(() => { setData(null); setLoading(false); });
-  }, [API]);
+  }, [API, user]);
   useEffect(() => { load(); }, [load]);
 
   const onSave = async (ticker, cfg) => {
@@ -118,6 +144,8 @@ export default function Watchlist({ API, onOpen, onChanged }) {
     load();
     onChanged && onChanged();
   };
+
+  if (!user) return <SignInGate requestAuth={requestAuth} what="watchlist" />;
 
   if (loading) return (
     <div style={{ padding: 48, display: "flex", alignItems: "center", gap: 10, color: C.dim, ...sans, fontSize: 13 }}>

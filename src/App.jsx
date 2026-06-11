@@ -1,24 +1,36 @@
 /* Equity Terminal — app root.
-   Step 7: updated fonts (Instrument Serif + Inter) and passes
-   historical price data (with dates) down to Company. */
+   Auth-aware: validates the stored session on boot, gates watchlist /
+   portfolio behind sign-in, and lazy-loads the heavy views so the
+   first paint ships a much smaller bundle. */
 
-import { useEffect, useMemo, useState, useCallback, useRef } from "react";
-import { TrendingUp, LayoutDashboard, List, Star, GitCompare, CalendarClock, Landmark, Gauge, History, Layers, Briefcase, Search } from "lucide-react";
+import { useEffect, useMemo, useState, useCallback, useRef, lazy, Suspense } from "react";
+import { TrendingUp, LayoutDashboard, List, Star, GitCompare, CalendarClock, Landmark, Gauge, History, Layers, Briefcase, Search, Loader2, LogIn, LogOut, ChevronDown } from "lucide-react";
 import { C, mono, sans, serif, gridBg } from "./lib/theme.js";
 import { SEED, buildFromApi } from "./lib/seedData.js";
 import Screener from "./components/Screener.jsx";
-import Company  from "./components/Company.jsx";
 import MarketDashboard from "./components/MarketDashboard.jsx";
 import Watchlist from "./components/Watchlist.jsx";
-import Compare from "./components/Compare.jsx";
-import Results from "./components/Results.jsx";
-import Ownership from "./components/Ownership.jsx";
-import Operations from "./components/Operations.jsx";
-import TrackRecord from "./components/TrackRecord.jsx";
-import Sectors from "./components/Sectors.jsx";
-import Portfolio from "./components/Portfolio.jsx";
 import CommandPalette from "./components/CommandPalette.jsx";
+import AuthModal from "./components/AuthModal.jsx";
 import { fetchWatchlist, saveWatch, removeWatch } from "./lib/watchlist.js";
+import { getUser, me, clearSession } from "./lib/auth.js";
+
+/* Heavy views are code-split: each loads on first visit. Dashboard and
+   Screener stay eager — they are the landing experience. */
+const Company     = lazy(() => import("./components/Company.jsx"));
+const Compare     = lazy(() => import("./components/Compare.jsx"));
+const Results     = lazy(() => import("./components/Results.jsx"));
+const Ownership   = lazy(() => import("./components/Ownership.jsx"));
+const Operations  = lazy(() => import("./components/Operations.jsx"));
+const TrackRecord = lazy(() => import("./components/TrackRecord.jsx"));
+const Sectors     = lazy(() => import("./components/Sectors.jsx"));
+const Portfolio   = lazy(() => import("./components/Portfolio.jsx"));
+
+const ViewLoader = () => (
+  <div style={{ padding: 48, display: "flex", alignItems: "center", gap: 10, color: C.dim, ...sans, fontSize: 13 }}>
+    <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> Loading…
+  </div>
+);
 
 /* ── TEMPORARY: focus the terminal on the Nifty 50 only ──────────────────────
    While we make the Nifty 50 pages 100% accurate, everything else is hidden.
@@ -47,6 +59,31 @@ export default function App() {
   const [histPrices,  setHistPrices]  = useState(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
 
+  // Auth session — seeded from localStorage, validated against /auth/me on boot.
+  const [user,        setUser]        = useState(() => getUser());
+  const [authOpen,    setAuthOpen]    = useState(false);
+  const [userMenu,    setUserMenu]    = useState(false);
+  const requestAuth = useCallback(() => setAuthOpen(true), []);
+
+  useEffect(() => {
+    if (!API) return;
+    me(API).then(u => setUser(u));
+  }, [API]);
+
+  // Any 401 from an authenticated route clears the session (in auth.js)
+  // and lands here: drop the stale user and prompt for sign-in.
+  useEffect(() => {
+    const onRequired = () => { setUser(null); setAuthOpen(true); };
+    window.addEventListener("auth:required", onRequired);
+    return () => window.removeEventListener("auth:required", onRequired);
+  }, []);
+
+  const signOut = useCallback(() => {
+    clearSession();
+    setUser(null);
+    setUserMenu(false);
+  }, []);
+
   // Watchlist membership (set of tickers) + a live alert count for the nav badge.
   const [watched,     setWatched]     = useState(() => new Set());
   const [watchAlerts, setWatchAlerts] = useState(0);
@@ -57,7 +94,13 @@ export default function App() {
   useEffect(() => { watchedRef.current = watched; }, [watched]);
 
   const reloadWatched = useCallback(() => {
-    if (!API) return;
+    if (!API || !user) {
+      const empty = new Set();
+      watchedRef.current = empty;
+      setWatched(empty);
+      setWatchAlerts(0);
+      return;
+    }
     fetchWatchlist(API)
       .then(d => {
         const next = new Set((d.items || []).map(i => i.ticker));
@@ -66,11 +109,12 @@ export default function App() {
         setWatchAlerts(d.triggered || 0);
       })
       .catch(() => {});
-  }, [API]);
+  }, [API, user]);
   useEffect(() => { reloadWatched(); }, [reloadWatched]);
 
   const toggleWatch = useCallback(async (ticker) => {
     if (!API || !ticker) return;
+    if (!user) { setAuthOpen(true); return; }
     const has = watchedRef.current.has(ticker);
     // optimistic — update the ref synchronously so back-to-back toggles
     // always see the latest membership, then mirror into state.
@@ -82,7 +126,7 @@ export default function App() {
       has ? await removeWatch(API, ticker) : await saveWatch(API, ticker, {});
     } catch { /* revert on failure */ reloadWatched(); return; }
     reloadWatched();
-  }, [API, reloadWatched]);
+  }, [API, user, reloadWatched]);
 
   useEffect(() => {
     if (!API) return;
@@ -209,6 +253,61 @@ export default function App() {
               <span style={{ ...mono, fontSize: 10, color: C.faint, border: `1px solid ${C.line}`,
                 borderRadius: 4, padding: "1px 5px" }}>⌘K</span>
             </button>
+
+            {!user ? (
+              <button onClick={() => setAuthOpen(true)} style={{
+                ...sans, display: "flex", alignItems: "center", gap: 7,
+                padding: "7px 13px", borderRadius: 8, cursor: "pointer",
+                fontSize: 13, fontWeight: 500,
+                border: `1px solid ${C.gold}55`, background: C.gold + "0d", color: C.gold,
+              }}>
+                <LogIn size={15} strokeWidth={1.6} />Sign in
+              </button>
+            ) : (
+              <div style={{ position: "relative" }}>
+                <button onClick={() => setUserMenu(m => !m)} style={{
+                  ...sans, display: "flex", alignItems: "center", gap: 8,
+                  padding: "4px 10px 4px 4px", borderRadius: 99, cursor: "pointer",
+                  fontSize: 13, fontWeight: 500,
+                  border: `1px solid ${C.line2}`, background: "transparent", color: C.text200,
+                }}>
+                  <span style={{
+                    ...serif, width: 26, height: 26, borderRadius: "50%",
+                    display: "inline-flex", alignItems: "center", justifyContent: "center",
+                    fontSize: 14, color: C.gold, background: C.bg800,
+                    border: `1px solid ${C.gold}88`, boxShadow: `0 0 0 1px ${C.gold}22`,
+                  }}>
+                    {(user.name || user.email || "?").trim().charAt(0).toUpperCase()}
+                  </span>
+                  {user.name || user.email}
+                  <ChevronDown size={13} color={C.dim} />
+                </button>
+                {userMenu && (
+                  <>
+                    <div onClick={() => setUserMenu(false)} style={{ position: "fixed", inset: 0, zIndex: 150 }} />
+                    <div className="fadein" style={{
+                      position: "absolute", top: "calc(100% + 8px)", right: 0, zIndex: 160,
+                      minWidth: 220, background: C.bg900, border: `1px solid ${C.line2}`,
+                      borderRadius: 10, boxShadow: "0 16px 48px rgba(0,0,0,0.55)", overflow: "hidden",
+                    }}>
+                      <div style={{ padding: "12px 16px", borderBottom: `1px solid ${C.line}` }}>
+                        {user.name && <div style={{ ...sans, fontSize: 13, fontWeight: 500, color: C.text }}>{user.name}</div>}
+                        <div style={{ ...mono, fontSize: 11, color: C.dim, marginTop: user.name ? 3 : 0 }}>{user.email}</div>
+                      </div>
+                      <button onClick={signOut} style={{
+                        ...sans, display: "flex", alignItems: "center", gap: 8, width: "100%",
+                        padding: "11px 16px", fontSize: 13, fontWeight: 500, textAlign: "left",
+                        background: "transparent", border: "none", cursor: "pointer", color: C.dim,
+                      }}
+                        onMouseEnter={e => { e.currentTarget.style.background = C.bg800; e.currentTarget.style.color = C.text; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.dim; }}>
+                        <LogOut size={14} strokeWidth={1.6} />Sign out
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </header>
         )}
 
@@ -220,44 +319,47 @@ export default function App() {
                     watched={watched} onToggleWatch={toggleWatch} API={API} />
         )}
         {view === "watchlist" && (
-          <Watchlist API={API} onOpen={open} onChanged={reloadWatched} />
+          <Watchlist API={API} onOpen={open} onChanged={reloadWatched}
+                     user={user} requestAuth={requestAuth} />
         )}
-        {view === "compare" && (
-          <Compare API={API} companies={companies} onOpen={open} seed={[...watched].slice(0, 4)} />
-        )}
-        {view === "results" && (
-          <Results API={API} onOpen={open} />
-        )}
-        {view === "ownership" && (
-          <Ownership API={API} onOpen={open} />
-        )}
-        {view === "operations" && (
-          <Operations API={API} onOpen={open} />
-        )}
-        {view === "sectors" && (
-          <Sectors API={API} onOpen={open} />
-        )}
-        {view === "portfolio" && (
-          <Portfolio API={API} onOpen={open} />
-        )}
-        {view === "track" && (
-          <TrackRecord API={API} onOpen={open} />
-        )}
-        {view === "company" && selected && assumptions && (
-          <Company
-            co={selected}
-            assumptions={assumptions}
-            setAssumptions={setAssumptions}
-            price={price}
-            setPrice={setPrice}
-            onBack={() => setView("dashboard")}
-            API={API}
-            allCompanies={companies}
-            histPrices={histPrices}
-            isWatched={watched.has(selected.ticker)}
-            onToggleWatch={toggleWatch}
-          />
-        )}
+        <Suspense fallback={<ViewLoader />}>
+          {view === "compare" && (
+            <Compare API={API} companies={companies} onOpen={open} seed={[...watched].slice(0, 4)} />
+          )}
+          {view === "results" && (
+            <Results API={API} onOpen={open} />
+          )}
+          {view === "ownership" && (
+            <Ownership API={API} onOpen={open} />
+          )}
+          {view === "operations" && (
+            <Operations API={API} onOpen={open} />
+          )}
+          {view === "sectors" && (
+            <Sectors API={API} onOpen={open} />
+          )}
+          {view === "portfolio" && (
+            <Portfolio API={API} onOpen={open} user={user} requestAuth={requestAuth} />
+          )}
+          {view === "track" && (
+            <TrackRecord API={API} onOpen={open} />
+          )}
+          {view === "company" && selected && assumptions && (
+            <Company
+              co={selected}
+              assumptions={assumptions}
+              setAssumptions={setAssumptions}
+              price={price}
+              setPrice={setPrice}
+              onBack={() => setView("dashboard")}
+              API={API}
+              allCompanies={companies}
+              histPrices={histPrices}
+              isWatched={watched.has(selected.ticker)}
+              onToggleWatch={toggleWatch}
+            />
+          )}
+        </Suspense>
       </div>
 
       <CommandPalette
@@ -265,6 +367,13 @@ export default function App() {
         setOpen={setPaletteOpen}
         companies={companies}
         onOpenCompany={open}
+      />
+
+      <AuthModal
+        open={authOpen}
+        onClose={() => setAuthOpen(false)}
+        API={API}
+        onAuthed={u => setUser(u)}
       />
     </div>
   );

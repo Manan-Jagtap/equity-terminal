@@ -7,6 +7,8 @@ import { Briefcase, Loader2, Plus, Trash2, ChevronRight } from "lucide-react";
 import { C, sans, serif, mono } from "../lib/theme.js";
 import { inr, signedPct } from "../lib/formatters.js";
 import { VerdictBadge } from "./primitives.jsx";
+import { SignInGate } from "./Watchlist.jsx";
+import { authFetch } from "../lib/auth.js";
 
 const pnlColor = v => v == null ? C.dim : v >= 0 ? C.green : C.red;
 // Backend sends pnl_pct, weight AND mos all as FRACTIONS (0.124 = 12.4%),
@@ -14,7 +16,7 @@ const pnlColor = v => v == null ? C.dim : v >= 0 ? C.green : C.red;
 const pctNum = (v, d = 1) => v == null || !isFinite(v) ? "—" : (v >= 0 ? "+" : "") + (Number(v) * 100).toFixed(d) + "%";
 const pctPlain = (v, d = 1) => v == null || !isFinite(v) ? "—" : (Number(v) * 100).toFixed(d) + "%";
 
-export default function Portfolio({ API, onOpen }) {
+export default function Portfolio({ API, onOpen, user, requestAuth }) {
   const [data, setData]       = useState(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr]         = useState(null);
@@ -26,12 +28,13 @@ export default function Portfolio({ API, onOpen }) {
   const [saving, setSaving]   = useState(false);
 
   const reload = useCallback(() => {
-    if (!API) { setLoading(false); return; }
+    if (!API || !user) { setData(null); setLoading(false); return; }
     setLoading(true);
-    fetch(`${API}/api/portfolio`).then(r => r.json())
+    authFetch(`${API}/api/portfolio`)
+      .then(r => { if (!r.ok) throw new Error(`portfolio ${r.status}`); return r.json(); })
       .then(d => { setData(d); setErr(null); setLoading(false); })
       .catch(e => { setErr(e.message); setLoading(false); });
-  }, [API]);
+  }, [API, user]);
   useEffect(() => { reload(); }, [reload]);
 
   const add = async e => {
@@ -39,7 +42,7 @@ export default function Portfolio({ API, onOpen }) {
     if (!API || !ticker.trim() || !qty || !avgCost) return;
     setSaving(true);
     try {
-      await fetch(`${API}/api/portfolio`, {
+      await authFetch(`${API}/api/portfolio`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ticker: ticker.trim().toUpperCase(), qty: Number(qty), avg_cost: Number(avgCost) }),
@@ -52,12 +55,14 @@ export default function Portfolio({ API, onOpen }) {
 
   const remove = async id => {
     if (!API) return;
-    try { await fetch(`${API}/api/portfolio/${id}`, { method: "DELETE" }); } catch { /* noop */ }
+    try { await authFetch(`${API}/api/portfolio/${id}`, { method: "DELETE" }); } catch { /* noop */ }
     reload();
   };
 
   const items  = data?.items || [];
   const totals = data?.totals || {};
+
+  if (!user) return <SignInGate requestAuth={requestAuth} what="portfolio" />;
 
   if (loading) return (
     <div style={{ padding: 48, display: "flex", alignItems: "center", gap: 10, color: C.dim, ...sans, fontSize: 13 }}>
