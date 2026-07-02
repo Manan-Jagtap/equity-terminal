@@ -93,9 +93,15 @@ export default function Portfolio({ API, onOpen, user, requestAuth }) {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginBottom: 18 }}>
         {[
           { l: "Total value", v: inr(totals.value), col: C.text },
-          { l: "Total P&L",
+          { l: "Capital P&L",
             v: totals.pnl != null ? (totals.pnl >= 0 ? "+" : "−") + inr(Math.abs(totals.pnl)) : "—",
             sub: pctNum(totals.pnl_pct), col: pnlColor(totals.pnl) },
+          { l: "Dividends", v: totals.div_income ? inr(totals.div_income) : "—",
+            sub: totals.div_income ? "received" : null, col: totals.div_income ? C.green : C.dim },
+          { l: "Total return",
+            v: totals.total_pnl != null ? (totals.total_pnl >= 0 ? "+" : "−") + inr(Math.abs(totals.total_pnl)) : "—",
+            sub: totals.total_pnl_pct != null ? pctNum(totals.total_pnl_pct) + " incl. div" : null,
+            col: pnlColor(totals.total_pnl) },
           { l: "Weighted MoS", v: totals.weighted_mos != null ? signedPct(totals.weighted_mos) : "—", col: pnlColor(totals.weighted_mos) },
           { l: "Holdings", v: String(items.length), col: C.text },
         ].map(s => (
@@ -144,7 +150,7 @@ export default function Portfolio({ API, onOpen, user, requestAuth }) {
         </div>
       ) : (
         <div style={{ overflowX: "auto", border: `1px solid ${C.line}`, borderRadius: 12 }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 920 }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1000 }}>
             <thead>
               <tr>
                 <th style={{ ...th, textAlign: "left" }}>Company</th>
@@ -153,6 +159,7 @@ export default function Portfolio({ API, onOpen, user, requestAuth }) {
                 <th style={{ ...th, textAlign: "right" }}>LTP</th>
                 <th style={{ ...th, textAlign: "right" }}>Value</th>
                 <th style={{ ...th, textAlign: "right" }}>P&amp;L</th>
+                <th style={{ ...th, textAlign: "right" }}>Div</th>
                 <th style={{ ...th, textAlign: "right" }}>Weight</th>
                 <th style={{ ...th, textAlign: "right" }}>MoS</th>
                 <th style={{ ...th, textAlign: "right" }}>Verdict</th>
@@ -175,6 +182,10 @@ export default function Portfolio({ API, onOpen, user, requestAuth }) {
                   <td style={{ ...td, textAlign: "right", color: pnlColor(h.pnl) }}>
                     {h.pnl != null ? (h.pnl >= 0 ? "+" : "−") + inr(Math.abs(h.pnl)) : "—"}
                     <span style={{ color: pnlColor(h.pnl), opacity: 0.85 }}> ({pctNum(h.pnl_pct)})</span>
+                  </td>
+                  <td style={{ ...td, textAlign: "right", color: h.div_income ? C.green : C.faint }}
+                      title={h.div_income ? "dividends received since added" : "no dividends recorded"}>
+                    {h.div_income ? inr(h.div_income) : "—"}
                   </td>
                   <td style={{ ...td, textAlign: "right", color: C.text200 }}>{pctPlain(h.weight)}</td>
                   <td style={{ ...td, textAlign: "right", color: pnlColor(h.mos) }}>{signedPct(h.mos)}</td>

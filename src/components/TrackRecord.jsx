@@ -48,8 +48,13 @@ function CohortCard({ name, c }) {
         {hasData ? pct(c.avg_return) : "—"}
       </div>
       <div style={{ ...sans, fontSize: 10, color: C.dim, marginTop: 4 }}>
-        avg return{hasData && c.median_return != null ? ` · med ${pct(c.median_return)}` : ""}
+        avg price return{hasData && c.median_return != null ? ` · med ${pct(c.median_return)}` : ""}
       </div>
+      {hasData && c.avg_total_return != null && (
+        <div style={{ ...mono, fontSize: 11, marginTop: 3, color: c.avg_total_return >= 0 ? C.green : C.red }}>
+          {pct(c.avg_total_return)} <span style={{ ...sans, color: C.dim }}>incl. dividends</span>
+        </div>
+      )}
       <div style={{ ...sans, fontSize: 10, color: C.dim, marginTop: 2 }}>
         {hasData && c.win_rate != null ? `${Math.round(c.win_rate * 100)}% correct` : name === "HOLD" ? "no direction" : ""}
         {hasData && c.avg_days != null ? ` · ~${Math.round(c.avg_days)}d held` : ""}
@@ -90,6 +95,9 @@ export default function TrackRecord({ API, onOpen }) {
 
   const cohorts = data?.cohorts || {};
   const spread = data?.buy_avoid_spread;
+  const buyTR = cohorts?.BUY?.avg_total_return;
+  const bench = data?.benchmark?.total_return;
+  const excess = (buyTR != null && bench != null) ? buyTR - bench : null;
   const th = { ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em",
                color: C.dim, textAlign: "right", padding: "8px 10px", whiteSpace: "nowrap" };
   const td = { ...mono, fontSize: 12, color: C.text, textAlign: "right", padding: "8px 10px", whiteSpace: "nowrap" };
@@ -128,6 +136,21 @@ export default function TrackRecord({ API, onOpen }) {
               : "If the model has signal, its BUYs should beat its AVOIDs. This is that test."}
           </div>
         </div>
+        {data?.benchmark && (
+          <div style={{ background: "rgba(16,14,10,0.6)", border: `1px solid ${C.line2}`, padding: "14px 20px", minWidth: 230 }}>
+            <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: C.dim, marginBottom: 6 }}>
+              BUY vs universe · total return
+            </div>
+            <div style={{ ...mono, fontSize: 26, color: excess == null ? C.dim : excess >= 0 ? C.green : C.red }}>
+              {excess == null ? "—" : pct(excess)}
+            </div>
+            <div style={{ ...sans, fontSize: 10, color: C.dim, marginTop: 4 }}>
+              {excess == null
+                ? "Needs BUY calls with history"
+                : `BUY ${pct(buyTR)} vs owning everything tracked ${pct(bench)} — dividends included`}
+            </div>
+          </div>
+        )}
         {COHORT_ORDER.map(v => <CohortCard key={v} name={v} c={cohorts[v]} />)}
       </div>
 
@@ -164,6 +187,7 @@ export default function TrackRecord({ API, onOpen }) {
                 <th style={th}>Status</th>
                 <th style={th}>Mark</th>
                 <th style={th}>Return</th>
+                <th style={th}>Total</th>
                 <th style={th}>Days</th>
               </tr>
             </thead>
@@ -182,6 +206,10 @@ export default function TrackRecord({ API, onOpen }) {
                   <td style={{ ...td, color: c.open ? C.green : C.dim }}>{c.open ? "OPEN" : `closed ${fmtDate(c.end_date)}`}</td>
                   <td style={td}>{inr(c.end_price)}</td>
                   <td style={{ padding: "8px 10px", textAlign: "right" }}><Ret v={c.ret} /></td>
+                  <td style={{ padding: "8px 10px", textAlign: "right" }}
+                      title={c.div_ret ? `incl. ${pct(c.div_ret)} from dividends` : "no dividends in window"}>
+                    <Ret v={c.total_ret != null ? c.total_ret : c.ret} />
+                  </td>
                   <td style={td}>{c.days}</td>
                 </tr>
               ))}
