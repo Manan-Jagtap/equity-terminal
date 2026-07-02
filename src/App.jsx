@@ -32,10 +32,11 @@ const ViewLoader = () => (
   </div>
 );
 
-/* ── TEMPORARY: focus the terminal on the Nifty 50 only ──────────────────────
-   While we make the Nifty 50 pages 100% accurate, everything else is hidden.
-   To show all companies again, set NIFTY50_ONLY = false.
-   Index composition changes occasionally — edit this list if a name is wrong.   */
+/* ── Visibility whitelist ────────────────────────────────────────────────────
+   What the terminal shows is driven by the backend /api/universe (the SINGLE
+   source of truth — currently the Nifty 100). The NIFTY_50 set below is only a
+   FALLBACK used when that call can't be reached. NIFTY50_ONLY gates whether we
+   filter at all; set it false to show every ingested name.                      */
 const NIFTY50_ONLY = true;
 const NIFTY_50 = new Set([
   "RELIANCE","HDFCBANK","BHARTIARTL","TCS","ICICIBANK","SBIN","INFY","BAJFINANCE","ITC","LT",
@@ -131,10 +132,16 @@ export default function App() {
   useEffect(() => {
     if (!API) return;
     setLoading(true);
-    fetch(`${API}/api/companies`)
+    // Visibility is driven by the backend /api/universe (single source of truth),
+    // so backend and frontend can't drift. NIFTY_50 below is only a fallback for
+    // when that call can't be reached.
+    const universe = fetch(`${API}/api/universe`)
       .then(r => r.json())
-      .then(rows => {
-        const visible = NIFTY50_ONLY ? rows.filter(r => NIFTY_50.has(r.ticker)) : rows;
+      .then(d => (Array.isArray(d?.tickers) && d.tickers.length) ? new Set(d.tickers) : NIFTY_50)
+      .catch(() => NIFTY_50);
+    Promise.all([universe, fetch(`${API}/api/companies`).then(r => r.json())])
+      .then(([visibleSet, rows]) => {
+        const visible = NIFTY50_ONLY ? rows.filter(r => visibleSet.has(r.ticker)) : rows;
         // Carry the backend's CONSENSUS-ANCHORED screener metrics onto each
         // company so the Screener displays them directly instead of recomputing
         // a bare DCF (which has no analyst data on the list page).

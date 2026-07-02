@@ -34,6 +34,8 @@ export const SECTOR_PARAMS = {
   UTILITIES:     { beta: 0.75, terminal_growth: 0.045, mature_roic: 0.11, mature_roe: 0.13, exit_pe: 15, exit_ev_ebitda: 9,  exit_pb: null },
   TELECOM:       { beta: 0.90, terminal_growth: 0.050, mature_roic: 0.13, mature_roe: 0.15, exit_pe: 32, exit_ev_ebitda: 9,  exit_pb: null },
   MANUFACTURING: { beta: 1.00, terminal_growth: 0.050, mature_roic: 0.15, mature_roe: 0.16, exit_pe: 28, exit_ev_ebitda: 15, exit_pb: null },
+  CHEMICALS:     { beta: 1.05, terminal_growth: 0.050, mature_roic: 0.16, mature_roe: 0.17, exit_pe: 26, exit_ev_ebitda: 15, exit_pb: null },
+  REALTY:        { beta: 1.25, terminal_growth: 0.050, mature_roic: 0.12, mature_roe: 0.13, exit_pe: 20, exit_ev_ebitda: 14, exit_pb: null },
   // Financials
   BANK:          { beta: 0.95, terminal_growth: 0.055, mature_roic: 0.15, mature_roe: 0.155, exit_pe: 16, exit_ev_ebitda: null, exit_pb: 2.4 },
   NBFC:          { beta: 1.10, terminal_growth: 0.055, mature_roic: 0.16, mature_roe: 0.165, exit_pe: 18, exit_ev_ebitda: null, exit_pb: 3.0 },
