@@ -4,7 +4,7 @@
    first paint ships a much smaller bundle. */
 
 import { useEffect, useMemo, useState, useCallback, useRef, lazy, Suspense } from "react";
-import { TrendingUp, LayoutDashboard, List, Star, GitCompare, CalendarClock, Landmark, Gauge, History, Layers, Briefcase, Search, Loader2, LogIn, LogOut, ChevronDown } from "lucide-react";
+import { TrendingUp, LayoutDashboard, List, Star, GitCompare, CalendarClock, Landmark, Gauge, History, Layers, Briefcase, Search, Loader2, LogIn, LogOut, ChevronDown, Sparkles } from "lucide-react";
 import { C, mono, sans, serif, gridBg } from "./lib/theme.js";
 import { SEED, buildFromApi } from "./lib/seedData.js";
 import Screener from "./components/Screener.jsx";
@@ -25,6 +25,7 @@ const Operations  = lazy(() => import("./components/Operations.jsx"));
 const TrackRecord = lazy(() => import("./components/TrackRecord.jsx"));
 const Sectors     = lazy(() => import("./components/Sectors.jsx"));
 const Portfolio   = lazy(() => import("./components/Portfolio.jsx"));
+const Ideas       = lazy(() => import("./components/Ideas.jsx"));
 
 const ViewLoader = () => (
   <div style={{ padding: 48, display: "flex", alignItems: "center", gap: 10, color: C.dim, ...sans, fontSize: 13 }}>
@@ -224,6 +225,7 @@ export default function App() {
               {[
                 { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
                 { id: "screener",  label: "Screener",  icon: List },
+                { id: "ideas",     label: "Ideas",     icon: Sparkles },
                 { id: "watchlist", label: "Watchlist", icon: Star },
                 { id: "compare",   label: "Compare",   icon: GitCompare },
                 { id: "results",   label: "Results",   icon: CalendarClock },
@@ -347,6 +349,9 @@ export default function App() {
           )}
           {view === "portfolio" && (
             <Portfolio API={API} onOpen={open} user={user} requestAuth={requestAuth} />
+          )}
+          {view === "ideas" && (
+            <Ideas API={API} onOpen={open} />
           )}
           {view === "track" && (
             <TrackRecord API={API} onOpen={open} />
