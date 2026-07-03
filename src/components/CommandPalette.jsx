@@ -3,10 +3,33 @@
    companies array App.jsx already holds. ArrowUp/Down + Enter to open. */
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Search, CornerDownLeft } from "lucide-react";
+import { Search, CornerDownLeft, ArrowRight } from "lucide-react";
 import { C, mono, sans, serif } from "../lib/theme.js";
 import { inr, signedPct } from "../lib/formatters.js";
 import { VerdictBadge } from "./primitives.jsx";
+
+/* Command language: type a destination ("SECTORS", "IDEAS", "TRACK") to jump
+   straight there — the Bloomberg-style keyboard-first navigation. */
+const COMMANDS = [
+  { view: "ideas",      label: "Ideas · Alpha Score", kw: ["ideas", "alpha", "rank", "factor"] },
+  { view: "sectors",    label: "Sectors",             kw: ["sectors", "sector"] },
+  { view: "screener",   label: "Screener",            kw: ["screener", "screen"] },
+  { view: "track",      label: "Track Record",        kw: ["track", "record", "backtest"] },
+  { view: "portfolio",  label: "Portfolio",           kw: ["portfolio", "holdings"] },
+  { view: "watchlist",  label: "Watchlist",           kw: ["watchlist", "watch"] },
+  { view: "dashboard",  label: "Dashboard",           kw: ["dashboard", "home", "market"] },
+  { view: "compare",    label: "Compare",             kw: ["compare"] },
+  { view: "results",    label: "Results",             kw: ["results", "earnings"] },
+  { view: "ownership",  label: "Ownership",           kw: ["ownership", "shareholding"] },
+  { view: "operations", label: "Operations",          kw: ["operations", "efficiency"] },
+];
+
+function matchCommands(q) {
+  if (!q) return [];
+  return COMMANDS
+    .filter(c => c.kw.some(k => k.startsWith(q) || q.startsWith(k) || k.includes(q)))
+    .slice(0, 4);
+}
 
 /* Rank: lower = better. Prefix matches first, then substrings, then a
    loose in-order (subsequence) match. Returns null when no match. */
@@ -34,7 +57,7 @@ const isTyping = el =>
   el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" ||
          el.tagName === "SELECT" || el.isContentEditable);
 
-export default function CommandPalette({ open, setOpen, companies, onOpenCompany }) {
+export default function CommandPalette({ open, setOpen, companies, onOpenCompany, onNavigate }) {
   const [q, setQ]       = useState("");
   const [active, setActive] = useState(0);
   const inputRef = useRef(null);
@@ -64,14 +87,16 @@ export default function CommandPalette({ open, setOpen, companies, onOpenCompany
     }
   }, [open]);
 
-  const results = useMemo(() => {
+  const items = useMemo(() => {
     const needle = q.trim().toLowerCase();
-    return (companies || [])
+    const cmds = matchCommands(needle).map(cmd => ({ type: "cmd", cmd }));
+    const cos = (companies || [])
       .map(co => ({ co, s: score(co, needle) }))
       .filter(r => r.s != null)
       .sort((a, b) => a.s - b.s || (a.co.name || "").localeCompare(b.co.name || ""))
-      .slice(0, 12)
-      .map(r => r.co);
+      .slice(0, 10)
+      .map(r => ({ type: "co", co: r.co }));
+    return [...cmds, ...cos];
   }, [companies, q]);
 
   useEffect(() => { setActive(0); }, [q]);
@@ -84,17 +109,18 @@ export default function CommandPalette({ open, setOpen, companies, onOpenCompany
 
   if (!open) return null;
 
-  const pick = co => {
-    const id = co.ticker || co.id;
+  const pick = item => {
     setOpen(false);
+    if (item.type === "cmd") { if (onNavigate) onNavigate(item.cmd.view); return; }
+    const id = item.co.ticker || item.co.id;
     if (id && onOpenCompany) onOpenCompany(id);
   };
 
   const onKeyDown = e => {
     if (e.key === "Escape") { e.preventDefault(); setOpen(false); }
-    else if (e.key === "ArrowDown") { e.preventDefault(); setActive(a => results.length ? (a + 1) % results.length : 0); }
-    else if (e.key === "ArrowUp")   { e.preventDefault(); setActive(a => results.length ? (a - 1 + results.length) % results.length : 0); }
-    else if (e.key === "Enter")     { e.preventDefault(); if (results[active]) pick(results[active]); }
+    else if (e.key === "ArrowDown") { e.preventDefault(); setActive(a => items.length ? (a + 1) % items.length : 0); }
+    else if (e.key === "ArrowUp")   { e.preventDefault(); setActive(a => items.length ? (a - 1 + items.length) % items.length : 0); }
+    else if (e.key === "Enter")     { e.preventDefault(); if (items[active]) pick(items[active]); }
   };
 
   return (
@@ -119,7 +145,7 @@ export default function CommandPalette({ open, setOpen, companies, onOpenCompany
             value={q}
             onChange={e => setQ(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="Search ticker or company…"
+            placeholder="Search a ticker, company, or a page (sectors, ideas, track)…"
             style={{ ...sans, flex: 1, background: "transparent", border: "none", outline: "none", color: C.text, fontSize: 16 }}
           />
           <span style={{ ...mono, fontSize: 10, color: C.faint, border: `1px solid ${C.line2}`, borderRadius: 5, padding: "2px 6px" }}>ESC</span>
@@ -127,19 +153,36 @@ export default function CommandPalette({ open, setOpen, companies, onOpenCompany
 
         {/* Results */}
         <div ref={listRef} style={{ maxHeight: 420, overflowY: "auto" }}>
-          {results.map((co, i) => {
-            const a = co.api || {};
+          {items.map((it, i) => {
+            const activeRow = i === active;
+            const rowStyle = {
+              display: "flex", alignItems: "center", gap: 12,
+              padding: "10px 18px", cursor: "pointer",
+              background: activeRow ? C.bg800 : "transparent",
+              borderLeft: `2px solid ${activeRow ? C.gold : "transparent"}`,
+            };
+            if (it.type === "cmd") {
+              return (
+                <div key={"cmd-" + it.cmd.view}
+                  onMouseEnter={() => setActive(i)}
+                  onMouseDown={e => { e.preventDefault(); pick(it); }}
+                  style={rowStyle}>
+                  <ArrowRight size={15} color={C.gold} strokeWidth={1.8} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ ...sans, fontSize: 13, fontWeight: 500, color: C.text }}>Go to {it.cmd.label}</div>
+                    <div style={{ ...mono, fontSize: 10, color: C.faint }}>command</div>
+                  </div>
+                  {activeRow && <CornerDownLeft size={13} color={C.dim} />}
+                </div>
+              );
+            }
+            const co = it.co, a = co.api || {};
             return (
               <div
                 key={co.ticker || co.id}
                 onMouseEnter={() => setActive(i)}
-                onMouseDown={e => { e.preventDefault(); pick(co); }}
-                style={{
-                  display: "flex", alignItems: "center", gap: 12,
-                  padding: "10px 18px", cursor: "pointer",
-                  background: i === active ? C.bg800 : "transparent",
-                  borderLeft: `2px solid ${i === active ? C.gold : "transparent"}`,
-                }}>
+                onMouseDown={e => { e.preventDefault(); pick(it); }}
+                style={rowStyle}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ ...sans, fontSize: 13, fontWeight: 500, color: C.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{co.name}</div>
                   <div style={{ ...mono, fontSize: 10, color: C.faint }}>{co.ticker} · {co.sector}</div>
@@ -151,13 +194,13 @@ export default function CommandPalette({ open, setOpen, companies, onOpenCompany
                   <span style={{ ...mono, fontSize: 11, color: a.mos >= 0 ? C.green : C.red, minWidth: 52, textAlign: "right" }}>{signedPct(a.mos)}</span>
                 )}
                 {a.verdict && <VerdictBadge verdict={a.verdict} />}
-                {i === active && <CornerDownLeft size={13} color={C.dim} />}
+                {activeRow && <CornerDownLeft size={13} color={C.dim} />}
               </div>
             );
           })}
-          {results.length === 0 && (
+          {items.length === 0 && (
             <div style={{ ...sans, padding: 36, textAlign: "center", color: C.faint, fontSize: 13 }}>
-              No companies match “{q}”.
+              No matches for “{q}”. Try a ticker, a company, or a page like “sectors”.
             </div>
           )}
         </div>

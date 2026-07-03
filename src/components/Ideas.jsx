@@ -30,6 +30,7 @@ function Cell({ v }) {
 
 export default function Ideas({ API, onOpen }) {
   const [data, setData] = useState(null);
+  const [bt, setBt] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sector, setSector] = useState("All");
 
@@ -40,6 +41,8 @@ export default function Ideas({ API, onOpen }) {
     fetch(`${API}/api/factors`).then(r => r.json())
       .then(d => { if (live) { setData(d); setLoading(false); } })
       .catch(() => { if (live) { setData(null); setLoading(false); } });
+    fetch(`${API}/api/factors/backtest`).then(r => r.json())
+      .then(d => { if (live) setBt(d); }).catch(() => { if (live) setBt(null); });
     return () => { live = false; };
   }, [API]);
 
@@ -83,6 +86,58 @@ export default function Ideas({ API, onOpen }) {
           weights: {Object.entries(data.weights).map(([k, v]) => `${k} ${Math.round(v * 100)}%`).join("  ·  ")}
         </div>
       )}
+
+      {/* Factor backtest + sector strength */}
+      <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 18 }}>
+        <div style={{ flex: "1 1 320px", border: `1px solid ${C.line}`, borderRadius: 10, padding: "12px 14px", background: "rgba(16,14,10,0.5)" }}>
+          <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: C.dim, marginBottom: 10 }}>
+            Factor backtest · forward return by Alpha bucket
+          </div>
+          {bt && bt.n >= 5 ? (
+            <>
+              <div style={{ display: "flex", alignItems: "flex-end", gap: 6 }}>
+                {bt.buckets.map(b => {
+                  const r = b.avg_return || 0;
+                  const h = Math.min(52, Math.abs(r) * 420);
+                  return (
+                    <div key={b.label} style={{ flex: 1, textAlign: "center" }}>
+                      <div style={{ height: 54, display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
+                        <div style={{ height: h, background: r >= 0 ? C.green : C.red, borderRadius: 2, opacity: 0.85 }} />
+                      </div>
+                      <div style={{ ...mono, fontSize: 9, color: C.dim, marginTop: 3 }}>{b.label}</div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div style={{ ...sans, fontSize: 10, color: C.dim, marginTop: 8 }}>
+                Q1−Q5 spread:{" "}
+                <span style={{ ...mono, color: (bt.top_minus_bottom || 0) >= 0 ? C.green : C.red }}>
+                  {bt.top_minus_bottom != null ? (bt.top_minus_bottom * 100).toFixed(1) + "%" : "—"}
+                </span>{" "}· since {bt.tracking_since || "—"} ({bt.snapshot_days || 0}d)
+              </div>
+            </>
+          ) : (
+            <div style={{ ...sans, fontSize: 11, color: C.faint, lineHeight: 1.6 }}>
+              Accruing — the factor track record needs a few snapshot days to be meaningful. Capture began {bt?.tracking_since || "today"}; Q1 (highest Alpha) should out-earn Q5 over time.
+            </div>
+          )}
+        </div>
+        <div style={{ flex: "1 1 320px", border: `1px solid ${C.line}`, borderRadius: 10, padding: "12px 14px", background: "rgba(16,14,10,0.5)" }}>
+          <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: C.dim, marginBottom: 10 }}>
+            Sector strength · avg Alpha (click to filter)
+          </div>
+          {(data?.sectors || []).slice(0, 6).map(s => (
+            <div key={s.sector} onClick={() => setSector(s.sector)}
+                 style={{ display: "flex", alignItems: "center", gap: 8, padding: "3px 0", cursor: "pointer" }}>
+              <div style={{ ...sans, fontSize: 11, color: C.text200, width: 130, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.sector}</div>
+              <div style={{ flex: 1, height: 5, background: C.bg600, borderRadius: 3 }}>
+                <div style={{ height: "100%", width: `${s.avg_alpha || 0}%`, background: scoreColor(s.avg_alpha), borderRadius: 3 }} />
+              </div>
+              <div style={{ ...mono, fontSize: 11, color: scoreColor(s.avg_alpha), width: 26, textAlign: "right" }}>{s.avg_alpha != null ? Math.round(s.avg_alpha) : "—"}</div>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* Sector filter */}
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>

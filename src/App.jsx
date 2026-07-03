@@ -379,6 +379,7 @@ export default function App() {
         setOpen={setPaletteOpen}
         companies={companies}
         onOpenCompany={open}
+        onNavigate={setView}
       />
 
       <AuthModal
