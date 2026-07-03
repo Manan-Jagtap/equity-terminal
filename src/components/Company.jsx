@@ -24,6 +24,7 @@ import { fundamentals, isFinancial } from "../lib/valuation.js";
 import { technicals } from "../lib/technicals.js";
 import { useIsMobile } from "../lib/useResponsive.js";
 import DCFModel from "./DCFModel.jsx";
+import ScenarioBar from "./ScenarioBar.jsx";
 import AnalystTab from "./AnalystTab.jsx";
 
 /* Verdict → colour tone (single mapping, used in header + snapshot). */
@@ -2985,7 +2986,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
         {tab==="overview"   && <OverviewTab    co={co2} rec={rec} cd={cd} priceData={priceChartWithSMA} profile={liveProfile} />}
         {tab==="financials" && <FinancialsTab  co={co2} cd={cd} liveFinancials={liveFinancials} API={API} />}
         {tab==="ratios"     && <RatiosTab      co={co2} API={API} liveMetrics={liveMetrics} />}
-        {tab==="dcf"        && <DCFModel       key={`dcf-${co.ticker}-${apiVal?.assumptions ? "seeded" : "base"}`} co={co2} a={assumptions} set={set} price={price} setPrice={setPrice} apiVal={apiVal} />}
+        {tab==="dcf"        && <><ScenarioBar API={API} ticker={co.ticker} assumptions={assumptions} setAssumptions={setAssumptions} /><DCFModel key={`dcf-${co.ticker}-${apiVal?.assumptions ? "seeded" : "base"}`} co={co2} a={assumptions} set={set} price={price} setPrice={setPrice} apiVal={apiVal} /></>}
         {tab==="analyst"    && <AnalystTab     co={co2} API={API} price={price} />}
         {tab==="peers"      && <PeersTab       co={co2} cd={cd} allCompanies={allCompanies} API={API} />}
         {tab==="ownership"  && <OwnershipTab   profile={liveProfile} />}
