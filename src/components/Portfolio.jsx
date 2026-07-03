@@ -3,7 +3,7 @@
    /api/portfolio endpoints. All amounts ₹ Indian-formatted. */
 
 import { useCallback, useEffect, useState } from "react";
-import { Briefcase, Loader2, Plus, Trash2, ChevronRight } from "lucide-react";
+import { Briefcase, Loader2, Plus, Trash2, ChevronRight, Sparkles } from "lucide-react";
 import { C, sans, serif, mono } from "../lib/theme.js";
 import { inr, signedPct } from "../lib/formatters.js";
 import { VerdictBadge } from "./primitives.jsx";
@@ -26,6 +26,7 @@ export default function Portfolio({ API, onOpen, user, requestAuth }) {
   const [qty, setQty]         = useState("");
   const [avgCost, setAvgCost] = useState("");
   const [saving, setSaving]   = useState(false);
+  const [xray, setXray]       = useState(null);
 
   const reload = useCallback(() => {
     if (!API || !user) { setData(null); setLoading(false); return; }
@@ -36,6 +37,13 @@ export default function Portfolio({ API, onOpen, user, requestAuth }) {
       .catch(e => { setErr(e.message); setLoading(false); });
   }, [API, user]);
   useEffect(() => { reload(); }, [reload]);
+
+  // Factor / risk X-ray (loads alongside; refreshes when holdings change).
+  useEffect(() => {
+    if (!API || !user) { setXray(null); return; }
+    authFetch(`${API}/api/portfolio/xray`)
+      .then(r => (r.ok ? r.json() : null)).then(setXray).catch(() => setXray(null));
+  }, [API, user, data]);
 
   const add = async e => {
     e.preventDefault();
@@ -112,6 +120,69 @@ export default function Portfolio({ API, onOpen, user, requestAuth }) {
           </div>
         ))}
       </div>
+
+      {/* Portfolio X-ray — factor exposure + inverse-vol sizing */}
+      {xray?.xray && xray.xray.n > 0 && (
+        <div style={{ border: `1px solid ${C.line}`, borderRadius: 12, background: C.panel, padding: "16px 18px", marginBottom: 18 }}>
+          <div style={{ ...sans, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.1em", color: C.dim, marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>
+            <Sparkles size={13} color={C.gold} /> Portfolio X-ray · factor &amp; risk
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px,1fr))", gap: 10, marginBottom: 14 }}>
+            {[
+              ["Weighted Alpha", xray.xray.weighted_alpha != null ? Math.round(xray.xray.weighted_alpha) : "—"],
+              ["Est. volatility", xray.xray.est_volatility != null ? (xray.xray.est_volatility * 100).toFixed(0) + "%" : "—"],
+              ["Top position", xray.xray.top_weight != null ? (xray.xray.top_weight * 100).toFixed(0) + "%" : "—"],
+              ["Sector conc. (HHI)", xray.xray.hhi != null ? xray.xray.hhi.toFixed(2) : "—"],
+            ].map(([l, v]) => (
+              <div key={l}>
+                <div style={{ ...sans, fontSize: 10, color: C.dim, textTransform: "uppercase", letterSpacing: "0.08em" }}>{l}</div>
+                <div style={{ ...mono, fontSize: 18, color: C.text, marginTop: 3 }}>{v}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginBottom: 4 }}>
+            {[["value", "Value"], ["quality", "Quality"], ["momentum", "Momentum"], ["low_vol", "Low Vol"], ["growth", "Growth"], ["catalyst", "Catalyst"]].map(([k, label]) => {
+              const v = xray.xray.factor_exposure?.[k];
+              const col = v == null ? C.dim : v >= 60 ? C.green : v >= 40 ? C.gold : C.red;
+              return (
+                <div key={k} style={{ minWidth: 88 }}>
+                  <div style={{ ...sans, fontSize: 10, color: C.dim }}>{label}</div>
+                  <div style={{ height: 4, background: C.bg600, borderRadius: 2, marginTop: 4 }}>
+                    <div style={{ height: "100%", width: `${v == null ? 0 : v}%`, background: col, borderRadius: 2 }} />
+                  </div>
+                  <div style={{ ...mono, fontSize: 10, color: C.dim, marginTop: 2 }}>{v == null ? "—" : Math.round(v)}</div>
+                </div>
+              );
+            })}
+          </div>
+          <div style={{ overflowX: "auto", marginTop: 12 }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 560 }}>
+              <thead>
+                <tr>
+                  {["Holding", "Alpha", "Weight", "Suggested", "Notes"].map((h, i) => (
+                    <th key={h} style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.07em", color: C.dim, textAlign: i === 0 ? "left" : "right", padding: "6px 8px" }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {xray.items.map(it => (
+                  <tr key={it.ticker} style={{ borderTop: `1px solid ${C.line}`, cursor: onOpen ? "pointer" : "default" }}
+                      onClick={() => onOpen && onOpen(it.ticker)}>
+                    <td style={{ ...mono, fontSize: 12, color: C.gold, padding: "7px 8px" }}>{it.ticker}</td>
+                    <td style={{ ...mono, fontSize: 12, textAlign: "right", padding: "7px 8px", color: it.alpha_score == null ? C.dim : it.alpha_score >= 60 ? C.green : it.alpha_score >= 40 ? C.gold : C.red }}>{it.alpha_score != null ? Math.round(it.alpha_score) : "—"}</td>
+                    <td style={{ ...mono, fontSize: 12, textAlign: "right", padding: "7px 8px", color: C.text }}>{it.weight != null ? (it.weight * 100).toFixed(0) + "%" : "—"}</td>
+                    <td style={{ ...mono, fontSize: 12, textAlign: "right", padding: "7px 8px", color: C.text200 }}>{it.suggested_weight != null ? (it.suggested_weight * 100).toFixed(0) + "%" : "—"}</td>
+                    <td style={{ ...sans, fontSize: 10, textAlign: "right", padding: "7px 8px", color: C.red }}>{(it.flags || []).join(" · ")}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div style={{ ...sans, fontSize: 10, color: C.faint, marginTop: 8 }}>
+            Suggested weights are inverse-volatility (risk-balanced), capped at 25%. A sizing aid, not investment advice.
+          </div>
+        </div>
+      )}
 
       {/* Add-holding form */}
       <form onSubmit={add} style={{
