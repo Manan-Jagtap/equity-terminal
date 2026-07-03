@@ -6,6 +6,7 @@
 import { useEffect, useMemo, useState, useCallback, useRef, lazy, Suspense } from "react";
 import { TrendingUp, LayoutDashboard, List, Star, GitCompare, CalendarClock, Landmark, Gauge, History, Layers, Briefcase, Search, Loader2, LogIn, LogOut, ChevronDown, Sparkles } from "lucide-react";
 import { C, mono, sans, serif, gridBg } from "./lib/theme.js";
+import { useIsMobile } from "./lib/useResponsive.js";
 import { SEED, buildFromApi } from "./lib/seedData.js";
 import Screener from "./components/Screener.jsx";
 import MarketDashboard from "./components/MarketDashboard.jsx";
@@ -51,6 +52,7 @@ const NIFTY_50 = new Set([
 
 export default function App() {
   const API = import.meta.env.VITE_API_URL;
+  const isMobile = useIsMobile();
 
   const [companies,   setCompanies]   = useState(SEED);
   const [loading,     setLoading]     = useState(false);
@@ -192,7 +194,7 @@ export default function App() {
   };
 
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, color: C.text }}>
+    <div style={{ minHeight: "100vh", background: C.bg, color: C.text, paddingBottom: isMobile ? 62 : 0 }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
         body { margin: 0; font-feature-settings: 'ss01','cv11'; }
@@ -221,7 +223,11 @@ export default function App() {
               <TrendingUp size={20} color={C.gold} strokeWidth={1.8} />
               <span style={{ ...serif, fontSize: 22, color: C.text }}>Equity Terminal</span>
             </div>
-            <nav style={{ display: "flex", gap: 4 }}>
+            <nav style={{ display: "flex", gap: 4,
+                          flexWrap: isMobile ? "nowrap" : "wrap",
+                          overflowX: isMobile ? "auto" : "visible",
+                          maxWidth: isMobile ? "100%" : "none",
+                          WebkitOverflowScrolling: "touch" }}>
               {[
                 { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
                 { id: "screener",  label: "Screener",  icon: List },
@@ -373,6 +379,31 @@ export default function App() {
           )}
         </Suspense>
       </div>
+
+      {isMobile && view !== "company" && (
+        <div style={{
+          position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 120,
+          display: "flex", justifyContent: "space-around", alignItems: "center",
+          background: C.bg900, borderTop: `1px solid ${C.line2}`, padding: "6px 4px 8px",
+          boxShadow: "0 -6px 24px rgba(0,0,0,0.4)",
+        }}>
+          {[
+            { id: "dashboard", label: "Home",   icon: LayoutDashboard },
+            { id: "screener",  label: "Screen", icon: List },
+            { id: "ideas",     label: "Ideas",  icon: Sparkles },
+            { id: "watchlist", label: "Watch",  icon: Star },
+            { id: "portfolio", label: "Folio",  icon: Briefcase },
+          ].map(({ id, label, icon: Icon }) => (
+            <button key={id} onClick={() => setView(id)} style={{
+              ...sans, display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
+              background: "transparent", border: "none", cursor: "pointer",
+              fontSize: 9, padding: "2px 8px", color: view === id ? C.gold : C.dim,
+            }}>
+              <Icon size={19} strokeWidth={1.7} />{label}
+            </button>
+          ))}
+        </div>
+      )}
 
       <CommandPalette
         open={paletteOpen}
