@@ -5,9 +5,11 @@
    into the auth modal. Fully responsive; no data fetches, so it renders
    instantly even before the API wakes. */
 
+import { useState } from "react";
 import { TrendingUp, ShieldCheck, LineChart, Sparkles, History, LogIn } from "lucide-react";
 import { C, mono, sans, serif } from "../lib/theme.js";
 import { useIsMobile } from "../lib/useResponsive.js";
+import PrivacyPolicy from "./PrivacyPolicy.jsx";
 
 const PILLARS = [
   {
@@ -35,6 +37,7 @@ const PILLARS = [
 export default function Landing({ onSignIn }) {
   const isMobile = useIsMobile();
   const PAD = isMobile ? 20 : 48;
+  const [policyOpen, setPolicyOpen] = useState(false);
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
@@ -96,7 +99,14 @@ export default function Landing({ onSignIn }) {
           markets are subject to market risk. Do your own diligence or consult a SEBI-registered
           investment adviser before acting.
         </p>
+        <div style={{ textAlign: "center", marginTop: 10 }}>
+          <button onClick={() => setPolicyOpen(true)} style={{
+            ...sans, background: "transparent", border: "none", padding: 0,
+            color: C.dim, cursor: "pointer", fontSize: 11.5, textDecoration: "underline",
+          }}>Privacy Policy</button>
+        </div>
       </footer>
+      <PrivacyPolicy open={policyOpen} onClose={() => setPolicyOpen(false)} />
     </div>
   );
 }

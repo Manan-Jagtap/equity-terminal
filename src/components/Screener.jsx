@@ -13,6 +13,29 @@ import { authFetch, getUser } from "../lib/auth.js";
 
 const confColor = lvl => lvl === "high" ? C.green : lvl === "medium" ? C.gold : C.red;
 
+/* One sector→bucket mapping for BOTH the dropdown and the row filter (they
+   used to duplicate this logic). Order matters: "Consumer Services" must hit
+   Consumer before the generic Services bucket; "Construction Materials" is
+   Industrials, not Realty. Covers every sector name in the Nifty 500 feed. */
+const sectorBucket = sec => {
+  const s = (sec || "").toLowerCase();
+  if (s.includes("financial") || s.includes("bank") || s.includes("nbfc") || s.includes("insurance")) return "Financials";
+  if (s.includes("tech") || s.includes("information")) return "Technology";
+  if (s.includes("pharma") || s.includes("health")) return "Healthcare";
+  if (s.includes("auto")) return "Auto";
+  if (s.includes("capital goods") || s.includes("construction") || s.includes("engineering") || s.includes("industrial") || s.includes("defence")) return "Industrials";
+  if (s.includes("fmcg") || s.includes("consumer")) return "Consumer";
+  if (s.includes("energy") || s.includes("oil") || s.includes("power") || s.includes("gas") || s.includes("utilit")) return "Energy";
+  if (s.includes("metal") || s.includes("mining")) return "Metals";
+  if (s.includes("chem")) return "Chemicals";
+  if (s.includes("realty") || s.includes("real estate")) return "Realty";
+  if (s.includes("telecom")) return "Telecom";
+  if (s.includes("textile")) return "Textiles";
+  if (s.includes("media")) return "Media";
+  if (s.includes("service")) return "Services";
+  return "Other";
+};
+
 export default function Screener({ companies, onOpen, loading, watched, onToggleWatch, API }) {
   const isWatched = t => watched && watched.has(t);
   const [q, setQ] = useState("");
@@ -59,21 +82,9 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
     reloadScreens();
   };
 
-  const sectors = useMemo(() => {
-    const s = new Set(companies.map(c => {
-      const sec = (c.sector || "").toLowerCase();
-      if (sec.includes("financial") || sec.includes("bank") || sec.includes("nbfc")) return "Financials";
-      if (sec.includes("tech") || sec.includes("information")) return "Technology";
-      if (sec.includes("pharma") || sec.includes("health")) return "Healthcare";
-      if (sec.includes("auto")) return "Auto";
-      if (sec.includes("fmcg") || sec.includes("consumer")) return "Consumer";
-      if (sec.includes("energy") || sec.includes("oil") || sec.includes("power")) return "Energy";
-      if (sec.includes("metal") || sec.includes("mining")) return "Metals";
-      if (sec.includes("chem")) return "Chemicals";
-      return "Other";
-    }));
-    return ["All", ...Array.from(s).sort()];
-  }, [companies]);
+  const sectors = useMemo(
+    () => ["All", ...Array.from(new Set(companies.map(c => sectorBucket(c.sector)))).sort()],
+    [companies]);
 
   const rows = useMemo(() => companies
     .map(co => {
@@ -107,17 +118,7 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
     })
     .filter(r => {
       const mQ = (r.co.name + r.co.ticker).toLowerCase().includes(q.toLowerCase());
-      if (sf === "All") return mQ;
-      const sec = (r.co.sector || "").toLowerCase();
-      if (sf === "Financials") return mQ && (sec.includes("financial") || sec.includes("bank") || sec.includes("nbfc"));
-      if (sf === "Technology") return mQ && (sec.includes("tech") || sec.includes("information"));
-      if (sf === "Healthcare") return mQ && (sec.includes("pharma") || sec.includes("health"));
-      if (sf === "Auto")       return mQ && sec.includes("auto");
-      if (sf === "Consumer")   return mQ && (sec.includes("fmcg") || sec.includes("consumer"));
-      if (sf === "Energy")     return mQ && (sec.includes("energy") || sec.includes("oil") || sec.includes("power"));
-      if (sf === "Metals")     return mQ && (sec.includes("metal") || sec.includes("mining"));
-      if (sf === "Chemicals")  return mQ && sec.includes("chem");
-      return mQ;
+      return mQ && (sf === "All" || sectorBucket(r.co.sector) === sf);
     })
     .filter(r => {
       if (vf !== "All" && r.verdict !== vf) return false;

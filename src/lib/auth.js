@@ -65,10 +65,9 @@ async function authPost(API, path, body) {
   return data; // { token, user }
 }
 
-export async function signup(API, email, password, name) {
-  const body = { email, password };
-  if (name) body.name = name;
-  const data = await authPost(API, "/api/auth/signup", body);
+export async function signup(API, email, password, name, consent = false) {
+  const data = await authPost(API, "/api/auth/signup",
+                              { email, password, name, consent });
   setSession(data.token, data.user);
   return data.user;
 }

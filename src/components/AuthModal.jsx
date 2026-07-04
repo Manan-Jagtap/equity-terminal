@@ -7,12 +7,15 @@ import { useEffect, useRef, useState } from "react";
 import { TrendingUp, Loader2, Lock } from "lucide-react";
 import { C, mono, sans, serif } from "../lib/theme.js";
 import { login, signup } from "../lib/auth.js";
+import PrivacyPolicy from "./PrivacyPolicy.jsx";
 
 export default function AuthModal({ open, onClose, API, onAuthed }) {
   const [mode, setMode]   = useState("signin"); // "signin" | "signup"
   const [email, setEmail] = useState("");
   const [pw, setPw]       = useState("");
   const [name, setName]   = useState("");
+  const [consent, setConsent] = useState(false);
+  const [policyOpen, setPolicyOpen] = useState(false);
   const [err, setErr]     = useState(null);
   const [busy, setBusy]   = useState(false);
   const emailRef = useRef(null);
@@ -20,7 +23,8 @@ export default function AuthModal({ open, onClose, API, onAuthed }) {
   /* Reset on every open. */
   useEffect(() => {
     if (open) {
-      setMode("signin"); setEmail(""); setPw(""); setName(""); setErr(null); setBusy(false);
+      setMode("signin"); setEmail(""); setPw(""); setName(""); setConsent(false);
+      setPolicyOpen(false); setErr(null); setBusy(false);
       setTimeout(() => emailRef.current?.focus(), 10);
     }
   }, [open]);
@@ -35,14 +39,16 @@ export default function AuthModal({ open, onClose, API, onAuthed }) {
 
   if (!open) return null;
 
+  const signupIncomplete = mode === "signup" && (!name.trim() || !consent);
+
   const submit = async e => {
     e?.preventDefault();
-    if (busy || !email.trim() || !pw) return;
+    if (busy || !email.trim() || !pw || signupIncomplete) return;
     setBusy(true); setErr(null);
     try {
       const user = mode === "signin"
         ? await login(API, email.trim(), pw)
-        : await signup(API, email.trim(), pw, name.trim() || undefined);
+        : await signup(API, email.trim(), pw, name.trim(), consent);
       onAuthed(user);
       onClose();
     } catch (ex) {
@@ -103,8 +109,8 @@ export default function AuthModal({ open, onClose, API, onAuthed }) {
         <form onSubmit={submit} style={{ padding: "22px 28px 26px" }}>
           {mode === "signup" && (
             <div style={{ marginBottom: 14 }}>
-              <label style={label}>Name <span style={{ color: C.vfaint, textTransform: "none", letterSpacing: 0 }}>(optional)</span></label>
-              <input value={name} onChange={e => setName(e.target.value)}
+              <label style={label}>Name</label>
+              <input value={name} onChange={e => setName(e.target.value)} required
                 placeholder="Your name" autoComplete="name" style={field} />
             </div>
           )}
@@ -120,6 +126,21 @@ export default function AuthModal({ open, onClose, API, onAuthed }) {
               autoComplete={mode === "signup" ? "new-password" : "current-password"} style={field} />
           </div>
 
+          {mode === "signup" && (
+            <label style={{ display: "flex", alignItems: "flex-start", gap: 9, marginBottom: 16, cursor: "pointer" }}>
+              <input type="checkbox" checked={consent} onChange={e => setConsent(e.target.checked)}
+                style={{ marginTop: 2, accentColor: C.gold, cursor: "pointer" }} />
+              <span style={{ ...sans, fontSize: 11.5, lineHeight: 1.55, color: C.dim }}>
+                I agree to the{" "}
+                <button type="button" onClick={() => setPolicyOpen(true)} style={{
+                  ...sans, background: "transparent", border: "none", padding: 0,
+                  color: C.gold, cursor: "pointer", fontSize: 11.5, textDecoration: "underline",
+                }}>Privacy Policy</button>
+                {" "}and understand this is a research tool, not investment advice.
+              </span>
+            </label>
+          )}
+
           {err && (
             <div style={{ ...sans, fontSize: 12, color: C.red, border: `1px solid ${C.red}44`,
               borderRadius: 7, padding: "8px 12px", marginBottom: 14, background: C.red + "10" }}>
@@ -127,12 +148,12 @@ export default function AuthModal({ open, onClose, API, onAuthed }) {
             </div>
           )}
 
-          <button type="submit" disabled={busy || !email.trim() || !pw} style={{
+          <button type="submit" disabled={busy || !email.trim() || !pw || signupIncomplete} style={{
             ...sans, width: "100%", fontSize: 13, fontWeight: 600,
             color: C.bg, background: C.gold, border: "none", borderRadius: 8,
             padding: "11px 0", cursor: busy ? "wait" : "pointer",
             display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7,
-            opacity: (!email.trim() || !pw) ? 0.55 : 1,
+            opacity: (!email.trim() || !pw || signupIncomplete) ? 0.55 : 1,
           }}>
             {busy
               ? <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />
@@ -145,6 +166,7 @@ export default function AuthModal({ open, onClose, API, onAuthed }) {
           </div>
         </form>
       </div>
+      <PrivacyPolicy open={policyOpen} onClose={() => setPolicyOpen(false)} />
     </div>
   );
 }
