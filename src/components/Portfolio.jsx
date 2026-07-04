@@ -140,6 +140,26 @@ export default function Portfolio({ API, onOpen, user, requestAuth }) {
               </div>
             ))}
           </div>
+          {xray.risk && (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px,1fr))", gap: 10, marginBottom: 14, paddingTop: 12, borderTop: `1px solid ${C.line}` }}>
+              {[
+                ["VaR (95%, 1d)", xray.risk.var_95_1d != null ? "−" + (xray.risk.var_95_1d * 100).toFixed(1) + "%" : "—",
+                  xray.risk.var_95_1d_amount != null ? "≈ ₹" + Math.round(xray.risk.var_95_1d_amount).toLocaleString("en-IN") : null],
+                ["Max drawdown (1y)", xray.risk.max_drawdown != null ? "−" + (xray.risk.max_drawdown * 100).toFixed(1) + "%" : "—",
+                  xray.risk.drawdown_trough ? "to " + xray.risk.drawdown_trough : null],
+                ["XIRR", xray.risk.xirr != null ? (xray.risk.xirr * 100).toFixed(1) + "%" : "—",
+                  xray.risk.xirr != null ? "money-weighted p.a." : "needs history"],
+                ["Series coverage", xray.risk.coverage != null ? (xray.risk.coverage * 100).toFixed(0) + "%" : "—",
+                  (xray.risk.uncovered || []).length ? "no data: " + xray.risk.uncovered.join(", ") : `${xray.risk.observations} obs`],
+              ].map(([l, v, sub]) => (
+                <div key={l}>
+                  <div style={{ ...sans, fontSize: 10, color: C.dim, textTransform: "uppercase", letterSpacing: "0.08em" }}>{l}</div>
+                  <div style={{ ...mono, fontSize: 18, color: C.text, marginTop: 3 }}>{v}</div>
+                  {sub && <div style={{ ...mono, fontSize: 10, color: C.faint, marginTop: 2 }}>{sub}</div>}
+                </div>
+              ))}
+            </div>
+          )}
           <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginBottom: 4 }}>
             {[["value", "Value"], ["quality", "Quality"], ["momentum", "Momentum"], ["low_vol", "Low Vol"], ["growth", "Growth"], ["catalyst", "Catalyst"]].map(([k, label]) => {
               const v = xray.xray.factor_exposure?.[k];

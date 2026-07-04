@@ -169,6 +169,19 @@ export default function App() {
     [companies, selectedId]
   );
 
+  // Shared-scenario deep link (?scenario=<token>): resolve the public payload,
+  // then open that company with the shared assumptions once data is loaded.
+  const [sharedScn, setSharedScn] = useState(null);
+  useEffect(() => {
+    if (!API) return;
+    const tok = new URLSearchParams(window.location.search).get("scenario");
+    if (!tok) return;
+    fetch(`${API}/api/scenarios/shared/${encodeURIComponent(tok)}`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (d && d.ticker) setSharedScn(d); })
+      .catch(() => {});
+  }, [API]);
+
   // Guards the history fetch against races: if the user opens company A and
   // then B before A's response lands, A's stale payload must not overwrite B's.
   const histReqRef = useRef(null);
@@ -192,6 +205,24 @@ export default function App() {
     }
     setView("company");
   };
+
+  // Apply a resolved shared scenario as soon as its company is available:
+  // open the name, then overlay the shared assumptions on the company's own
+  // (so any field the share omits falls back to the model's derived value).
+  // Deferred a tick so navigation happens after the render commit (and to keep
+  // this effect free of synchronous setState).
+  useEffect(() => {
+    if (!sharedScn) return;
+    const co = companies.find(c => (c.ticker || c.id) === sharedScn.ticker);
+    if (!co) return;
+    const t = setTimeout(() => {
+      open(sharedScn.ticker);
+      setAssumptions({ ...co.assumptions, ...(sharedScn.data || {}) });
+      setSharedScn(null);
+      window.history.replaceState({}, "", window.location.pathname);
+    }, 0);
+    return () => clearTimeout(t);
+  }, [sharedScn, companies]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, color: C.text, paddingBottom: isMobile ? 62 : 0 }}>

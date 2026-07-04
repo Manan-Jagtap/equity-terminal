@@ -3,7 +3,7 @@
    signed out. Saving captures the current assumptions dict; loading writes it
    back into the shared assumptions state so the whole model recomputes. */
 import { useCallback, useEffect, useState } from "react";
-import { Save, Trash2, Loader2, Bookmark } from "lucide-react";
+import { Save, Trash2, Loader2, Bookmark, Link2, Check } from "lucide-react";
 import { C, sans, mono } from "../lib/theme.js";
 import { authFetch, getUser } from "../lib/auth.js";
 
@@ -36,6 +36,21 @@ export default function ScenarioBar({ API, ticker, assumptions, setAssumptions }
   };
   const load = s => setAssumptions({ ...s.data });
   const del = async id => { try { await authFetch(`${API}/api/scenarios/${id}`, { method: "DELETE" }); } catch { /* noop */ } reload(); };
+
+  // Mint a share token and put a deep link on the clipboard. Anyone with the
+  // link sees the scenario read-only (?scenario= is handled at App boot).
+  const [copiedId, setCopiedId] = useState(null);
+  const share = async s => {
+    try {
+      const r = await authFetch(`${API}/api/scenarios/${s.id}/share`, { method: "POST" });
+      if (!r.ok) return;
+      const { token } = await r.json();
+      const url = `${window.location.origin}${window.location.pathname}?scenario=${encodeURIComponent(token)}`;
+      await navigator.clipboard.writeText(url);
+      setCopiedId(s.id);
+      setTimeout(() => setCopiedId(c => (c === s.id ? null : c)), 1600);
+    } catch { /* clipboard denied or offline — nothing to clean up */ }
+  };
 
   const wrap = {
     display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap",
@@ -74,6 +89,9 @@ export default function ScenarioBar({ API, ticker, assumptions, setAssumptions }
           <span key={s.id} style={{ display: "inline-flex", alignItems: "center", gap: 5,
             border: `1px solid ${C.line2}`, borderRadius: 99, padding: "3px 6px 3px 11px", background: C.panel2 }}>
             <button onClick={() => load(s)} title="Load scenario" style={{ ...sans, fontSize: 12, color: C.text200, background: "transparent", border: "none", cursor: "pointer", padding: 0 }}>{s.name}</button>
+            <button onClick={() => share(s)} title={copiedId === s.id ? "Link copied!" : "Copy share link"} style={{ background: "transparent", border: "none", cursor: "pointer", padding: 2, lineHeight: 0 }}>
+              {copiedId === s.id ? <Check size={11} color={C.green} /> : <Link2 size={11} color={C.faint} />}
+            </button>
             <button onClick={() => del(s.id)} title="Delete" style={{ background: "transparent", border: "none", cursor: "pointer", padding: 2, lineHeight: 0 }}>
               <Trash2 size={11} color={C.faint} />
             </button>

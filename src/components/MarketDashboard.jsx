@@ -3,7 +3,7 @@
    Pulls /api/market/snapshot (one round-trip, server-side cached). */
 
 import { useEffect, useState, useMemo } from "react";
-import { TrendingUp, TrendingDown, Activity, ArrowUpRight, ArrowDownRight, Loader2, RefreshCw } from "lucide-react";
+import { TrendingUp, TrendingDown, Activity, ArrowUpRight, ArrowDownRight, Loader2, RefreshCw, ShieldCheck, ShieldAlert, ChevronDown } from "lucide-react";
 import { C, mono, sans, serif } from "../lib/theme.js";
 import { useIsMobile } from "../lib/useResponsive.js";
 
@@ -71,6 +71,8 @@ export default function MarketDashboard({ API, companies, onOpen }) {
         </div>
       )}
 
+      <DataHealth API={API} onOpen={openIf} />
+
       {/* Index strip */}
       {indices.length > 0 && (
         <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 6, marginBottom: 22 }}>
@@ -113,6 +115,56 @@ export default function MarketDashboard({ API, companies, onOpen }) {
           ) : <Empty />}
         </Card>
       </div>
+    </div>
+  );
+}
+
+/* Second-source data health (Dhan vs IndianAPI cross-check). Silent when clean —
+   a one-line all-clear. Flagged names expand into a clickable list, so a stale
+   or divergent price is never something the user finds out about the hard way. */
+function DataHealth({ API, onOpen }) {
+  const [health, setHealth] = useState(null);
+  const [expand, setExpand] = useState(false);
+
+  useEffect(() => {
+    if (!API) return;
+    fetch(`${API}/api/quality/cross-check`)
+      .then(r => r.json()).then(setHealth).catch(() => setHealth(null));
+  }, [API]);
+
+  if (!health || !health.count) return null;
+  const flagged = health.flagged || [];
+  const clean = flagged.length === 0;
+  const tone = clean ? C.green : health.alerts > 0 ? C.red : C.gold;
+  const Icon = clean ? ShieldCheck : ShieldAlert;
+
+  return (
+    <div style={{ border: `1px solid ${C.line}`, borderRadius: 10, background: C.bg900, padding: "10px 14px", marginBottom: 18 }}>
+      <div onClick={() => !clean && setExpand(e => !e)}
+        style={{ display: "flex", alignItems: "center", gap: 8, cursor: clean ? "default" : "pointer" }}>
+        <Icon size={14} color={tone} strokeWidth={1.7} />
+        <span style={{ ...sans, fontSize: 12, color: C.text200 }}>
+          {clean
+            ? `Data health: both price sources agree on all ${health.count} names`
+            : `Data health: ${health.alerts} alert${health.alerts === 1 ? "" : "s"}, ${health.warnings} warning${health.warnings === 1 ? "" : "s"} across ${health.count} names`}
+        </span>
+        <span style={{ ...mono, fontSize: 10, color: C.faint, marginLeft: "auto" }}>Dhan × IndianAPI</span>
+        {!clean && <ChevronDown size={13} color={C.dim} style={{ transform: expand ? "rotate(180deg)" : "none", transition: "transform .15s" }} />}
+      </div>
+      {expand && flagged.length > 0 && (
+        <div style={{ marginTop: 8, borderTop: `1px solid ${C.line}`, paddingTop: 6 }}>
+          {flagged.slice(0, 12).map((f, i) => (
+            <div key={i} onClick={() => onOpen(f.ticker)}
+              style={{ display: "flex", alignItems: "baseline", gap: 10, padding: "4px 2px", cursor: "pointer" }}>
+              <span style={{ ...mono, fontSize: 11.5, color: f.status === "alert" ? C.red : C.gold, minWidth: 90 }}>{f.ticker}</span>
+              <span style={{ ...sans, fontSize: 11.5, color: C.dim }}>{(f.flags || []).map(x => x.message).join(" · ")}</span>
+            </div>
+          ))}
+          {flagged.length > 12 && (
+            <div style={{ ...sans, fontSize: 11, color: C.faint, padding: "4px 2px" }}>+{flagged.length - 12} more</div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

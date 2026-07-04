@@ -1,14 +1,15 @@
 /* Screener — search/sort/filter table of all companies.
    Click row → opens Company detail. */
 
-import { useMemo, useState } from "react";
-import { Search, ChevronRight, Database, Star, Download } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Search, ChevronRight, Database, Star, Download, Bookmark, Save, Trash2 } from "lucide-react";
 import { C, mono, sans } from "../lib/theme.js";
 import { fmt, inr, pct, multiple, inrOrDash, signedPct } from "../lib/formatters.js";
 import { fundamentals } from "../lib/valuation.js";
 import { recommend } from "../lib/recommend.js";
 import { VerdictBadge } from "./primitives.jsx";
 import Logo from "./Logo.jsx";
+import { authFetch, getUser } from "../lib/auth.js";
 
 const confColor = lvl => lvl === "high" ? C.green : lvl === "medium" ? C.gold : C.red;
 
@@ -18,6 +19,40 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
   const [sort, setSort] = useState("rank");
   const [sf, setSf] = useState("All");
   const VRANK = { BUY: 5, ACCUMULATE: 4, HOLD: 3, REDUCE: 2, TRIM: 2, AVOID: 1 };
+
+  // Saved screens: name the current filter state (query/sector/sort), reload it
+  // with one click. Auth-scoped like scenarios; silent when signed out.
+  const user = getUser();
+  const [screens, setScreens] = useState([]);
+  const [screenName, setScreenName] = useState("");
+  const reloadScreens = useCallback(() => {
+    // No sync clear here: the whole row is gated on `user`, and a user change
+    // re-fetches, so a stale list is never rendered.
+    if (!API || !user) return;
+    authFetch(`${API}/api/screens`)
+      .then(r => (r.ok ? r.json() : { items: [] }))
+      .then(d => setScreens(d.items || []))
+      .catch(() => setScreens([]));
+  }, [API, user]);
+  useEffect(() => { reloadScreens(); }, [reloadScreens]);
+  const saveScreen = async () => {
+    if (!screenName.trim()) return;
+    try {
+      await authFetch(`${API}/api/screens`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: screenName.trim(), data: { q, sort, sf } }),
+      });
+      setScreenName(""); reloadScreens();
+    } catch { /* keep the name so the user can retry */ }
+  };
+  const applyScreen = s => {
+    const d = s.data || {};
+    setQ(d.q ?? ""); setSort(d.sort ?? "rank"); setSf(d.sf ?? "All");
+  };
+  const deleteScreen = async id => {
+    try { await authFetch(`${API}/api/screens/${id}`, { method: "DELETE" }); } catch { /* noop */ }
+    reloadScreens();
+  };
 
   const sectors = useMemo(() => {
     const s = new Set(companies.map(c => {
@@ -130,6 +165,38 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
           </a>
         )}
       </div>
+
+      {user && (
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+          <span style={{ ...sans, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.1em", color: C.dim, display: "flex", alignItems: "center", gap: 6 }}>
+            <Bookmark size={12} color={C.gold} /> Screens
+          </span>
+          <input
+            value={screenName} onChange={e => setScreenName(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter") saveScreen(); }}
+            placeholder="Name this screen…"
+            style={{ ...mono, fontSize: 12, background: C.panel2, border: `1px solid ${C.line}`, borderRadius: 7, color: C.text, padding: "5px 10px", width: 150, outline: "none" }}
+          />
+          <button onClick={saveScreen} disabled={!screenName.trim()} style={{
+            ...sans, display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 500,
+            padding: "5px 11px", borderRadius: 7, cursor: screenName.trim() ? "pointer" : "default",
+            border: `1px solid ${C.gold}66`, color: C.gold, background: C.gold + "0d",
+            opacity: screenName.trim() ? 1 : 0.5,
+          }}>
+            <Save size={11} /> Save
+          </button>
+          {screens.map(s => (
+            <span key={s.id} style={{ display: "inline-flex", alignItems: "center", gap: 5,
+              border: `1px solid ${C.line}`, borderRadius: 99, padding: "3px 6px 3px 11px", background: C.panel2 }}>
+              <button onClick={() => applyScreen(s)} title="Apply screen"
+                style={{ ...sans, fontSize: 12, color: C.text200, background: "transparent", border: "none", cursor: "pointer", padding: 0 }}>{s.name}</button>
+              <button onClick={() => deleteScreen(s.id)} title="Delete" style={{ background: "transparent", border: "none", cursor: "pointer", padding: 2, lineHeight: 0 }}>
+                <Trash2 size={11} color={C.faint} />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
 
       <div style={{ border: `1px solid ${C.line}`, borderRadius: 10, overflowX: "auto", background: C.panel }}>
         <table style={{ width: "100%", minWidth: 720, borderCollapse: "collapse" }}>
