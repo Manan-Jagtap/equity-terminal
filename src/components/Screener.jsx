@@ -83,14 +83,23 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
       // the analyst overlay). Only fall back to a local recompute for seed/offline
       // rows that never came from the API.
       if (a && a.iv != null) {
+        // NO CALL / NO DATA names: the model has disowned its own intrinsic, so
+        // never display or sort on it — that's how a +717% "margin of safety"
+        // ends up green next to a grey badge. Fall back to analyst consensus
+        // (clearly labeled) so the row still gives the user a reference point.
+        const noCall = a.verdict === "LOW CONF" || a.verdict === "NO DATA";
         return {
           co,
-          iv: a.iv, mos: a.mos, verdict: a.verdict,
+          iv: noCall ? null : a.iv,
+          mos: noCall ? null : a.mos,
+          consensus: noCall ? a.analystTarget : null,
+          consensusUpside: noCall ? a.analystUpside : null,
+          verdict: a.verdict,
           composite: a.composite ?? 0,
           reliable: a.reliable !== false,
           confidence: { level: a.confidence || "medium", flags: [] },
           pb: a.pb ?? f.pb, pe: a.pe ?? f.pe, roe: a.roe ?? f.roe,
-          sortMos: a.mos ?? -Infinity,
+          sortMos: noCall ? -Infinity : (a.mos ?? -Infinity),
         };
       }
       const r = recommend(co, co.assumptions);
@@ -285,9 +294,17 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
                   </div>
                 </td>
                 <td style={{ ...mono, textAlign: "right", padding: "11px 12px", fontSize: 12 }}>
-                  {inr(r.co.price)} <span style={{ color: C.faint }}>/</span> <span style={{ color: C.gold }}>{inrOrDash(r.iv)}</span>
+                  {inr(r.co.price)} <span style={{ color: C.faint }}>/</span>{" "}
+                  {r.consensus != null
+                    ? <span title="Analyst consensus target — our model has no call on this name" style={{ color: C.dim }}>{inrOrDash(r.consensus)}<span style={{ fontSize: 9, color: C.faint }}> ⌖</span></span>
+                    : <span style={{ color: C.gold }}>{inrOrDash(r.iv)}</span>}
                 </td>
-                <td style={{ ...mono, textAlign: "right", padding: "11px 12px", fontSize: 12, color: r.mos == null ? C.faint : r.mos >= 0 ? C.green : C.red }}>{signedPct(r.mos)}</td>
+                <td style={{ ...mono, textAlign: "right", padding: "11px 12px", fontSize: 12, color: r.mos == null ? C.faint : r.mos >= 0 ? C.green : C.red }}>
+                  {r.mos != null ? signedPct(r.mos)
+                    : r.consensusUpside != null
+                      ? <span title="Analyst consensus upside — not our model" style={{ color: C.dim }}>{signedPct(r.consensusUpside)}<span style={{ fontSize: 9, color: C.faint }}> ⌖</span></span>
+                      : "—"}
+                </td>
                 <td style={{ ...mono, textAlign: "right", padding: "11px 12px", fontSize: 12, color: C.text }}>{pct(r.roe)}</td>
                 <td style={{ ...mono, textAlign: "right", padding: "11px 12px", fontSize: 12, color: C.text }}>{multiple(r.pb, 2)}</td>
                 <td style={{ ...mono, textAlign: "right", padding: "11px 12px", fontSize: 12, color: C.text }}>{multiple(r.pe, 1)}</td>

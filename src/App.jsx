@@ -13,6 +13,7 @@ import MarketDashboard from "./components/MarketDashboard.jsx";
 import Watchlist from "./components/Watchlist.jsx";
 import CommandPalette from "./components/CommandPalette.jsx";
 import AuthModal from "./components/AuthModal.jsx";
+import Landing from "./components/Landing.jsx";
 import { fetchWatchlist, saveWatch, removeWatch } from "./lib/watchlist.js";
 import { getUser, me, clearSession } from "./lib/auth.js";
 
@@ -232,6 +233,30 @@ export default function App() {
     }, 0);
     return () => clearTimeout(t);
   }, [sharedScn, companies]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Sign-in is compulsory: anonymous visitors get the landing page. Data
+  // fetches above still warm in the background, so the app is instant on auth.
+  // A pending ?scenario= deep link survives the gate — it applies right after
+  // sign-in via the sharedScn effect.
+  if (!user) {
+    return (
+      <div style={{ minHeight: "100vh", background: C.bg, color: C.text }}>
+        <style>{`
+          @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+          body { margin: 0; font-feature-settings: 'ss01','cv11'; }
+          @keyframes fadein { from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;} }
+          .fadein { animation: fadein .3s ease-out both; }
+        `}</style>
+        <Landing onSignIn={() => setAuthOpen(true)} />
+        <AuthModal
+          open={authOpen}
+          onClose={() => setAuthOpen(false)}
+          API={API}
+          onAuthed={u => setUser(u)}
+        />
+      </div>
+    );
+  }
 
   return (
     <div style={{ minHeight: "100vh", background: C.bg, color: C.text, paddingBottom: isMobile ? 62 : 0 }}>

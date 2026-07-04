@@ -2,15 +2,16 @@
    All read from the central theme tokens — no hard-coded colors. */
 
 import { C, mono, sans } from "../lib/theme.js";
+import { verdictLabel, verdictTitle } from "../lib/formatters.js";
 
 export function VerdictBadge({ verdict, big }) {
   const col =
     verdict === "BUY" || verdict === "ACCUMULATE" ? C.green :
     verdict === "HOLD" ? C.gold :
-    verdict === "TRIM" || verdict === "AVOID" ? C.red :
-    C.dim; // NO DATA / LOW CONF → neutral grey, never green
+    verdict === "TRIM" || verdict === "REDUCE" || verdict === "AVOID" ? C.red :
+    C.dim; // NO DATA / NO CALL → neutral grey, never green
   return (
-    <span style={{
+    <span title={verdictTitle(verdict)} style={{
       ...mono,
       color: col,
       border: `1px solid ${col}55`,
@@ -20,7 +21,8 @@ export function VerdictBadge({ verdict, big }) {
       fontSize: big ? 15 : 11,
       letterSpacing: "0.08em",
       fontWeight: 600,
-    }}>{verdict}</span>
+      whiteSpace: "nowrap",
+    }}>{verdictLabel(verdict)}</span>
   );
 }
 

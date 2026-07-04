@@ -38,3 +38,14 @@ export const signedPct = (n, d = 1) =>
   n == null || isNaN(n) || !isFinite(n)
     ? "—"
     : (n >= 0 ? "+" : "") + (n * 100).toFixed(d) + "%";
+
+/* Verdict display helpers. "LOW CONF" reads like a broken product; "NO CALL"
+   reads like a judgment — which is what it is: the model knows this name needs
+   a specialist approach and refuses to guess. API values are unchanged. */
+export const verdictLabel = v => (v === "LOW CONF" ? "NO CALL" : v);
+export const verdictTitle = v =>
+  v === "LOW CONF"
+    ? "No automated call: this name's economics need a specialist model (conglomerate, insurer, demerger, or an implausible model fit). We'd rather say nothing than something wrong."
+    : v === "NO DATA"
+    ? "Not enough verified data to value this name."
+    : undefined;

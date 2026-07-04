@@ -2,13 +2,14 @@
    Summary cards + add-holding form + holdings table against the backend
    /api/portfolio endpoints. All amounts ₹ Indian-formatted. */
 
-import { useCallback, useEffect, useState } from "react";
-import { Briefcase, Loader2, Plus, Trash2, ChevronRight, Sparkles } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Briefcase, Loader2, Plus, Trash2, ChevronRight, Sparkles, Upload } from "lucide-react";
 import { C, sans, serif, mono } from "../lib/theme.js";
 import { inr, signedPct } from "../lib/formatters.js";
 import { VerdictBadge } from "./primitives.jsx";
 import { SignInGate } from "./Watchlist.jsx";
 import { authFetch } from "../lib/auth.js";
+import { parseHoldings } from "../lib/brokerImport.js";
 
 const pnlColor = v => v == null ? C.dim : v >= 0 ? C.green : C.red;
 // Backend sends pnl_pct, weight AND mos all as FRACTIONS (0.124 = 12.4%),
@@ -65,6 +66,40 @@ export default function Portfolio({ API, onOpen, user, requestAuth }) {
     if (!API) return;
     try { await authFetch(`${API}/api/portfolio/${id}`, { method: "DELETE" }); } catch { /* noop */ }
     reload();
+  };
+
+  // Broker import: parse a holdings CSV (Zerodha Console / Groww / generic)
+  // client-side and bulk-upsert. Names outside our coverage are reported,
+  // never silently dropped — the imported book must be auditable.
+  const fileRef = useRef(null);
+  const [importing, setImporting] = useState(false);
+  const [importMsg, setImportMsg] = useState(null);
+  const importCsv = async file => {
+    if (!file || !API) return;
+    setImporting(true); setImportMsg(null);
+    try {
+      const { holdings, skipped, error } = parseHoldings(await file.text());
+      if (error) { setImportMsg({ tone: C.red, text: error }); setImporting(false); return; }
+      let ok = 0; const uncovered = [];
+      for (const h of holdings) {
+        try {
+          const r = await authFetch(`${API}/api/portfolio`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(h),
+          });
+          if (r.ok) ok += 1; else uncovered.push(h.ticker);
+        } catch { uncovered.push(h.ticker); }
+      }
+      const parts = [`Imported ${ok} holding${ok === 1 ? "" : "s"}`];
+      if (uncovered.length) parts.push(`outside coverage: ${uncovered.join(", ")}`);
+      if (skipped.length) parts.push(`${skipped.length} row${skipped.length === 1 ? "" : "s"} unparseable`);
+      setImportMsg({ tone: uncovered.length || !ok ? C.gold : C.green, text: parts.join(" · ") });
+      reload();
+    } catch {
+      setImportMsg({ tone: C.red, text: "Could not read that file — export the holdings CSV from your broker and retry." });
+    }
+    setImporting(false);
+    if (fileRef.current) fileRef.current.value = "";
   };
 
   const items  = data?.items || [];
@@ -226,6 +261,20 @@ export default function Portfolio({ API, onOpen, user, requestAuth }) {
           {saving ? <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> : <Plus size={13} />}
           Add
         </button>
+        <span style={{ width: 1, height: 20, background: C.line }} />
+        <input ref={fileRef} type="file" accept=".csv,text/csv" style={{ display: "none" }}
+          onChange={e => importCsv(e.target.files?.[0])} />
+        <button type="button" onClick={() => fileRef.current?.click()} disabled={importing}
+          title="Import your broker's holdings export (Zerodha Console, Groww, or any CSV with symbol/qty/avg-price columns)"
+          style={{
+            ...sans, display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 500,
+            padding: "8px 14px", borderRadius: 8, cursor: importing ? "wait" : "pointer",
+            border: `1px solid ${C.line2}`, color: C.text200, background: "transparent",
+          }}>
+          {importing ? <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> : <Upload size={13} />}
+          Import broker CSV
+        </button>
+        {importMsg && <span style={{ ...sans, fontSize: 11.5, color: importMsg.tone }}>{importMsg.text}</span>}
         {err && <span style={{ ...sans, fontSize: 11, color: C.red }}>Could not reach backend: {err}</span>}
       </form>
 
