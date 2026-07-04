@@ -2623,10 +2623,17 @@ function parseLatestPL(d) {
 }
 
 /* ── Main Company component ──────────────────────────────────────── */
-export default function Company({ co, assumptions, setAssumptions, price, setPrice, onBack, API, allCompanies, histPrices, isWatched, onToggleWatch }) {
+export default function Company({ co, assumptions, setAssumptions, price, setPrice, onBack, API, allCompanies, histPrices, isWatched, onToggleWatch, initialTab }) {
   const isMobile = useIsMobile();
   const PAD = isMobile ? 16 : 32;
-  const [tab, setTab] = useState("overview");
+  const [tab, setTab] = useState(initialTab || "overview");
+  // ⌘K commands like "TCS DCF at 12% growth" land on a specific tab. Adjust
+  // during render (the sanctioned derived-state pattern) — no effect needed.
+  const [prevInitialTab, setPrevInitialTab] = useState(initialTab);
+  if (initialTab !== prevInitialTab) {
+    setPrevInitialTab(initialTab);
+    if (initialTab) setTab(initialTab);
+  }
   const [liveFinancials, setLiveFinancials] = useState(null);
   const [liveMetrics,    setLiveMetrics]    = useState(null);
   const [liveProfile,    setLiveProfile]    = useState(null);

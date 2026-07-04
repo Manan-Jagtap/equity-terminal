@@ -161,7 +161,7 @@ export default function Portfolio({ API, onOpen, user, requestAuth }) {
             </div>
           )}
           <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginBottom: 4 }}>
-            {[["value", "Value"], ["quality", "Quality"], ["momentum", "Momentum"], ["low_vol", "Low Vol"], ["growth", "Growth"], ["catalyst", "Catalyst"]].map(([k, label]) => {
+            {[["value", "Value"], ["quality", "Quality"], ["momentum", "Momentum"], ["low_vol", "Low Vol"], ["growth", "Growth"], ["catalyst", "Catalyst"], ["surprise", "Surprise"]].map(([k, label]) => {
               const v = xray.xray.factor_exposure?.[k];
               const col = v == null ? C.dim : v >= 60 ? C.green : v >= 40 ? C.gold : C.red;
               return (

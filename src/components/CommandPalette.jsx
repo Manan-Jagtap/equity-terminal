@@ -3,7 +3,7 @@
    companies array App.jsx already holds. ArrowUp/Down + Enter to open. */
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Search, CornerDownLeft, ArrowRight } from "lucide-react";
+import { Search, CornerDownLeft, ArrowRight, Calculator } from "lucide-react";
 import { C, mono, sans, serif } from "../lib/theme.js";
 import { inr, signedPct } from "../lib/formatters.js";
 import { VerdictBadge } from "./primitives.jsx";
@@ -29,6 +29,33 @@ function matchCommands(q) {
   return COMMANDS
     .filter(c => c.kw.some(k => k.startsWith(q) || q.startsWith(k) || k.includes(q)))
     .slice(0, 4);
+}
+
+/* Model command: "TCS DCF at 12% growth 18% margin beta 1.1" → open the name's
+   Valuation tab with those assumptions applied. Recognized overrides:
+   "<x>% growth" (revenue growth), "<x>% margin" (EBIT), "<x>% roe"
+   (financials), "beta <x>". Bare "<ticker> dcf" just jumps to the model. */
+function parseModelCommand(q, companies, scoreFn) {
+  const m = q.match(/^(.+?)\s+(?:dcf|valuation|model)\b(.*)$/i);
+  if (!m) return null;
+  const needle = m[1].trim().toLowerCase();
+  const rest = m[2] || "";
+  const best = (companies || [])
+    .map(c => ({ c, s: scoreFn(c, needle) }))
+    .filter(r => r.s != null)
+    .sort((a, b) => a.s - b.s)[0];
+  if (!best) return null;
+  const overrides = {};
+  const parts = [];
+  const gm = rest.match(/(\d+(?:\.\d+)?)\s*%\s*(?:rev(?:enue)?\s*)?growth/i);
+  if (gm) { overrides.rev_growth = +gm[1] / 100; parts.push(`${gm[1]}% growth`); }
+  const mm = rest.match(/(\d+(?:\.\d+)?)\s*%\s*(?:ebit\s*)?margin/i);
+  if (mm) { overrides.ebit_margin = +mm[1] / 100; parts.push(`${mm[1]}% margin`); }
+  const rm = rest.match(/(\d+(?:\.\d+)?)\s*%\s*roe/i);
+  if (rm) { overrides.forecast_roe = +rm[1] / 100; parts.push(`${rm[1]}% ROE`); }
+  const bm = rest.match(/beta\s*(\d+(?:\.\d+)?)/i);
+  if (bm) { overrides.beta = +bm[1]; parts.push(`beta ${bm[1]}`); }
+  return { co: best.c, overrides, desc: parts.join(" · ") || "base assumptions" };
 }
 
 /* Rank: lower = better. Prefix matches first, then substrings, then a
@@ -57,7 +84,7 @@ const isTyping = el =>
   el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" ||
          el.tagName === "SELECT" || el.isContentEditable);
 
-export default function CommandPalette({ open, setOpen, companies, onOpenCompany, onNavigate }) {
+export default function CommandPalette({ open, setOpen, companies, onOpenCompany, onNavigate, onOpenModel }) {
   const [q, setQ]       = useState("");
   const [active, setActive] = useState(0);
   const inputRef = useRef(null);
@@ -89,6 +116,8 @@ export default function CommandPalette({ open, setOpen, companies, onOpenCompany
 
   const items = useMemo(() => {
     const needle = q.trim().toLowerCase();
+    const model = onOpenModel ? parseModelCommand(q.trim(), companies, score) : null;
+    const modelRow = model ? [{ type: "model", ...model }] : [];
     const cmds = matchCommands(needle).map(cmd => ({ type: "cmd", cmd }));
     const cos = (companies || [])
       .map(co => ({ co, s: score(co, needle) }))
@@ -96,8 +125,8 @@ export default function CommandPalette({ open, setOpen, companies, onOpenCompany
       .sort((a, b) => a.s - b.s || (a.co.name || "").localeCompare(b.co.name || ""))
       .slice(0, 10)
       .map(r => ({ type: "co", co: r.co }));
-    return [...cmds, ...cos];
-  }, [companies, q]);
+    return [...modelRow, ...cmds, ...cos];
+  }, [companies, q, onOpenModel]);
 
   useEffect(() => { setActive(0); }, [q]);
 
@@ -112,6 +141,10 @@ export default function CommandPalette({ open, setOpen, companies, onOpenCompany
   const pick = item => {
     setOpen(false);
     if (item.type === "cmd") { if (onNavigate) onNavigate(item.cmd.view); return; }
+    if (item.type === "model") {
+      if (onOpenModel) onOpenModel(item.co.ticker || item.co.id, item.overrides);
+      return;
+    }
     const id = item.co.ticker || item.co.id;
     if (id && onOpenCompany) onOpenCompany(id);
   };
@@ -145,7 +178,7 @@ export default function CommandPalette({ open, setOpen, companies, onOpenCompany
             value={q}
             onChange={e => setQ(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="Search a ticker, company, or a page (sectors, ideas, track)…"
+            placeholder='Ticker, page, or a model: "TCS DCF at 12% growth"…'
             style={{ ...sans, flex: 1, background: "transparent", border: "none", outline: "none", color: C.text, fontSize: 16 }}
           />
           <span style={{ ...mono, fontSize: 10, color: C.faint, border: `1px solid ${C.line2}`, borderRadius: 5, padding: "2px 6px" }}>ESC</span>
@@ -161,6 +194,23 @@ export default function CommandPalette({ open, setOpen, companies, onOpenCompany
               background: activeRow ? C.bg800 : "transparent",
               borderLeft: `2px solid ${activeRow ? C.gold : "transparent"}`,
             };
+            if (it.type === "model") {
+              return (
+                <div key={"model-" + (it.co.ticker || it.co.id)}
+                  onMouseEnter={() => setActive(i)}
+                  onMouseDown={e => { e.preventDefault(); pick(it); }}
+                  style={rowStyle}>
+                  <Calculator size={15} color={C.gold} strokeWidth={1.8} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ ...sans, fontSize: 13, fontWeight: 500, color: C.text }}>
+                      Open {it.co.name} — Valuation model
+                    </div>
+                    <div style={{ ...mono, fontSize: 10, color: C.gold }}>{it.desc}</div>
+                  </div>
+                  {activeRow && <CornerDownLeft size={13} color={C.dim} />}
+                </div>
+              );
+            }
             if (it.type === "cmd") {
               return (
                 <div key={"cmd-" + it.cmd.view}

@@ -1,8 +1,10 @@
 /* Ideas.jsx — multi-factor Alpha Score ranking.
 
    Reads /api/factors: a transparent value/quality/momentum/low-vol/growth
-   composite that ranks the visible universe into a short idea list, with a
-   factor breakdown per name. A research/ranking aid — NOT investment advice. */
+   composite (plus the catalyst estimate-revision and EPS-surprise overlays,
+   which participate as their data accrues) that ranks the visible universe
+   into a short idea list, with a factor breakdown per name. A research/
+   ranking aid — NOT investment advice. */
 import { useEffect, useMemo, useState } from "react";
 import { Sparkles, Loader2, Info } from "lucide-react";
 import { C, sans, serif, mono } from "../lib/theme.js";
@@ -10,7 +12,8 @@ import { VerdictBadge } from "./primitives.jsx";
 
 const FACTORS = [
   ["value", "Value"], ["quality", "Quality"], ["momentum", "Momentum"],
-  ["low_vol", "Low Vol"], ["growth", "Growth"],
+  ["low_vol", "Low Vol"], ["growth", "Growth"], ["catalyst", "Catalyst"],
+  ["surprise", "Surprise"],
 ];
 
 const scoreColor = (v) =>

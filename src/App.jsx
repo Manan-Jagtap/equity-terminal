@@ -189,9 +189,14 @@ export default function App() {
   // then B before A's response lands, A's stale payload must not overwrite B's.
   const histReqRef = useRef(null);
 
+  // Which tab the Company page opens on. Normal opens land on the overview;
+  // ⌘K model commands and shared-scenario links land on the Valuation tab.
+  const [companyTab, setCompanyTab] = useState(null);
+
   const open = id => {
     const co = companies.find(c => (c.ticker || c.id) === id);
     if (!co) return;
+    setCompanyTab(null);
     setSelectedId(id);
     setAssumptions({ ...co.assumptions });
     setPrice(co.price);
@@ -221,6 +226,7 @@ export default function App() {
     const t = setTimeout(() => {
       open(sharedScn.ticker);
       setAssumptions({ ...co.assumptions, ...(sharedScn.data || {}) });
+      setCompanyTab("dcf");   // a scenario IS a valuation what-if — land on it
       setSharedScn(null);
       window.history.replaceState({}, "", window.location.pathname);
     }, 0);
@@ -409,6 +415,7 @@ export default function App() {
               histPrices={histPrices}
               isWatched={watched.has(selected.ticker)}
               onToggleWatch={toggleWatch}
+              initialTab={companyTab}
             />
           )}
         </Suspense>
@@ -445,6 +452,7 @@ export default function App() {
         companies={companies}
         onOpenCompany={open}
         onNavigate={setView}
+        onOpenModel={(ticker, overrides) => setSharedScn({ ticker, data: overrides })}
       />
 
       <AuthModal

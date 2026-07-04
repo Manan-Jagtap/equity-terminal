@@ -18,6 +18,10 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
   const [q, setQ] = useState("");
   const [sort, setSort] = useState("rank");
   const [sf, setSf] = useState("All");
+  // Query-builder filters: verdict, data confidence, minimum margin of safety.
+  const [vf, setVf] = useState("All");
+  const [cf, setCf] = useState("All");
+  const [minMos, setMinMos] = useState("");
   const VRANK = { BUY: 5, ACCUMULATE: 4, HOLD: 3, REDUCE: 2, TRIM: 2, AVOID: 1 };
 
   // Saved screens: name the current filter state (query/sector/sort), reload it
@@ -40,7 +44,7 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
     try {
       await authFetch(`${API}/api/screens`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: screenName.trim(), data: { q, sort, sf } }),
+        body: JSON.stringify({ name: screenName.trim(), data: { q, sort, sf, vf, cf, minMos } }),
       });
       setScreenName(""); reloadScreens();
     } catch { /* keep the name so the user can retry */ }
@@ -48,6 +52,7 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
   const applyScreen = s => {
     const d = s.data || {};
     setQ(d.q ?? ""); setSort(d.sort ?? "rank"); setSf(d.sf ?? "All");
+    setVf(d.vf ?? "All"); setCf(d.cf ?? "All"); setMinMos(d.minMos ?? "");
   };
   const deleteScreen = async id => {
     try { await authFetch(`${API}/api/screens/${id}`, { method: "DELETE" }); } catch { /* noop */ }
@@ -105,6 +110,13 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
       if (sf === "Chemicals")  return mQ && sec.includes("chem");
       return mQ;
     })
+    .filter(r => {
+      if (vf !== "All" && r.verdict !== vf) return false;
+      if (cf !== "All" && r.confidence.level !== cf) return false;
+      const m = parseFloat(minMos);
+      if (!isNaN(m) && (r.mos == null || r.mos * 100 < m)) return false;
+      return true;
+    })
     .sort((a, b) => {
       if (sort === "rank") {
         const d = (VRANK[b.verdict] || 0) - (VRANK[a.verdict] || 0);
@@ -114,7 +126,7 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
       if (sort === "mos")       return b.sortMos - a.sortMos;
       if (sort === "roe")       return (b.roe || 0) - (a.roe || 0);
       return a.co.name.localeCompare(b.co.name);
-    }), [companies, q, sort, sf]);
+    }), [companies, q, sort, sf, vf, cf, minMos]);
 
   const Th = ({ children, k }) => (
     <th onClick={() => k && setSort(k)} style={{
@@ -151,6 +163,27 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
         }}>
           {sectors.map(s => <option key={s} value={s}>{s}</option>)}
         </select>
+        <select value={vf} onChange={e => setVf(e.target.value)} title="Filter by verdict" style={{
+          ...sans, background: C.panel2, border: `1px solid ${vf !== "All" ? C.gold + "88" : C.line}`,
+          borderRadius: 8, color: vf !== "All" ? C.gold : C.text, padding: "8px 12px",
+          fontSize: 13, cursor: "pointer", outline: "none",
+        }}>
+          {["All", "BUY", "ACCUMULATE", "HOLD", "REDUCE", "AVOID"].map(v =>
+            <option key={v} value={v}>{v === "All" ? "Any verdict" : v}</option>)}
+        </select>
+        <select value={cf} onChange={e => setCf(e.target.value)} title="Filter by data confidence" style={{
+          ...sans, background: C.panel2, border: `1px solid ${cf !== "All" ? C.gold + "88" : C.line}`,
+          borderRadius: 8, color: cf !== "All" ? C.gold : C.text, padding: "8px 12px",
+          fontSize: 13, cursor: "pointer", outline: "none",
+        }}>
+          {[["All", "Any confidence"], ["high", "High conf"], ["medium", "Med conf"], ["low", "Low conf"]].map(([v, l]) =>
+            <option key={v} value={v}>{l}</option>)}
+        </select>
+        <input value={minMos} onChange={e => setMinMos(e.target.value)}
+          placeholder="MoS ≥ %" inputMode="decimal" title="Minimum margin of safety (%)"
+          style={{ ...mono, width: 74, background: C.panel2, fontSize: 12, color: minMos ? C.gold : C.text,
+                   border: `1px solid ${minMos ? C.gold + "88" : C.line}`, borderRadius: 8,
+                   padding: "8px 10px", outline: "none" }} />
         <div style={{ ...sans, color: C.faint, fontSize: 12 }}>
           {loading ? "Loading…" : `${rows.length} companies`}
         </div>
