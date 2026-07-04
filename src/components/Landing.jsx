@@ -69,7 +69,7 @@ export default function Landing({ onSignIn }) {
           Create your free account
         </button>
         <div style={{ ...mono, fontSize: 11, color: C.faint, marginTop: 12 }}>
-          Nifty 250 coverage · 5-year history · daily model refresh
+          Nifty 500 coverage · 5-year history · daily model refresh
         </div>
       </section>
 

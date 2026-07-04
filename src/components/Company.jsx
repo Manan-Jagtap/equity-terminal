@@ -450,62 +450,6 @@ function ProfileKeyFacts({ kf }) {
   );
 }
 
-function DocsCard({ profile }) {
-  if (!profile) return null;
-  const has = (profile.concalls?.length || profile.annual_reports?.length ||
-               profile.credit_ratings?.length || profile.announcements?.length);
-  if (!has) return null;
-  const Link = ({ href, children }) => !href ? null : (
-    <a href={href} target="_blank" rel="noopener noreferrer"
-       style={{ ...sans, fontSize:12.5, color:C.text200, textDecoration:"none", display:"flex", alignItems:"center", gap:7, lineHeight:1.5 }}
-       onMouseEnter={e => (e.currentTarget.style.color = C.gold)}
-       onMouseLeave={e => (e.currentTarget.style.color = C.text200)}>
-      <FileText size={12} color={C.faint} style={{ flexShrink:0 }} /> <span>{children}</span>
-    </a>
-  );
-  const Group = ({ title, children }) => (
-    <div style={{ marginBottom:14 }}>
-      <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.12em", color:C.gold, marginBottom:8 }}>{title}</div>
-      <div style={{ display:"flex", flexDirection:"column", gap:7 }}>{children}</div>
-    </div>
-  );
-  return (
-    <Card>
-      <SectionLabel accent="SOURCE DOCUMENTS">FILINGS &amp; REPORTS</SectionLabel>
-      {profile.concalls?.length > 0 && (
-        <Group title="Earnings Calls">
-          {profile.concalls.slice(0, 5).map((c, i) => (
-            <Link key={i} href={c.transcript || c.rec || c.ppt}>
-              {c.date} — {c.transcript ? "Transcript" : c.ppt ? "Presentation" : "Recording"}
-            </Link>
-          ))}
-        </Group>
-      )}
-      {profile.annual_reports?.length > 0 && (
-        <Group title="Annual Reports">
-          {profile.annual_reports.slice(0, 5).map((a, i) => (
-            <Link key={i} href={a.url}>FY{a.year} Annual Report</Link>
-          ))}
-        </Group>
-      )}
-      {profile.credit_ratings?.length > 0 && (
-        <Group title="Credit Ratings">
-          {profile.credit_ratings.slice(0, 4).map((c, i) => (
-            <Link key={i} href={c.url}>{c.date} — {c.title}</Link>
-          ))}
-        </Group>
-      )}
-      {profile.announcements?.length > 0 && (
-        <Group title="Recent Announcements">
-          {profile.announcements.slice(0, 5).map((a, i) => (
-            <Link key={i} href={a.link}>{(a.title || "").replace(/\s+\d+[dh]?\s+-\s+.*/, "").slice(0, 80) || "Announcement"}</Link>
-          ))}
-        </Group>
-      )}
-    </Card>
-  );
-}
-
 function OverviewTab({ co, rec, cd, priceData, profile }) {
   const isMobile = useIsMobile();
   const f = rec.f;
@@ -1886,23 +1830,13 @@ function NewsTab({ co, API, profile }) {
 /* ── Docs Tab ────────────────────────────────────────────────────── */
 /* Company documents (concalls, annual reports, credit ratings,
    announcements) + an on-demand AI research note from the backend. */
-function DocsTab({ co, API }) {
-  const [docs, setDocs]         = useState(null);
-  const [loading, setLoading]   = useState(true);
+/* The on-demand LLM research note (backend /thesis pipeline: grounded in DB
+   financials, every number machine-validated). Lives in the AI THESIS tab —
+   the Docs tab is a pure document library. */
+function ResearchNoteCard({ co, API }) {
   const [note, setNote]         = useState(null);    // { status, thesis?, reason? }
   const [noteBusy, setNoteBusy] = useState(false);
-
-  useEffect(() => {
-    setNote(null); setNoteBusy(false);
-    if (!API) { setLoading(false); return; }
-    let live = true;
-    setLoading(true);
-    fetch(`${API}/api/companies/${co.ticker}/documents`)
-      .then(r => r.json())
-      .then(d => { if (live) { setDocs(d || {}); setLoading(false); } })
-      .catch(() => { if (live) { setDocs(null); setLoading(false); } });
-    return () => { live = false; };
-  }, [co.ticker, API]);
+  useEffect(() => { setNote(null); setNoteBusy(false); }, [co.ticker]);
 
   const generateNote = () => {
     if (!API || noteBusy) return;
@@ -1912,6 +1846,73 @@ function DocsTab({ co, API }) {
       .then(d => { setNote(d); setNoteBusy(false); })
       .catch(e => { setNote({ status: "error", reason: e.message }); setNoteBusy(false); });
   };
+
+  return (
+    <Card style={{ marginBottom: 20 }}>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:16, flexWrap:"wrap" }}>
+        <div>
+          <div style={{ ...sans, fontSize:11, letterSpacing:"0.14em", textTransform:"uppercase", color:C.gold }}>Deep Research Note</div>
+          <div style={{ ...sans, fontSize:12, color:C.dim, marginTop:4 }}>
+            AI-written, grounded in the filings below — every figure machine-checked against the data store. Can still be wrong; not investment advice.
+          </div>
+        </div>
+        <button onClick={generateNote} disabled={noteBusy} style={{
+          ...sans, display:"flex", alignItems:"center", gap:7,
+          fontSize:11, letterSpacing:"0.12em", textTransform:"uppercase", fontWeight:500,
+          padding:"8px 16px", border:`1px solid ${C.gold}66`, color:C.gold,
+          background:C.gold+"0d", cursor:noteBusy?"wait":"pointer", opacity:noteBusy?0.7:1,
+        }}>
+          {noteBusy
+            ? <Loader2 size={13} style={{ animation:"spin 1s linear infinite" }} />
+            : <Brain size={13} />}
+          {noteBusy ? "Writing…" : note?.status === "ok" ? "Regenerate note" : "Generate note"}
+        </button>
+      </div>
+
+      {noteBusy && (
+        <div style={{ ...sans, display:"flex", alignItems:"center", gap:10, marginTop:18, color:C.dim, fontSize:13 }}>
+          <Loader2 size={15} color={C.gold} style={{ animation:"spin 1s linear infinite" }} />
+          Reading filings and writing the note — this can take a minute…
+        </div>
+      )}
+      {!noteBusy && note?.status === "ok" && (
+        <div style={{
+          ...serif, fontSize:16, lineHeight:1.75, color:C.text,
+          whiteSpace:"pre-wrap", maxWidth:760, marginTop:20,
+          paddingTop:20, borderTop:`1px solid ${C.line}`,
+        }}>
+          {note.thesis}
+        </div>
+      )}
+      {!noteBusy && note && note.status === "unavailable" && (
+        <div style={{ ...sans, fontSize:12, color:C.dim, marginTop:16, fontStyle:"italic" }}>
+          Set ANTHROPIC_API_KEY on the backend to enable AI research notes
+        </div>
+      )}
+      {!noteBusy && note && note.status === "error" && (
+        <div style={{ ...sans, fontSize:12, color:C.red, marginTop:16 }}>
+          Could not generate the note{note.reason ? `: ${note.reason}` : ""}. Try again.
+        </div>
+      )}
+    </Card>
+  );
+}
+
+
+function DocsTab({ co, API }) {
+  const [docs, setDocs]         = useState(null);
+  const [loading, setLoading]   = useState(true);
+
+  useEffect(() => {
+    if (!API) { setLoading(false); return; }
+    let live = true;
+    setLoading(true);
+    fetch(`${API}/api/companies/${co.ticker}/documents`)
+      .then(r => r.json())
+      .then(d => { if (live) { setDocs(d || {}); setLoading(false); } })
+      .catch(() => { if (live) { setDocs(null); setLoading(false); } });
+    return () => { live = false; };
+  }, [co.ticker, API]);
 
   const concalls = docs?.concalls || [];
   const reports  = docs?.annual_reports || [];
@@ -1947,63 +1948,11 @@ function DocsTab({ co, API }) {
   return (
     <div className="fadein" style={{ padding:32 }}>
       <div style={{ marginBottom:24 }}>
-        <div style={{ ...serif, fontSize:22, color:C.text }}>{co.name} — Documents &amp; Research</div>
+        <div style={{ ...serif, fontSize:22, color:C.text }}>{co.name} — Document Library</div>
         <div style={{ ...sans, fontSize:12, color:C.dim, marginTop:4 }}>
-          Concall transcripts, annual reports, credit ratings, exchange announcements — plus an AI-written research note.
+          Concall transcripts, annual reports, credit ratings, exchange announcements. AI-written notes live in the AI Thesis tab.
         </div>
       </div>
-
-      {/* ── Research note ─────────────────────────────────────── */}
-      <Card style={{ marginBottom:24 }}>
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:16, flexWrap:"wrap" }}>
-          <div>
-            <div style={{ ...sans, fontSize:11, letterSpacing:"0.14em", textTransform:"uppercase", color:C.gold }}>Research Note</div>
-            <div style={{ ...sans, fontSize:12, color:C.dim, marginTop:4 }}>
-              A model-written note on {co.name}: business, valuation, risks — generated from the terminal's data.
-            </div>
-          </div>
-          <button onClick={generateNote} disabled={noteBusy} style={{
-            ...sans, display:"flex", alignItems:"center", gap:7,
-            fontSize:11, letterSpacing:"0.12em", textTransform:"uppercase", fontWeight:500,
-            padding:"8px 16px", border:`1px solid ${C.gold}66`, color:C.gold,
-            background:C.gold+"0d", cursor:noteBusy?"wait":"pointer", opacity:noteBusy?0.7:1,
-          }}>
-            {noteBusy
-              ? <Loader2 size={13} style={{ animation:"spin 1s linear infinite" }} />
-              : <Brain size={13} />}
-            {noteBusy ? "Writing…" : note?.status === "ok" ? "Regenerate research note" : "Generate research note"}
-          </button>
-        </div>
-
-        {noteBusy && (
-          <div style={{ ...sans, display:"flex", alignItems:"center", gap:10, marginTop:18, color:C.dim, fontSize:13 }}>
-            <Loader2 size={15} color={C.gold} style={{ animation:"spin 1s linear infinite" }} />
-            Reading filings and writing the note — this can take a minute…
-          </div>
-        )}
-
-        {!noteBusy && note?.status === "ok" && (
-          <div style={{
-            ...serif, fontSize:16, lineHeight:1.75, color:C.text,
-            whiteSpace:"pre-wrap", maxWidth:760, marginTop:20,
-            paddingTop:20, borderTop:`1px solid ${C.line}`,
-          }}>
-            {note.thesis}
-          </div>
-        )}
-
-        {!noteBusy && note && note.status === "unavailable" && (
-          <div style={{ ...sans, fontSize:12, color:C.dim, marginTop:16, fontStyle:"italic" }}>
-            Set ANTHROPIC_API_KEY on the backend to enable AI research notes
-          </div>
-        )}
-
-        {!noteBusy && note && note.status === "error" && (
-          <div style={{ ...sans, fontSize:12, color:C.red, marginTop:16 }}>
-            Could not generate the note{note.reason ? `: ${note.reason}` : ""}. Try again.
-          </div>
-        )}
-      </Card>
 
       {loading && (
         <div style={{ display:"flex", alignItems:"center", gap:12, padding:40, ...sans, color:C.dim, fontSize:13 }}>
@@ -2101,7 +2050,7 @@ function DocsTab({ co, API }) {
 /* ── AI Thesis Tab ───────────────────────────────────────────────── */
 /* AI Thesis — assembled entirely from IndianAPI data (concall AI summaries,
    consensus, growth track record, key metrics). No LLM call / no API tokens. */
-function AIThesisTab({ co, profile, insights, cd, price }) {
+function AIThesisTab({ co, profile, insights, cd, price, API, onGoTab }) {
   const isMobile = useIsMobile();
   const sm  = insights?.self_metrics || {};
   const an  = insights?.analyst || null;
@@ -2168,6 +2117,9 @@ function AIThesisTab({ co, profile, insights, cd, price }) {
             {desc || `${co.name} operates in the ${co.sector} sector.`}
           </div>
         </Card>
+
+        {/* On-demand LLM deep note (moved here from Docs — this is the AI tab) */}
+        <ResearchNoteCard co={co} API={API} />
 
         {/* Consensus & valuation */}
         <Card>
@@ -2254,9 +2206,27 @@ function AIThesisTab({ co, profile, insights, cd, price }) {
         </div>
       </div>
 
-      {/* Sidebar — the actual source documents this thesis is grounded in */}
+      {/* Sidebar — pointer to the grounding documents (the full library lives
+          in the Docs tab; listing it twice was pure duplication) */}
       <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
-        <DocsCard profile={profile} />
+        <Card>
+          <SectionLabel accent="SOURCE DOCUMENTS">GROUNDED IN FILINGS</SectionLabel>
+          <div style={{ ...sans, fontSize:12.5, color:C.text200, lineHeight:1.6 }}>
+            {(profile?.concalls?.length || 0) + (profile?.annual_reports?.length || 0) +
+             (profile?.credit_ratings?.length || 0) + (profile?.announcements?.length || 0) || "—"} documents
+            back this view — earnings calls, annual reports, ratings and exchange filings.
+          </div>
+          {onGoTab && (
+            <button onClick={() => onGoTab("docs")} style={{
+              ...sans, marginTop: 12, display:"flex", alignItems:"center", gap:6,
+              fontSize:11, letterSpacing:"0.1em", textTransform:"uppercase", fontWeight:500,
+              padding:"7px 14px", border:`1px solid ${C.gold}66`, color:C.gold,
+              background:C.gold+"0d", cursor:"pointer",
+            }}>
+              <FolderOpen size={12} /> Open document library
+            </button>
+          )}
+        </Card>
         <Card>
           <SectionLabel>METHOD</SectionLabel>
           {["Assembled from IndianAPI — no LLM tokens used","Concall summaries are IndianAPI's own AI output","Bull/bear derived from reported facts","Consensus & target from analyst feed"].map((s, i) => (
@@ -2641,6 +2611,26 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
   const [liveStatement,  setLiveStatement]  = useState(null); // real latest-FY operating figures
   const [apiVal,         setApiVal]         = useState(null); // backend INDEPENDENT valuation (authoritative)
 
+  // F&O-underlying universe (Dhan scrip master, cached ~daily server-side).
+  // Cash-only names get no Options tab — showing an always-empty tab reads
+  // like a bug. null = unknown (fetch failed) → fail OPEN and keep the tab.
+  const [fnoSet, setFnoSet] = useState(null);
+  useEffect(() => {
+    if (!API) return;
+    fetch(`${API}/api/dhan/fno`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (d && Array.isArray(d.tickers) && d.tickers.length) setFnoSet(new Set(d.tickers)); })
+      .catch(() => {});
+  }, [API]);
+  const visibleTabs = useMemo(() => {
+    const tk = (co.ticker || "").toUpperCase().replace(/-/g, "").replace(/&/g, "");
+    const hasFO = !fnoSet || fnoSet.has((co.ticker || "").toUpperCase()) || fnoSet.has(tk);
+    return hasFO ? TABS : TABS.filter(t => t.id !== "options");
+  }, [co.ticker, fnoSet]);
+  // Landing on a hidden tab (e.g. Options open, then switching to a cash-only
+  // name) would render nothing — snap back to the overview.
+  if (!visibleTabs.some(t => t.id === tab)) setTab("overview");
+
   const hasRealPrices = (histPrices?.data?.length || 0) > 10;
   const co2 = useMemo(() => {
     const base = { ...co, price, assumptions, syntheticSeries: !hasRealPrices };
@@ -2982,7 +2972,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
       {/* ── Tab navigation ─────────────────────────────────────── */}
       <nav style={{ borderBottom:`1px solid ${C.line}`, background:C.bg+"dd", backdropFilter:"blur(8px)", position:"sticky", top:0, zIndex:30, padding:`0 ${PAD}px`, overflowX:"auto" }}>
         <div style={{ display:"flex", gap: isMobile ? 18 : 28, whiteSpace:"nowrap" }}>
-          {TABS.map(({ id, icon:Icon, label }) => (
+          {visibleTabs.map(({ id, icon:Icon, label }) => (
             <button key={id} onClick={() => setTab(id)} style={{
               ...sans, position:"relative", display:"flex", alignItems:"center", gap:8,
               padding:"14px 0", border:"none", background:"transparent",
@@ -3010,7 +3000,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
         {tab==="ownership"  && <OwnershipTab   profile={liveProfile} />}
         {tab==="news"       && <NewsTab        co={co2} API={API} profile={liveProfile} />}
         {tab==="docs"       && <DocsTab        co={co2} API={API} />}
-        {tab==="thesis"     && <AIThesisTab    co={co2} profile={liveProfile} insights={liveInsights} cd={cd} price={price} />}
+        {tab==="thesis"     && <AIThesisTab    co={co2} profile={liveProfile} insights={liveInsights} cd={cd} price={price} API={API} onGoTab={setTab} />}
         {tab==="forensics"  && <ForensicsTab   co={co2} API={API} />}
         {tab==="verdict"    && <VerdictTab     co={co2} rec={rec} cd={cd} price={price} insights={liveInsights} apiVal={apiVal} />}
       </main>
