@@ -9,7 +9,7 @@ import {
   ArrowLeft, Building2, FileText, Activity, Calculator,
   Users, Brain, Shield, Sparkles, Check, AlertTriangle,
   Info, Loader2, TrendingUp, TrendingDown, Newspaper, Download, PieChart,
-  ShieldAlert, Star, FolderOpen, FileSpreadsheet, ExternalLink,
+  ShieldAlert, Star, FolderOpen, FileSpreadsheet, ExternalLink, Layers,
 } from "lucide-react";
 import {
   ComposedChart, AreaChart, Area, BarChart, Bar, LineChart, Line,
@@ -27,6 +27,7 @@ import DCFModel from "./DCFModel.jsx";
 import ScenarioBar from "./ScenarioBar.jsx";
 import PriceChart from "./PriceChart.jsx";
 import TranscriptSummary from "./TranscriptSummary.jsx";
+import OptionsTab from "./OptionsTab.jsx";
 import AnalystTab from "./AnalystTab.jsx";
 
 /* Verdict → colour tone (single mapping, used in header + snapshot). */
@@ -229,6 +230,7 @@ const TABS = [
   { id:"ratios",     icon:Activity,   label:"Ratios & KPIs" },
   { id:"dcf",        icon:Calculator, label:"Valuation"     },
   { id:"analyst",    icon:Sparkles,   label:"Analyst & Forward" },
+  { id:"options",    icon:Layers,     label:"Options"       },
   { id:"peers",      icon:Users,      label:"Peer Universe" },
   { id:"ownership",  icon:PieChart,   label:"Ownership"     },
   { id:"news",       icon:Newspaper,  label:"News"          },
@@ -2996,6 +2998,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
         {tab==="ratios"     && <RatiosTab      co={co2} API={API} liveMetrics={liveMetrics} />}
         {tab==="dcf"        && <><ScenarioBar API={API} ticker={co.ticker} assumptions={assumptions} setAssumptions={setAssumptions} /><DCFModel key={`dcf-${co.ticker}-${apiVal?.assumptions ? "seeded" : "base"}`} co={co2} a={assumptions} set={set} price={price} setPrice={setPrice} apiVal={apiVal} /></>}
         {tab==="analyst"    && <AnalystTab     co={co2} API={API} price={price} />}
+        {tab==="options"    && <OptionsTab     co={co2} API={API} />}
         {tab==="peers"      && <PeersTab       co={co2} cd={cd} allCompanies={allCompanies} API={API} />}
         {tab==="ownership"  && <OwnershipTab   profile={liveProfile} />}
         {tab==="news"       && <NewsTab        co={co2} API={API} profile={liveProfile} />}
