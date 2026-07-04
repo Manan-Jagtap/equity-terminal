@@ -40,12 +40,15 @@ const ViewLoader = () => (
    FALLBACK used when that call can't be reached. NIFTY50_ONLY gates whether we
    filter at all; set it false to show every ingested name.                      */
 const NIFTY50_ONLY = true;
+// Official Nifty 50 (niftyindices.com, 2026-07-04) minus INDIGO (no defensible
+// sector model — the backend excludes it too) plus FEDFINA (backend
+// EXTRA_TICKERS). Post-demerger this carries TMPV, not TATAMOTORS.
 const NIFTY_50 = new Set([
   "RELIANCE","HDFCBANK","BHARTIARTL","TCS","ICICIBANK","SBIN","INFY","BAJFINANCE","ITC","LT",
   "HINDUNILVR","KOTAKBANK","AXISBANK","M&M","SUNPHARMA","MARUTI","NTPC","HCLTECH","ULTRACEMCO","TITAN",
   "BAJAJFINSV","ONGC","ADANIENT","ADANIPORTS","POWERGRID","WIPRO","JSWSTEEL","NESTLEIND","COALINDIA","TATASTEEL",
   "ASIANPAINT","BAJAJ-AUTO","TRENT","JIOFIN","BEL","GRASIM","HINDALCO","SBILIFE","TECHM","HDFCLIFE",
-  "SHRIRAMFIN","CIPLA","DRREDDY","EICHERMOT","BRITANNIA","APOLLOHOSP","TATACONSUM","HEROMOTOCO","ETERNAL","TATAMOTORS",
+  "SHRIRAMFIN","CIPLA","DRREDDY","EICHERMOT","APOLLOHOSP","TATACONSUM","ETERNAL","TMPV","MAXHEALTH",
   // Extra coverage beyond the Nifty 50 (mirror backend EXTRA_TICKERS)
   "FEDFINA",
 ]);
