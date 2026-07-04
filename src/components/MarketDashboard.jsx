@@ -2,10 +2,14 @@
    Index strip, top gainers/losers, most active, 52-week highs/lows.
    Pulls /api/market/snapshot (one round-trip, server-side cached). */
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, lazy, Suspense } from "react";
 import { TrendingUp, TrendingDown, Activity, ArrowUpRight, ArrowDownRight, Loader2, RefreshCw, ShieldCheck, ShieldAlert, ChevronDown } from "lucide-react";
 import { C, mono, sans, serif } from "../lib/theme.js";
 import { useIsMobile } from "../lib/useResponsive.js";
+
+// Lazy: keeps recharts out of the eager dashboard bundle — the chart only
+// loads the first time an index card is clicked.
+const IndexChart = lazy(() => import("./IndexChart.jsx"));
 
 const fmtN = (n, d = 2) => n == null || isNaN(n) ? "—" : Number(n).toLocaleString("en-IN", { maximumFractionDigits: d, minimumFractionDigits: d });
 const fmtP = (n, d = 2) => n == null || isNaN(n) ? "—" : (n >= 0 ? "+" : "") + n.toFixed(d) + "%";
@@ -17,6 +21,7 @@ export default function MarketDashboard({ API, companies, onOpen }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [tick, setTick] = useState(0);
+  const [idxChart, setIdxChart] = useState(null);   // index name whose chart is open
 
   // Tickers in our universe → clickable through to the company page.
   const known = useMemo(() => new Set((companies || []).map(c => (c.ticker || "").toUpperCase())), [companies]);
@@ -73,17 +78,28 @@ export default function MarketDashboard({ API, companies, onOpen }) {
 
       <DataHealth API={API} onOpen={openIf} />
 
-      {/* Index strip */}
+      {/* Index strip — click a card for the index's full-history chart */}
       {indices.length > 0 && (
         <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 6, marginBottom: 22 }}>
           {indices.map((ix, i) => (
-            <div key={i} style={{ flex: "0 0 auto", minWidth: 150, border: `1px solid ${C.line}`, borderRadius: 10, background: C.bg900, padding: "12px 14px" }}>
+            <div key={i} onClick={() => ix.name && setIdxChart(ix.name)}
+              title={`${ix.name} — open chart`}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = C.gold + "66"; e.currentTarget.style.background = C.bg800; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = ""; e.currentTarget.style.background = C.bg900; }}
+              style={{ flex: "0 0 auto", minWidth: 150, border: `1px solid ${C.line}`, borderRadius: 10,
+                       background: C.bg900, padding: "12px 14px", cursor: "pointer" }}>
               <div style={{ ...sans, fontSize: 11, color: C.dim, textTransform: "uppercase", letterSpacing: "0.04em", whiteSpace: "nowrap" }}>{ix.name}</div>
               <div style={{ ...mono, fontSize: 18, color: C.text, marginTop: 4 }}>{fmtN(ix.price)}</div>
               <div style={{ ...mono, fontSize: 12, color: toneOf(ix.pct), marginTop: 2 }}>{fmtP(ix.pct)} <span style={{ color: C.faint }}>·</span> {ix.net >= 0 ? "+" : ""}{fmtN(ix.net)}</div>
             </div>
           ))}
         </div>
+      )}
+
+      {idxChart && (
+        <Suspense fallback={null}>
+          <IndexChart API={API} name={idxChart} onClose={() => setIdxChart(null)} />
+        </Suspense>
       )}
 
       {/* Movers */}
