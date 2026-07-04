@@ -26,6 +26,7 @@ import { useIsMobile } from "../lib/useResponsive.js";
 import DCFModel from "./DCFModel.jsx";
 import ScenarioBar from "./ScenarioBar.jsx";
 import PriceChart from "./PriceChart.jsx";
+import TranscriptSummary from "./TranscriptSummary.jsx";
 import AnalystTab from "./AnalystTab.jsx";
 
 /* Verdict → colour tone (single mapping, used in header + snapshot). */
@@ -2016,6 +2017,10 @@ function DocsTab({ co, API }) {
             appear here once the backend's document ingestion has run for this company.
           </div>
         </Card>
+      )}
+
+      {!loading && concalls.length > 0 && (
+        <TranscriptSummary API={API} ticker={co.ticker} />
       )}
 
       {!loading && !empty && (
