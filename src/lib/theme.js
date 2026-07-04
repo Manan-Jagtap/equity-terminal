@@ -1,56 +1,96 @@
-/* Design tokens — Equity Terminal.
-   Warm ink palette matching the reference design exactly.
-   Single source of truth for all colors and fonts. */
+/* Design tokens — Equity Terminal "Aurora" theme.
+
+   Deep-space indigo base with a luminous mint-cyan accent: dark enough for
+   long research sessions, cool and alive instead of flat black. Signals are
+   unmistakable (spring green / coral), depth comes from aurora gradients
+   rather than borders, and every sector carries its own accent hue on the
+   company page (see sectorAccent).
+
+   Single source of truth: components must read from here, never hard-code.
+   NOTE: token KEYS are semantic and stable — `gold` = primary accent
+   (historical name, kept so 25 components re-skin without edits). */
 
 export const C = {
-  // Ink scale (warm near-black, brownish tint)
-  bg:      "#0a0907",   // ink-950
-  bg900:   "#100e0a",   // ink-900
-  bg800:   "#181510",   // ink-800
-  bg700:   "#211d17",   // ink-700
-  bg600:   "#2c2820",   // ink-600
-  bg500:   "#3a3528",   // ink-500
-  bg400:   "#5b5440",   // ink-400
+  // Abyss scale (deep space navy)
+  bg:      "#060A13",   // abyss-950
+  bg900:   "#0A101E",   // abyss-900
+  bg800:   "#101A2C",   // abyss-800
+  bg700:   "#16223A",   // abyss-700
+  bg600:   "#1E2E4E",   // abyss-600
+  bg500:   "#293B63",   // abyss-500
+  bg400:   "#3E5788",   // abyss-400
 
-  // Text scale
-  text:    "#dcd5c1",   // ink-100
-  text200: "#b8b09a",   // ink-200
-  dim:     "#857d65",   // ink-300
-  faint:   "#5b5440",   // ink-400
-  vfaint:  "#3a3528",   // ink-500
+  // Text scale (cool porcelain)
+  text:    "#E8EEFA",
+  text200: "#BFCCE4",
+  dim:     "#7E8FB0",
+  faint:   "#526180",
+  vfaint:  "#39466B",
 
-  // Gold scale
-  gold:    "#d4a93e",   // gold-400
-  gold500: "#c89a39",   // gold-500
-  gold600: "#a07d2c",   // gold-600
-  gold700: "#7c5e1f",   // gold-700
-  goldDim: "#a07d2c",
+  // Primary accent — aurora mint-cyan (key name `gold` kept for stability)
+  gold:    "#3EE6C1",
+  gold500: "#2BC9A8",
+  gold600: "#1FA085",
+  gold700: "#177862",
+  goldDim: "#1FA085",
 
   // Signal colors
-  green:   "#7aa87a",   // pos-400
-  green500:"#5a8f5a",   // pos-500
-  red:     "#c46f65",   // neg-400
-  red500:  "#a85148",   // neg-500
-  blue:    "#7d97ad",   // info-400 (announcements, FCF lines)
+  green:   "#4ADE80",   // spring green — unambiguous positive
+  green500:"#22B563",
+  red:     "#FB7185",   // coral — negative without alarm-red harshness
+  red500:  "#E5484D",
+  blue:    "#60A5FA",   // info (announcements, FCF lines)
 
-  // Panel surfaces (referenced by Screener/primitives — were missing, which
-  // silently rendered `background: undefined` and broke row-hover highlights)
-  panel:   "#100e0a",   // = bg900
-  panel2:  "#181510",   // = bg800
+  // Panel surfaces
+  panel:   "#0A101E",   // = bg900
+  panel2:  "#101A2C",   // = bg800
 
-  // Borders
-  line:    "rgba(220,213,193,0.08)",   // hairline
-  line2:   "rgba(220,213,193,0.12)",   // slightly more visible
+  // Borders — cool hairlines
+  line:    "rgba(147,171,255,0.09)",
+  line2:   "rgba(147,171,255,0.16)",
 };
 
-// Gradient helpers
+// Sector accent hues — each stock page carries its industry's color.
+// Muted-luminous family chosen to sit on the abyss base at the same perceived
+// brightness as the brand accent, so no sector feels louder than another.
+const SECTOR_ACCENTS = [
+  [/financial|bank|nbfc|insurance/, "#818CF8"],   // indigo — institutions
+  [/tech|information/,              "#22D3EE"],   // cyan — software
+  [/pharma|health/,                 "#4ADE80"],   // green — life
+  [/auto/,                          "#FB923C"],   // orange — motion
+  [/fmcg|consumer/,                 "#F472B6"],   // rose — retail
+  [/energy|oil|power|gas|utilit/,   "#FACC15"],   // amber — energy
+  [/metal|mining/,                  "#94A3B8"],   // steel — heavy industry
+  [/chem/,                          "#A78BFA"],   // violet — chemistry
+  [/realty|real estate|construction|cement|capital goods|engineering|industrial|defence/,
+                                    "#F87171"],   // terracotta — built world
+  [/telecom/,                       "#38BDF8"],   // sky — networks
+  [/textile|media|service/,         "#E879F9"],   // magenta — culture/services
+];
+export function sectorAccent(sector) {
+  const s = (sector || "").toLowerCase();
+  for (const [re, hue] of SECTOR_ACCENTS) if (re.test(s)) return hue;
+  return C.gold;
+}
+
+// Depth helpers
 export const gridBg = {
   backgroundImage: `
-    linear-gradient(rgba(220,213,193,.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(220,213,193,.025) 1px, transparent 1px)`,
+    linear-gradient(rgba(147,171,255,.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(147,171,255,.03) 1px, transparent 1px)`,
   backgroundSize: "56px 56px",
 };
 
+// The aurora wash behind the whole app — two soft radial glows (cyan top-right,
+// indigo bottom-left) that give the abyss base depth without distracting.
+export const auroraBg = {
+  backgroundImage: `
+    radial-gradient(1100px 700px at 85% -10%, rgba(62,230,193,0.07), transparent 60%),
+    radial-gradient(900px 650px at -10% 108%, rgba(99,102,241,0.09), transparent 55%),
+    radial-gradient(700px 500px at 50% 120%, rgba(56,189,248,0.05), transparent 60%)`,
+  backgroundAttachment: "fixed",
+};
+
 export const mono  = { fontFamily: "'JetBrains Mono',monospace", fontVariantNumeric: "tabular-nums" };
-export const serif = { fontFamily: "'Instrument Serif','Georgia',serif" };
+export const serif = { fontFamily: "'Space Grotesk','Inter',-apple-system,sans-serif", letterSpacing: "-0.01em" };
 export const sans  = { fontFamily: "'Inter',-apple-system,system-ui,sans-serif" };

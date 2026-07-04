@@ -176,7 +176,7 @@ export default function Compare({ API, companies = [], onOpen, seed = [] }) {
                   <th key={it.ticker} onClick={() => onOpen && onOpen(it.ticker)} style={{ cursor: "pointer", padding: "14px 16px",
                     borderBottom: `1px solid ${C.line}`, textAlign: "left", minWidth: 130 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <Logo ticker={it.ticker} name={it.name} size={26} />
+                      <Logo ticker={it.ticker} name={it.name} sector={it.sector} size={26} />
                       <div style={{ ...serif, fontSize: 18, color: C.text }}>{it.name}</div>
                     </div>
                     <div style={{ ...mono, fontSize: 10, color: C.faint, marginTop: 2 }}>{it.ticker} · {it.sector}</div>

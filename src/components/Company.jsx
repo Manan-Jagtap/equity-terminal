@@ -17,7 +17,7 @@ import {
   ReferenceLine, Cell,
 } from "recharts";
 
-import { C, mono, sans, serif, gridBg } from "../lib/theme.js";
+import { C, mono, sans, serif, gridBg, sectorAccent } from "../lib/theme.js";
 import { fmt, inr, pct, cr, multiple, inrOrDash, signedPct } from "../lib/formatters.js";
 import { recommend } from "../lib/recommend.js";
 import { fundamentals, isFinancial } from "../lib/valuation.js";
@@ -2595,6 +2595,7 @@ function parseLatestPL(d) {
 /* ── Main Company component ──────────────────────────────────────── */
 export default function Company({ co, assumptions, setAssumptions, price, setPrice, onBack, API, allCompanies, histPrices, isWatched, onToggleWatch, initialTab }) {
   const isMobile = useIsMobile();
+  const accent = sectorAccent(co.sector);   // each stock wears its sector's hue
   const PAD = isMobile ? 16 : 32;
   const [tab, setTab] = useState(initialTab || "overview");
   // ⌘K commands like "TCS DCF at 12% growth" land on a specific tab. Adjust
@@ -2843,9 +2844,12 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
   return (
     <div style={{ minHeight:"100vh" }}>
       {/* ── Header ─────────────────────────────────────────────── */}
-      <header style={{ borderBottom:`1px solid ${C.line}`, background:`linear-gradient(180deg,${C.bg900},${C.bg})`, position:"relative", ...gridBg }}>
-        <div style={{ position:"absolute", inset:0, opacity:0.5, pointerEvents:"none",
-          backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.85 0 0 0 0 0.78 0 0 0 0 0.55 0 0 0 0.025 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }} />
+      <header style={{ borderBottom:`1px solid ${C.line}`, position:"relative", ...gridBg,
+        backgroundImage:`radial-gradient(900px 420px at 10% -30%, ${accent}24, transparent 55%),
+                         radial-gradient(700px 380px at 95% 130%, ${accent}12, transparent 60%),
+                         linear-gradient(180deg, ${C.bg900}, ${C.bg})` }}>
+        <div style={{ position:"absolute", inset:0, opacity:0.4, pointerEvents:"none",
+          backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.72 0 0 0 0 0.80 0 0 0 0 0.96 0 0 0 0.02 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }} />
         <div style={{ position:"relative", padding: isMobile ? "16px 16px 20px" : "24px 32px 28px" }}>
           {/* Top bar */}
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:24 }}>
@@ -2854,7 +2858,9 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
                 <ArrowLeft size={14} /> Back to screener
               </button>
               <span style={{ color:C.bg500 }}>/</span>
-              <span style={{ ...sans, fontSize:11, color:C.dim, textTransform:"uppercase", letterSpacing:"0.14em" }}>India · {co.type==="financial"?"NBFC":"Equity"} · {co.sector}</span>
+              <span style={{ ...sans, fontSize:11, color:C.dim, textTransform:"uppercase", letterSpacing:"0.14em" }}>
+                India · {co.type==="financial"?"NBFC":"Equity"} · <span style={{ color:accent, fontWeight:600 }}>{co.sector}</span>
+              </span>
             </div>
             <div style={{ display:"flex", alignItems:"center", gap:12, ...sans, fontSize:12, color:C.dim }}>
               {onToggleWatch && (
@@ -2919,7 +2925,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
                 <span style={{ color:C.gold }}>{mktData.sebiCap || "Large Cap"}</span>
               </div>
               <div style={{ display:"flex", alignItems:"center", gap:14 }}>
-                <Logo ticker={co.ticker} name={co.name} size={isMobile ? 36 : 48} radius={10} />
+                <Logo ticker={co.ticker} name={co.name} sector={co.sector} size={isMobile ? 36 : 48} radius={10} />
                 <div style={{ ...serif, fontSize: isMobile ? 34 : 60, color:C.text, lineHeight:1.05, letterSpacing:"-0.02em" }}>{co.name}</div>
               </div>
               <div style={{ ...sans, fontSize:13, color:C.text200, marginTop:12, maxWidth:680, lineHeight:1.6 }}>

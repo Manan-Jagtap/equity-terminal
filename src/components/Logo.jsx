@@ -1,7 +1,7 @@
 /* Logo.jsx — company logo via the backend proxy, with a graceful monogram
-   fallback when no logo exists. */
+   fallback tinted by the company's sector accent (see theme.sectorAccent). */
 import { useState } from "react";
-import { C, sans } from "../lib/theme.js";
+import { C, sans, sectorAccent } from "../lib/theme.js";
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -13,7 +13,7 @@ function monogram(name = "", ticker = "") {
   return (a + b).toUpperCase();
 }
 
-export default function Logo({ ticker, name, size = 28, radius = 7 }) {
+export default function Logo({ ticker, name, size = 28, radius = 7, sector }) {
   const [failed, setFailed] = useState(false);
   const box = {
     width: size, height: size, borderRadius: radius, flexShrink: 0,
@@ -21,8 +21,11 @@ export default function Logo({ ticker, name, size = 28, radius = 7 }) {
     overflow: "hidden", background: C.bg800, border: `1px solid ${C.line}`,
   };
   if (failed || !API || !ticker) {
+    const accent = sectorAccent(sector);
     return (
-      <span style={{ ...box, ...sans, fontSize: size * 0.38, fontWeight: 600, color: C.gold, letterSpacing: "0.02em" }}>
+      <span style={{ ...box, ...sans, fontSize: size * 0.38, fontWeight: 600,
+        color: accent, background: accent + "14", border: `1px solid ${accent}33`,
+        letterSpacing: "0.02em" }}>
         {monogram(name, ticker)}
       </span>
     );

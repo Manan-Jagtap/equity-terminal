@@ -58,7 +58,10 @@ export default function Landing({ onSignIn }) {
       <section style={{ padding: `${isMobile ? 48 : 88}px ${PAD}px ${isMobile ? 36 : 56}px`, maxWidth: 880, margin: "0 auto", textAlign: "center" }}>
         <h1 style={{ ...serif, fontSize: isMobile ? 34 : 52, lineHeight: 1.15, color: C.text, margin: 0, fontWeight: 400 }}>
           Independent equity research<br />
-          <span style={{ color: C.gold }}>with every number traceable.</span>
+          <span style={{
+            backgroundImage: `linear-gradient(92deg, ${C.gold}, ${C.blue} 70%, #A78BFA)`,
+            WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent",
+          }}>with every number traceable.</span>
         </h1>
         <p style={{ ...sans, fontSize: isMobile ? 14.5 : 16.5, lineHeight: 1.65, color: C.dim, margin: "22px auto 0", maxWidth: 620 }}>
           Sector-correct valuations, a falsifiable public track record, and a

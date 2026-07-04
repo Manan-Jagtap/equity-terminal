@@ -287,7 +287,7 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
                     )}
                     <span title={`Data confidence: ${r.confidence.level}${r.confidence.flags.length ? " — " + r.confidence.flags.join("; ") : ""}`}
                       style={{ width:7, height:7, borderRadius:"50%", background:confColor(r.confidence.level), flexShrink:0 }} />
-                    <Logo ticker={r.co.ticker} name={r.co.name} size={26} />
+                    <Logo ticker={r.co.ticker} name={r.co.name} sector={r.co.sector} size={26} />
                     <div>
                       <div style={{ ...sans, color: C.text, fontSize: 13, fontWeight: 500 }}>{r.co.name}</div>
                       <div style={{ ...mono, color: C.faint, fontSize: 10 }}>{r.co.ticker} · {r.co.sector}</div>

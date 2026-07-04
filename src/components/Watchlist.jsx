@@ -183,7 +183,7 @@ export default function Watchlist({ API, onOpen, onChanged, user, requestAuth })
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
               <div onClick={() => onOpen(it.ticker)} style={{ cursor: "pointer", flex: 1 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <Logo ticker={it.ticker} name={it.name} size={30} />
+                  <Logo ticker={it.ticker} name={it.name} sector={it.sector} size={30} />
                   <span style={{ ...serif, fontSize: 20, color: C.text }}>{it.name}</span>
                   <VerdictBadge verdict={it.verdict} />
                 </div>

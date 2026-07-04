@@ -5,7 +5,7 @@
 
 import { useEffect, useMemo, useState, useCallback, useRef, lazy, Suspense } from "react";
 import { TrendingUp, LayoutDashboard, List, Star, GitCompare, CalendarClock, Landmark, Gauge, History, Layers, Briefcase, Search, Loader2, LogIn, LogOut, ChevronDown, Sparkles } from "lucide-react";
-import { C, mono, sans, serif, gridBg } from "./lib/theme.js";
+import { C, mono, sans, serif, auroraBg } from "./lib/theme.js";
 import { useIsMobile } from "./lib/useResponsive.js";
 import { SEED, buildFromApi } from "./lib/seedData.js";
 import Screener from "./components/Screener.jsx";
@@ -240,9 +240,9 @@ export default function App() {
   // sign-in via the sharedScn effect.
   if (!user) {
     return (
-      <div style={{ minHeight: "100vh", background: C.bg, color: C.text }}>
+      <div style={{ minHeight: "100vh", background: C.bg, color: C.text, ...auroraBg }}>
         <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+          @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
           body { margin: 0; font-feature-settings: 'ss01','cv11'; }
           @keyframes fadein { from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;} }
           .fadein { animation: fadein .3s ease-out both; }
@@ -258,14 +258,29 @@ export default function App() {
     );
   }
 
+  const NAV = [
+    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+    { id: "screener",  label: "Screener",  icon: List },
+    { id: "ideas",     label: "Ideas",     icon: Sparkles },
+    { id: "watchlist", label: "Watchlist", icon: Star },
+    { id: "compare",   label: "Compare",   icon: GitCompare },
+    { id: "results",   label: "Results",   icon: CalendarClock },
+    { id: "ownership", label: "Ownership", icon: Landmark },
+    { id: "operations", label: "Operations", icon: Gauge },
+    { id: "sectors",   label: "Sectors",   icon: Layers },
+    { id: "portfolio", label: "Portfolio", icon: Briefcase },
+    { id: "track",     label: "Track Record", icon: History },
+  ];
+  const railVisible = !isMobile && view !== "company";
+
   return (
-    <div style={{ minHeight: "100vh", background: C.bg, color: C.text, paddingBottom: isMobile ? 62 : 0 }}>
+    <div style={{ minHeight: "100vh", background: C.bg, color: C.text, paddingBottom: isMobile ? 62 : 0, ...auroraBg }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
         body { margin: 0; font-feature-settings: 'ss01','cv11'; }
         *::-webkit-scrollbar { height: 7px; width: 7px }
         *::-webkit-scrollbar-thumb { background: ${C.bg600}; border-radius: 4px }
-        input[type=range] { -webkit-appearance: none; height: 2px; background: rgba(220,213,193,.18); border-radius: 99px; }
+        input[type=range] { -webkit-appearance: none; height: 2px; background: rgba(191,204,228,.18); border-radius: 99px; }
         input[type=range]::-webkit-slider-thumb {
           -webkit-appearance: none; height: 14px; width: 14px; border-radius: 50%;
           background: ${C.gold}; border: 2px solid ${C.bg}; cursor: pointer;
@@ -278,118 +293,123 @@ export default function App() {
         select option { background: ${C.bg800} }
       `}</style>
 
-      <div style={{ maxWidth: 1440, margin: "0 auto" }}>
-        {view !== "company" && (
-          <header style={{
-            display: "flex", alignItems: "center", gap: 22, flexWrap: "wrap",
-            padding: "16px 32px", borderBottom: `1px solid ${C.line}`,
-          }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-              <TrendingUp size={20} color={C.gold} strokeWidth={1.8} />
-              <span style={{ ...serif, fontSize: 22, color: C.text }}>Equity Terminal</span>
-            </div>
-            <nav style={{ display: "flex", gap: 4,
-                          flexWrap: isMobile ? "nowrap" : "wrap",
-                          overflowX: isMobile ? "auto" : "visible",
-                          maxWidth: isMobile ? "100%" : "none",
-                          WebkitOverflowScrolling: "touch" }}>
-              {[
-                { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-                { id: "screener",  label: "Screener",  icon: List },
-                { id: "ideas",     label: "Ideas",     icon: Sparkles },
-                { id: "watchlist", label: "Watchlist", icon: Star },
-                { id: "compare",   label: "Compare",   icon: GitCompare },
-                { id: "results",   label: "Results",   icon: CalendarClock },
-                { id: "ownership", label: "Ownership", icon: Landmark },
-                { id: "operations", label: "Operations", icon: Gauge },
-                { id: "sectors",   label: "Sectors",   icon: Layers },
-                { id: "portfolio", label: "Portfolio", icon: Briefcase },
-                { id: "track",     label: "Track Record", icon: History },
-              ].map(({ id, label, icon: Icon }) => (
-                <button key={id} onClick={() => setView(id)} style={{
-                  ...sans, display: "flex", alignItems: "center", gap: 7,
-                  padding: "7px 13px", borderRadius: 8, cursor: "pointer",
-                  fontSize: 13, fontWeight: 500, position: "relative",
-                  border: `1px solid ${view === id ? C.line2 : "transparent"}`,
-                  background: view === id ? C.bg800 : "transparent",
-                  color: view === id ? C.gold : C.dim,
-                }}>
-                  <Icon size={15} strokeWidth={1.6} />{label}
-                  {id === "watchlist" && watchAlerts > 0 && (
-                    <span style={{ ...sans, fontSize: 10, fontWeight: 700, color: C.bg, background: C.gold,
-                      borderRadius: 99, minWidth: 16, height: 16, padding: "0 4px", display: "inline-flex",
-                      alignItems: "center", justifyContent: "center", marginLeft: 2 }}>{watchAlerts}</span>
-                  )}
-                </button>
-              ))}
-            </nav>
-            <button onClick={() => setPaletteOpen(true)} title="Search companies (⌘K)" style={{
-              ...sans, display: "flex", alignItems: "center", gap: 7, marginLeft: "auto",
-              padding: "7px 13px", borderRadius: 8, cursor: "pointer",
-              fontSize: 13, fontWeight: 500,
-              border: `1px solid ${C.line2}`, background: "transparent", color: C.dim,
-            }}>
-              <Search size={15} strokeWidth={1.6} />Search
-              <span style={{ ...mono, fontSize: 10, color: C.faint, border: `1px solid ${C.line}`,
-                borderRadius: 4, padding: "1px 5px" }}>⌘K</span>
-            </button>
+      {/* ── Desktop: left navigation rail (the Bloomberg-launchpad pattern —
+             every destination one glance away, content gets the full width) */}
+      {railVisible && (
+        <aside style={{
+          position: "fixed", left: 0, top: 0, bottom: 0, width: 216, zIndex: 110,
+          display: "flex", flexDirection: "column", boxSizing: "border-box",
+          padding: "18px 12px 14px", borderRight: `1px solid ${C.line}`,
+          background: "rgba(8,13,26,0.78)", backdropFilter: "blur(16px)",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 9, padding: "2px 8px 14px" }}>
+            <TrendingUp size={20} color={C.gold} strokeWidth={1.8} />
+            <span style={{ ...serif, fontSize: 18, fontWeight: 600, color: C.text }}>Equity Terminal</span>
+          </div>
 
-            {!user ? (
-              <button onClick={() => setAuthOpen(true)} style={{
-                ...sans, display: "flex", alignItems: "center", gap: 7,
-                padding: "7px 13px", borderRadius: 8, cursor: "pointer",
-                fontSize: 13, fontWeight: 500,
-                border: `1px solid ${C.gold}55`, background: C.gold + "0d", color: C.gold,
+          <button onClick={() => setPaletteOpen(true)} title="Search companies (⌘K)" style={{
+            ...sans, display: "flex", alignItems: "center", gap: 8,
+            padding: "8px 12px", borderRadius: 9, cursor: "pointer", fontSize: 12.5,
+            border: `1px solid ${C.line2}`, background: C.bg900, color: C.dim, marginBottom: 12,
+          }}>
+            <Search size={14} strokeWidth={1.6} />Search
+            <span style={{ ...mono, fontSize: 10, color: C.faint, border: `1px solid ${C.line}`,
+              borderRadius: 4, padding: "1px 5px", marginLeft: "auto" }}>⌘K</span>
+          </button>
+
+          <nav style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 2 }}>
+            {NAV.map(({ id, label, icon: Icon }) => (
+              <button key={id} onClick={() => setView(id)} style={{
+                ...sans, display: "flex", alignItems: "center", gap: 10, position: "relative",
+                padding: "9px 12px", borderRadius: 9, cursor: "pointer",
+                fontSize: 13, fontWeight: 500, textAlign: "left", border: "none",
+                background: view === id ? C.gold + "14" : "transparent",
+                color: view === id ? C.gold : C.dim,
+                boxShadow: view === id ? `inset 2px 0 0 ${C.gold}` : "none",
               }}>
-                <LogIn size={15} strokeWidth={1.6} />Sign in
-              </button>
-            ) : (
-              <div style={{ position: "relative" }}>
-                <button onClick={() => setUserMenu(m => !m)} style={{
-                  ...sans, display: "flex", alignItems: "center", gap: 8,
-                  padding: "4px 10px 4px 4px", borderRadius: 99, cursor: "pointer",
-                  fontSize: 13, fontWeight: 500,
-                  border: `1px solid ${C.line2}`, background: "transparent", color: C.text200,
-                }}>
-                  <span style={{
-                    ...serif, width: 26, height: 26, borderRadius: "50%",
-                    display: "inline-flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 14, color: C.gold, background: C.bg800,
-                    border: `1px solid ${C.gold}88`, boxShadow: `0 0 0 1px ${C.gold}22`,
-                  }}>
-                    {(user.name || user.email || "?").trim().charAt(0).toUpperCase()}
-                  </span>
-                  {user.name || user.email}
-                  <ChevronDown size={13} color={C.dim} />
-                </button>
-                {userMenu && (
-                  <>
-                    <div onClick={() => setUserMenu(false)} style={{ position: "fixed", inset: 0, zIndex: 150 }} />
-                    <div className="fadein" style={{
-                      position: "absolute", top: "calc(100% + 8px)", right: 0, zIndex: 160,
-                      minWidth: 220, background: C.bg900, border: `1px solid ${C.line2}`,
-                      borderRadius: 10, boxShadow: "0 16px 48px rgba(0,0,0,0.55)", overflow: "hidden",
-                    }}>
-                      <div style={{ padding: "12px 16px", borderBottom: `1px solid ${C.line}` }}>
-                        {user.name && <div style={{ ...sans, fontSize: 13, fontWeight: 500, color: C.text }}>{user.name}</div>}
-                        <div style={{ ...mono, fontSize: 11, color: C.dim, marginTop: user.name ? 3 : 0 }}>{user.email}</div>
-                      </div>
-                      <button onClick={signOut} style={{
-                        ...sans, display: "flex", alignItems: "center", gap: 8, width: "100%",
-                        padding: "11px 16px", fontSize: 13, fontWeight: 500, textAlign: "left",
-                        background: "transparent", border: "none", cursor: "pointer", color: C.dim,
-                      }}
-                        onMouseEnter={e => { e.currentTarget.style.background = C.bg800; e.currentTarget.style.color = C.text; }}
-                        onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.dim; }}>
-                        <LogOut size={14} strokeWidth={1.6} />Sign out
-                      </button>
-                    </div>
-                  </>
+                <Icon size={16} strokeWidth={1.6} />{label}
+                {id === "watchlist" && watchAlerts > 0 && (
+                  <span style={{ ...sans, fontSize: 10, fontWeight: 700, color: C.bg, background: C.gold,
+                    borderRadius: 99, minWidth: 16, height: 16, padding: "0 4px", display: "inline-flex",
+                    alignItems: "center", justifyContent: "center", marginLeft: "auto" }}>{watchAlerts}</span>
                 )}
-              </div>
+              </button>
+            ))}
+          </nav>
+
+          <div style={{ position: "relative", borderTop: `1px solid ${C.line}`, paddingTop: 10, marginTop: 8 }}>
+            <button onClick={() => setUserMenu(m => !m)} style={{
+              ...sans, display: "flex", alignItems: "center", gap: 9, width: "100%",
+              padding: "7px 8px", borderRadius: 9, cursor: "pointer",
+              fontSize: 12.5, fontWeight: 500, border: "none",
+              background: "transparent", color: C.text200, textAlign: "left",
+            }}>
+              <span style={{
+                ...serif, width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
+                display: "inline-flex", alignItems: "center", justifyContent: "center",
+                fontSize: 13, fontWeight: 600, color: C.bg,
+                background: `linear-gradient(135deg, ${C.gold}, ${C.blue})`,
+              }}>
+                {(user.name || user.email || "?").trim().charAt(0).toUpperCase()}
+              </span>
+              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {user.name || user.email}
+              </span>
+              <ChevronDown size={13} color={C.dim} style={{ marginLeft: "auto", flexShrink: 0 }} />
+            </button>
+            {userMenu && (
+              <>
+                <div onClick={() => setUserMenu(false)} style={{ position: "fixed", inset: 0, zIndex: 150 }} />
+                <div className="fadein" style={{
+                  position: "absolute", bottom: "calc(100% + 8px)", left: 0, right: 0, zIndex: 160,
+                  background: C.bg900, border: `1px solid ${C.line2}`,
+                  borderRadius: 10, boxShadow: "0 16px 48px rgba(0,0,0,0.55)", overflow: "hidden",
+                }}>
+                  <div style={{ padding: "12px 14px", borderBottom: `1px solid ${C.line}` }}>
+                    {user.name && <div style={{ ...sans, fontSize: 13, fontWeight: 500, color: C.text }}>{user.name}</div>}
+                    <div style={{ ...mono, fontSize: 10.5, color: C.dim, marginTop: user.name ? 3 : 0, overflowWrap: "anywhere" }}>{user.email}</div>
+                  </div>
+                  <button onClick={signOut} style={{
+                    ...sans, display: "flex", alignItems: "center", gap: 8, width: "100%",
+                    padding: "11px 14px", fontSize: 13, fontWeight: 500, textAlign: "left",
+                    background: "transparent", border: "none", cursor: "pointer", color: C.dim,
+                  }}
+                    onMouseEnter={e => { e.currentTarget.style.background = C.bg800; e.currentTarget.style.color = C.text; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.dim; }}>
+                    <LogOut size={14} strokeWidth={1.6} />Sign out
+                  </button>
+                </div>
+              </>
             )}
-          </header>
-        )}
+          </div>
+        </aside>
+      )}
+
+      {/* ── Mobile: slim top bar (nav lives in the bottom tab bar) */}
+      {isMobile && view !== "company" && (
+        <header style={{
+          display: "flex", alignItems: "center", gap: 10,
+          padding: "13px 16px", borderBottom: `1px solid ${C.line}`,
+        }}>
+          <TrendingUp size={19} color={C.gold} strokeWidth={1.8} />
+          <span style={{ ...serif, fontSize: 18, fontWeight: 600, color: C.text }}>Equity Terminal</span>
+          <button onClick={() => setPaletteOpen(true)} aria-label="Search" style={{
+            marginLeft: "auto", display: "flex", padding: 8, borderRadius: 9, cursor: "pointer",
+            border: `1px solid ${C.line2}`, background: "transparent",
+          }}>
+            <Search size={16} color={C.dim} strokeWidth={1.6} />
+          </button>
+          <button onClick={signOut} title="Sign out" style={{
+            display: "flex", padding: 8, borderRadius: 9, cursor: "pointer",
+            border: `1px solid ${C.line2}`, background: "transparent",
+          }}>
+            <LogOut size={16} color={C.dim} strokeWidth={1.6} />
+          </button>
+        </header>
+      )}
+
+      <main style={{ marginLeft: railVisible ? 216 : 0 }}>
+        <div style={{ maxWidth: 1360, margin: "0 auto" }}>
 
         {view === "dashboard" && (
           <MarketDashboard API={API} companies={companies} onOpen={open} />
@@ -444,7 +464,8 @@ export default function App() {
             />
           )}
         </Suspense>
-      </div>
+        </div>
+      </main>
 
       {isMobile && view !== "company" && (
         <div style={{
