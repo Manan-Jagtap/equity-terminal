@@ -2969,7 +2969,11 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
         <div style={{ padding:`14px ${PAD}px`, display:"grid", gridTemplateColumns: isMobile ? "repeat(3,1fr)" : "repeat(11,1fr)", gap: isMobile ? 14 : 8, rowGap: isMobile ? 16 : 8 }}>
           {[
             { l:"Market Cap",       v:"₹"+fmtCr(mcap)               },
-            { l:"Enterprise Value", v:mktData.evCr ? "₹"+fmtCr(mktData.evCr) : (evLive!=null?"₹"+fmtCr(evLive):"—") },
+            // EV is meaningless for a lender (debt is raw material, not financing)
+            // — financials show book value per share instead, computable for all.
+            co.type === "financial"
+              ? { l:"Book Value / sh", v:(co.equity && co.shares) ? inrOrDash(co.equity / co.shares, 0) : "—" }
+              : { l:"Enterprise Value", v:mktData.evCr ? "₹"+fmtCr(mktData.evCr) : (evLive!=null?"₹"+fmtCr(evLive):"—") },
             { l:"P / E (TTM)",      v:sm?.pe!=null?multiple(sm.pe,2):multiple(rec.f.pe, 2)         },
             { l:"P / B",            v:sm?.pb!=null?multiple(sm.pb,2):multiple(rec.f.pb, 2)         },
             { l:"ROE",              v:sm?.roe_ttm!=null?fmtPa(sm.roe_ttm):(rec.f.roe!=null?fmtPa(rec.f.roe*100):"—"), accent:C.green },
