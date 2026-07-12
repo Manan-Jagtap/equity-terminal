@@ -1228,6 +1228,41 @@ function RatiosTab({ co, API, liveMetrics }) {
                              periods={ratios.periods.slice(-5)}
                              metrics={Object.fromEntries(Object.entries(ratios.metrics || {}).map(([k, v]) => [k, (v || []).slice(-5)]))}
                              order={ratios.order} kind="annual" />
+      ) : (insights?.ratios && Object.keys(insights.ratios).length > 0) ? (
+        // Fallback: the same operating ratios live in the insights blob for
+        // nearly all 500 (metric → {"Mar YYYY": value}) — wiring audit #4.
+        (() => {
+          const src = insights.ratios;
+          const periods = [...new Set(Object.values(src).flatMap(o => Object.keys(o || {})))]
+            .sort((a, b) => (a.split(" ")[1] || 0) - (b.split(" ")[1] || 0)).slice(-5);
+          return (
+            <Card noPad style={{ overflow:"hidden" }}>
+              <div style={{ padding:"14px 18px 0" }}>
+                <SectionLabel accent="OPERATING RATIOS · REPORTED">RATIOS</SectionLabel>
+              </div>
+              <div style={{ overflowX:"auto" }}>
+                <table style={{ width:"100%", borderCollapse:"collapse", minWidth:420 }}>
+                  <thead><tr>
+                    <th style={{ ...sans, textAlign:"left", fontSize:10, color:C.dim, textTransform:"uppercase", letterSpacing:"0.08em", padding:"8px 18px" }}>Metric</th>
+                    {periods.map(p => <th key={p} style={{ ...sans, textAlign:"right", fontSize:10, color:C.dim, padding:"8px 12px", whiteSpace:"nowrap" }}>{p}</th>)}
+                  </tr></thead>
+                  <tbody>
+                    {Object.entries(src).map(([metric, vals]) => (
+                      <tr key={metric} style={{ borderTop:`1px solid ${C.line}` }}>
+                        <td style={{ ...sans, fontSize:12.5, color:C.text200, padding:"7px 18px" }}>{metric}</td>
+                        {periods.map(p => (
+                          <td key={p} style={{ ...mono, fontSize:12, color:C.text, textAlign:"right", padding:"7px 12px" }}>
+                            {vals?.[p] == null ? "—" : Number(vals[p]).toLocaleString("en-IN", { maximumFractionDigits: 1 })}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          );
+        })()
       ) : null}
 
       {/* Growth & returns — styled to match the financials / operating tables */}
@@ -1534,8 +1569,18 @@ function PeersTab({ co, cd, allCompanies, API }) {
 
   if (iaData === undefined)
     return <div style={{ padding: 40, textAlign: "center", ...sans, color: C.dim, fontSize: 13 }}>Loading peers…</div>;
-  if (iaData?.peers && iaData.peers.length)
-    return <IndianApiPeers co={co} peers={iaData.peers} selfMetrics={iaData.self_metrics} universe={universe} />;
+  if (iaData?.peers && iaData.peers.length) {
+    // Hero-row fallback: the peer table showed "—" for the company's own
+    // net margin / div yield / rating while every peer had values (audit #7).
+    const own = (universe || []).find(u => (u.ticker || "").toUpperCase() === (co.ticker || "").toUpperCase());
+    const npmComputed = (co.netProfit != null && co.revenue) ? (co.netProfit / co.revenue) * 100 : null;
+    const base = iaData.self_metrics || {};
+    const selfM = { ...(own || {}), ...base,
+                    npm_ttm: base.npm_ttm ?? own?.npm_ttm ?? npmComputed,
+                    div_yield: base.div_yield ?? own?.div_yield ?? null,
+                    rating: base.rating ?? own?.rating ?? null };
+    return <IndianApiPeers co={co} peers={iaData.peers} selfMetrics={selfM} universe={universe} />;
+  }
 
   // Fallback: curated seed (e.g. Muthoot) → screener-universe comparison.
   const peers = cd?.peers;
