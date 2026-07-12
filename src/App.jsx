@@ -26,6 +26,7 @@ const Ownership   = lazy(() => import("./components/Ownership.jsx"));
 const Operations  = lazy(() => import("./components/Operations.jsx"));
 const TrackRecord = lazy(() => import("./components/TrackRecord.jsx"));
 const Sectors     = lazy(() => import("./components/Sectors.jsx"));
+const FundManager = lazy(() => import("./components/FundManager.jsx"));
 const Portfolio   = lazy(() => import("./components/Portfolio.jsx"));
 const Ideas       = lazy(() => import("./components/Ideas.jsx"));
 
@@ -292,6 +293,7 @@ export default function App() {
     { id: "operations", label: "Operations", icon: Gauge },
     { id: "sectors",   label: "Sectors",   icon: Layers },
     { id: "portfolio", label: "Portfolio", icon: Briefcase },
+    { id: "manager",   label: "Fund Manager", icon: Sparkles },
     { id: "track",     label: "Track Record", icon: History },
   ];
   const railVisible = !isMobile && view !== "company";
@@ -473,6 +475,9 @@ export default function App() {
           )}
           {view === "portfolio" && (
             <Portfolio API={API} onOpen={open} user={user} requestAuth={requestAuth} />
+          )}
+          {view === "manager" && (
+            <FundManager API={API} onOpen={open} user={user} requestAuth={requestAuth} />
           )}
           {view === "ideas" && (
             <Ideas API={API} onOpen={open} />
