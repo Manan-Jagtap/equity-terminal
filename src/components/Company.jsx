@@ -617,7 +617,7 @@ function OverviewTab({ co, rec, cd, priceData, profile }) {
 
         {cd?.guidance && (
           <Card>
-            <SectionLabel accent="MANAGEMENT · FY27">GUIDANCE</SectionLabel>
+            <SectionLabel accent="MANAGEMENT · FROM LATEST CONCALL">GUIDANCE</SectionLabel>
             {Object.entries(cd.guidance).map(([k, v]) => <KV key={k} label={k} value={v} />)}
           </Card>
         )}
@@ -1099,7 +1099,7 @@ function FinancialsTab({ co, cd, liveFinancials, API }) {
     if (cd?.pnl) {
       return (
         <div style={{ display:"flex", flexDirection:"column", gap:24 }}>
-          <FinTable title="Income Statement" accent="CONSOLIDATED · FY22 — FY27E" rows={cd.pnl.rows} years={cd.pnl.years} />
+          <FinTable title="Income Statement" accent={`CONSOLIDATED · ${cd.pnl.years[0]} — ${cd.pnl.years[cd.pnl.years.length - 1]}`} rows={cd.pnl.rows} years={cd.pnl.years} />
           {cd.bs && <FinTable title="Balance Sheet & AUM" accent="CONSOLIDATED · YEAR-END" rows={cd.bs.rows} years={cd.bs.years} />}
         </div>
       );
@@ -1669,12 +1669,13 @@ function PeersTab({ co, cd, allCompanies, API }) {
 }
 
 /* ── News Tab ────────────────────────────────────────────────────── */
-function NewsTab({ co, API, profile }) {
-  const [news, setNews]       = useState(null);
-  const [loading, setLoading] = useState(true);
+function NewsTab({ co, API, profile, preloaded }) {
+  const [news, setNews]       = useState(preloaded || null);
+  const [loading, setLoading] = useState(!preloaded);
   const [error, setError]     = useState(null);
 
   useEffect(() => {
+    if (preloaded) { setNews(preloaded); setLoading(false); setError(null); return; }
     if (!API) { setLoading(false); return; }
     setLoading(true);
     setError(null); // clear any stale error from a previous ticker/fetch
@@ -1682,7 +1683,7 @@ function NewsTab({ co, API, profile }) {
       .then(r => r.json())
       .then(d => { setNews(d); setLoading(false); })
       .catch(e => { setError(e.message); setLoading(false); });
-  }, [co.ticker, API]);
+  }, [co.ticker, API, preloaded]);
 
   const typeColor = t => t === "announcement" ? C.blue : t === "result" ? C.green : C.text200;
   const typeLabel = t => t === "announcement" ? "📋 Announcement" : t === "result" ? "📊 Result" : "📰 News";
@@ -1875,11 +1876,25 @@ function DocsTab({ co, API }) {
   const anns     = docs?.announcements || [];
   const empty    = !loading && concalls.length === 0 && reports.length === 0 && ratings.length === 0 && anns.length === 0;
 
+  // The feed publishes dates at MIXED granularity: "May 2026" (concalls carry
+  // no day), "30 Jun 2026", or relative ages ("1d"). Rendering through Date()
+  // fabricated a day ("1 May 2026") or a year (2001) — show exactly what the
+  // filing gives us, no more.
   const fmtDocDate = d => {
     if (!d) return "—";
-    const dt = new Date(d);
-    if (isNaN(dt.getTime())) return String(d).slice(0, 10);
+    const s = String(d).trim();
+    if (/^[A-Za-z]{3,9}\s+\d{4}$/.test(s)) return s;            // month-year only
+    if (/^\d{1,2}\s+[A-Za-z]{3,9}(\s+\d{4})?$/.test(s)) return s; // already day-month[-year]
+    if (/^\d+\s*(d|h|w|mo|y)$/i.test(s)) return s + " ago";     // relative age
+    const dt = new Date(s);
+    if (isNaN(dt.getTime())) return s.slice(0, 20);
     return dt.toLocaleDateString("en-IN", { day:"numeric", month:"short", year:"numeric" });
+  };
+  // Announcement dates arrive as "6 Jul - one-line summary" — split so the
+  // summary reads as content, not as a truncated date.
+  const annParts = d => {
+    const [when, ...rest] = String(d || "").split(" - ");
+    return [fmtDocDate(when), rest.join(" - ").trim() || null];
   };
 
   const DocLink = ({ href, label }) => href ? (
@@ -1942,6 +1957,7 @@ function DocsTab({ co, API }) {
                 <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
                   <DocLink href={c.transcript} label="Transcript" />
                   <DocLink href={c.ppt}        label="PPT" />
+                  <DocLink href={c.recording}  label="▶ Recording" />
                   <DocLink href={c.summary}    label="Summary" />
                 </div>
               </div>
@@ -1984,17 +2000,21 @@ function DocsTab({ co, API }) {
           <Card>
             <SectionHead title="Announcements" count={anns.length} />
             {anns.length === 0 && <div style={{ ...sans, fontSize:12, color:C.faint }}>No exchange announcements.</div>}
-            {anns.map((a, i) => (
-              <div key={i} style={{ padding:"10px 0", borderTop: i ? `1px solid ${C.line}` : "none" }}>
-                <div style={{ display:"flex", alignItems:"center", gap:10, justifyContent:"space-between" }}>
-                  <div style={{ minWidth:0 }}>
-                    <div style={{ ...sans, fontSize:12, color:C.text, fontWeight:500 }}>{a.title}</div>
-                    <div style={{ ...mono, fontSize:10, color:C.faint, marginTop:2 }}>{fmtDocDate(a.date)}</div>
+            {anns.map((a, i) => {
+              const [when, blurb] = annParts(a.date);
+              return (
+                <div key={i} style={{ padding:"10px 0", borderTop: i ? `1px solid ${C.line}` : "none" }}>
+                  <div style={{ display:"flex", alignItems:"center", gap:10, justifyContent:"space-between" }}>
+                    <div style={{ minWidth:0 }}>
+                      <div style={{ ...sans, fontSize:12, color:C.text, fontWeight:500 }}>{a.title}</div>
+                      <div style={{ ...mono, fontSize:10, color:C.faint, marginTop:2 }}>{when}</div>
+                      {blurb && <div style={{ ...sans, fontSize:11, color:C.dim, marginTop:3, lineHeight:1.45 }}>{blurb}</div>}
+                    </div>
+                    <DocLink href={a.url} label="Open" />
                   </div>
-                  <DocLink href={a.url} label="Open" />
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </Card>
         </div>
       )}
@@ -2580,11 +2600,28 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
       .then(d => { if (d && Array.isArray(d.tickers) && d.tickers.length) setFnoSet(new Set(d.tickers)); })
       .catch(() => {});
   }, [API]);
+  // News is fetched at the page level so the tab itself can be gated: a name
+  // with zero syndicated items gets no News tab at all (an empty tab reads
+  // like a bug). null = not loaded yet → fail OPEN and keep the tab.
+  const [newsData, setNewsData] = useState(null);
+  useEffect(() => {
+    setNewsData(null);
+    if (!API || !co.ticker) return;
+    let dead = false;
+    fetch(`${API}/api/companies/${co.ticker}/news`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (!dead && d) setNewsData(d); })
+      .catch(() => {});
+    return () => { dead = true; };
+  }, [API, co.ticker]);
   const visibleTabs = useMemo(() => {
     const tk = (co.ticker || "").toUpperCase().replace(/-/g, "").replace(/&/g, "");
     const hasFO = !fnoSet || fnoSet.has((co.ticker || "").toUpperCase()) || fnoSet.has(tk);
-    return hasFO ? TABS : TABS.filter(t => t.id !== "options");
-  }, [co.ticker, fnoSet]);
+    let tabs = hasFO ? TABS : TABS.filter(t => t.id !== "options");
+    if (newsData && (newsData.count || 0) === 0 && !(newsData.items || []).length)
+      tabs = tabs.filter(t => t.id !== "news");
+    return tabs;
+  }, [co.ticker, fnoSet, newsData]);
   // Landing on a hidden tab (e.g. Options open, then switching to a cash-only
   // name) would render nothing — snap back to the overview.
   if (!visibleTabs.some(t => t.id === tab)) setTab("overview");
@@ -2628,7 +2665,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
   const liveFeed = useLive(API);
   const livePx = liveFeed.prices?.[(co.ticker || "").toUpperCase()];
   const displayPrice = livePx || price;
-  const mcap = (price && co.shares) ? price * co.shares : (mktData.mcapCr || null);
+  const mcap = (price && co.shares) ? price * co.shares : null; // never the curated snapshot
 
   useEffect(() => {
     if (!API || !co.ticker) return;
@@ -2802,10 +2839,10 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
   const yearRows = hasRealPrices ? priceChartData.slice(-252) : [];
   const hi52 = yearRows.length
     ? Math.max(...yearRows.map(p => p.high ?? p.close).filter(x => x != null))
-    : (mktData.high52 ?? null);
+    : null; // no real prices → show nothing, never a frozen curated value
   const lo52 = yearRows.length
     ? Math.min(...yearRows.map(p => p.low ?? p.close).filter(x => x != null))
-    : (mktData.low52 ?? null);
+    : null;
 
   // Day change vs the last close that ISN'T today's evolving mark — computed
   // from real history instead of a seed constant that froze every non-seeded
@@ -2820,7 +2857,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
   // 30-session average daily traded value, in ₹ crores (audit #9).
   const adv30Cr = (() => {
     const pts = hasRealPrices ? priceChartData.slice(-30).filter(p => p.close && p.volume) : [];
-    if (!pts.length) return mktData.adv30Cr ?? null;
+    if (!pts.length) return null; // frozen curated ADV would masquerade as current
     return pts.reduce((a, p) => a + p.close * p.volume, 0) / pts.length / 1e7;
   })();
 
@@ -2957,7 +2994,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
             // — financials show book value per share instead, computable for all.
             co.type === "financial"
               ? { l:"Book Value / sh", v:(co.equity && co.shares) ? inrOrDash(co.equity / co.shares, 0) : "—" }
-              : { l:"Enterprise Value", v:mktData.evCr ? "₹"+fmtCr(mktData.evCr) : (evLive!=null?"₹"+fmtCr(evLive):"—") },
+              : { l:"Enterprise Value", v:evLive!=null ? "₹"+fmtCr(evLive) : "—" },
             { l:"P / E (TTM)",      v:sm?.pe!=null?multiple(sm.pe,2):multiple(rec.f.pe, 2)         },
             { l:"P / B",            v:sm?.pb!=null?multiple(sm.pb,2):multiple(rec.f.pb, 2)         },
             { l:"ROE",              v:sm?.roe_ttm!=null?fmtPa(sm.roe_ttm):(rec.f.roe!=null?fmtPa(rec.f.roe*100):"—"), accent:C.green },
@@ -3011,7 +3048,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
         {tab==="options"    && <OptionsTab     co={co2} API={API} />}
         {tab==="peers"      && <PeersTab       co={co2} cd={cd} allCompanies={allCompanies} API={API} />}
         {tab==="ownership"  && <OwnershipTab   profile={liveProfile} ownership={liveInsights?.ownership} />}
-        {tab==="news"       && <NewsTab        co={co2} API={API} profile={liveProfile} />}
+        {tab==="news"       && <NewsTab        co={co2} API={API} profile={liveProfile} preloaded={newsData} />}
         {tab==="docs"       && <DocsTab        co={co2} API={API} />}
         {tab==="thesis"     && <AIThesisTab    co={co2} profile={liveProfile} insights={liveInsights} cd={cd} price={price} API={API} onGoTab={setTab} />}
         {tab==="forensics"  && <ForensicsTab   co={co2} API={API} />}

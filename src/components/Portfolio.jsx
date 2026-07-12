@@ -74,11 +74,13 @@ export default function Portfolio({ API, onOpen, user, requestAuth }) {
   const fileRef = useRef(null);
   const [importing, setImporting] = useState(false);
   const [importMsg, setImportMsg] = useState(null);
-  const importCsv = async file => {
-    if (!file || !API) return;
+  const [pasteOpen, setPasteOpen] = useState(false);
+  const [pasteText, setPasteText] = useState("");
+  const importText = async text => {
+    if (!text?.trim() || !API) return;
     setImporting(true); setImportMsg(null);
     try {
-      const { holdings, skipped, error } = parseHoldings(await file.text());
+      const { holdings, skipped, error } = parseHoldings(text);
       if (error) { setImportMsg({ tone: C.red, text: error }); setImporting(false); return; }
       let ok = 0; const uncovered = [];
       for (const h of holdings) {
@@ -94,11 +96,17 @@ export default function Portfolio({ API, onOpen, user, requestAuth }) {
       if (uncovered.length) parts.push(`outside coverage: ${uncovered.join(", ")}`);
       if (skipped.length) parts.push(`${skipped.length} row${skipped.length === 1 ? "" : "s"} unparseable`);
       setImportMsg({ tone: uncovered.length || !ok ? C.gold : C.green, text: parts.join(" · ") });
+      if (ok) { setPasteOpen(false); setPasteText(""); }
       reload();
     } catch {
-      setImportMsg({ tone: C.red, text: "Could not read that file — export the holdings CSV from your broker and retry." });
+      setImportMsg({ tone: C.red, text: "Could not read those holdings — paste rows like \"INFY 100 1450.50\" or your broker's holdings table." });
     }
     setImporting(false);
+  };
+  const importCsv = async file => {
+    if (!file) return;
+    try { await importText(await file.text()); }
+    catch { setImportMsg({ tone: C.red, text: "Could not read that file — copy-paste your holdings instead (Paste holdings button)." }); }
     if (fileRef.current) fileRef.current.value = "";
   };
 
@@ -274,9 +282,49 @@ export default function Portfolio({ API, onOpen, user, requestAuth }) {
           {importing ? <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> : <Upload size={13} />}
           Import broker CSV
         </button>
+        <button type="button" onClick={() => setPasteOpen(v => !v)} disabled={importing}
+          title="Paste your holdings straight from your broker's page or a spreadsheet — no file needed"
+          style={{
+            ...sans, display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 500,
+            padding: "8px 14px", borderRadius: 8, cursor: "pointer",
+            border: `1px solid ${pasteOpen ? C.gold + "66" : C.line2}`,
+            color: pasteOpen ? C.gold : C.text200, background: pasteOpen ? C.gold + "0d" : "transparent",
+          }}>
+          <ChevronRight size={13} style={{ transform: pasteOpen ? "rotate(90deg)" : "none", transition: "transform 160ms" }} />
+          Paste holdings
+        </button>
         {importMsg && <span style={{ ...sans, fontSize: 11.5, color: importMsg.tone }}>{importMsg.text}</span>}
         {err && <span style={{ ...sans, fontSize: 11, color: C.red }}>Could not reach backend: {err}</span>}
       </form>
+
+      {/* Paste-your-holdings panel — the no-upload import path */}
+      {pasteOpen && (
+        <div style={{ border: `1px solid ${C.line}`, borderRadius: 10, background: C.panel,
+                      padding: "14px 16px", marginBottom: 18 }}>
+          <div style={{ ...sans, fontSize: 12, color: C.dim, marginBottom: 8, lineHeight: 1.5 }}>
+            Copy your holdings table from your broker (Zerodha Console, Groww, Upstox…) or a spreadsheet and paste it below —
+            headers optional. Plain lines work too, one holding per line: <span style={{ ...mono, color: C.text200 }}>INFY 100 1450.50</span>
+          </div>
+          <textarea value={pasteText} onChange={e => setPasteText(e.target.value)} rows={6}
+            placeholder={"Symbol\tQty\tAvg price\nINFY\t100\t1450.50\nTCS\t12\t3200"}
+            style={{ ...mono, fontSize: 12, width: "100%", boxSizing: "border-box", resize: "vertical",
+                     background: C.bg900, color: C.text, border: `1px solid ${C.line2}`,
+                     borderRadius: 8, padding: "10px 12px", outline: "none" }} />
+          <div style={{ display: "flex", gap: 10, marginTop: 10, alignItems: "center" }}>
+            <button type="button" disabled={importing || !pasteText.trim()} onClick={() => importText(pasteText)}
+              style={{ ...sans, display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 500,
+                       padding: "8px 14px", borderRadius: 8, cursor: importing ? "wait" : "pointer",
+                       border: `1px solid ${C.gold}66`, color: C.gold, background: C.gold + "0d",
+                       opacity: !pasteText.trim() ? 0.5 : 1 }}>
+              {importing ? <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> : <Plus size={13} />}
+              Import pasted holdings
+            </button>
+            <span style={{ ...sans, fontSize: 10.5, color: C.faint }}>
+              Parsed locally in your browser — nothing is uploaded anywhere until you import.
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Holdings table / empty state */}
       {items.length === 0 ? (

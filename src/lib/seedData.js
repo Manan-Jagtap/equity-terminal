@@ -96,6 +96,14 @@ export function buildFromApi(r) {
     if (r.equity != null)   merged.equity    = r.equity;
     if (r.net_profit != null) merged.netProfit = r.net_profit;
     if (r.net_debt != null) merged.netDebt   = r.net_debt;
+    if (r.revenue != null)  merged.revenue   = r.revenue;
+    // The seeded NBFC block is a snapshot of one quarter's filings — live API
+    // values must win or AUM/GNPA/NIM freeze at the seed vintage forever.
+    if (seed.nbfc) {
+      merged.nbfc = { ...seed.nbfc };
+      for (const k of ["aum", "gnpa", "nnpa", "crar", "nim", "roa"])
+        if (r[k] != null) merged.nbfc[k] = r[k];
+    }
     // Refresh cost-of-capital to the current calibration (seeds predate it) and
     // backfill template_code so every name uses the same engine basis.
     merged.assumptions = { ...(seed.assumptions || {}), rf: 0.069, erp: 0.050 };
