@@ -494,6 +494,7 @@ export default function App() {
               isWatched={watched.has(selected.ticker)}
               onToggleWatch={toggleWatch}
               initialTab={companyTab}
+              onOpenTicker={open}
             />
           )}
         </Suspense>

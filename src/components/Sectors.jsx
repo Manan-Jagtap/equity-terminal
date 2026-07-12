@@ -44,12 +44,15 @@ function VerdictBar({ counts, total }) {
 export default function Sectors({ API, onOpen }) {
   const [rows, setRows]       = useState(null);
   const [loading, setLoading] = useState(true);
+  const [openSector, setOpenSector] = useState(null); // expanded card
 
   useEffect(() => {
     if (!API) { setLoading(false); return; }
     let live = true;
     setLoading(true);
-    fetch(`${API}/api/companies?nifty50=true`).then(r => r.json())
+    // FULL visible universe — this tab aggregated only the Nifty-50 slice
+    // before, silently ignoring 450 covered names.
+    fetch(`${API}/api/companies`).then(r => r.json())
       .then(d => { if (live) { setRows(Array.isArray(d) ? d : (d.items || [])); setLoading(false); } })
       .catch(() => { if (live) { setRows(null); setLoading(false); } });
     return () => { live = false; };
@@ -77,6 +80,7 @@ export default function Sectors({ API, onOpen }) {
         medPb: median(cos.map(c => c.pb)),
         avgMos: avg(cos.map(c => c.mos)),
         counts, cheapest, richest,
+        cos: [...cos].sort((a, b) => (b.mos ?? -Infinity) - (a.mos ?? -Infinity)),
       };
     }).sort((a, b) => (b.avgMos ?? -Infinity) - (a.avgMos ?? -Infinity));
   }, [rows]);
@@ -156,10 +160,17 @@ export default function Sectors({ API, onOpen }) {
       {/* Sector cards */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(310px, 1fr))", gap: 14 }}>
         {sectors.map(s => (
-          <div key={s.name} style={{ border: `1px solid ${C.line}`, borderRadius: 12, background: C.panel, padding: "16px 18px" }}>
-            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 12 }}>
+          <div key={s.name}
+            style={{ border: `1px solid ${openSector === s.name ? C.gold + "55" : C.line}`, borderRadius: 12,
+                     background: C.panel, padding: "16px 18px",
+                     gridColumn: openSector === s.name ? "1 / -1" : undefined }}>
+            <div onClick={() => setOpenSector(v => (v === s.name ? null : s.name))}
+              title={openSector === s.name ? "Collapse" : `Show all ${s.n} ${s.name} names`}
+              style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 12, cursor: "pointer" }}>
               <span style={{ ...serif, fontSize: 19, color: C.text }}>{s.name}</span>
-              <span style={{ ...sans, fontSize: 11, color: C.faint }}>{s.n} {s.n === 1 ? "company" : "companies"}</span>
+              <span style={{ ...sans, fontSize: 11, color: openSector === s.name ? C.gold : C.faint }}>
+                {s.n} {s.n === 1 ? "company" : "companies"} {openSector === s.name ? "▾" : "▸"}
+              </span>
             </div>
 
             <div style={{ display: "flex", gap: 22, marginBottom: 12 }}>
@@ -181,6 +192,27 @@ export default function Sectors({ API, onOpen }) {
               <NameLink co={s.cheapest} label="Cheapest" icon={TrendingUp} tone={C.green} />
               <NameLink co={s.richest}  label="Richest"  icon={TrendingDown} tone={C.red} />
             </div>
+
+            {/* Drilldown: every covered name in the sector, sorted by MoS */}
+            {openSector === s.name && (
+              <div style={{ marginTop: 13, borderTop: `1px solid ${C.line}`, maxHeight: 420, overflowY: "auto" }}>
+                {s.cos.map(c => (
+                  <div key={c.ticker}
+                    onClick={e => { e.stopPropagation(); onOpen && onOpen(c.ticker); }}
+                    onMouseEnter={e => e.currentTarget.style.background = C.bg800}
+                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                    style={{ display: "flex", alignItems: "baseline", gap: 10, padding: "8px 6px",
+                             borderBottom: `1px solid ${C.line}`, cursor: "pointer" }}>
+                    <span style={{ ...mono, fontSize: 11, color: C.gold, flexShrink: 0, minWidth: 92 }}>{c.ticker}</span>
+                    <span style={{ ...sans, fontSize: 12.5, color: C.text200, whiteSpace: "nowrap",
+                                   overflow: "hidden", textOverflow: "ellipsis", flex: 1 }}>{c.name}</span>
+                    <span style={{ ...mono, fontSize: 11.5, color: C.dim, flexShrink: 0 }}>{multiple(c.pe, 1)}</span>
+                    <span style={{ ...mono, fontSize: 11.5, color: mosColor(c.mos), flexShrink: 0, minWidth: 64, textAlign: "right" }}>{signedPct(c.mos)}</span>
+                    {c.verdict && <span style={{ ...sans, fontSize: 10, color: C.dim, flexShrink: 0, minWidth: 66, textAlign: "right" }}>{c.verdict === "TRIM" ? "REDUCE" : c.verdict}</span>}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         ))}
         {sectors.length === 0 && (

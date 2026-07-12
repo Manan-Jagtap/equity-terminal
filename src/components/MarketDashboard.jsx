@@ -96,7 +96,9 @@ export default function MarketDashboard({ API, companies, onOpen }) {
                        background: C.bg900, padding: "12px 14px", cursor: "pointer" }}>
               <div style={{ ...sans, fontSize: 11, color: C.dim, textTransform: "uppercase", letterSpacing: "0.04em", whiteSpace: "nowrap" }}>{ix.name}</div>
               <div style={{ ...mono, fontSize: 18, color: C.text, marginTop: 4 }}>{fmtN(liveFeed.indices?.[ix.name] ?? ix.price)}</div>
-              <div style={{ ...mono, fontSize: 12, color: toneOf(ix.pct), marginTop: 2 }}>{fmtP(ix.pct)} <span style={{ color: C.faint }}>·</span> {ix.net >= 0 ? "+" : ""}{fmtN(ix.net)}</div>
+              {(ix.pct != null || ix.net != null)
+                ? <div style={{ ...mono, fontSize: 12, color: toneOf(ix.pct), marginTop: 2 }}>{fmtP(ix.pct)} <span style={{ color: C.faint }}>·</span> {ix.net >= 0 ? "+" : ""}{fmtN(ix.net)}</div>
+                : <div style={{ ...sans, fontSize: 10.5, color: C.faint, marginTop: 3 }}>tap for full history</div>}
             </div>
           ))}
         </div>

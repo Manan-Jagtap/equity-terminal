@@ -1429,24 +1429,31 @@ function DynamicPeers({ co, allCompanies }) {
 /* ── Peers Tab ───────────────────────────────────────────────────── */
 /* Live peer comparison from IndianAPI — the company's actual named sector
    peers with current market multiples (P/E, P/B, ROE TTM, margins, div yield). */
-function IndianApiPeers({ co, peers, selfMetrics, universe }) {
+function IndianApiPeers({ co, peers, selfMetrics, universe, onOpenTicker }) {
   const f = fundamentals(co);
   const sm = selfMetrics || {};
   const pctR = (n, d = 1) => (n == null || isNaN(n)) ? "—" : Number(n).toFixed(d) + "%";
 
   // Candidate peers: IndianAPI's curated sector peers, PLUS any other company in
   // the same sector from the full universe (consistent multiples). Deduped by name.
-  const curated = (peers || []).map(p => ({
-    key: p.name, name: p.name, price: p.price, pe: p.pe, pb: p.pb,
-    roe: p.roe_ttm, npm: p.npm_ttm, divY: p.div_yield, rating: p.rating, src: "peer",
-  }));
   // Dedup by NORMALISED name so "HCL Technologies" (curated) and "HCL
   // Technologies Ltd." (universe) collapse to one row.
   const norm = s => (s || "").toLowerCase().replace(/\b(ltd|limited|inc|corp|co|company|industries)\b\.?/g, "").replace(/[^a-z0-9]/g, "");
+  // Vendor-curated peers restricted to OUR coverage: the terminal never
+  // comments on names it doesn't cover, and mapping to the universe row
+  // gives each peer a ticker (clickable) instead of a dead label.
+  const uniByName = new Map((universe || []).map(u => [norm(u.name), u]));
+  const curated = (peers || []).flatMap(p => {
+    const u = uniByName.get(norm(p.name));
+    if (!u) return [];
+    return [{ key: u.ticker || p.name, name: u.name || p.name, ticker: u.ticker,
+              price: p.price, pe: p.pe, pb: p.pb,
+              roe: p.roe_ttm, npm: p.npm_ttm, divY: p.div_yield, rating: p.rating, src: "peer" }];
+  });
   const seen = new Set([norm(co.name), ...curated.map(c => norm(c.name))]);
   const extra = (universe || [])
     .filter(u => u.sector && co.sector && u.sector === co.sector && !seen.has(norm(u.name)))
-    .map(u => ({ key: u.ticker || u.name, name: u.name, price: u.price, pe: u.pe, pb: u.pb,
+    .map(u => ({ key: u.ticker || u.name, name: u.name, ticker: u.ticker, price: u.price, pe: u.pe, pb: u.pb,
                  roe: u.roe_ttm, npm: u.npm_ttm, divY: u.div_yield, rating: u.rating, src: "sector" }));
   const candidates = [...curated, ...extra];
 
@@ -1535,7 +1542,15 @@ function IndianApiPeers({ co, peers, selfMetrics, universe }) {
                       <input type="checkbox" checked={on} readOnly style={{ accentColor: C.gold, cursor: "pointer" }} />
                     </td>
                     <td style={{ ...sans, padding: "9px 20px", color: C.text200 }}>
-                      {p.name}{p.src === "sector" && <span style={{ ...sans, fontSize: 9, color: C.faint, marginLeft: 6, textTransform: "uppercase" }}>sector</span>}
+                      <span
+                        onClick={e => { if (onOpenTicker && p.ticker) { e.stopPropagation(); onOpenTicker(p.ticker); } }}
+                        onMouseEnter={e => { if (p.ticker) e.currentTarget.style.color = C.gold; }}
+                        onMouseLeave={e => { e.currentTarget.style.color = ""; }}
+                        title={p.ticker ? `Open ${p.ticker}` : undefined}
+                        style={{ cursor: p.ticker && onOpenTicker ? "pointer" : "inherit" }}>
+                        {p.name}
+                      </span>
+                      {p.src === "sector" && <span style={{ ...sans, fontSize: 9, color: C.faint, marginLeft: 6, textTransform: "uppercase" }}>sector</span>}
                     </td>
                     {cell(p)}
                   </tr>
@@ -1554,7 +1569,7 @@ function IndianApiPeers({ co, peers, selfMetrics, universe }) {
   );
 }
 
-function PeersTab({ co, cd, allCompanies, API }) {
+function PeersTab({ co, cd, allCompanies, API, onOpenTicker }) {
   const [iaData, setIaData] = useState(undefined); // undefined = loading
   const [universe, setUniverse] = useState(null);
   useEffect(() => {
@@ -1580,7 +1595,7 @@ function PeersTab({ co, cd, allCompanies, API }) {
                     npm_ttm: base.npm_ttm ?? own?.npm_ttm ?? npmComputed,
                     div_yield: base.div_yield ?? own?.div_yield ?? null,
                     rating: base.rating ?? own?.rating ?? null };
-    return <IndianApiPeers co={co} peers={iaData.peers} selfMetrics={selfM} universe={universe} />;
+    return <IndianApiPeers co={co} peers={iaData.peers} selfMetrics={selfM} universe={universe} onOpenTicker={onOpenTicker} />;
   }
 
   // Fallback: curated seed (e.g. Muthoot) → screener-universe comparison.
@@ -2570,7 +2585,7 @@ function parseLatestPL(d) {
 }
 
 /* ── Main Company component ──────────────────────────────────────── */
-export default function Company({ co, assumptions, setAssumptions, price, setPrice, onBack, API, allCompanies, histPrices, isWatched, onToggleWatch, initialTab }) {
+export default function Company({ co, assumptions, setAssumptions, price, setPrice, onBack, API, allCompanies, histPrices, isWatched, onToggleWatch, initialTab, onOpenTicker }) {
   const isMobile = useIsMobile();
   const accent = sectorAccent(co.sector);   // each stock wears its sector's hue
   const PAD = isMobile ? 16 : 32;
@@ -3047,7 +3062,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
               price={price} setPrice={setPrice} apiVal={apiVal} /></>}
         {tab==="analyst"    && <AnalystTab     co={co2} API={API} price={price} />}
         {tab==="options"    && <OptionsTab     co={co2} API={API} />}
-        {tab==="peers"      && <PeersTab       co={co2} cd={cd} allCompanies={allCompanies} API={API} />}
+        {tab==="peers"      && <PeersTab       co={co2} cd={cd} allCompanies={allCompanies} API={API} onOpenTicker={onOpenTicker} />}
         {tab==="ownership"  && <OwnershipTab   profile={liveProfile} ownership={liveInsights?.ownership} />}
         {tab==="news"       && <NewsTab        co={co2} API={API} profile={liveProfile} preloaded={newsData} />}
         {tab==="docs"       && <DocsTab        co={co2} API={API} />}
