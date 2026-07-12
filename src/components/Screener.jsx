@@ -10,6 +10,7 @@ import { recommend } from "../lib/recommend.js";
 import { VerdictBadge } from "./primitives.jsx";
 import Logo from "./Logo.jsx";
 import { authFetch, getUser } from "../lib/auth.js";
+import { useLive } from "../lib/live.js";
 
 const confColor = lvl => lvl === "high" ? C.green : lvl === "medium" ? C.gold : C.red;
 
@@ -38,6 +39,7 @@ const sectorBucket = sec => {
 
 export default function Screener({ companies, onOpen, loading, watched, onToggleWatch, API }) {
   const isWatched = t => watched && watched.has(t);
+  const liveFeed = useLive(API);   // near-real-time CMP ticks (shared store)
   const [q, setQ] = useState("");
   const [sort, setSort] = useState("rank");
   const [sf, setSf] = useState("All");
@@ -295,7 +297,7 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
                   </div>
                 </td>
                 <td style={{ ...mono, textAlign: "right", padding: "11px 12px", fontSize: 12 }}>
-                  {inr(r.co.price)} <span style={{ color: C.faint }}>/</span>{" "}
+                  {inr(liveFeed.prices?.[(r.co.ticker || "").toUpperCase()] ?? r.co.price)} <span style={{ color: C.faint }}>/</span>{" "}
                   {r.consensus != null
                     ? <span title="Analyst consensus target — our model has no call on this name" style={{ color: C.dim }}>{inrOrDash(r.consensus)}<span style={{ fontSize: 9, color: C.faint }}> ⌖</span></span>
                     : <span style={{ color: C.gold }}>{inrOrDash(r.iv)}</span>}

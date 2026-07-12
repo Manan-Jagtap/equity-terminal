@@ -15,7 +15,7 @@ import CommandPalette from "./components/CommandPalette.jsx";
 import AuthModal from "./components/AuthModal.jsx";
 import Landing from "./components/Landing.jsx";
 import { fetchWatchlist, saveWatch, removeWatch } from "./lib/watchlist.js";
-import { getUser, me, clearSession } from "./lib/auth.js";
+import { getUser, me, clearSession, authFetch } from "./lib/auth.js";
 
 /* Heavy views are code-split: each loads on first visit. Dashboard and
    Screener stay eager — they are the landing experience. */
@@ -91,6 +91,29 @@ export default function App() {
     setUser(null);
     setUserMenu(false);
   }, []);
+
+  // DPDP right-to-erasure: typed email confirmation, then the backend wipes
+  // the account + every personal row and we drop the local session.
+  const deleteAccount = useCallback(async () => {
+    const email = window.prompt(
+      "This permanently deletes your account, watchlist, portfolio, saved screens and scenarios.\n\nType your account email to confirm:");
+    if (!email) return;
+    try {
+      const r = await authFetch(`${API}/api/auth/account`, {
+        method: "DELETE", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirm_email: email.trim() }),
+      });
+      if (!r.ok) {
+        const d = await r.json().catch(() => ({}));
+        window.alert(d.detail || "Could not delete the account.");
+        return;
+      }
+      clearSession();
+      window.location.reload();
+    } catch {
+      window.alert("Network error — the account was not deleted.");
+    }
+  }, [API]);
 
   // Watchlist membership (set of tickers) + a live alert count for the nav badge.
   const [watched,     setWatched]     = useState(() => new Set());
@@ -377,6 +400,16 @@ export default function App() {
                     onMouseEnter={e => { e.currentTarget.style.background = C.bg800; e.currentTarget.style.color = C.text; }}
                     onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.dim; }}>
                     <LogOut size={14} strokeWidth={1.6} />Sign out
+                  </button>
+                  <button onClick={deleteAccount} style={{
+                    ...sans, display: "flex", alignItems: "center", gap: 8, width: "100%",
+                    padding: "10px 14px", fontSize: 12, textAlign: "left",
+                    background: "transparent", border: "none", cursor: "pointer", color: C.faint,
+                    borderTop: `1px solid ${C.line}`,
+                  }}
+                    onMouseEnter={e => { e.currentTarget.style.color = C.red; }}
+                    onMouseLeave={e => { e.currentTarget.style.color = C.faint; }}>
+                    Delete account…
                   </button>
                 </div>
               </>

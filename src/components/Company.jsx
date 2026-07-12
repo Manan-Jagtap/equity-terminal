@@ -18,6 +18,7 @@ import {
 } from "recharts";
 
 import { C, mono, sans, serif, gridBg, sectorAccent } from "../lib/theme.js";
+import { useLive, liveDotStyle } from "../lib/live.js";
 import { fmt, inr, pct, cr, multiple, inrOrDash, signedPct } from "../lib/formatters.js";
 import { recommend } from "../lib/recommend.js";
 import { fundamentals, isFinancial } from "../lib/valuation.js";
@@ -2666,7 +2667,11 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
 
   // Live market data: prefer cd (seeded companies have real FY26 data)
   const mktData = cd?.market || {};
-  const displayPrice = price;
+  // Near-real-time tick from the shared /api/live store (15s cadence during
+  // market hours); the prop price is the fallback outside sessions.
+  const liveFeed = useLive(API);
+  const livePx = liveFeed.prices?.[(co.ticker || "").toUpperCase()];
+  const displayPrice = livePx || price;
   const mcap = mktData.mcapCr || (price * (co.shares || 40));
 
   useEffect(() => {
@@ -2933,7 +2938,12 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
               </div>
             </div>
             <div style={{ textAlign: isMobile ? "left" : "right" }}>
-              <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.18em", color:C.dim }}>Last Price</div>
+              <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.18em", color:C.dim, display:"flex", alignItems:"center", gap:7, justifyContent: isMobile ? "flex-start" : "flex-end" }}>
+                {liveFeed.live && livePx != null && (
+                  <span className="blink" style={liveDotStyle(C.green)} title={`Live · ${liveFeed.as_of || ""}`} />
+                )}
+                {liveFeed.live && livePx != null ? "Live Price" : "Last Price"}
+              </div>
               <div style={{ display:"flex", alignItems:"baseline", gap:16, marginTop:4, justifyContent: isMobile ? "flex-start" : "flex-start" }}>
                 <div style={{ ...mono, fontSize: isMobile ? 40 : 56, color:C.text, lineHeight:1, letterSpacing:"-0.02em" }}>{fmtPx(displayPrice)}</div>
                 <div style={{ ...mono, fontSize:14, fontWeight:500, color:chgPct>=0?C.green:C.red }}>

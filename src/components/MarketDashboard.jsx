@@ -6,6 +6,7 @@ import { useEffect, useState, useMemo, lazy, Suspense } from "react";
 import { TrendingUp, TrendingDown, Activity, ArrowUpRight, ArrowDownRight, Loader2, RefreshCw, ShieldCheck, ShieldAlert, ChevronDown } from "lucide-react";
 import { C, mono, sans, serif } from "../lib/theme.js";
 import { useIsMobile } from "../lib/useResponsive.js";
+import { useLive, liveDotStyle } from "../lib/live.js";
 
 // Lazy: keeps recharts out of the eager dashboard bundle — the chart only
 // loads the first time an index card is clicked.
@@ -22,6 +23,7 @@ export default function MarketDashboard({ API, companies, onOpen }) {
   const [loading, setLoading] = useState(true);
   const [tick, setTick] = useState(0);
   const [idxChart, setIdxChart] = useState(null);   // index name whose chart is open
+  const liveFeed = useLive(API);
 
   // Tickers in our universe → clickable through to the company page.
   const known = useMemo(() => new Set((companies || []).map(c => (c.ticker || "").toUpperCase())), [companies]);
@@ -62,7 +64,11 @@ export default function MarketDashboard({ API, companies, onOpen }) {
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
         <h1 style={{ ...serif, fontSize: isMobile ? 26 : 32, color: C.text, margin: 0, fontWeight: 400 }}>Market Overview</h1>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          {data?.as_of && <span style={{ ...mono, fontSize: 11, color: C.dim }}>as of {data.as_of}</span>}
+          {liveFeed.live
+            ? <span style={{ ...mono, fontSize: 11, color: C.green, display: "inline-flex", alignItems: "center", gap: 6 }}>
+                <span className="blink" style={liveDotStyle(C.green)} />LIVE · {liveFeed.as_of}
+              </span>
+            : data?.as_of && <span style={{ ...mono, fontSize: 11, color: C.dim }}>as of {data.as_of}</span>}
           <button onClick={() => setTick(t => t + 1)} title="Refresh"
             style={{ ...sans, display: "flex", alignItems: "center", gap: 6, background: C.bg800, border: `1px solid ${C.line}`, color: C.dim, borderRadius: 7, padding: "5px 10px", fontSize: 12, cursor: "pointer" }}>
             <RefreshCw size={12} style={loading ? { animation: "spin 1s linear infinite" } : undefined} /> Refresh
@@ -89,7 +95,7 @@ export default function MarketDashboard({ API, companies, onOpen }) {
               style={{ flex: "0 0 auto", minWidth: 150, border: `1px solid ${C.line}`, borderRadius: 10,
                        background: C.bg900, padding: "12px 14px", cursor: "pointer" }}>
               <div style={{ ...sans, fontSize: 11, color: C.dim, textTransform: "uppercase", letterSpacing: "0.04em", whiteSpace: "nowrap" }}>{ix.name}</div>
-              <div style={{ ...mono, fontSize: 18, color: C.text, marginTop: 4 }}>{fmtN(ix.price)}</div>
+              <div style={{ ...mono, fontSize: 18, color: C.text, marginTop: 4 }}>{fmtN(liveFeed.indices?.[ix.name] ?? ix.price)}</div>
               <div style={{ ...mono, fontSize: 12, color: toneOf(ix.pct), marginTop: 2 }}>{fmtP(ix.pct)} <span style={{ color: C.faint }}>·</span> {ix.net >= 0 ? "+" : ""}{fmtN(ix.net)}</div>
             </div>
           ))}
