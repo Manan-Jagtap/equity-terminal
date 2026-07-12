@@ -97,11 +97,18 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
   const [importMsg, setImportMsg] = useState(null);
   const [pasteOpen, setPasteOpen] = useState(false);
   const [pasteText, setPasteText] = useState("");
-  const importText = async text => {
-    if (!text?.trim() || !API) return;
+  const [pendingImport, setPendingImport] = useState(null);
+  const commitPending = async mode => {
+    const p = pendingImport;
+    setPendingImport(null);
+    if (p) await importText(null, { mode, staged: p });
+  };
+  const importText = async (text, opts = {}) => {
+    if (!API) return;
+    if (!opts.staged && !text?.trim()) return;
     setImporting(true); setImportMsg(null);
     try {
-      const parsed = parseHoldings(text);
+      const parsed = opts.staged || parseHoldings(text);
       const { skipped, error } = parsed;
       let holdings = parsed.holdings;
       if (error) { setImportMsg({ tone: C.red, text: error }); setImporting(false); return; }
@@ -148,6 +155,18 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
           const t = (h.isin && maps.map?.[h.isin]) || (h.label && resolveName(h.label)) || null;
           return t ? { ...h, ticker: t } : h;
         });
+      }
+      // A bulk import into an EXISTING book needs an explicit decision:
+      // replace the book or merge into it. Stage and ask.
+      if (items.length > 0 && holdings.filter(h => h.ticker).length >= 3 && !opts.mode) {
+        setPendingImport({ holdings, skipped });
+        setImporting(false);
+        return;
+      }
+      if (opts.mode === "replace") {
+        for (const it of items) {
+          try { await authFetch(`${API}/api/portfolio/${it.id}`, { method: "DELETE" }); } catch { /* keep going */ }
+        }
       }
       let ok = 0; const uncovered = [];
       const post = h => authFetch(`${API}/api/portfolio`, {
@@ -246,6 +265,9 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
             sub: totals.total_pnl_pct != null ? pctNum(totals.total_pnl_pct) + " incl. div" : null,
             col: pnlColor(totals.total_pnl) },
           { l: "Weighted MoS", v: totals.weighted_mos != null ? signedPct(totals.weighted_mos) : "—", col: pnlColor(totals.weighted_mos) },
+          { l: "XIRR", v: totals.xirr != null ? pctNum(totals.xirr) : "—",
+            sub: totals.xirr != null ? "annualised, incl. dividends" : "needs purchase dates",
+            col: pnlColor(totals.xirr) },
           { l: "Holdings", v: String(items.length), col: C.text },
         ].map(s => (
           <div key={s.l} style={{ background: C.panel2, border: `1px solid ${C.line}`, borderRadius: 10, padding: "13px 16px" }}>
@@ -427,7 +449,38 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
         {err && <span style={{ ...sans, fontSize: 11, color: C.red }}>Could not reach backend: {err}</span>}
       </form>
 
-      {/* Paste-your-holdings panel — the no-upload import path */}
+      {pendingImport && (
+        <div style={{ border: `1px solid ${C.gold}55`, borderRadius: 10, background: C.panel,
+                      padding: "14px 16px", marginBottom: 18 }}>
+          <div style={{ ...sans, fontSize: 13, color: C.text, marginBottom: 4 }}>
+            This import has {pendingImport.holdings.filter(h => h.ticker || h.isin || h.label).length} holdings —
+            and your book already has {items.length}.
+          </div>
+          <div style={{ ...sans, fontSize: 11.5, color: C.dim, marginBottom: 10, lineHeight: 1.5 }}>
+            <b style={{ color: C.text200 }}>Replace</b> clears the current book first (clean slate, exactly what the file says).{" "}
+            <b style={{ color: C.text200 }}>Merge</b> keeps existing positions and updates any ticker the file also contains.
+          </div>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <button type="button" onClick={() => commitPending("replace")} style={{
+              ...sans, fontSize: 12, fontWeight: 600, padding: "8px 14px", borderRadius: 8, cursor: "pointer",
+              border: `1px solid ${C.red}66`, color: C.red, background: C.red + "0d" }}>
+              Replace book
+            </button>
+            <button type="button" onClick={() => commitPending("merge")} style={{
+              ...sans, fontSize: 12, fontWeight: 600, padding: "8px 14px", borderRadius: 8, cursor: "pointer",
+              border: `1px solid ${C.green}66`, color: C.green, background: C.green + "0d" }}>
+              Merge into book
+            </button>
+            <button type="button" onClick={() => setPendingImport(null)} style={{
+              ...sans, fontSize: 12, padding: "8px 14px", borderRadius: 8, cursor: "pointer",
+              border: `1px solid ${C.line2}`, color: C.dim, background: "transparent" }}>
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+            {/* Paste-your-holdings panel — the no-upload import path */}
       {pasteOpen && (
         <div style={{ border: `1px solid ${C.line}`, borderRadius: 10, background: C.panel,
                       padding: "14px 16px", marginBottom: 18 }}>
@@ -480,6 +533,7 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
                 <th style={{ ...th, textAlign: "right" }}>LTP</th>
                 <th style={{ ...th, textAlign: "right" }}>Value</th>
                 <th style={{ ...th, textAlign: "right" }}>P&amp;L</th>
+                <th style={{ ...th, textAlign: "right" }} title="Annualised money-weighted return over the actual holding period, dividends included">XIRR</th>
                 <th style={{ ...th, textAlign: "right" }}>Div</th>
                 <th style={{ ...th, textAlign: "right" }}>Weight</th>
                 <th style={{ ...th, textAlign: "right" }}>MoS</th>
@@ -540,6 +594,10 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
                   <td style={{ ...td, textAlign: "right", color: pnlColor(h.pnl) }}>
                     {h.pnl != null ? (h.pnl >= 0 ? "+" : "−") + inr(Math.abs(h.pnl)) : "—"}
                     <span style={{ color: pnlColor(h.pnl), opacity: 0.85 }}> ({pctNum(h.pnl_pct)})</span>
+                  </td>
+                  <td style={{ ...td, textAlign: "right", color: pnlColor(h.xirr) }}
+                      title={h.xirr == null ? "Needs ≥7 days of holding and a purchase date" : "annualised, incl. dividends"}>
+                    {h.xirr != null ? pctNum(h.xirr) : "—"}
                   </td>
                   <td style={{ ...td, textAlign: "right", color: h.div_income ? C.green : C.faint }}
                       title={h.div_income ? "dividends received since added" : "no dividends recorded"}>
