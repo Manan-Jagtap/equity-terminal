@@ -19,6 +19,9 @@ const pctPlain = (v, d = 1) => v == null || !isFinite(v) ? "—" : (Number(v) * 
 
 export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse }) {
   const [data, setData]       = useState(null);
+  // Declared BEFORE the effects that list it as a dependency — a later
+  // declaration is a temporal-dead-zone crash on first render.
+  const [showAnalysis, setShowAnalysis] = useState(false); // Analyse toggle
   const [loading, setLoading] = useState(true);
   const [err, setErr]         = useState(null);
 
@@ -93,7 +96,6 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
   const [importing, setImporting] = useState(false);
   const [importMsg, setImportMsg] = useState(null);
   const [pasteOpen, setPasteOpen] = useState(false);
-  const [showAnalysis, setShowAnalysis] = useState(false); // Analyse button toggle
   const [pasteText, setPasteText] = useState("");
   const importText = async text => {
     if (!text?.trim() || !API) return;
