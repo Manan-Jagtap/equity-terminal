@@ -40,25 +40,28 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
   }, [API, user]);
   useEffect(() => { reload(); }, [reload]);
 
-  // Factor / risk X-ray (loads alongside; refreshes when holdings change).
+  // Factor / risk X-ray — fetched only while the Analyse panel is open.
   useEffect(() => {
-    if (!API || !user) { setXray(null); return; }
+    if (!API || !user || !showAnalysis) return;
+    let dead = false;
     authFetch(`${API}/api/portfolio/xray`)
-      .then(r => (r.ok ? r.json() : null)).then(setXray).catch(() => setXray(null));
-  }, [API, user, data]);
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (!dead) setXray(d); }).catch(() => { if (!dead) setXray(null); });
+    return () => { dead = true; };
+  }, [API, user, data, showAnalysis]);
   // Allocation / LTCG / strategist analysis (same cadence). No synchronous
   // clear needed: the render gate (`analysis && items.length`) hides it the
   // moment holdings reset.
   const [analysis, setAnalysis] = useState(null);
   useEffect(() => {
-    if (!API || !user) return;
+    if (!API || !user || !showAnalysis) return;
     let dead = false;
     authFetch(`${API}/api/portfolio/analysis`)
       .then(r => (r.ok ? r.json() : null))
       .then(d => { if (!dead) setAnalysis(d); })
       .catch(() => { if (!dead) setAnalysis(null); });
     return () => { dead = true; };
-  }, [API, user, data]);
+  }, [API, user, data, showAnalysis]);
 
   const add = async e => {
     e.preventDefault();
@@ -90,6 +93,7 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
   const [importing, setImporting] = useState(false);
   const [importMsg, setImportMsg] = useState(null);
   const [pasteOpen, setPasteOpen] = useState(false);
+  const [showAnalysis, setShowAnalysis] = useState(false); // Analyse button toggle
   const [pasteText, setPasteText] = useState("");
   const importText = async text => {
     if (!text?.trim() || !API) return;
@@ -101,23 +105,42 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
       if (error) { setImportMsg({ tone: C.red, text: error }); setImporting(false); return; }
       // Broker exports identify rows by ISIN / display name, not NSE ticker —
       // resolve them against the universe before importing.
+      const norm = n => (n || "").toLowerCase().replace(/&/g, " and ")
+        .replace(/\b(ltd|limited|company|corp|corporation|industries|enterprises|the|and|of|india)\b\.?/g, " ")
+        .split(/[^a-z0-9]+/).filter(Boolean).join(" ");
+      let maps = null;
+      const loadMaps = async () => {
+        if (maps) return maps;
+        try { maps = await fetch(`${API}/api/isin-map`).then(r => r.json()); }
+        catch { maps = { map: {}, names: {} }; }
+        return maps;
+      };
+      const resolveName = label => {
+        const n = norm(label);
+        if (!n || !maps) return null;
+        if (maps.names?.[n]) return maps.names[n];
+        const keys = Object.keys(maps.names || {});
+        // Tier 2: raw prefix, ≥8-char stem — brokers truncate MID-WORD
+        // ("Anand Rathi Weal" → "anand rathi wealth"). Unambiguous only.
+        let hits = keys.filter(k => Math.min(k.length, n.length) >= 8 &&
+          (k.startsWith(n) || n.startsWith(k)));
+        if (hits.length === 1) return maps.names[hits[0]];
+        // Tier 3: ordered token subsequence — brokers DROP middle tokens
+        // ("Aditya Birla Sun AMC" ⊂ "aditya birla sun life amc").
+        const toks = n.split(" ");
+        if (toks.length >= 3) {
+          hits = keys.filter(k => {
+            const kt = k.split(" ");
+            let i = 0;
+            for (const t of kt) if (i < toks.length && (t === toks[i] || t.startsWith(toks[i]))) i++;
+            return i === toks.length;
+          });
+          if (hits.length === 1) return maps.names[hits[0]];
+        }
+        return null;
+      };
       if (holdings.some(h => !h.ticker)) {
-        const norm = n => (n || "").toLowerCase().replace(/&/g, " and ")
-          .replace(/\b(ltd|limited|company|corp|corporation|industries|enterprises|the|and|of|india)\b\.?/g, " ")
-          .split(/[^a-z0-9]+/).filter(Boolean).join(" ");
-        let maps = { map: {}, names: {} };
-        try { maps = await fetch(`${API}/api/isin-map`).then(r => r.json()); } catch { /* best effort */ }
-        const nameKeys = Object.keys(maps.names || {});
-        const resolveName = label => {
-          const n = norm(label);
-          if (!n) return null;
-          if (maps.names?.[n]) return maps.names[n];
-          // brokers truncate ("AU Small Fin. Bank") — word-boundary prefix,
-          // ≥6-char stem, both directions, must be unambiguous.
-          const hits = nameKeys.filter(k => Math.min(k.length, n.length) >= 6 &&
-            (k.startsWith(n + " ") || n.startsWith(k + " ") || k === n));
-          return hits.length === 1 ? maps.names[hits[0]] : null;
-        };
+        await loadMaps();
         holdings = holdings.map(h => {
           if (h.ticker) return h;
           const t = (h.isin && maps.map?.[h.isin]) || (h.label && resolveName(h.label)) || null;
@@ -125,15 +148,22 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
         });
       }
       let ok = 0; const uncovered = [];
+      const post = h => authFetch(`${API}/api/portfolio`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(h),
+      });
       for (const h of holdings) {
         if (!h.ticker) { uncovered.push(h.label || h.isin || "?"); continue; }
         try {
-          const r = await authFetch(`${API}/api/portfolio`, {
-            method: "POST", headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(h),
-          });
-          if (r.ok) ok += 1; else uncovered.push(h.ticker);
-        } catch { uncovered.push(h.ticker); }
+          let r = await post(h);
+          if (!r.ok && r.status === 404) {
+            // The "ticker" may be a single-word display name (Infosys ≠ INFY).
+            await loadMaps();
+            const t2 = resolveName(h.label || h.ticker);
+            if (t2 && t2 !== h.ticker) r = await post({ ...h, ticker: t2 });
+          }
+          if (r.ok) ok += 1; else uncovered.push(h.label || h.ticker);
+        } catch { uncovered.push(h.label || h.ticker); }
       }
       const parts = [`Imported ${ok} holding${ok === 1 ? "" : "s"}`];
       if (uncovered.length) parts.push(`outside coverage: ${uncovered.join(", ")}`);
@@ -225,7 +255,7 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
       </div>
 
       {/* Portfolio X-ray — factor exposure + inverse-vol sizing */}
-      {xray?.xray && xray.xray.n > 0 && (
+      {showAnalysis && xray?.xray && xray.xray.n > 0 && (
         <div style={{ border: `1px solid ${C.line}`, borderRadius: 12, background: C.panel, padding: "16px 18px", marginBottom: 18 }}>
           <div style={{ ...sans, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.1em", color: C.dim, marginBottom: 12, display: "flex", alignItems: "center", gap: 6 }}>
             <Sparkles size={13} color={C.gold} /> Portfolio X-ray · factor &amp; risk
@@ -370,17 +400,16 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
           }}>
           <Sparkles size={13} /> Sync from Dhan
         </button>
-        {onAnalyse && (
-          <button type="button" onClick={onAnalyse}
-            title="Open the Fund Manager's read of this book — PM note, sized actions, levels"
-            style={{
-              ...sans, display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 500,
-              padding: "8px 14px", borderRadius: 8, cursor: "pointer",
-              border: `1px solid ${C.gold}66`, color: C.gold, background: C.gold + "0d",
-            }}>
-            <Sparkles size={13} /> Analyse
-          </button>
-        )}
+        <button type="button" onClick={() => setShowAnalysis(v => !v)}
+          title={showAnalysis ? "Hide the analysis panels" : "Show X-ray, composition and holding-term analysis for this book"}
+          style={{
+            ...sans, display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 500,
+            padding: "8px 14px", borderRadius: 8, cursor: "pointer",
+            border: `1px solid ${C.gold}${showAnalysis ? "" : "66"}`,
+            color: showAnalysis ? C.bg : C.gold, background: showAnalysis ? C.gold : C.gold + "0d",
+          }}>
+          <Sparkles size={13} /> {showAnalysis ? "Hide analysis" : "Analyse"}
+        </button>
         <button type="button" onClick={() => setPasteOpen(v => !v)} disabled={importing}
           title="Paste your holdings straight from your broker's page or a spreadsheet — no file needed"
           style={{
@@ -534,7 +563,7 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
       )}
 
       {/* ── Portfolio Analysis ─────────────────────────────────────────── */}
-      {analysis && items.length > 0 && (
+      {showAnalysis && analysis && items.length > 0 && (
         <div style={{ marginTop: 18, display: "grid", gap: 16 }}>
           <div style={{ border: `1px solid ${C.line}`, borderRadius: 12, background: C.panel, padding: "16px 20px" }}>
             <div style={{ ...sans, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.1em", color: C.dim, marginBottom: 14 }}>
@@ -605,6 +634,12 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
                 <Sparkles size={13} color={C.gold} />
                 <span style={{ ...sans, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.1em", color: C.gold }}>Strategist</span>
                 <span style={{ ...sans, fontSize: 11, color: C.dim }}>mechanical read of your book against the model — you decide</span>
+                {onAnalyse && (
+                  <span onClick={onAnalyse}
+                    style={{ ...sans, fontSize: 11, color: C.gold, cursor: "pointer", marginLeft: "auto" }}>
+                    open the Fund Manager desk →
+                  </span>
+                )}
               </div>
               {(analysis.recommendations || []).map((r, i) => (
                 <div key={i} onClick={() => onOpen && onOpen(r.ticker)}
