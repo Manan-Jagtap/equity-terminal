@@ -694,13 +694,45 @@ function ShareholdingTrendCard({ trend }) {
   );
 }
 
-function OwnershipTab({ profile }) {
+function OwnershipTab({ profile, ownership }) {
   const isMobile = useIsMobile();
   if (!profile) {
     return <div style={{ padding:40, ...sans, color:C.dim, fontSize:13 }}>Loading ownership…</div>;
   }
   const hasAny = profile.shareholding?.length || profile.corporate_actions?.length ||
                  profile.shareholding_trend?.rows?.length || profile.leadership?.length;
+  if (!hasAny && ownership) {
+    // Insights-blob fallback: quarterly shareholding pattern with QoQ deltas.
+    const rows = [["Promoter", ownership.promoter], ["FII", ownership.fii],
+                  ["Mutual Funds", ownership.mf], ["DII", ownership.dii],
+                  ["Institutional", ownership.institutional], ["Public", ownership.public]]
+      .filter(([, v]) => v && v.pct != null);
+    if (rows.length) {
+      return (
+        <div className="fadein" style={{ padding: isMobile ? 16 : 32, maxWidth: 520 }}>
+          <div style={{ border:`1px solid ${C.line}`, borderRadius:12, background:C.panel, padding:"18px 20px" }}>
+            <div style={{ ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.1em", color:C.dim, marginBottom:12 }}>
+              Shareholding Pattern{ownership.as_of ? ` · as of ${ownership.as_of}` : ""}
+            </div>
+            {rows.map(([label, v]) => (
+              <div key={label} style={{ display:"flex", alignItems:"baseline", gap:10, padding:"7px 0", borderTop:`1px solid ${C.line}` }}>
+                <span style={{ ...sans, fontSize:13, color:C.text200, flex:1 }}>{label}</span>
+                <span style={{ ...mono, fontSize:14, color:C.text }}>{v.pct.toFixed(2)}%</span>
+                {v.delta != null && v.delta !== 0 && (
+                  <span style={{ ...mono, fontSize:11, color:v.delta >= 0 ? C.green : C.red, minWidth:64, textAlign:"right" }}>
+                    {v.delta >= 0 ? "+" : ""}{v.delta.toFixed(2)} QoQ
+                  </span>
+                )}
+              </div>
+            ))}
+            <div style={{ ...sans, fontSize:10.5, color:C.faint, marginTop:10 }}>
+              Historical trend, corporate actions and leadership arrive with the detailed profile refresh.
+            </div>
+          </div>
+        </div>
+      );
+    }
+  }
   if (!hasAny) {
     return <div style={{ padding:40, ...sans, color:C.dim, fontSize:13 }}>No ownership data available for this company.</div>;
   }
@@ -1748,7 +1780,7 @@ function NewsTab({ co, API, profile }) {
         <div>
           <div style={{ ...serif, fontSize:22, color:C.text }}>{co.name} — Latest News</div>
           <div style={{ ...sans, fontSize:12, color:C.dim, marginTop:4 }}>
-            {news ? `${news.count} items · Sources: ${(news.sources||[]).join(", ")} · refreshes every 30 min` : "Loading…"}
+            {news ? [`${news.count} items`, (news.sources||[]).length ? `Sources: ${news.sources.join(", ")}` : null, "refreshes every 30 min"].filter(Boolean).join(" · ") : "Loading…"}
           </div>
         </div>
         {news?.count > 0 && (
@@ -1776,7 +1808,7 @@ function NewsTab({ co, API, profile }) {
       {!loading && !error && (!news || news.count === 0) && (
         <Card>
           <div style={{ ...sans, color:C.dim, fontSize:13, padding:40, textAlign:"center" }}>
-            No news found for {co.ticker}. yfinance news coverage varies — well-covered for Nifty 50 companies.
+            No syndicated news for {co.ticker} right now — smaller names get thinner coverage from news wires. Exchange filings and documents live in the Docs tab.
           </div>
         </Card>
       )}
@@ -2865,8 +2897,9 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
               <span style={{ color:C.bg500 }}>/</span>
               <span style={{ ...sans, fontSize:11, color:C.dim, textTransform:"uppercase", letterSpacing:"0.14em" }}>
                 India · {co.type!=="financial" ? "Equity"
-                  : /bank/i.test(co.sector||"") ? "Bank"
-                  : /insur/i.test(co.sector||"") ? "Insurer" : "NBFC"} · <span style={{ color:accent, fontWeight:600 }}>{co.sector}</span>
+                  : co.template_code==="BANK" || /\bbank\b/i.test(co.name||"") ? "Bank"
+                  : co.template_code==="INSURANCE" || /insur/i.test((co.sector||"")+(co.name||"")) ? "Insurer"
+                  : "NBFC"} · <span style={{ color:accent, fontWeight:600 }}>{co.sector}</span>
               </span>
             </div>
             <div style={{ display:"flex", alignItems:"center", gap:12, ...sans, fontSize:12, color:C.dim }}>
@@ -2925,9 +2958,9 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
               <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8, flexWrap:"wrap", ...sans, fontSize:11, letterSpacing:"0.16em", textTransform:"uppercase", color:C.dim }}>
                 <span>NSE: {co.ticker}</span>
                 <span style={{ color:C.bg500 }}>·</span>
-                <span>BSE: {cd?.meta?.bse || "—"}</span>
+                {(liveProfile?.key_facts?.bse_code || cd?.meta?.bse) && <span>BSE: {liveProfile?.key_facts?.bse_code || cd?.meta?.bse}</span>}
                 <span style={{ color:C.bg500 }}>·</span>
-                <span>ISIN: {cd?.meta?.isin || "—"}</span>
+                {(liveProfile?.key_facts?.isin || cd?.meta?.isin) && <span>ISIN: {liveProfile?.key_facts?.isin || cd?.meta?.isin}</span>}
                 <span style={{ color:C.bg500 }}>·</span>
                 <span style={{ color:C.gold }}>{mktData.sebiCap || "Large Cap"}</span>
               </div>
@@ -2956,7 +2989,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
               <div style={{ display:"flex", gap:20, marginTop:8, ...mono, fontSize:11, color:C.dim, justifyContent:"flex-end" }}>
                 <span>52W H {fmtN(hi52, 2)}</span>
                 <span>52W L {fmtN(lo52, 2)}</span>
-                <span>Beta {fmtN(mktData.beta || co.assumptions?.beta, 2)}</span>
+                <span>Beta {fmtN(mktData.beta ?? assumptions?.beta ?? co.assumptions?.beta, 2)}</span>
                 <span>ADV {fmtN(mktData.adv30Cr, 0)} Cr</span>
               </div>
             </div>
@@ -2979,7 +3012,9 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
             { l:"ROE",              v:sm?.roe_ttm!=null?fmtPa(sm.roe_ttm):(rec.f.roe!=null?fmtPa(rec.f.roe*100):"—"), accent:C.green },
             { l:"ROA",              v:roaLive!=null?fmtPa(roaLive*100):(co.nbfc?.roa!=null?fmtPa(co.nbfc.roa*100):"—") },
             { l:"Div Yield",        v:sm?.div_yield!=null?fmtPa(sm.div_yield):"—" },
-            { l:"Promoter Hold",    v:promoterLive!=null?fmtPa(promoterLive):(mktData.promoterPct!=null?fmtPa(mktData.promoterPct):"—"), accent:C.gold },
+            { l:"Promoter Hold",    v:promoterLive!=null?fmtPa(promoterLive)
+                                      :liveInsights?.ownership?.promoter?.pct!=null?fmtPa(liveInsights.ownership.promoter.pct)
+                                      :(mktData.promoterPct!=null?fmtPa(mktData.promoterPct):"—"), accent:C.gold },
             { l:"Fair Value",       v:fairValue!=null?inrOrDash(fairValue,0):"—", accent:C.gold },
             { l:"Upside",           v:fairUpside!=null?signedPct(fairUpside):"—", accent:fairUpside==null?C.dim:fairUpside>=0?C.green:C.red },
             { l:"Verdict",          v:modelVerdict||"—", accent:modelVerdictColor, large:true },
@@ -3020,7 +3055,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
         {tab==="analyst"    && <AnalystTab     co={co2} API={API} price={price} />}
         {tab==="options"    && <OptionsTab     co={co2} API={API} />}
         {tab==="peers"      && <PeersTab       co={co2} cd={cd} allCompanies={allCompanies} API={API} />}
-        {tab==="ownership"  && <OwnershipTab   profile={liveProfile} />}
+        {tab==="ownership"  && <OwnershipTab   profile={liveProfile} ownership={liveInsights?.ownership} />}
         {tab==="news"       && <NewsTab        co={co2} API={API} profile={liveProfile} />}
         {tab==="docs"       && <DocsTab        co={co2} API={API} />}
         {tab==="thesis"     && <AIThesisTab    co={co2} profile={liveProfile} insights={liveInsights} cd={cd} price={price} API={API} onGoTab={setTab} />}
