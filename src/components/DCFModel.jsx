@@ -10,7 +10,7 @@
  * Sections: blended headline + method breakdown · reverse DCF · projection chart
  * · Monte Carlo · sensitivity grid · year-by-year schedule.
  */
-import { useMemo, useState, useRef } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import {
   ComposedChart, BarChart, Bar, Line, XAxis, YAxis,
   CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Cell,
@@ -64,13 +64,22 @@ const liveVerdictOf = (mos) => mos == null ? "—"
   : mos > 0.15 ? "BUY" : mos > 0.05 ? "ACCUMULATE" : mos >= -0.10 ? "HOLD" : mos >= -0.25 ? "REDUCE" : "AVOID";
 
 /* ── Main component ─────────────────────────────────────────────── */
-export default function DCFModel({ co, price, apiVal }) {
+const ENGINE_KEYS = ["risk_free","erp","beta","tax_rate","terminal_growth","fade_years",
+  "rev_growth","ebit_margin","reinvest_rate","debt_weight","cost_debt",
+  "forecast_roe","terminal_roe","payout","_valuation_sector"];
+
+export default function DCFModel({ co, price, apiVal, a, onWork }) {
   const isMobile = useIsMobile();
   const isF = co.type === "financial" || ["NBFC","BANK","INSURANCE"].includes(co.template_code);
 
-  // Base assumption block = the backend's OWN derived drivers (snake_case). The
-  // parent re-keys this component when apiVal arrives, so these seed correctly.
-  const base = apiVal?.assumptions || {};
+  // Base assumption block = the backend's OWN derived drivers (snake_case),
+  // OVERLAID with any engine-dialect keys in the shared `assumptions` state —
+  // that's how a loaded scenario or a shared ?scenario= link actually reaches
+  // the sliders (they were disconnected before: wiring audit #5). The parent
+  // re-keys this component on scenario load, so useState re-seeds.
+  const base = { ...(apiVal?.assumptions || {}),
+                 ...Object.fromEntries(ENGINE_KEYS.filter(k => a?.[k] !== undefined)
+                                                  .map(k => [k, a[k]])) };
   const vs = base._valuation_sector || co.valuation_sector || co.template_code || "MANUFACTURING";
   const sp = engine.params(vs);
 
@@ -102,6 +111,17 @@ export default function DCFModel({ co, price, apiVal }) {
     _valuation_sector: vs,
   };
   const coSnake = useMemo(() => engine.toEngineCo(co, price), [co, price]);
+
+  // Mirror sliders up into the shared assumptions so Save-scenario captures
+  // what the user actually set (guarded: only fires when values change).
+  const workJson = JSON.stringify(aWork);
+  const lastMirror = useRef(null);
+  useEffect(() => {
+    if (onWork && lastMirror.current !== workJson) {
+      lastMirror.current = workJson;
+      onWork(aWork);
+    }
+  }, [workJson]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const eb  = useMemo(() => engine.blended(coSnake, aWork), [coSnake, JSON.stringify(aWork)]);
   const v   = eb.valuation;

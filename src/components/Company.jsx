@@ -803,7 +803,7 @@ function LiveStatementTable({ title, accent, statements, years, stmtKey, order }
   }
   if (!present.size) return null;
   // Only canonical line items, in canonical order. Anything not in `order`
-  // (margin %s, stray yfinance keys) is intentionally excluded so the statement
+  // (margin %s, stray news wires keys) is intentionally excluded so the statement
   // reads cleanly, like a real income statement / balance sheet.
   const items = order.filter(k => present.has(k));
   if (!items.length) return null;
@@ -973,13 +973,64 @@ function QuarterlyResults({ co, API }) {
   }, [co.ticker, API]);
 
   if (loading) return <div style={{ ...sans, color:C.dim, fontSize:13, textAlign:"center", padding:40 }}>Loading quarterly results…</div>;
-  if (!data?.has_data || !(data.quarters || []).length) return (
-    <Card><div style={{ ...sans, color:C.dim, fontSize:13, textAlign:"center", padding:40, lineHeight:1.7 }}>
-      Quarterly results not available yet for <b style={{ color:C.text }}>{co.ticker}</b>.
-    </div></Card>
-  );
+  if (!data?.has_data || !(data.quarters || []).length) return <QuarterlyInsightsFallback co={co} API={API} />;
   return <ScreenerIncomeTable accent={`QUARTERLY RESULTS · LAST ${data.quarters.length} QUARTERS`}
                               periods={data.quarters} metrics={data.metrics} order={data.order} kind="quarterly" growth />;
+}
+
+/* Quarterly fallback — the /quarterly endpoint is empty for most names, but
+   insights.latest_q (same filings feed) carries the latest quarter + TTM P&L
+   for nearly all 500 (wiring audit #3). Two honest columns beat an empty tab. */
+function QuarterlyInsightsFallback({ co, API }) {
+  const [q, setQ] = useState(undefined);          // undefined=loading, null=absent
+  useEffect(() => {
+    let live = true;
+    fetch(`${API}/api/companies/${co.ticker}/insights`)
+      .then(r => r.json())
+      .then(d => { if (live) setQ(d?.latest_q || null); })
+      .catch(() => { if (live) setQ(null); });
+    return () => { live = false; };
+  }, [co.ticker, API]);
+  if (q === undefined) return <div style={{ ...sans, color:C.dim, fontSize:13, textAlign:"center", padding:40 }}>Loading quarterly results…</div>;
+  const rows = [["Sales", "sales"], ["Expenses", "expenses"], ["Operating Profit", "operating_profit"],
+    ["OPM %", "opm"], ["Other Income", "other_income"], ["Interest", "interest"],
+    ["Depreciation", "depreciation"], ["Profit Before Tax", "profit_before_tax"],
+    ["Tax %", "tax_percentage"], ["Net Profit", "net_profit"], ["EPS (₹)", "eps"]];
+  const has = q && (q.quarter || q.ttm);
+  if (!has) return (
+    <Card><div style={{ ...sans, color:C.dim, fontSize:13, textAlign:"center", padding:40, lineHeight:1.7 }}>
+      Quarterly results aren't published in our data feed for <b style={{ color:C.text }}>{co.ticker}</b> yet — they arrive with the weekly refresh after the next results date.
+    </div></Card>
+  );
+  const cell = (blk, key) => {
+    const v = blk?.[key];
+    return v == null ? "—" : ["opm","tax_percentage"].includes(key) ? `${fmtN(v,1)}%`
+         : key === "eps" ? fmtN(v,2) : fmtN(v,0);
+  };
+  return (
+    <Card>
+      <SectionLabel accent="LATEST QUARTER · FROM THE FILINGS FEED">QUARTERLY SNAPSHOT</SectionLabel>
+      <div style={{ overflowX:"auto" }}>
+        <table style={{ width:"100%", borderCollapse:"collapse", minWidth:380 }}>
+          <thead><tr>
+            <th style={{ ...sans, textAlign:"left", fontSize:10, color:C.dim, textTransform:"uppercase", letterSpacing:"0.08em", padding:"8px 10px" }}>₹ Cr</th>
+            <th style={{ ...sans, textAlign:"right", fontSize:10, color:C.gold, textTransform:"uppercase", letterSpacing:"0.08em", padding:"8px 10px" }}>Latest Qtr</th>
+            <th style={{ ...sans, textAlign:"right", fontSize:10, color:C.dim, textTransform:"uppercase", letterSpacing:"0.08em", padding:"8px 10px" }}>TTM</th>
+          </tr></thead>
+          <tbody>
+            {rows.map(([label, key]) => (
+              <tr key={key} style={{ borderTop:`1px solid ${C.line}` }}>
+                <td style={{ ...sans, fontSize:12.5, color:C.text200, padding:"7px 10px" }}>{label}</td>
+                <td style={{ ...mono, fontSize:12.5, color:C.text, textAlign:"right", padding:"7px 10px" }}>{cell(q.quarter, key)}</td>
+                <td style={{ ...mono, fontSize:12.5, color:C.text200, textAlign:"right", padding:"7px 10px" }}>{cell(q.ttm, key)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div style={{ ...sans, fontSize:10.5, color:C.faint, marginTop:8 }}>The full multi-quarter table appears as more quarters accumulate in the feed.</div>
+    </Card>
+  );
 }
 
 /* Annual income statement — last 5 years from /annual_pl, SAME format as
@@ -1255,181 +1306,7 @@ function SliderRow({ label, value, setValue, min, max, step, fmtFn, hint }) {
   );
 }
 
-function DCFTab({ co, a, set, price, setPrice, cd }) {
-  const SCENARIOS = {
-    bear: { growthN:8,  growthFar:5,  terminal:4,   coe:14 },
-    base: { growthN:18, growthFar:11, terminal:5,   coe:13.5 },
-    bull: { growthN:24, growthFar:15, terminal:5.5, coe:12.5 },
-  };
-  const [scenario, setScenario] = useState("base");
-  const sc = SCENARIOS[scenario];
-  const [basePAT,    setBasePAT]    = useState(co.netProfit || 10590);
-  const [growthN,    setGrowthN]    = useState(sc.growthN);
-  const [growthY,    setGrowthY]    = useState(5);
-  const [growthFar,  setGrowthFar]  = useState(sc.growthFar);
-  const [growthFarY, setGrowthFarY] = useState(5);
-  const [terminal,   setTerminal]   = useState(sc.terminal);
-  const [coe,        setCoe]        = useState(sc.coe);
-
-  const shares = co.shares || 40.13;
-  const result = buildDCF({ basePAT, growthN, growthY, growthFar, growthFarY, terminal, coe, shares });
-  const pbValue = (sc.coe > sc.terminal) ? ((growthN / 100) / (coe / 100 - terminal / 100)) * (co.equity || 35600) / shares : 0;
-  const peValue = (basePAT * (1 + growthN / 100) / shares) * 16;
-  const blended = result.perShare * 0.60 + pbValue * 0.25 + peValue * 0.15;
-  const upside = ((blended - price) / price) * 100;
-
-  const coes  = [11.5, 12.5, 13.5, 14.5, 15.5];
-  const terms = [3, 4, 5, 5.5, 6];
-  const sensGrid = coes.map(c => terms.map(t => {
-    if (c / 100 <= t / 100) return 0;
-    const r2 = buildDCF({ basePAT, growthN, growthY, growthFar, growthFarY, terminal: t, coe: c, shares });
-    return Math.round(r2.perShare * 0.60 + pbValue * 0.25 + peValue * 0.15);
-  }));
-
-  return (
-    <div className="fadein" style={{ padding:32 }}>
-      {/* Scenarios */}
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:12, marginBottom:24 }}>
-        {Object.entries(SCENARIOS).map(([id, s]) => (
-          <button key={id} onClick={() => { setScenario(id); setGrowthN(s.growthN); setGrowthFar(s.growthFar); setTerminal(s.terminal); setCoe(s.coe); }} style={{
-            padding:"12px 16px", border:`1px solid ${scenario===id ? C.gold+"99" : C.line2}`,
-            background: scenario===id ? C.gold+"18" : C.bg900+"66",
-            cursor:"pointer", textAlign:"left",
-          }}>
-            <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.18em", color:scenario===id?C.gold:C.dim, marginBottom:4 }}>{id}</div>
-            <div style={{ ...sans, fontSize:13, color:scenario===id?C.text:C.text200 }}>Growth {s.growthN}% → {s.growthFar}%</div>
-            <div style={{ ...sans, fontSize:10, color:C.dim, marginTop:2 }}>CoE {s.coe}% · g∞ {s.terminal}%</div>
-          </button>
-        ))}
-      </div>
-
-      <div style={{ display:"grid", gridTemplateColumns:"280px 1fr", gap:24 }}>
-        {/* INPUTS */}
-        <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
-          <Card>
-            <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.18em", color:C.dim, marginBottom:12 }}>BASE PAT (₹ CR)</div>
-            <input type="number" value={basePAT} onChange={e => setBasePAT(parseFloat(e.target.value)||0)} style={{ ...mono, width:"100%", background:C.bg800, border:`1px solid ${C.line2}`, color:C.text, padding:"8px 10px", fontSize:16, outline:"none", boxSizing:"border-box" }} />
-            <Sep />
-            <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.18em", color:C.dim, marginBottom:10 }}>STAGE 1 — HIGH GROWTH</div>
-            <SliderRow label="Growth Rate"   value={growthN}   setValue={setGrowthN}   min={5}  max={35}  step={0.5} />
-            <SliderRow label="Years"         value={growthY}   setValue={setGrowthY}   min={3}  max={8}   step={1}   fmtFn={v => v+"  yrs"} />
-            <Sep />
-            <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.18em", color:C.dim, marginBottom:10 }}>STAGE 2 — FADE</div>
-            <SliderRow label="Fade Growth"   value={growthFar} setValue={setGrowthFar} min={3}  max={20}  step={0.5} />
-            <SliderRow label="Years"         value={growthFarY}setValue={setGrowthFarY}min={3}  max={8}   step={1}   fmtFn={v => v+"  yrs"} />
-            <Sep />
-            <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.18em", color:C.dim, marginBottom:10 }}>TERMINAL & DISCOUNT</div>
-            <SliderRow label="Terminal Growth" value={terminal} setValue={setTerminal} min={2}  max={7}   step={0.25} hint="India long-run nominal GDP proxy" />
-            <SliderRow label="Cost of Equity"  value={coe}     setValue={setCoe}      min={10} max={18}  step={0.25} hint={`CAPM: Rf 7.1% + β·ERP`} />
-          </Card>
-
-          <Card>
-            <SectionLabel>BLENDED INTRINSIC VALUE</SectionLabel>
-            <KV label="DCF (Stage1+2+TV)"       value={"₹"+fmtN(result.perShare,0)}  />
-            <KV label="Gordon Growth (P/B)"      value={"₹"+fmtN(pbValue,0)}          />
-            <KV label="P/E 16x on next-yr PAT"   value={"₹"+fmtN(peValue,0)}          />
-            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", padding:"12px 0 0" }}>
-              <span style={{ ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.1em", color:C.gold, marginTop:4 }}>Weighted (60/25/15)</span>
-              <span style={{ ...serif, fontSize:28, color:C.gold }}>₹{fmtN(blended,0)}</span>
-            </div>
-            <div style={{ display:"flex", justifyContent:"space-between", marginTop:4 }}>
-              <span style={{ ...sans, fontSize:12, color:C.dim }}>vs CMP ₹{fmtN(price,0)}</span>
-              <span style={{ ...mono, fontSize:13, fontWeight:600, color:upside>=0?C.green:C.red }}>{upside>=0?"▲ +":"▼ "}{fmtN(Math.abs(upside),1)}%</span>
-            </div>
-          </Card>
-        </div>
-
-        {/* RIGHT: charts + sensitivity */}
-        <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
-          {/* Hero */}
-          <Card style={{ position:"relative", overflow:"hidden" }}>
-            <div style={{ position:"absolute", inset:0, ...gridBg, opacity:0.4, pointerEvents:"none" }} />
-            <div style={{ position:"relative", display:"grid", gridTemplateColumns:"1fr auto", gap:32, alignItems:"start" }}>
-              <div>
-                <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.18em", color:C.dim }}>Equity Value · {scenario.toUpperCase()} Case</div>
-                <div style={{ ...serif, fontSize:72, color:C.text, lineHeight:1, marginTop:8 }}>₹{fmtN(blended,0)}</div>
-                <div style={{ ...sans, fontSize:14, marginTop:8, color:upside>=0?C.green:C.red }}>
-                  <span style={{ fontWeight:600 }}>{upside>=0?"+":""}{fmtN(upside,1)}%</span>
-                  <span style={{ color:C.dim, marginLeft:8 }}>margin of safety vs ₹{fmtN(price,0)} CMP</span>
-                </div>
-              </div>
-              <div style={{ minWidth:180 }}>
-                {[["PV Stage 1+2", fmtN(result.sumOpsPV/shares,0)],["PV Terminal",fmtN(result.tvPV/shares,0)],["TV % of Total",fmtPa((result.tvPV/result.equity)*100,1)],["Implied P/E",fmtN(blended/(basePAT*(1+growthN/100)/shares),1)+"x"]].map(([l,v]) => (
-                  <KV key={l} label={l} value={v} />
-                ))}
-              </div>
-            </div>
-          </Card>
-
-          {/* Projection chart */}
-          <Card noPad>
-            <div style={{ padding:"16px 20px 8px" }}>
-              <SectionLabel accent="₹ CRORES · DISCOUNTED">PROJECTED PAT & PRESENT VALUE</SectionLabel>
-            </div>
-            <div style={{ height:240, padding:"0 8px 12px" }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={result.projection} margin={{ top:10, right:20, left:0, bottom:5 }}>
-                  <CartesianGrid strokeDasharray="2 3" stroke="rgba(220,213,193,.08)" vertical={false} />
-                  <XAxis dataKey="year" tick={{ fill:C.dim, fontSize:11 }} axisLine={{ stroke:"rgba(220,213,193,.1)" }} tickLine={false} />
-                  <YAxis tick={{ fill:C.dim, fontSize:11 }} axisLine={false} tickLine={false} tickFormatter={v=>fmtN(v/1000,0)+"k"} />
-                  <Tooltip contentStyle={{ background:C.bg800, border:`1px solid ${C.bg600}`, borderRadius:0 }} formatter={(v,n)=>["₹"+fmtN(v,0)+" Cr",n==="pat"?"Projected PAT":"Present Value"]} />
-                  <Bar dataKey="pat" fill="rgba(212,169,62,.18)" stroke="rgba(212,169,62,.4)" />
-                  <Line type="monotone" dataKey="pv" stroke={C.gold} strokeWidth={2.5} dot={{ fill:C.gold, r:3 }} />
-                  <ReferenceLine x={"Y"+growthY} stroke="rgba(220,213,193,.25)" strokeDasharray="2 4" label={{ value:"Fade", fill:C.dim, fontSize:10, position:"top" }} />
-                </ComposedChart>
-              </ResponsiveContainer>
-            </div>
-          </Card>
-
-          {/* Sensitivity */}
-          <Card noPad>
-            <div style={{ padding:"16px 20px 8px", display:"flex", alignItems:"baseline", justifyContent:"space-between" }}>
-              <div>
-                <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.18em", color:C.dim }}>INTRINSIC VALUE · ₹ / SHARE</div>
-                <div style={{ ...serif, fontSize:22, color:C.text, marginTop:2 }}>Sensitivity — Cost of Equity × Terminal Growth</div>
-              </div>
-            </div>
-            <div style={{ padding:"8px 20px 20px", overflowX:"auto" }}>
-              <table style={{ width:"100%", fontSize:12, borderCollapse:"collapse" }}>
-                <thead>
-                  <tr>
-                    <th style={{ ...sans, textAlign:"left", color:C.dim, fontSize:10, textTransform:"uppercase", paddingBottom:8 }}>CoE ↓ / g∞ →</th>
-                    {terms.map((t,i) => <th key={i} style={{ ...mono, textAlign:"right", color:C.dim, fontSize:10, paddingBottom:8, paddingLeft:8 }}>{t.toFixed(1)}%</th>)}
-                  </tr>
-                </thead>
-                <tbody>
-                  {sensGrid.map((row, i) => (
-                    <tr key={i}>
-                      <td style={{ ...mono, color:C.dim, fontSize:11, paddingRight:12, paddingBottom:6 }}>{coes[i].toFixed(1)}%</td>
-                      {row.map((cell, j) => {
-                        const pct2 = ((cell - price) / price) * 100;
-                        return (
-                          <td key={j} style={{
-                            ...mono, textAlign:"right", fontSize:12, padding:"6px 8px", fontWeight:500,
-                            background: i===2&&j===2 ? C.gold+"33" : pct2>15 ? C.green500+"22" : pct2<-10 ? C.red500+"22" : "transparent",
-                            color: i===2&&j===2 ? C.gold : pct2>15 ? C.green : pct2<-10 ? C.red : C.text200,
-                            outline: i===2&&j===2 ? `1px solid ${C.gold}55` : "none",
-                          }}>₹{fmtN(cell,0)}</td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <div style={{ display:"flex", gap:16, marginTop:12 }}>
-                {[["Upside >15% vs CMP",C.green500+"44"],["Downside >10%",C.red500+"44"],["Base case",C.gold+"44"]].map(([l,c]) => (
-                  <span key={l} style={{ display:"flex", alignItems:"center", gap:6, ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.1em", color:C.dim }}>
-                    <span style={{ width:8, height:8, background:c, display:"inline-block" }} />{l}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </Card>
-        </div>
-      </div>
-    </div>
-  );
-}
+/* DCFTab removed — dead code with hardcoded fallbacks (wiring audit); DCFModel is the live valuation tab. */
 
 /* ── Dynamic peer comparison (consistent basis) ──────────────────────
    Every peer's P/E, P/B, ROE, intrinsic and MoS are computed with the SAME
@@ -1800,7 +1677,7 @@ function NewsTab({ co, API, profile }) {
       {error && !loading && (
         <Card>
           <div style={{ ...sans, color:C.red, fontSize:13 }}>
-            Could not load news: {error}. Ensure the backend is running and CORS is configured.
+            News is temporarily unreachable — it usually recovers on the next refresh.
           </div>
         </Card>
       )}
@@ -1919,7 +1796,7 @@ function ResearchNoteCard({ co, API }) {
       )}
       {!noteBusy && note && note.status === "unavailable" && (
         <div style={{ ...sans, fontSize:12, color:C.dim, marginTop:16, fontStyle:"italic" }}>
-          Set ANTHROPIC_API_KEY on the backend to enable AI research notes
+          AI research notes are being enabled for this account
         </div>
       )}
       {!noteBusy && note && note.status === "error" && (
@@ -1998,7 +1875,7 @@ function DocsTab({ co, API }) {
         <Card>
           <div style={{ ...sans, color:C.dim, fontSize:13, padding:40, textAlign:"center" }}>
             No documents found for {co.ticker} yet. Concalls, annual reports, ratings and announcements
-            appear here once the backend's document ingestion has run for this company.
+            appear here as filings are collected for this company — typically within the weekly refresh.
           </div>
         </Card>
       )}
@@ -2246,7 +2123,8 @@ function AIThesisTab({ co, profile, insights, cd, price, API, onGoTab }) {
           <SectionLabel accent="SOURCE DOCUMENTS">GROUNDED IN FILINGS</SectionLabel>
           <div style={{ ...sans, fontSize:12.5, color:C.text200, lineHeight:1.6 }}>
             {(profile?.concalls?.length || 0) + (profile?.annual_reports?.length || 0) +
-             (profile?.credit_ratings?.length || 0) + (profile?.announcements?.length || 0) || "—"} documents
+             (profile?.credit_ratings?.length || 0) + (profile?.announcements?.length || 0) ||
+             (insights?.documents ? Object.values(insights.documents).reduce((a, l) => a + (l?.length || 0), 0) : 0) || "—"} documents
             back this view — earnings calls, annual reports, ratings and exchange filings.
           </div>
           {onGoTab && (
@@ -2434,7 +2312,7 @@ function ForensicsTab({ co, API }) {
       {/* Pending classic scores */}
       {pending.length > 0 && (
         <Card style={{ gridColumn:"1/-1" }}>
-          <SectionLabel accent="INGESTION EXPANSION IN PROGRESS">CLASSIC SCORES · COMING SOON</SectionLabel>
+          <SectionLabel accent="COVERAGE EXPANDING">CLASSIC SCORES · COMING SOON</SectionLabel>
           <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(240px,1fr))", gap:12 }}>
             {pending.map((p, i) => (
               <div key={i} style={{ display:"flex", alignItems:"flex-start", gap:8 }}>
@@ -2642,6 +2520,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
   const [liveMetrics,    setLiveMetrics]    = useState(null);
   const [liveProfile,    setLiveProfile]    = useState(null);
   const [liveInsights,   setLiveInsights]   = useState(null);
+  const [scnNonce,       setScnNonce]       = useState(0);   // remounts DCF sliders on scenario load
   const [liveStatement,  setLiveStatement]  = useState(null); // real latest-FY operating figures
   const [apiVal,         setApiVal]         = useState(null); // backend INDEPENDENT valuation (authoritative)
 
@@ -2704,7 +2583,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
   const liveFeed = useLive(API);
   const livePx = liveFeed.prices?.[(co.ticker || "").toUpperCase()];
   const displayPrice = livePx || price;
-  const mcap = mktData.mcapCr || (price * (co.shares || 40));
+  const mcap = (price && co.shares) ? price * co.shares : (mktData.mcapCr || null);
 
   useEffect(() => {
     if (!API || !co.ticker) return;
@@ -2872,11 +2751,28 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
   // Never fall back to the synthetic series (which produced Bajaj's impossible
   // 52W High 8,547 while the price was 920).
   const realCloses = hasRealPrices ? priceChartData.map(p => p.close).filter(x => x != null) : [];
-  const hi52 = mktData.high52 ?? (realCloses.length ? Math.max(...realCloses) : null);
-  const lo52 = mktData.low52  ?? (realCloses.length ? Math.min(...realCloses) : null);
+  // TRUE 52-week window (last ~252 sessions) — the old code ranged over the
+  // whole 5-year series while labelling it 52W (wiring audit #6).
+  const yearCloses = realCloses.slice(-252);
+  const hi52 = yearCloses.length ? Math.max(...yearCloses) : (mktData.high52 ?? null);
+  const lo52 = yearCloses.length ? Math.min(...yearCloses) : (mktData.low52 ?? null);
 
-  const chgPct = mktData.chgPct || 0;
-  const chgAmt = mktData.chg    || 0;
+  // Day change vs the last close that ISN'T today's evolving mark — computed
+  // from real history instead of a seed constant that froze every non-seeded
+  // name at "+0.00 / +0.00%" (wiring audit #1).
+  const prevClose = realCloses.length >= 2
+    ? (Math.abs(realCloses[realCloses.length - 1] - displayPrice) < 1e-9
+        ? realCloses[realCloses.length - 2] : realCloses[realCloses.length - 1])
+    : null;
+  const chgAmt = prevClose ? displayPrice - prevClose : 0;
+  const chgPct = prevClose ? (displayPrice / prevClose - 1) * 100 : 0;
+
+  // 30-session average daily traded value, in ₹ crores (audit #9).
+  const adv30Cr = (() => {
+    const pts = hasRealPrices ? priceChartData.slice(-30).filter(p => p.close && p.volume) : [];
+    if (!pts.length) return mktData.adv30Cr ?? null;
+    return pts.reduce((a, p) => a + p.close * p.volume, 0) / pts.length / 1e7;
+  })();
 
   return (
     <div style={{ minHeight:"100vh" }}>
@@ -2962,7 +2858,12 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
                 <span style={{ color:C.bg500 }}>·</span>
                 {(liveProfile?.key_facts?.isin || cd?.meta?.isin) && <span>ISIN: {liveProfile?.key_facts?.isin || cd?.meta?.isin}</span>}
                 <span style={{ color:C.bg500 }}>·</span>
-                <span style={{ color:C.gold }}>{mktData.sebiCap || "Large Cap"}</span>
+                {(() => {
+                  const m = price && co.shares ? price * co.shares : null;
+                  const band = m == null ? mktData.sebiCap
+                    : m >= 67000 ? "Large Cap" : m >= 22000 ? "Mid Cap" : "Small Cap";
+                  return band ? <span style={{ color:C.gold }}>{band}</span> : null;
+                })()}
               </div>
               <div style={{ display:"flex", alignItems:"center", gap:14 }}>
                 <Logo ticker={co.ticker} name={co.name} sector={co.sector} size={isMobile ? 36 : 48} radius={10} />
@@ -2990,7 +2891,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
                 <span>52W H {fmtN(hi52, 2)}</span>
                 <span>52W L {fmtN(lo52, 2)}</span>
                 <span>Beta {fmtN(mktData.beta ?? assumptions?.beta ?? co.assumptions?.beta, 2)}</span>
-                <span>ADV {fmtN(mktData.adv30Cr, 0)} Cr</span>
+                {adv30Cr != null && <span>ADV {fmtN(adv30Cr, 0)} Cr</span>}
               </div>
             </div>
           </div>
@@ -3051,7 +2952,11 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
         {tab==="chart"      && <PriceChart     data={histPrices?.data} intrinsic={fairValue} price={price} ticker={co.ticker} />}
         {tab==="financials" && <FinancialsTab  co={co2} cd={cd} liveFinancials={liveFinancials} API={API} />}
         {tab==="ratios"     && <RatiosTab      co={co2} API={API} liveMetrics={liveMetrics} />}
-        {tab==="dcf"        && <><ScenarioBar API={API} ticker={co.ticker} assumptions={assumptions} setAssumptions={setAssumptions} /><DCFModel key={`dcf-${co.ticker}-${apiVal?.assumptions ? "seeded" : "base"}`} co={co2} a={assumptions} set={set} price={price} setPrice={setPrice} apiVal={apiVal} /></>}
+        {tab==="dcf"        && <><ScenarioBar API={API} ticker={co.ticker} assumptions={assumptions}
+              setAssumptions={d => { setAssumptions(d); setScnNonce(n => n + 1); }} />
+            <DCFModel key={`dcf-${co.ticker}-${apiVal?.assumptions ? "seeded" : "base"}-${scnNonce}`}
+              co={co2} a={assumptions} onWork={aw => setAssumptions(prev => ({ ...(prev || {}), ...aw }))}
+              price={price} setPrice={setPrice} apiVal={apiVal} /></>}
         {tab==="analyst"    && <AnalystTab     co={co2} API={API} price={price} />}
         {tab==="options"    && <OptionsTab     co={co2} API={API} />}
         {tab==="peers"      && <PeersTab       co={co2} cd={cd} allCompanies={allCompanies} API={API} />}
