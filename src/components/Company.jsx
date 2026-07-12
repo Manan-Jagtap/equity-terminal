@@ -2857,8 +2857,12 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
                 </button>
               )}
               <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-                <span className="blink" style={{ width:6, height:6, borderRadius:"50%", background:C.green, display:"inline-block" }} />
-                <span style={{ letterSpacing:"0.1em" }}>LIVE · {cd?.meta?.asOf || new Date().toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})}</span>
+                {liveFeed.live
+                  ? <span className="blink" style={{ width:6, height:6, borderRadius:"50%", background:C.green, display:"inline-block" }} />
+                  : <span style={{ width:6, height:6, borderRadius:"50%", background:C.dim, display:"inline-block" }} />}
+                <span style={{ letterSpacing:"0.1em" }}>
+                  {liveFeed.live ? "LIVE" : "EOD"} · {new Date().toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})}
+                </span>
               </div>
               <span style={{ color:C.bg500 }}>|</span>
               <span title={conf.flags.length ? conf.flags.join("  •  ") : "All core inputs present"}
