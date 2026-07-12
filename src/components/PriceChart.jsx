@@ -76,11 +76,14 @@ export default function PriceChart({ data, intrinsic, price, ticker }) {
 
   const series = useMemo(() => (range === Infinity ? full : full.slice(-range)), [full, range]);
 
-  // 52-week high/low from the trailing year regardless of the selected range.
+  // 52-week high/low from the trailing year (intraday extremes when the feed
+  // carries them — the external-terminal convention), regardless of range.
   const [hi52, lo52] = useMemo(() => {
-    const yr = full.slice(-252).map(p => p.close);
-    return yr.length ? [Math.max(...yr), Math.min(...yr)] : [null, null];
-  }, [full]);
+    const yr = (data || []).filter(p => p && p.close != null).slice(-252);
+    if (!yr.length) return [null, null];
+    return [Math.max(...yr.map(p => p.high ?? p.close)),
+            Math.min(...yr.map(p => p.low ?? p.close))];
+  }, [data]);
 
   if (!full.length) return (
     <div style={{ ...sans, padding: 40, color: C.dim, fontSize: 13 }}>

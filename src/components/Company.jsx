@@ -2796,11 +2796,16 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
   // Never fall back to the synthetic series (which produced Bajaj's impossible
   // 52W High 8,547 while the price was 920).
   const realCloses = hasRealPrices ? priceChartData.map(p => p.close).filter(x => x != null) : [];
-  // TRUE 52-week window (last ~252 sessions) — the old code ranged over the
-  // whole 5-year series while labelling it 52W (wiring audit #6).
-  const yearCloses = realCloses.slice(-252);
-  const hi52 = yearCloses.length ? Math.max(...yearCloses) : (mktData.high52 ?? null);
-  const lo52 = yearCloses.length ? Math.min(...yearCloses) : (mktData.low52 ?? null);
+  // TRUE 52-week window (last ~252 TRADING sessions) using INTRADAY highs and
+  // lows — the convention every external terminal (NSE, brokers) uses. Ranging
+  // over closes systematically understates highs and overstates lows.
+  const yearRows = hasRealPrices ? priceChartData.slice(-252) : [];
+  const hi52 = yearRows.length
+    ? Math.max(...yearRows.map(p => p.high ?? p.close).filter(x => x != null))
+    : (mktData.high52 ?? null);
+  const lo52 = yearRows.length
+    ? Math.min(...yearRows.map(p => p.low ?? p.close).filter(x => x != null))
+    : (mktData.low52 ?? null);
 
   // Day change vs the last close that ISN'T today's evolving mark — computed
   // from real history instead of a seed constant that froze every non-seeded
