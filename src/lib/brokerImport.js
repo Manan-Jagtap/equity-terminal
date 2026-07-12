@@ -31,11 +31,16 @@ export function parseCsv(text, delim = ",") {
 }
 
 const SYM_COLS = ["symbol", "tradingsymbol", "ticker", "scrip", "instrument",
-                  "stock symbol", "stock name", "name of the instrument"];
+                  "stock symbol", "stock name", "name of the instrument",
+                  "company", "company name"];
 const QTY_COLS = ["quantity available", "total quantity", "quantity", "qty", "shares", "units"];
 const AVG_COLS = ["average price", "avg price", "avg. price", "average buying price",
+                  "average buy price", "avg buy price", "avg. buy price", "buy price",
                   "avg cost", "average cost", "buy average", "buy avg price",
                   "purchase price", "avg. cost price"];
+const ISIN_COLS = ["isin", "isin code"];
+const SIDE_COLS = ["buy/sell", "side", "transaction type", "trade type", "order type"];
+const isIsin = v => /^IN[A-Z0-9]{10}$/.test((v || "").toString().trim().toUpperCase());
 const DATE_COLS = ["buy date", "purchase date", "date of purchase", "trade date",
                    "first buy date", "date"];
 
@@ -81,8 +86,84 @@ const toNum = v => {
   return isFinite(n) ? n : null;
 };
 
+/* Tradebook import — the fix for "holdings exports carry no dates".
+   Brokers' ORDER-HISTORY/tradebook exports (Groww, Zerodha console) list every
+   fill with its date. We replay them FIFO per scrip: buys open lots, sells
+   consume the oldest lots, and what survives IS the current position — true
+   quantity, true weighted average cost, and the earliest OPEN lot's date
+   (the conservative anchor for the 12-month LTCG clock). */
+export function parseTradebook(text) {
+  const delim = ((text.match(/\t/g) || []).length > (text.match(/,/g) || []).length) ? "\t" : ",";
+  const rows = parseCsv(text, delim).filter(r => r.some(c => c && c.trim() !== ""));
+  for (let h = 0; h < Math.min(rows.length, 12); h++) {
+    const si = findCol(rows[h], SYM_COLS);
+    const qi = findCol(rows[h], QTY_COLS);
+    const ai = findCol(rows[h], [...AVG_COLS, "price", "trade price", "execution price"]);
+    const di = findCol(rows[h], [...DATE_COLS, "execution time", "trade time", "order time", "time"]);
+    const bi = findCol(rows[h], SIDE_COLS);
+    const ii = findCol(rows[h], ISIN_COLS);
+    if (si === -1 || qi === -1 || ai === -1 || bi === -1) continue;
+
+    const trades = [];
+    for (const r of rows.slice(h + 1)) {
+      const side = (r[bi] || "").toString().trim().toLowerCase();
+      if (side !== "buy" && side !== "sell" && !/\b(buy|sell)\b/.test(side)) continue;
+      const qty = toNum(r[qi]);
+      const price = toNum(r[ai]);
+      if (!qty || qty <= 0 || price == null || price <= 0) continue;
+      const rawSym = (r[si] || "").toString().trim();
+      const ticker = normalizeTicker(rawSym);
+      const tickerLike = ticker && /^[A-Z0-9&-]{1,24}$/.test(ticker) && !/\s/.test(rawSym.trim());
+      const isin = ii !== -1 && isIsin(r[ii]) ? r[ii].toString().trim().toUpperCase() : null;
+      const key = isin || (tickerLike ? ticker : rawSym.toUpperCase());
+      trades.push({ key, isin, ticker: tickerLike ? ticker : null, label: rawSym,
+                    sell: /sell/.test(side), qty, price,
+                    date: di !== -1 ? parseBuyDate(r[di]) : null });
+    }
+    if (!trades.length) continue;
+
+    trades.sort((a, b) => (a.date || "0000") < (b.date || "0000") ? -1 : 1);
+    const books = new Map();
+    for (const t of trades) {
+      if (!books.has(t.key)) books.set(t.key, { meta: t, lots: [] });
+      const b = books.get(t.key);
+      if (!t.sell) {
+        b.lots.push({ qty: t.qty, price: t.price, date: t.date });
+      } else {
+        let left = t.qty;
+        while (left > 0 && b.lots.length) {
+          const lot = b.lots[0];
+          const take = Math.min(lot.qty, left);
+          lot.qty -= take; left -= take;
+          if (lot.qty <= 0) b.lots.shift();
+        }
+      }
+    }
+    const holdings = [], skipped = [];
+    for (const { meta, lots } of books.values()) {
+      const qty = lots.reduce((s2, l) => s2 + l.qty, 0);
+      if (qty <= 0) continue;              // fully exited — not a holding
+      const cost = lots.reduce((s2, l) => s2 + l.qty * l.price, 0);
+      const row = { qty, avg_cost: +(cost / qty).toFixed(2) };
+      if (meta.ticker) row.ticker = meta.ticker;
+      if (meta.isin) row.isin = meta.isin;
+      if (!meta.ticker && meta.label) row.label = meta.label;
+      const first = lots.find(l => l.date);
+      if (first) row.buy_date = first.date;
+      if (lots.filter(l => l.date).length > 1) row.mixed_lots = true;
+      holdings.push(row);
+    }
+    return { holdings, skipped, error: null, source: "tradebook" };
+  }
+  return null;   // not a tradebook — caller falls through to holdings parse
+}
+
 /* → { holdings: [{ticker, qty, avg_cost}], skipped: [rawSymbol…], error } */
 export function parseHoldings(text) {
+  // A tradebook (has a buy/sell column) beats a holdings snapshot — it
+  // carries the DATES holdings exports lack.
+  const tb = parseTradebook(text);
+  if (tb && tb.holdings.length) return tb;
   // Pasted tables (broker page, Excel) arrive tab-separated; files are CSV.
   const delim = ((text.match(/\t/g) || []).length > (text.match(/,/g) || []).length) ? "\t" : ",";
   const rows = parseCsv(text, delim).filter(r => r.some(c => c && c.trim() !== ""));
@@ -93,16 +174,26 @@ export function parseHoldings(text) {
     const qi = findCol(rows[h], QTY_COLS);
     const ai = findCol(rows[h], AVG_COLS);
     const di = findCol(rows[h], DATE_COLS);
+    const ii = findCol(rows[h], ISIN_COLS);
     if (si === -1 || qi === -1) continue;
     const holdings = [], skipped = [];
     for (const r of rows.slice(h + 1)) {
-      const ticker = normalizeTicker(r[si]);
+      const rawSym = (r[si] || "").toString().trim();
+      const ticker = normalizeTicker(rawSym);
+      const isin = ii !== -1 && isIsin(r[ii]) ? r[ii].toString().trim().toUpperCase() : null;
       const qty = toNum(r[qi]);
       const avg = ai !== -1 ? toNum(r[ai]) : null;
-      if (!ticker || !/^[A-Z0-9&-]{1,24}$/.test(ticker)) { if (r[si]) skipped.push(r[si]); continue; }
-      if (!qty || qty <= 0 || avg == null || avg <= 0) { skipped.push(ticker); continue; }
+      const tickerLike = ticker && /^[A-Z0-9&-]{1,24}$/.test(ticker);
+      // Groww exports display NAMES ("ADIT BIRL SUN LIF AMC LTD"), not
+      // tickers — the ISIN column is the identifier there.
+      if (!tickerLike && !isin) { if (rawSym) skipped.push(rawSym); continue; }
+      if (!qty || qty <= 0 || avg == null || avg <= 0) { skipped.push(rawSym || isin); continue; }
       const buy_date = di !== -1 ? parseBuyDate(r[di]) : null;
-      holdings.push(buy_date ? { ticker, qty, avg_cost: avg, buy_date } : { ticker, qty, avg_cost: avg });
+      const row = tickerLike ? { ticker, qty, avg_cost: avg } : { qty, avg_cost: avg };
+      if (isin) row.isin = isin;
+      if (rawSym && !tickerLike) row.label = rawSym;
+      if (buy_date) row.buy_date = buy_date;
+      holdings.push(row);
     }
     return { holdings, skipped, error: null };
   }

@@ -62,7 +62,7 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
 
   const add = async e => {
     e.preventDefault();
-    if (!API || !ticker.trim() || !qty || !avgCost) return;
+    if (!API || !ticker.trim() || !qty || !avgCost || !buyDate) return;
     setSaving(true);
     try {
       await authFetch(`${API}/api/portfolio`, {
@@ -95,10 +95,27 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
     if (!text?.trim() || !API) return;
     setImporting(true); setImportMsg(null);
     try {
-      const { holdings, skipped, error } = parseHoldings(text);
+      const parsed = parseHoldings(text);
+      const { skipped, error } = parsed;
+      let holdings = parsed.holdings;
       if (error) { setImportMsg({ tone: C.red, text: error }); setImporting(false); return; }
+      // Broker exports identify rows by ISIN / display name, not NSE ticker —
+      // resolve them against the universe before importing.
+      if (holdings.some(h => !h.ticker)) {
+        const norm = n => (n || "").toLowerCase().replace(/&/g, " and ")
+          .replace(/\b(ltd|limited|company|corp|corporation|industries|enterprises|the|and|of|india)\b\.?/g, " ")
+          .split(/[^a-z0-9]+/).filter(Boolean).join(" ");
+        let maps = { map: {}, names: {} };
+        try { maps = await fetch(`${API}/api/isin-map`).then(r => r.json()); } catch { /* best effort */ }
+        holdings = holdings.map(h => {
+          if (h.ticker) return h;
+          const t = (h.isin && maps.map?.[h.isin]) || (h.label && maps.names?.[norm(h.label)]) || null;
+          return t ? { ...h, ticker: t } : h;
+        });
+      }
       let ok = 0; const uncovered = [];
       for (const h of holdings) {
+        if (!h.ticker) { uncovered.push(h.label || h.isin || "?"); continue; }
         try {
           const r = await authFetch(`${API}/api/portfolio`, {
             method: "POST", headers: { "Content-Type": "application/json" },
@@ -279,11 +296,13 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
           title="Purchase date (optional) — drives the short-/long-term tax classification"
           max={new Date().toISOString().slice(0, 10)}
           style={{ ...inputStyle, width: 150, colorScheme: "dark" }} />
-        <button type="submit" disabled={saving || !ticker.trim() || !qty || !avgCost} style={{
+        <button type="submit" disabled={saving || !ticker.trim() || !qty || !avgCost || !buyDate}
+          title={!buyDate ? "Purchase date is required — it drives the LTCG/STCG tax terms and the Fund Manager's timing" : undefined}
+          style={{
           ...sans, display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 500,
           padding: "8px 14px", borderRadius: 8, cursor: saving ? "wait" : "pointer",
           border: `1px solid ${C.gold}66`, color: C.gold, background: C.gold + "0d",
-          opacity: (!ticker.trim() || !qty || !avgCost) ? 0.5 : 1,
+          opacity: (!ticker.trim() || !qty || !avgCost || !buyDate) ? 0.5 : 1,
         }}>
           {saving ? <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> : <Plus size={13} />}
           Add
@@ -355,7 +374,9 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
                       padding: "14px 16px", marginBottom: 18 }}>
           <div style={{ ...sans, fontSize: 12, color: C.dim, marginBottom: 8, lineHeight: 1.5 }}>
             Copy your holdings table from your broker (Zerodha Console, Groww, Upstox…) or a spreadsheet and paste it below —
-            headers optional. Plain lines work too, one holding per line: <span style={{ ...mono, color: C.text200 }}>INFY 100 1450.50</span>
+            ISINs and display names resolve automatically; headers optional. Plain lines work too: <span style={{ ...mono, color: C.text200 }}>INFY 100 1450.50 2024-05-13</span>.
+            <span style={{ color: C.text200 }}> Best of all: paste your ORDER HISTORY / tradebook</span> (it has a Buy/Sell column) —
+            we replay it FIFO to recover true quantities, costs <span style={{ color: C.text200 }}>and purchase dates</span>, which holdings exports don't carry.
           </div>
           <textarea value={pasteText} onChange={e => setPasteText(e.target.value)} rows={6}
             placeholder={"Symbol\tQty\tAvg price\nINFY\t100\t1450.50\nTCS\t12\t3200"}
@@ -433,7 +454,25 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
                                        background: (h.term === "long" ? C.green : "#E8B054") + "1a" }}>
                           {h.term === "long" ? "LT" : "ST"}
                         </span>
-                        {h.date_source === "added" && <span style={{ color: C.faint }} title="approximate — from add date">≈</span>}
+                        {h.date_source === "added" && (
+                          <input type="date" defaultValue="" onClick={e => e.stopPropagation()}
+                            max={new Date().toISOString().slice(0, 10)}
+                            title="No purchase date on file (approximated from the add date) — set the real one for exact LTCG/STCG terms"
+                            onChange={async e => {
+                              e.stopPropagation();
+                              const v = e.target.value;
+                              if (!v) return;
+                              try {
+                                await authFetch(`${API}/api/portfolio`, {
+                                  method: "POST", headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ ticker: h.ticker, qty: h.qty, avg_cost: h.avg_cost, buy_date: v }),
+                                });
+                                reload();
+                              } catch { /* keep */ }
+                            }}
+                            style={{ width: 22, height: 16, marginLeft: 5, border: "none", background: "transparent",
+                                     colorScheme: "dark", cursor: "pointer", verticalAlign: "middle" }} />
+                        )}
                       </>
                     )}
                   </td>
