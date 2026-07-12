@@ -36,6 +36,23 @@ const QTY_COLS = ["quantity available", "total quantity", "quantity", "qty", "sh
 const AVG_COLS = ["average price", "avg price", "avg. price", "average buying price",
                   "avg cost", "average cost", "buy average", "buy avg price",
                   "purchase price", "avg. cost price"];
+const DATE_COLS = ["buy date", "purchase date", "date of purchase", "trade date",
+                   "first buy date", "date"];
+
+// "2024-05-13", "13-05-2024", "13/05/2024", "13 May 2024" → ISO or null.
+export function parseBuyDate(raw) {
+  const s = (raw || "").toString().trim();
+  if (!s) return null;
+  let m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+  m = s.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})/);
+  if (m) return `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
+  const MON = { jan:1, feb:2, mar:3, apr:4, may:5, jun:6, jul:7, aug:8, sep:9, oct:10, nov:11, dec:12 };
+  m = s.match(/^(\d{1,2})\s+([A-Za-z]{3,9})\s+(\d{4})/);
+  if (m && MON[m[2].slice(0, 3).toLowerCase()])
+    return `${m[3]}-${String(MON[m[2].slice(0, 3).toLowerCase()]).padStart(2, "0")}-${m[1].padStart(2, "0")}`;
+  return null;
+}
 
 const norm = s => (s || "").toString().trim().toLowerCase().replace(/\s+/g, " ");
 
@@ -75,6 +92,7 @@ export function parseHoldings(text) {
     const si = findCol(rows[h], SYM_COLS);
     const qi = findCol(rows[h], QTY_COLS);
     const ai = findCol(rows[h], AVG_COLS);
+    const di = findCol(rows[h], DATE_COLS);
     if (si === -1 || qi === -1) continue;
     const holdings = [], skipped = [];
     for (const r of rows.slice(h + 1)) {
@@ -83,7 +101,8 @@ export function parseHoldings(text) {
       const avg = ai !== -1 ? toNum(r[ai]) : null;
       if (!ticker || !/^[A-Z0-9&-]{1,24}$/.test(ticker)) { if (r[si]) skipped.push(r[si]); continue; }
       if (!qty || qty <= 0 || avg == null || avg <= 0) { skipped.push(ticker); continue; }
-      holdings.push({ ticker, qty, avg_cost: avg });
+      const buy_date = di !== -1 ? parseBuyDate(r[di]) : null;
+      holdings.push(buy_date ? { ticker, qty, avg_cost: avg, buy_date } : { ticker, qty, avg_cost: avg });
     }
     return { holdings, skipped, error: null };
   }
@@ -99,7 +118,10 @@ export function parseHoldings(text) {
     if (!/^[A-Z][A-Z0-9&-]{0,23}$/.test(ticker) || /^\d/.test(cells[0])) { skipped.push(cells[0]); continue; }
     const nums = cells.slice(1).map(toNum).filter(n => n != null && n > 0);
     if (nums.length < 2) { skipped.push(ticker); continue; }
-    holdings.push({ ticker, qty: nums[0], avg_cost: nums[1] });
+    // Optional trailing date token: "INFY 100 1450.50 2024-05-13"
+    const buy_date = cells.slice(1).map(parseBuyDate).find(Boolean) || null;
+    holdings.push(buy_date ? { ticker, qty: nums[0], avg_cost: nums[1], buy_date }
+                           : { ticker, qty: nums[0], avg_cost: nums[1] });
   }
   if (holdings.length) return { holdings, skipped, error: null };
   return { holdings: [], skipped: [],

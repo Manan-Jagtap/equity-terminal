@@ -26,6 +26,7 @@ export default function Portfolio({ API, onOpen, user, requestAuth }) {
   const [ticker, setTicker]   = useState("");
   const [qty, setQty]         = useState("");
   const [avgCost, setAvgCost] = useState("");
+  const [buyDate, setBuyDate] = useState("");
   const [saving, setSaving]   = useState(false);
   const [xray, setXray]       = useState(null);
 
@@ -45,6 +46,19 @@ export default function Portfolio({ API, onOpen, user, requestAuth }) {
     authFetch(`${API}/api/portfolio/xray`)
       .then(r => (r.ok ? r.json() : null)).then(setXray).catch(() => setXray(null));
   }, [API, user, data]);
+  // Allocation / LTCG / strategist analysis (same cadence). No synchronous
+  // clear needed: the render gate (`analysis && items.length`) hides it the
+  // moment holdings reset.
+  const [analysis, setAnalysis] = useState(null);
+  useEffect(() => {
+    if (!API || !user) return;
+    let dead = false;
+    authFetch(`${API}/api/portfolio/analysis`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (!dead) setAnalysis(d); })
+      .catch(() => { if (!dead) setAnalysis(null); });
+    return () => { dead = true; };
+  }, [API, user, data]);
 
   const add = async e => {
     e.preventDefault();
@@ -54,9 +68,10 @@ export default function Portfolio({ API, onOpen, user, requestAuth }) {
       await authFetch(`${API}/api/portfolio`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ticker: ticker.trim().toUpperCase(), qty: Number(qty), avg_cost: Number(avgCost) }),
+        body: JSON.stringify({ ticker: ticker.trim().toUpperCase(), qty: Number(qty), avg_cost: Number(avgCost),
+                               ...(buyDate ? { buy_date: buyDate } : {}) }),
       });
-      setTicker(""); setQty(""); setAvgCost("");
+      setTicker(""); setQty(""); setAvgCost(""); setBuyDate("");
       reload();
     } catch { /* keep form values so the user can retry */ }
     setSaving(false);
@@ -260,6 +275,10 @@ export default function Portfolio({ API, onOpen, user, requestAuth }) {
           style={{ ...inputStyle, width: 90 }} />
         <input value={avgCost} onChange={e => setAvgCost(e.target.value)} placeholder="Avg cost ₹" type="number" min="0" step="any"
           style={{ ...inputStyle, width: 120 }} />
+        <input value={buyDate} onChange={e => setBuyDate(e.target.value)} type="date"
+          title="Purchase date (optional) — drives the short-/long-term tax classification"
+          max={new Date().toISOString().slice(0, 10)}
+          style={{ ...inputStyle, width: 150, colorScheme: "dark" }} />
         <button type="submit" disabled={saving || !ticker.trim() || !qty || !avgCost} style={{
           ...sans, display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 500,
           padding: "8px 14px", borderRadius: 8, cursor: saving ? "wait" : "pointer",
@@ -344,6 +363,7 @@ export default function Portfolio({ API, onOpen, user, requestAuth }) {
                 <th style={{ ...th, textAlign: "left" }}>Company</th>
                 <th style={{ ...th, textAlign: "right" }}>Qty</th>
                 <th style={{ ...th, textAlign: "right" }}>Avg cost</th>
+                <th style={{ ...th, textAlign: "right" }}>Held</th>
                 <th style={{ ...th, textAlign: "right" }}>LTP</th>
                 <th style={{ ...th, textAlign: "right" }}>Value</th>
                 <th style={{ ...th, textAlign: "right" }}>P&amp;L</th>
@@ -365,6 +385,25 @@ export default function Portfolio({ API, onOpen, user, requestAuth }) {
                   </td>
                   <td style={{ ...td, textAlign: "right", color: C.text }}>{h.qty != null ? Number(h.qty).toLocaleString("en-IN") : "—"}</td>
                   <td style={{ ...td, textAlign: "right", color: C.text200 }}>{inr(h.avg_cost, 2)}</td>
+                  <td style={{ ...td, textAlign: "right", whiteSpace: "nowrap" }}
+                      title={h.term ? (h.date_source === "added"
+                          ? "No purchase date given — measured from when the row was added; edit the holding to set the real date"
+                          : (h.term === "long" ? "Long-term (≥12 months) — LTCG applies"
+                             : `Short-term — turns long-term in ${h.days_to_lt} days`)) : ""}>
+                    {h.holding_days == null ? <span style={{ color: C.faint }}>—</span> : (
+                      <>
+                        <span style={{ color: C.text200 }}>
+                          {h.holding_days >= 365 ? (h.holding_days / 365).toFixed(1) + "y" : h.holding_days + "d"}
+                        </span>
+                        <span style={{ ...sans, fontSize: 9, fontWeight: 600, marginLeft: 6, padding: "2px 6px", borderRadius: 4,
+                                       color: h.term === "long" ? C.green : "#E8B054",
+                                       background: (h.term === "long" ? C.green : "#E8B054") + "1a" }}>
+                          {h.term === "long" ? "LT" : "ST"}
+                        </span>
+                        {h.date_source === "added" && <span style={{ color: C.faint }} title="approximate — from add date">≈</span>}
+                      </>
+                    )}
+                  </td>
                   <td style={{ ...td, textAlign: "right", color: C.text }}>{inr(h.price, 2)}</td>
                   <td style={{ ...td, textAlign: "right", color: C.text }}>{inr(h.value)}</td>
                   <td style={{ ...td, textAlign: "right", color: pnlColor(h.pnl) }}>
@@ -391,6 +430,105 @@ export default function Portfolio({ API, onOpen, user, requestAuth }) {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* ── Portfolio Analysis ─────────────────────────────────────────── */}
+      {analysis && items.length > 0 && (
+        <div style={{ marginTop: 18, display: "grid", gap: 16 }}>
+          <div style={{ border: `1px solid ${C.line}`, borderRadius: 12, background: C.panel, padding: "16px 20px" }}>
+            <div style={{ ...sans, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.1em", color: C.dim, marginBottom: 14 }}>
+              Portfolio Analysis
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: 20 }}>
+              {/* Sector allocation */}
+              <div>
+                <div style={{ ...sans, fontSize: 10, color: C.faint, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Sector allocation</div>
+                {(analysis.sectors || []).slice(0, 6).map(s2 => (
+                  <div key={s2.sector} style={{ marginBottom: 7 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", ...sans, fontSize: 11.5, color: C.text200 }}>
+                      <span>{s2.sector}</span><span style={{ ...mono }}>{s2.weight != null ? (s2.weight * 100).toFixed(0) + "%" : "—"}</span>
+                    </div>
+                    <div style={{ height: 4, background: C.line, borderRadius: 2, marginTop: 3 }}>
+                      <div style={{ height: 4, width: `${Math.min(100, (s2.weight || 0) * 100)}%`, background: C.gold, borderRadius: 2 }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {/* Concentration */}
+              <div>
+                <div style={{ ...sans, fontSize: 10, color: C.faint, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Concentration</div>
+                {[["Holdings", analysis.concentration?.n],
+                  ["Top position", analysis.concentration?.top1 != null ? (analysis.concentration.top1 * 100).toFixed(0) + "%" : "—"],
+                  ["Top 3", analysis.concentration?.top3 != null ? (analysis.concentration.top3 * 100).toFixed(0) + "%" : "—"],
+                  ["HHI", analysis.concentration?.hhi != null ? analysis.concentration.hhi.toFixed(2) : "—"]].map(([l, v]) => (
+                  <div key={l} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", borderTop: `1px solid ${C.line}` }}>
+                    <span style={{ ...sans, fontSize: 12, color: C.dim }}>{l}</span>
+                    <span style={{ ...mono, fontSize: 12.5, color: C.text }}>{v ?? "—"}</span>
+                  </div>
+                ))}
+              </div>
+              {/* Holding terms */}
+              <div>
+                <div style={{ ...sans, fontSize: 10, color: C.faint, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Holding terms (LTCG)</div>
+                {[["Long-term", analysis.term?.long], ["Short-term", analysis.term?.short]].map(([l, t]) => (
+                  <div key={l} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", borderTop: `1px solid ${C.line}` }}>
+                    <span style={{ ...sans, fontSize: 12, color: l === "Long-term" ? C.green : "#E8B054" }}>{l}</span>
+                    <span style={{ ...mono, fontSize: 12.5, color: C.text }}>
+                      {t ? `${t.n} · ${t.weight != null ? (t.weight * 100).toFixed(0) + "%" : "—"}` : "—"}
+                    </span>
+                  </div>
+                ))}
+                {(analysis.term?.turning_lt_soon || []).slice(0, 3).map(x => (
+                  <div key={x.ticker} style={{ ...sans, fontSize: 11, color: C.dim, marginTop: 5 }}>
+                    {x.ticker} turns long-term in <span style={{ color: C.gold }}>{x.days_to_lt}d</span>
+                  </div>
+                ))}
+              </div>
+              {/* Verdict mix */}
+              <div>
+                <div style={{ ...sans, fontSize: 10, color: C.faint, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Model view of the book</div>
+                {Object.entries(analysis.verdict_mix || {}).map(([v, w]) => (
+                  <div key={v} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", borderTop: `1px solid ${C.line}` }}>
+                    <span style={{ ...sans, fontSize: 12, color: v === "BUY" ? C.green : v === "REDUCE" || v === "SELL" ? C.red : C.dim }}>{v}</span>
+                    <span style={{ ...mono, fontSize: 12.5, color: C.text }}>{w != null ? (w * 100).toFixed(0) + "%" : "—"}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* ── Strategist ─────────────────────────────────────────────── */}
+          {(analysis.recommendations || []).length > 0 && (
+            <div style={{ border: `1px solid ${C.gold}33`, borderRadius: 12, background: C.panel, padding: "16px 20px" }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 4 }}>
+                <Sparkles size={13} color={C.gold} />
+                <span style={{ ...sans, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.1em", color: C.gold }}>Strategist</span>
+                <span style={{ ...sans, fontSize: 11, color: C.dim }}>mechanical read of your book against the model — you decide</span>
+              </div>
+              {(analysis.recommendations || []).map((r, i) => (
+                <div key={i} onClick={() => onOpen && onOpen(r.ticker)}
+                  onMouseEnter={e => e.currentTarget.style.background = C.bg800}
+                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                  style={{ display: "flex", alignItems: "baseline", gap: 12, padding: "10px 6px",
+                           borderTop: `1px solid ${C.line}`, cursor: "pointer" }}>
+                  <span style={{ ...sans, fontSize: 9.5, fontWeight: 700, letterSpacing: "0.06em", flexShrink: 0,
+                                 padding: "3px 8px", borderRadius: 5,
+                                 color: r.action.includes("EXIT") ? C.red : r.action.includes("TRIM") ? "#E8B054" : C.green,
+                                 background: (r.action.includes("EXIT") ? C.red : r.action.includes("TRIM") ? "#E8B054" : C.green) + "1a" }}>
+                    {r.action}
+                  </span>
+                  <span style={{ ...mono, fontSize: 12, color: C.gold, flexShrink: 0, minWidth: 92 }}>{r.ticker}</span>
+                  <span style={{ ...sans, fontSize: 12, color: C.text200, lineHeight: 1.55 }}>
+                    {(r.reasons || []).join(" · ")}
+                  </span>
+                </div>
+              ))}
+              <div style={{ ...sans, fontSize: 10, color: C.faint, marginTop: 12, lineHeight: 1.5 }}>
+                {analysis.disclaimer}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
