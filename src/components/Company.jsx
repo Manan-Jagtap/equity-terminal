@@ -2822,8 +2822,8 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
     <div style={{ minHeight:"100vh" }}>
       {/* ── Header ─────────────────────────────────────────────── */}
       <header style={{ borderBottom:`1px solid ${C.line}`, position:"relative", ...gridBg,
-        backgroundImage:`radial-gradient(900px 420px at 10% -30%, ${accent}24, transparent 55%),
-                         radial-gradient(700px 380px at 95% 130%, ${accent}12, transparent 60%),
+        backgroundImage:`radial-gradient(900px 420px at 10% -30%, ${accent}0d, transparent 55%),
+                         radial-gradient(700px 380px at 95% 130%, ${accent}07, transparent 60%),
                          linear-gradient(180deg, ${C.bg900}, ${C.bg})` }}>
         <div style={{ position:"absolute", inset:0, opacity:0.4, pointerEvents:"none",
           backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.72 0 0 0 0 0.80 0 0 0 0 0.96 0 0 0 0.02 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }} />
@@ -2835,8 +2835,11 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
                 <ArrowLeft size={14} /> Back to screener
               </button>
               <span style={{ color:C.bg500 }}>/</span>
-              <span style={{ ...sans, fontSize:11, color:C.dim, textTransform:"uppercase", letterSpacing:"0.14em" }}>
-                India · {co.type!=="financial" ? "Equity"
+              <span style={{ ...sans, fontSize:11, color:C.dim, textTransform:"uppercase", letterSpacing:"0.14em",
+                             whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis", maxWidth:"52vw" }}>
+                India · {co.type!=="financial"
+                  ? ({ IT_SERVICES:"IT Services", CONSUMER:"Consumer", PHARMA:"Pharma",
+                       ENERGY:"Energy", MANUFACTURING:"Manufacturing" }[co.template_code] || "Equity")
                   : co.template_code==="BANK" || /\bbank\b/i.test(co.name||"") ? "Bank"
                   : co.template_code==="INSURANCE" || /insur/i.test((co.sector||"")+(co.name||"")) ? "Insurer"
                   : "NBFC"} · <span style={{ color:accent, fontWeight:600 }}>{co.sector}</span>
@@ -2959,7 +2962,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
             // — financials show book value per share instead, computable for all.
             co.type === "financial"
               ? { l:"Book Value / sh", v:(co.equity && co.shares) ? inrOrDash(co.equity / co.shares, 0) : "—" }
-              : { l:"Enterprise Value", v:evLive!=null ? "₹"+fmtCr(evLive) : "—" },
+              : { l:"EV", v:evLive!=null ? "₹"+fmtCr(evLive) : "—" },
             { l:"P / E (TTM)",      v:sm?.pe!=null?multiple(sm.pe,2):multiple(rec.f.pe, 2)         },
             { l:"P / B",            v:sm?.pb!=null?multiple(sm.pb,2):multiple(rec.f.pb, 2)         },
             { l:"ROE",              v:sm?.roe_ttm!=null?fmtPa(sm.roe_ttm):(rec.f.roe!=null?fmtPa(rec.f.roe*100):"—"), accent:C.green },
@@ -2972,9 +2975,9 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
             { l:"Upside",           v:fairUpside!=null?signedPct(fairUpside):"—", accent:fairUpside==null?C.dim:fairUpside>=0?C.green:C.red },
             { l:"Verdict",          v:modelVerdict||"—", accent:modelVerdictColor, large:true },
           ].map(s => (
-            <div key={s.l}>
-              <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.12em", color:C.dim, fontWeight:500 }}>{s.l}</div>
-              <div style={{ ...mono, fontSize:s.large?18:16, color:s.accent||C.text, marginTop:4, fontWeight:s.large?600:400, letterSpacing:s.large?"0.06em":"0" }}>{s.v}</div>
+            <div key={s.l} style={{ minWidth: 0 }}>
+              <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.12em", color:C.dim, fontWeight:500, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }} title={s.l}>{s.l}</div>
+              <div style={{ ...mono, fontSize:s.large?18:16, color:s.accent||C.text, marginTop:4, fontWeight:s.large?600:400, letterSpacing:s.large?"0.06em":"0", whiteSpace:"nowrap" }}>{s.v}</div>
             </div>
           ))}
         </div>

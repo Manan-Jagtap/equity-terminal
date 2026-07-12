@@ -58,6 +58,7 @@ const NIFTY_50 = new Set([
 export default function App() {
   const API = import.meta.env.VITE_API_URL;
   const isMobile = useIsMobile();
+  const [moreOpen, setMoreOpen] = useState(false);
 
   const [companies,   setCompanies]   = useState(SEED);
   const [loading,     setLoading]     = useState(false);
@@ -506,6 +507,37 @@ export default function App() {
         </div>
       </main>
 
+      {isMobile && moreOpen && view !== "company" && (
+        <div onClick={() => setMoreOpen(false)}
+          style={{ position: "fixed", inset: 0, zIndex: 118, background: "rgba(4,8,16,0.55)" }}>
+          <div onClick={e => e.stopPropagation()} style={{
+            position: "absolute", left: 0, right: 0, bottom: 56,
+            background: C.bg900, borderTop: `1px solid ${C.line2}`,
+            borderRadius: "14px 14px 0 0", padding: "16px 14px 18px",
+            display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14,
+          }}>
+            {[
+              { id: "ideas",      label: "Ideas",      icon: Sparkles },
+              { id: "watchlist",  label: "Watchlist",  icon: Star },
+              { id: "compare",    label: "Compare",    icon: GitCompare },
+              { id: "results",    label: "Results",    icon: CalendarClock },
+              { id: "ownership",  label: "Ownership",  icon: Landmark },
+              { id: "operations", label: "Operations", icon: Gauge },
+              { id: "sectors",    label: "Sectors",    icon: Layers },
+              { id: "track",      label: "Track Rec.", icon: History },
+            ].map(({ id, label, icon: Icon }) => (
+              <button key={id} onClick={() => { setView(id); setMoreOpen(false); }} style={{
+                ...sans, display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
+                background: view === id ? C.bg800 : "transparent", border: `1px solid ${view === id ? C.line2 : "transparent"}`,
+                borderRadius: 10, cursor: "pointer", fontSize: 10, padding: "10px 4px",
+                color: view === id ? C.gold : C.text200,
+              }}>
+                <Icon size={20} strokeWidth={1.6} />{label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       {isMobile && view !== "company" && (
         <div style={{
           position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 120,
@@ -516,18 +548,24 @@ export default function App() {
           {[
             { id: "dashboard", label: "Home",   icon: LayoutDashboard },
             { id: "screener",  label: "Screen", icon: List },
-            { id: "ideas",     label: "Ideas",  icon: Sparkles },
-            { id: "watchlist", label: "Watch",  icon: Star },
+            { id: "manager",   label: "Manager", icon: Sparkles },
             { id: "portfolio", label: "Folio",  icon: Briefcase },
           ].map(({ id, label, icon: Icon }) => (
-            <button key={id} onClick={() => setView(id)} style={{
+            <button key={id} onClick={() => { setView(id); setMoreOpen(false); }} style={{
               ...sans, display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
               background: "transparent", border: "none", cursor: "pointer",
-              fontSize: 9, padding: "2px 8px", color: view === id ? C.gold : C.dim,
+              fontSize: 9, padding: "2px 8px", color: view === id && !moreOpen ? C.gold : C.dim,
             }}>
               <Icon size={19} strokeWidth={1.7} />{label}
             </button>
           ))}
+          <button onClick={() => setMoreOpen(v => !v)} style={{
+            ...sans, display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
+            background: "transparent", border: "none", cursor: "pointer",
+            fontSize: 9, padding: "2px 8px", color: moreOpen ? C.gold : C.dim,
+          }}>
+            <Layers size={19} strokeWidth={1.7} />More
+          </button>
         </div>
       )}
 

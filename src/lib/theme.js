@@ -58,14 +58,14 @@ const SECTOR_ACCENTS = [
   [/tech|information/,              "#22D3EE"],   // cyan — software
   [/pharma|health/,                 "#4ADE80"],   // green — life
   [/auto/,                          "#FB923C"],   // orange — motion
-  [/fmcg|consumer/,                 "#F472B6"],   // rose — retail
+  [/fmcg|consumer/,                 "#D8919F"],   // muted rose — retail
   [/energy|oil|power|gas|utilit/,   "#FACC15"],   // amber — energy
   [/metal|mining/,                  "#94A3B8"],   // steel — heavy industry
   [/chem/,                          "#A78BFA"],   // violet — chemistry
   [/realty|real estate|construction|cement|capital goods|engineering|industrial|defence/,
-                                    "#F87171"],   // terracotta — built world
+                                    "#D08B7E"],   // muted terracotta — built world
   [/telecom/,                       "#38BDF8"],   // sky — networks
-  [/textile|media|service/,         "#E879F9"],   // magenta — culture/services
+  [/textile|media|service/,         "#C08BD8"],   // muted orchid — culture/services
 ];
 export function sectorAccent(sector) {
   const s = (sector || "").toLowerCase();

@@ -1,19 +1,13 @@
-/* Logo.jsx — company logo via the backend proxy, with a graceful monogram
-   fallback tinted by the company's sector accent (see theme.sectorAccent). */
+/* Logo.jsx — the company's REAL logo via the backend proxy (vendor CDN,
+   cached server-side). Owner directive: original artwork or nothing — when a
+   logo can't be fetched we render a quiet neutral tile, never invented
+   monogram initials. */
 import { useState } from "react";
-import { C, sans, sectorAccent } from "../lib/theme.js";
+import { C, sectorAccent } from "../lib/theme.js";
 
 const API = import.meta.env.VITE_API_URL;
 
-function monogram(name = "", ticker = "") {
-  const src = (name || ticker || "?").trim();
-  const parts = src.split(/\s+/).filter(Boolean);
-  const a = parts[0]?.[0] || "?";
-  const b = parts.length > 1 ? parts[1][0] : "";
-  return (a + b).toUpperCase();
-}
-
-export default function Logo({ ticker, name, size = 28, radius = 7, sector }) {
+export default function Logo({ ticker, size = 28, radius = 7, sector }) {
   const [failed, setFailed] = useState(false);
   const box = {
     width: size, height: size, borderRadius: radius, flexShrink: 0,
@@ -23,10 +17,9 @@ export default function Logo({ ticker, name, size = 28, radius = 7, sector }) {
   if (failed || !API || !ticker) {
     const accent = sectorAccent(sector);
     return (
-      <span style={{ ...box, ...sans, fontSize: size * 0.38, fontWeight: 600,
-        color: accent, background: accent + "14", border: `1px solid ${accent}33`,
-        letterSpacing: "0.02em" }}>
-        {monogram(name, ticker)}
+      <span aria-hidden style={{ ...box }}>
+        <span style={{ width: size * 0.28, height: size * 0.28, borderRadius: "50%",
+                       background: accent + "40", display: "inline-block" }} />
       </span>
     );
   }
@@ -34,7 +27,7 @@ export default function Logo({ ticker, name, size = 28, radius = 7, sector }) {
     <span style={box}>
       <img src={`${API}/api/logo/${encodeURIComponent(ticker)}`} alt=""
         width={size} height={size} loading="lazy" onError={() => setFailed(true)}
-        style={{ width: size, height: size, objectFit: "contain" }} />
+        style={{ width: size, height: size, objectFit: "contain", padding: 2, boxSizing: "border-box", background: "#fff" }} />
     </span>
   );
 }

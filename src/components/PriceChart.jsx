@@ -4,7 +4,8 @@
    linear/log scale, toggleable moving-average overlays, a horizontal FAIR-VALUE
    line at the model's intrinsic, volume bars, an RSI(14) pane, and 52-week
    high/low markers. Recharts + inline theme, mobile-aware. */
-import { useMemo, useState } from "react";
+import { lazy, Suspense, useMemo, useState } from "react";
+const CandleChart = lazy(() => import("./CandleChart.jsx"));
 import {
   ComposedChart, Area, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, ReferenceLine,
@@ -58,6 +59,7 @@ const Toggle = ({ on, set, color, label }) => (
 
 export default function PriceChart({ data, intrinsic, price, ticker }) {
   const isMobile = useIsMobile();
+  const [style, setStyle] = useState("candles");   // broker-terminal default
   const [range, setRange] = useState(252);
   const [showSMA50, setShowSMA50] = useState(true);
   const [showSMA200, setShowSMA200] = useState(false);
@@ -98,8 +100,30 @@ export default function PriceChart({ data, intrinsic, price, ticker }) {
   const peak = Math.max(...series.map(p => p.close));
   const ddNow = peak > 0 && last != null ? last / peak - 1 : null;
 
+  const StyleToggle = (
+    <div style={{ display: "inline-flex", gap: 4, marginRight: 8 }}>
+      {[["candles", "Candles"], ["line", "Line"]].map(([id, lbl]) => (
+        <button key={id} onClick={() => setStyle(id)} style={{
+          ...sans, fontSize: 11, padding: "4px 11px", borderRadius: 7, cursor: "pointer",
+          border: `1px solid ${style === id ? C.gold + "66" : C.line2}`,
+          background: style === id ? C.gold + "0d" : "transparent",
+          color: style === id ? C.gold : C.dim }}>{lbl}</button>
+      ))}
+    </div>
+  );
+
+  if (style === "candles") return (
+    <div style={{ padding: isMobile ? "8px 2px" : "8px 4px" }}>
+      <div style={{ marginBottom: 8 }}>{StyleToggle}</div>
+      <Suspense fallback={<div style={{ ...sans, padding: 30, color: C.dim, fontSize: 12 }}>Loading chart engine…</div>}>
+        <CandleChart data={data} height={isMobile ? 300 : 430} />
+      </Suspense>
+    </div>
+  );
+
   return (
     <div style={{ padding: isMobile ? "8px 2px" : "8px 4px" }}>
+      <div style={{ marginBottom: 8 }}>{StyleToggle}</div>
       <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap", marginBottom: 10 }}>
         <span style={{ ...mono, fontSize: 22, color: C.text }}>{inr(last)}</span>
         {chg != null && (
