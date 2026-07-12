@@ -107,9 +107,20 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
           .split(/[^a-z0-9]+/).filter(Boolean).join(" ");
         let maps = { map: {}, names: {} };
         try { maps = await fetch(`${API}/api/isin-map`).then(r => r.json()); } catch { /* best effort */ }
+        const nameKeys = Object.keys(maps.names || {});
+        const resolveName = label => {
+          const n = norm(label);
+          if (!n) return null;
+          if (maps.names?.[n]) return maps.names[n];
+          // brokers truncate ("AU Small Fin. Bank") — word-boundary prefix,
+          // ≥6-char stem, both directions, must be unambiguous.
+          const hits = nameKeys.filter(k => Math.min(k.length, n.length) >= 6 &&
+            (k.startsWith(n + " ") || n.startsWith(k + " ") || k === n));
+          return hits.length === 1 ? maps.names[hits[0]] : null;
+        };
         holdings = holdings.map(h => {
           if (h.ticker) return h;
-          const t = (h.isin && maps.map?.[h.isin]) || (h.label && maps.names?.[norm(h.label)]) || null;
+          const t = (h.isin && maps.map?.[h.isin]) || (h.label && resolveName(h.label)) || null;
           return t ? { ...h, ticker: t } : h;
         });
       }
@@ -137,8 +148,25 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
   };
   const importCsv = async file => {
     if (!file) return;
-    try { await importText(await file.text()); }
-    catch { setImportMsg({ tone: C.red, text: "Could not read that file — copy-paste your holdings instead (Paste holdings button)." }); }
+    try {
+      if (/\.pdf$/i.test(file.name) || file.type === "application/pdf") {
+        setImporting(true);
+        setImportMsg({ tone: C.dim, text: "Reading PDF locally (never uploaded)…" });
+        const { pdfToTradebookCsv } = await import("../lib/pdfImport.js");
+        const csv = await pdfToTradebookCsv(file);
+        setImporting(false);
+        if (!csv) {
+          setImportMsg({ tone: C.red, text: "Couldn't find orders in that PDF — export the orders page as PDF from your broker and retry." });
+        } else {
+          await importText(csv);
+        }
+      } else {
+        await importText(await file.text());
+      }
+    } catch {
+      setImporting(false);
+      setImportMsg({ tone: C.red, text: "Could not read that file — copy-paste your holdings instead (Paste holdings button)." });
+    }
     if (fileRef.current) fileRef.current.value = "";
   };
 
@@ -308,17 +336,17 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
           Add
         </button>
         <span style={{ width: 1, height: 20, background: C.line }} />
-        <input ref={fileRef} type="file" accept=".csv,text/csv" style={{ display: "none" }}
+        <input ref={fileRef} type="file" accept=".csv,text/csv,.pdf,application/pdf" style={{ display: "none" }}
           onChange={e => importCsv(e.target.files?.[0])} />
         <button type="button" onClick={() => fileRef.current?.click()} disabled={importing}
-          title="Import your broker's holdings export (Zerodha Console, Groww, or any CSV with symbol/qty/avg-price columns)"
+          title="Import a holdings CSV, an order-history CSV, or your broker's Orders PDF (Groww print-to-PDF works) — tradebooks recover purchase dates via FIFO"
           style={{
             ...sans, display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 500,
             padding: "8px 14px", borderRadius: 8, cursor: importing ? "wait" : "pointer",
             border: `1px solid ${C.line2}`, color: C.text200, background: "transparent",
           }}>
           {importing ? <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> : <Upload size={13} />}
-          Import broker CSV
+          Import CSV / PDF
         </button>
         <button type="button" disabled={importing}
           title="Pull your actual holdings straight from your Dhan account (read-only; no orders are ever placed)"
