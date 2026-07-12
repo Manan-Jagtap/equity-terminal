@@ -16,6 +16,22 @@ const FACTORS = [
   ["surprise", "Surprise"],
 ];
 
+// Plain-English "why is this ranked here": the two strongest factor
+// percentiles carry the rank; the weakest is named so the trade-off is
+// visible — no black box.
+function whyRanked(r) {
+  const fs = FACTORS
+    .map(([k, label]) => [label, r.factors?.[k]])
+    .filter(([, v]) => v != null);
+  if (fs.length < 2) return null;
+  const sorted = [...fs].sort((a, b) => b[1] - a[1]);
+  const [t1, t2] = sorted;
+  const worst = sorted[sorted.length - 1];
+  let out = `Carried by ${t1[0]} (${t1[1]}th pct) and ${t2[0]} (${t2[1]}th)`;
+  if (worst[1] < 40) out += `; watch ${worst[0]} (${worst[1]}th)`;
+  return out + ".";
+}
+
 const scoreColor = (v) =>
   v == null ? C.dim : v >= 70 ? C.green : v >= 45 ? C.gold : C.red;
 
@@ -179,9 +195,14 @@ export default function Ideas({ API, onOpen }) {
                     onMouseEnter={e => { e.currentTarget.style.background = C.panel2; }}
                     onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}>
                   <td style={{ ...td, textAlign: "left", color: C.faint }}>{r.rank}</td>
-                  <td style={{ padding: "8px 10px", textAlign: "left" }}>
+                  <td style={{ padding: "8px 10px", textAlign: "left", maxWidth: 260 }}>
                     <div style={{ ...sans, fontSize: 12.5, fontWeight: 500, color: C.gold }}>{r.ticker}</div>
                     <div style={{ ...sans, fontSize: 10, color: C.faint }}>{r.sector || ""}</div>
+                    {whyRanked(r) && (
+                      <div style={{ ...sans, fontSize: 10.5, color: C.dim, marginTop: 3, lineHeight: 1.45 }}>
+                        {whyRanked(r)}
+                      </div>
+                    )}
                   </td>
                   <td style={{ padding: "8px 10px", textAlign: "right" }}>
                     <span style={{ ...mono, fontSize: 15, fontWeight: 600, color: scoreColor(r.alpha_score) }}>

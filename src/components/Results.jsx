@@ -11,10 +11,11 @@ const sp   = v => v == null ? "—" : (v >= 0 ? "+" : "") + Number(v).toFixed(1)
 const pctRaw = v => v == null ? "—" : Number(v).toFixed(1) + "%";
 
 const SORTS = [
-  { id: "latest", label: "Latest" },
-  { id: "pat",    label: "PAT growth" },
-  { id: "sales",  label: "Sales growth" },
-  { id: "beat",   label: "Biggest beat" },
+  { id: "latest",   label: "Latest" },
+  { id: "pat",      label: "PAT growth" },
+  { id: "sales",    label: "Sales growth" },
+  { id: "beat",     label: "Biggest beat" },
+  { id: "upcoming", label: "Upcoming" },
 ];
 
 function Delta({ v }) {
@@ -24,6 +25,49 @@ function Delta({ v }) {
     <span style={{ ...mono, fontSize: 11, color: up ? C.green : C.red, display: "inline-flex", alignItems: "center", gap: 3 }}>
       {up ? <TrendingUp size={11} /> : <TrendingDown size={11} />}{signed(v)}
     </span>
+  );
+}
+
+function UpcomingCalendar({ API, onOpen }) {
+  const [cal, setCal] = useState(null);
+  useEffect(() => {
+    if (!API) return;
+    let live = true;
+    fetch(`${API}/api/results/upcoming`).then(r => r.json())
+      .then(d => { if (live) setCal(d); }).catch(() => { if (live) setCal({ items: [] }); });
+    return () => { live = false; };
+  }, [API]);
+  if (!cal) return <div style={{ ...sans, padding: 32, color: C.dim, fontSize: 13 }}>Loading calendar…</div>;
+  const items = cal.items || [];
+  if (!items.length) return (
+    <div style={{ ...sans, padding: 32, color: C.dim, fontSize: 13, lineHeight: 1.6 }}>
+      No upcoming board meetings on file yet — the calendar fills after the next weekly sweep of exchange
+      board-meeting notices (Saturdays), and results season concentrates dates in Apr / Jul / Oct / Jan.
+    </div>
+  );
+  return (
+    <div style={{ border: `1px solid ${C.line}`, borderRadius: 12, overflow: "hidden" }}>
+      {items.map((r, i) => (
+        <div key={i} onClick={() => onOpen && onOpen(r.ticker)}
+          onMouseEnter={e => e.currentTarget.style.background = C.bg800}
+          onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+          style={{ display: "flex", alignItems: "baseline", gap: 14, padding: "11px 16px",
+                   borderTop: i ? `1px solid ${C.line}` : "none", cursor: "pointer" }}>
+          <span style={{ ...mono, fontSize: 12, color: r.days_away <= 3 ? C.gold : C.text200, flexShrink: 0, minWidth: 88 }}>
+            {r.date}
+          </span>
+          <span style={{ ...sans, fontSize: 10, color: C.dim, flexShrink: 0, minWidth: 52 }}>
+            {r.days_away === 0 ? "today" : r.days_away < 0 ? `${-r.days_away}d ago` : `in ${r.days_away}d`}
+          </span>
+          <span style={{ ...mono, fontSize: 12, color: C.gold, flexShrink: 0, minWidth: 100 }}>{r.ticker}</span>
+          <span style={{ ...sans, fontSize: 12.5, color: C.text, flexShrink: 0 }}>{r.name}</span>
+          {r.results_meeting && <span style={{ ...sans, fontSize: 9, fontWeight: 700, color: C.green,
+            background: C.green + "1a", borderRadius: 4, padding: "2px 7px", flexShrink: 0 }}>RESULTS</span>}
+          <span style={{ ...sans, fontSize: 11, color: C.faint, whiteSpace: "nowrap", overflow: "hidden",
+                         textOverflow: "ellipsis" }}>{r.agenda}</span>
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -83,6 +127,7 @@ export default function Results({ API, onOpen }) {
         ))}
       </div>
 
+      {sort === "upcoming" ? <UpcomingCalendar API={API} onOpen={onOpen} /> : (
       <div style={{ overflowX: "auto", border: `1px solid ${C.line}`, borderRadius: 12 }}>
         <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 880 }}>
           <thead>
@@ -136,7 +181,7 @@ export default function Results({ API, onOpen }) {
             )}
           </tbody>
         </table>
-      </div>
+      </div>)}
     </div>
   );
 }

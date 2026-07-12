@@ -119,6 +119,24 @@ export default function FundManager({ API, user, requestAuth, onOpen }) {
                         title={a.size_note || ""}>~{inr(a.size_inr)}{a.size_note ? ` ${a.size_note}` : ""}</span>
                     )}
                   </div>
+                  {a.levels?.target != null && (
+                    <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginTop: 4, ...mono, fontSize: 11 }}>
+                      <span style={{ color: C.dim }}>CMP <span style={{ color: C.text200 }}>{inr(a.levels.price)}</span></span>
+                      {a.action.startsWith("ADD") || a.action.startsWith("TOP-UP")
+                        ? <span style={{ color: C.dim }} title="Price at which the margin of safety reaches the model's 25% BUY gate">
+                            entry zone <span style={{ color: C.green }}>≤ {inr(a.levels.entry_below)}</span>
+                          </span>
+                        : null}
+                      <span style={{ color: C.dim }} title="The model's fair value — its 12–18 month anchor, re-derived every refresh">
+                        target <span style={{ color: C.gold }}>{inr(a.levels.target)}</span>
+                      </span>
+                      {a.levels.upside_pct != null && (
+                        <span style={{ color: a.levels.upside_pct >= 0 ? C.green : C.red }}>
+                          {(a.levels.upside_pct * 100).toFixed(0)}% to fair
+                        </span>
+                      )}
+                    </div>
+                  )}
                   <div style={{ ...sans, fontSize: 11.5, color: C.dim, lineHeight: 1.55, marginTop: 2 }}>
                     {(a.reasons || []).join(" · ")}
                   </div>

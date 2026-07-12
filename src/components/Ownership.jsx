@@ -35,6 +35,8 @@ export default function Ownership({ API, onOpen }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sort, setSort] = useState("inst");
+  // Column-header sort: by holding LEVEL (pct), toggling asc/desc.
+  const [colSort, setColSort] = useState(null); // {key, dir}
 
   useEffect(() => {
     if (!API) { setLoading(false); return; }
@@ -48,13 +50,29 @@ export default function Ownership({ API, onOpen }) {
 
   const rows = useMemo(() => {
     const items = (data?.items || []).slice();
+    if (colSort) {
+      const p = r => (r[colSort.key]?.pct == null ? -999 : r[colSort.key].pct);
+      items.sort((a, b) => (colSort.dir === "asc" ? p(a) - p(b) : p(b) - p(a)));
+      return items;
+    }
     const d = (r, k) => (r[k]?.delta == null ? -999 : r[k].delta);
     if (sort === "inst")     items.sort((a, b) => d(b, "institutional") - d(a, "institutional"));
     if (sort === "fii")      items.sort((a, b) => d(b, "fii") - d(a, "fii"));
     if (sort === "dii")      items.sort((a, b) => d(b, "dii") - d(a, "dii"));
     if (sort === "promoter") items.sort((a, b) => d(b, "promoter") - d(a, "promoter"));
     return items;
-  }, [data, sort]);
+  }, [data, sort, colSort]);
+
+  const sortableTh = (label, key, style) => (
+    <th onClick={() => setColSort(v => (v?.key === key
+        ? (v.dir === "desc" ? { key, dir: "asc" } : null)
+        : { key, dir: "desc" }))}
+      title={`Sort by ${label} holding — click to toggle high→low / low→high / off`}
+      style={{ ...style, cursor: "pointer", userSelect: "none",
+               color: colSort?.key === key ? C.gold : style.color }}>
+      {label}{colSort?.key === key ? (colSort.dir === "desc" ? " ↓" : " ↑") : ""}
+    </th>
+  );
 
   if (loading) return (
     <div style={{ padding: 48, display: "flex", alignItems: "center", gap: 10, color: C.dim, ...sans, fontSize: 13 }}>
@@ -93,11 +111,11 @@ export default function Ownership({ API, onOpen }) {
           <thead>
             <tr>
               <th style={{ ...th, textAlign: "left" }}>Company</th>
-              <th style={{ ...th, textAlign: "right" }}>Promoter</th>
-              <th style={{ ...th, textAlign: "right" }}>FII</th>
-              <th style={{ ...th, textAlign: "right" }}>DII</th>
-              <th style={{ ...th, textAlign: "right" }}>Mutual funds</th>
-              <th style={{ ...th, textAlign: "right" }}>Public</th>
+              {sortableTh("Promoter", "promoter", { ...th, textAlign: "right" })}
+              {sortableTh("FII", "fii", { ...th, textAlign: "right" })}
+              {sortableTh("DII", "dii", { ...th, textAlign: "right" })}
+              {sortableTh("Mutual funds", "mf", { ...th, textAlign: "right" })}
+              {sortableTh("Public", "public", { ...th, textAlign: "right" })}
               <th style={{ ...th, textAlign: "right" }}>Instit. Δ</th>
               <th style={{ ...th }}></th>
             </tr>

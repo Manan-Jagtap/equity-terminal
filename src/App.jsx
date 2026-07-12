@@ -475,7 +475,7 @@ export default function App() {
             <Sectors API={API} onOpen={open} />
           )}
           {view === "portfolio" && (
-            <Portfolio API={API} onOpen={open} user={user} requestAuth={requestAuth} />
+            <Portfolio API={API} onOpen={open} user={user} requestAuth={requestAuth} onAnalyse={() => setView("manager")} />
           )}
           {view === "manager" && (
             <FundManager API={API} onOpen={open} user={user} requestAuth={requestAuth} />

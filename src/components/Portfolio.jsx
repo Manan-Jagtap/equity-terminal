@@ -17,7 +17,7 @@ const pnlColor = v => v == null ? C.dim : v >= 0 ? C.green : C.red;
 const pctNum = (v, d = 1) => v == null || !isFinite(v) ? "—" : (v >= 0 ? "+" : "") + (Number(v) * 100).toFixed(d) + "%";
 const pctPlain = (v, d = 1) => v == null || !isFinite(v) ? "—" : (Number(v) * 100).toFixed(d) + "%";
 
-export default function Portfolio({ API, onOpen, user, requestAuth }) {
+export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse }) {
   const [data, setData]       = useState(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr]         = useState(null);
@@ -301,6 +301,39 @@ export default function Portfolio({ API, onOpen, user, requestAuth }) {
           {importing ? <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> : <Upload size={13} />}
           Import broker CSV
         </button>
+        <button type="button" disabled={importing}
+          title="Pull your actual holdings straight from your Dhan account (read-only; no orders are ever placed)"
+          onClick={async () => {
+            setImporting(true); setImportMsg(null);
+            try {
+              const r = await authFetch(`${API}/api/portfolio/sync-dhan`, { method: "POST" });
+              const d = await r.json();
+              if (!r.ok) throw new Error(d?.detail || "sync failed");
+              const parts = [`Synced ${d.imported} holding${d.imported === 1 ? "" : "s"} from Dhan`];
+              if (d.uncovered?.length) parts.push(`outside coverage: ${d.uncovered.join(", ")}`);
+              setImportMsg({ tone: C.green, text: parts.join(" · ") });
+              reload();
+            } catch (e) { setImportMsg({ tone: C.red, text: `Dhan sync: ${e.message}` }); }
+            setImporting(false);
+          }}
+          style={{
+            ...sans, display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 500,
+            padding: "8px 14px", borderRadius: 8, cursor: importing ? "wait" : "pointer",
+            border: `1px solid ${C.green}55`, color: C.green, background: C.green + "0d",
+          }}>
+          <Sparkles size={13} /> Sync from Dhan
+        </button>
+        {onAnalyse && (
+          <button type="button" onClick={onAnalyse}
+            title="Open the Fund Manager's read of this book — PM note, sized actions, levels"
+            style={{
+              ...sans, display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 500,
+              padding: "8px 14px", borderRadius: 8, cursor: "pointer",
+              border: `1px solid ${C.gold}66`, color: C.gold, background: C.gold + "0d",
+            }}>
+            <Sparkles size={13} /> Analyse
+          </button>
+        )}
         <button type="button" onClick={() => setPasteOpen(v => !v)} disabled={importing}
           title="Paste your holdings straight from your broker's page or a spreadsheet — no file needed"
           style={{
