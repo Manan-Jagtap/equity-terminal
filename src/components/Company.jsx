@@ -12,7 +12,7 @@ import {
   ShieldAlert, Star, FolderOpen, FileSpreadsheet, ExternalLink, Layers,
 } from "lucide-react";
 import {
-  ComposedChart, AreaChart, Area, BarChart, Bar, LineChart, Line,
+  ComposedChart, BarChart, Bar, LineChart, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   ReferenceLine, Cell,
 } from "recharts";
@@ -451,29 +451,25 @@ function ProfileKeyFacts({ kf }) {
   );
 }
 
-function OverviewTab({ co, rec, cd, priceData, profile }) {
+function OverviewTab({ co, rec, cd, profile }) {
   const isMobile = useIsMobile();
   const f = rec.f;
-  const t = rec.t;
   const histPAT = cd?.pnl?.years?.slice(0, 5).map((y, i) => ({
     y,
     pat: cd.pnl.rows.find(r => r.metric === "PAT (Reported)")?.v[i],
     aum: cd.bs?.rows?.find(r => r.metric === "AUM (Consol.)")?.v[i],
   })) || [];
-  const chartData = (priceData && priceData.length > 10) ? priceData : t.data;
-  const hasRealDates = priceData && priceData.length > 10 && priceData[0]?.date != null;
-  const thinned = chartData.length > 300
-    ? chartData.filter((_, i) => i % Math.ceil(chartData.length / 250) === 0)
-    : chartData;
 
   return (
     <div className="fadein" style={{ padding: isMobile ? 16 : 32, display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 380px", gap:24 }}>
       {/* LEFT */}
       <div style={{ display:"flex", flexDirection:"column", gap:24 }}>
         <Card>
-          <SectionLabel accent="CONCALL SNAPSHOT">INVESTMENT THESIS</SectionLabel>
+          {cd?.description
+            ? <SectionLabel accent="CONCALL SNAPSHOT">INVESTMENT THESIS</SectionLabel>
+            : <SectionLabel accent="FROM EXCHANGE FILINGS">BUSINESS PROFILE</SectionLabel>}
           <div style={{ ...sans, fontSize:14, lineHeight:1.75, color:C.text200 }}>
-            <span style={{ ...serif, fontSize:36, float:"left", marginRight:10, lineHeight:1, color:C.gold }}>"</span>
+            {cd?.description && <span style={{ ...serif, fontSize:36, float:"left", marginRight:10, lineHeight:1, color:C.gold }}>"</span>}
             {cd?.description || profile?.description || `${co.name} operates in the ${co.sector} sector. Profile data loading…`}
           </div>
           <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginTop:16 }}>
@@ -553,49 +549,6 @@ function OverviewTab({ co, rec, cd, priceData, profile }) {
       {/* RIGHT */}
       <div style={{ display:"flex", flexDirection:"column", gap:24 }}>
 
-        {/* Price chart with real dates */}
-        <Card>
-          <SectionLabel accent={hasRealDates ? "LIVE · NSE DAILY OHLCV" : "INDICATIVE SERIES · REAL PRICE HISTORY ARRIVES WITH THE NEXT REFRESH"}>
-            PRICE CHART
-          </SectionLabel>
-          <div style={{ height:180 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={thinned} margin={{ top:4, right:4, bottom:0, left:-20 }}>
-                <defs>
-                  <linearGradient id="pg" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%"  stopColor={C.gold} stopOpacity={0.25} />
-                    <stop offset="95%" stopColor={C.gold} stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="2 4" stroke="rgba(220,213,193,.06)" vertical={false} />
-                <XAxis
-                  dataKey={hasRealDates ? "label" : "i"}
-                  tick={{ fill:C.dim, fontSize:9 }}
-                  axisLine={{ stroke:"rgba(220,213,193,.1)" }}
-                  tickLine={false}
-                  interval={hasRealDates ? Math.floor(thinned.length / 6) : "preserveStartEnd"}
-                />
-                <YAxis domain={["auto","auto"]} tick={{ fill:C.dim, fontSize:9 }} axisLine={false} tickLine={false} tickFormatter={v=>"₹"+v} width={52} />
-                <Tooltip
-                  contentStyle={{ background:C.bg800, border:`1px solid ${C.bg600}`, borderRadius:0, fontSize:11 }}
-                  labelFormatter={l => hasRealDates ? l : ""}
-                  formatter={v => ["₹"+v.toLocaleString("en-IN"), "Close"]}
-                />
-                <Area type="monotone" dataKey="close" stroke={C.gold} strokeWidth={1.6} fill="url(#pg)" dot={false} />
-                {thinned.some(d => d.sma50 != null) && (
-                  <Line type="monotone" dataKey="sma50" stroke={C.dim} strokeWidth={1} dot={false} strokeDasharray="4 3" />
-                )}
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-          <div style={{ display:"flex", gap:16, marginTop:8 }}>
-            {hasRealDates
-              ? [["High ₹"+fmtN(t.hi||0,1), C.text200],["Low ₹"+fmtN(t.lo||0,1), C.text200],["RSI "+fmtN(t.rsi||0,0), t.rsi>70?C.red:t.rsi<30?C.green:C.dim],[t.aboveSMA50?"Above 50DMA":"Below 50DMA", t.aboveSMA50?C.green:C.red]].map(([l,cl]) => (
-                  <span key={l} style={{ ...sans, fontSize:10, color:cl }}>{l}</span>
-                ))
-              : <span style={{ ...sans, fontSize:10, color:C.faint }}>High / Low / RSI shown once real OHLC is ingested — synthetic series suppressed</span>}
-          </div>
-        </Card>
 
         {(cd?.keyFacts || cd?.meta) ? (
           <Card>
@@ -2808,18 +2761,6 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
   }, [histPrices, co.series]);
 
   // Add SMA to price chart data
-  const priceChartWithSMA = useMemo(() => {
-    const data = [...priceChartData];
-    for (let i = 0; i < data.length; i++) {
-      if (i >= 19) {
-        data[i].sma20 = +(data.slice(i-19,i+1).reduce((s,d)=>s+d.close,0)/20).toFixed(1);
-      }
-      if (i >= 49) {
-        data[i].sma50 = +(data.slice(i-49,i+1).reduce((s,d)=>s+d.close,0)/50).toFixed(1);
-      }
-    }
-    return data;
-  }, [priceChartData]);
 
   // PDF download handler
   const downloadOnepager = async () => {
@@ -2973,8 +2914,16 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
                 <div style={{ ...serif, fontSize: isMobile ? 34 : 60, color:C.text, lineHeight:1.05, letterSpacing:"-0.02em" }}>{co.name}</div>
               </div>
               <div style={{ ...sans, fontSize:13, color:C.text200, marginTop:12, maxWidth:680, lineHeight:1.6 }}>
-                {liveProfile?.description || cd?.description ||
-                  `${co.name} is a ${co.sector} company in the terminal's Nifty 500 coverage. The figures on this page are its live market data and our independent model's read; a detailed business profile arrives with the next data refresh.`}
+                {(() => {
+                  // Header teaser: first two sentences. The FULL profile lives in
+                  // the Business tab — repeating it verbatim in both places made
+                  // the page read like a copy-paste bug.
+                  const full = liveProfile?.description || cd?.description ||
+                    `${co.name} is a ${co.sector} company in the terminal's Nifty 500 coverage. The figures on this page are its live market data and our independent model's read; a detailed business profile arrives with the next data refresh.`;
+                  const parts = full.match(/[^.!?]+[.!?]+(\s|$)/g) || [full];
+                  const teaser = parts.slice(0, 2).join("").trim();
+                  return teaser.length < full.trim().length ? teaser + " …" : teaser;
+                })()}
               </div>
             </div>
             <div style={{ textAlign: isMobile ? "left" : "right" }}>
@@ -3051,7 +3000,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
 
       {/* ── Tab content ───────────────────────────────────────── */}
       <main>
-        {tab==="overview"   && <OverviewTab    co={co2} rec={rec} cd={cd} priceData={priceChartWithSMA} profile={liveProfile} />}
+        {tab==="overview"   && <OverviewTab    co={co2} rec={rec} cd={cd} profile={liveProfile} />}
         {tab==="chart"      && <PriceChart     data={histPrices?.data} intrinsic={fairValue} price={price} ticker={co.ticker} />}
         {tab==="financials" && <FinancialsTab  co={co2} cd={cd} liveFinancials={liveFinancials} API={API} />}
         {tab==="ratios"     && <RatiosTab      co={co2} API={API} liveMetrics={liveMetrics} />}
