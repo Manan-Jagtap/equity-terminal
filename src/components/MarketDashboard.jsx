@@ -155,6 +155,18 @@ function DataHealth({ API, onOpen }) {
   }, [API]);
 
   if (!health || !health.count) return null;
+  // An expired price-feed token outranks everything: it's the one cause that
+  // makes ALL other flags bloom, and the one fix that clears them.
+  if (health.feed?.token_expired) {
+    return (
+      <div style={{ border: `1px solid ${C.red}55`, borderRadius: 10, background: C.red + "10", padding: "10px 14px", marginBottom: 18, display: "flex", alignItems: "center", gap: 8 }}>
+        <ShieldAlert size={14} color={C.red} strokeWidth={1.7} />
+        <span style={{ ...sans, fontSize: 12, color: C.text200 }}>
+          Price-feed access token expired {health.feed.token_expires_utc?.slice(0, 10)} — daily history, live prices and options are paused until it's renewed. Valuations continue on last verified data.
+        </span>
+      </div>
+    );
+  }
   const flagged = health.flagged || [];
   const clean = flagged.length === 0;
   const tone = clean ? C.green : health.alerts > 0 ? C.red : C.gold;
