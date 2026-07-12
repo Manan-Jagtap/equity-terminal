@@ -31,16 +31,17 @@ function ConvictionBar({ v }) {
 
 export default function FundManager({ API, user, requestAuth, onOpen }) {
   const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // loading derives from "signed in but no payload yet" — no sync setState.
+  const [loaded, setLoaded] = useState(false);
+  const loading = !!user && !loaded;
 
   useEffect(() => {
     if (!API || !user) return;
     let dead = false;
-    setLoading(true);
     authFetch(`${API}/api/portfolio/analysis`)
       .then(r => (r.ok ? r.json() : null))
-      .then(d => { if (!dead) { setData(d); setLoading(false); } })
-      .catch(() => { if (!dead) { setData(null); setLoading(false); } });
+      .then(d => { if (!dead) { setData(d); setLoaded(true); } })
+      .catch(() => { if (!dead) { setData(null); setLoaded(true); } });
     return () => { dead = true; };
   }, [API, user]);
 
