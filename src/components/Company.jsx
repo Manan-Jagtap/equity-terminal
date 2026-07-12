@@ -2829,7 +2829,8 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
           backgroundImage:`url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.72 0 0 0 0 0.80 0 0 0 0 0.96 0 0 0 0.02 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }} />
         <div style={{ position:"relative", padding: isMobile ? "16px 16px 20px" : "24px 32px 28px" }}>
           {/* Top bar */}
-          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:24 }}>
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
+                        flexWrap:"wrap", rowGap:10, marginBottom: isMobile ? 14 : 24 }}>
             <div style={{ display:"flex", alignItems:"center", gap:12 }}>
               <button onClick={onBack} style={{ ...sans, display:"flex", alignItems:"center", gap:6, background:"transparent", border:"none", color:C.dim, fontSize:12, cursor:"pointer", padding:0 }}>
                 <ArrowLeft size={14} /> Back to screener
@@ -2845,7 +2846,8 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
                   : "NBFC"} · <span style={{ color:accent, fontWeight:600 }}>{co.sector}</span>
               </span>
             </div>
-            <div style={{ display:"flex", alignItems:"center", gap:12, ...sans, fontSize:12, color:C.dim }}>
+            <div style={{ display:"flex", alignItems:"center", gap: isMobile ? 8 : 12, flexWrap:"wrap",
+                          rowGap:8, ...sans, fontSize:12, color:C.dim }}>
               {onToggleWatch && (
                 <button onClick={() => onToggleWatch(co.ticker)}
                   title={isWatched ? "Remove from watchlist" : "Add to watchlist"}
@@ -2873,8 +2875,8 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
                   Data {conf.level} ({Math.round(conf.score*100)}%)
                 </span>
               </span>
-              <span style={{ color:C.bg500 }}>|</span>
-              <span>₹ in Crores unless stated</span>
+              {!isMobile && <><span style={{ color:C.bg500 }}>|</span>
+              <span>₹ in Crores unless stated</span></>}
               <span style={{ color:C.bg500 }}>|</span>
               <button onClick={downloadOnepager} style={{
                 ...sans, display:"flex", alignItems:"center", gap:6,

@@ -10,6 +10,15 @@
     <meta property="og:title" content="Equity Terminal — Independent Equity Research for Indian Markets" />
     <meta property="og:description" content="Transparent valuations, factor rankings and portfolio analytics for Nifty 500 companies — research that shows its work, with a track record that can't be faked." />
   </head>
+  <style>
+    /* Global guards: dark canvas everywhere (no white gutters when content
+       overflows) and NO horizontal document overflow — one over-wide element
+       otherwise makes iOS Safari zoom the whole layout out to fit, which
+       flips every isMobile check back to desktop. Wide tables scroll inside
+       their own overflow-x containers instead. */
+    html, body { margin: 0; background: #060A13; overflow-x: hidden; }
+    #root { overflow-x: clip; }
+  </style>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
