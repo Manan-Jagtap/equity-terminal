@@ -555,7 +555,7 @@ function OverviewTab({ co, rec, cd, priceData, profile }) {
 
         {/* Price chart with real dates */}
         <Card>
-          <SectionLabel accent={hasRealDates ? "LIVE · NSE DAILY OHLCV" : "SYNTHETIC · RUN PRICE INGESTER FOR REAL DATA"}>
+          <SectionLabel accent={hasRealDates ? "LIVE · NSE DAILY OHLCV" : "INDICATIVE SERIES · REAL PRICE HISTORY ARRIVES WITH THE NEXT REFRESH"}>
             PRICE CHART
           </SectionLabel>
           <div style={{ height:180 }}>
@@ -998,7 +998,7 @@ function FinancialsTab({ co, cd, liveFinancials, API }) {
           <div style={{ display:"flex", alignItems:"flex-start", gap:12, padding:16, background:C.green+"0a", border:`1px solid ${C.green}33` }}>
             <Check size={16} color={C.green} style={{ flexShrink:0, marginTop:2 }} />
             <div style={{ ...sans, fontSize:13, color:C.text200, lineHeight:1.6 }}>
-              Live statements — <span style={{ color:C.green, fontWeight:500 }}>{years.length} fiscal year{years.length>1?"s":""}</span> from IndianAPI. ₹ in crores.
+              Live statements — <span style={{ color:C.green, fontWeight:500 }}>{years.length} fiscal year{years.length>1?"s":""}</span> from the verified filings feed. ₹ in crores.
             </div>
           </div>
           <AnnualIncomeStatement co={co} API={API} fallback={
@@ -1110,7 +1110,7 @@ function RatiosTab({ co, API, liveMetrics }) {
   return (
     <div className="fadein" style={{ padding: isMobile ? 16 : 32, display:"flex", flexDirection:"column", gap:24 }}>
       <div style={{ ...sans, fontSize:12, color:C.dim, display:"flex", alignItems:"center", gap:8 }}>
-        <Info size={13} color={C.faint} /> Ratios published as IndianAPI reports them — sector-specific, no standardised template.
+        <Info size={13} color={C.faint} /> Ratios as reported in the source feed — sector-specific, no standardised template.
       </div>
 
       {/* Valuation & returns — IndianAPI's own TTM multiples (same card style) */}
@@ -1119,7 +1119,7 @@ function RatiosTab({ co, API, liveMetrics }) {
           <Card noPad style={{ overflow:"hidden" }}>
             <div style={{ padding:"14px 18px 10px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
               <span style={{ ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.16em", color:C.gold, fontWeight:600 }}>VALUATION &amp; RETURNS</span>
-              <span style={{ ...sans, fontSize:10, color:C.dim }}>TTM · IndianAPI</span>
+              <span style={{ ...sans, fontSize:10, color:C.dim }}>TTM · reported</span>
             </div>
             <div style={{ borderTop:`1px solid ${C.line2}` }}>
               {[["P / E", multiple(sm.pe,1)],["P / B", multiple(sm.pb,1)],["ROE (TTM)", pctR(sm.roe_ttm)],
@@ -1141,7 +1141,7 @@ function RatiosTab({ co, API, liveMetrics }) {
       {ratios === undefined ? (
         <div style={{ ...sans, color:C.dim, fontSize:13, padding:24 }}>Loading ratios…</div>
       ) : (ratios?.has_data && (ratios.periods || []).length) ? (
-        <ScreenerIncomeTable title="Ratios" accent="OPERATING RATIOS · IndianAPI"
+        <ScreenerIncomeTable title="Ratios" accent="OPERATING RATIOS · REPORTED"
                              periods={ratios.periods.slice(-5)}
                              metrics={Object.fromEntries(Object.entries(ratios.metrics || {}).map(([k, v]) => [k, (v || []).slice(-5)]))}
                              order={ratios.order} kind="annual" />
@@ -1152,7 +1152,7 @@ function RatiosTab({ co, API, liveMetrics }) {
         <Card noPad style={{ overflow:"hidden" }}>
           <div style={{ padding:"16px 20px 8px", display:"flex", alignItems:"baseline", justifyContent:"space-between" }}>
             <div>
-              <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.18em", color:C.dim }}>COMPOUNDED · IndianAPI</div>
+              <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.18em", color:C.dim }}>COMPOUNDED · REPORTED</div>
               <div style={{ ...serif, fontSize:22, color:C.text, marginTop:2 }}>Growth &amp; Returns</div>
             </div>
           </div>
@@ -1602,7 +1602,7 @@ function IndianApiPeers({ co, peers, selfMetrics, universe }) {
           </table>
         </div>
         <div style={{ padding: "10px 20px", ...sans, fontSize: 11, color: C.faint }}>
-          Market multiples via IndianAPI (one consistent basis) · ◆ marks {co.ticker} · ROE &amp; margins are TTM · Median/Average computed over selected peers only.
+          Market multiples from the verified feed (one consistent basis) · ◆ marks {co.ticker} · ROE &amp; margins are TTM · Median/Average computed over selected peers only.
         </div>
       </Card>
     </div>
@@ -2864,7 +2864,9 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
               </button>
               <span style={{ color:C.bg500 }}>/</span>
               <span style={{ ...sans, fontSize:11, color:C.dim, textTransform:"uppercase", letterSpacing:"0.14em" }}>
-                India · {co.type==="financial"?"NBFC":"Equity"} · <span style={{ color:accent, fontWeight:600 }}>{co.sector}</span>
+                India · {co.type!=="financial" ? "Equity"
+                  : /bank/i.test(co.sector||"") ? "Bank"
+                  : /insur/i.test(co.sector||"") ? "Insurer" : "NBFC"} · <span style={{ color:accent, fontWeight:600 }}>{co.sector}</span>
               </span>
             </div>
             <div style={{ display:"flex", alignItems:"center", gap:12, ...sans, fontSize:12, color:C.dim }}>
@@ -2934,7 +2936,8 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
                 <div style={{ ...serif, fontSize: isMobile ? 34 : 60, color:C.text, lineHeight:1.05, letterSpacing:"-0.02em" }}>{co.name}</div>
               </div>
               <div style={{ ...sans, fontSize:13, color:C.text200, marginTop:12, maxWidth:680, lineHeight:1.6 }}>
-                {cd?.description || `${co.name} operates in the ${co.sector} sector. Data is being populated.`}
+                {liveProfile?.description || cd?.description ||
+                  `${co.name} is a ${co.sector} company in the terminal's Nifty 500 coverage. The figures on this page are its live market data and our independent model's read; a detailed business profile arrives with the next data refresh.`}
               </div>
             </div>
             <div style={{ textAlign: isMobile ? "left" : "right" }}>

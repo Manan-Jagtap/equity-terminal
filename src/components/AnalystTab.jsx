@@ -76,7 +76,7 @@ export default function AnalystTab({ co, API, price }) {
   if (!data || !data.has_data) return (
     <div style={{ padding: `40px ${isMobile ? 16 : 32}px` }}>
       <Panel title="Analyst & Forward" icon={TrendingUp}>
-        <Empty>No analyst data ingested yet for {co.ticker}. Run the IndianAPI ingester and this lights up.</Empty>
+        <Empty>Analyst estimates for {co.ticker} aren't in our data yet — coverage for this name arrives with the rolling weekly refresh. The independent model's view lives in the Valuation tab meanwhile.</Empty>
       </Panel>
     </div>
   );
