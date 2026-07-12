@@ -705,7 +705,8 @@ function OwnershipTab({ profile, ownership }) {
     // Insights-blob fallback: quarterly shareholding pattern with QoQ deltas.
     const rows = [["Promoter", ownership.promoter], ["FII", ownership.fii],
                   ["Mutual Funds", ownership.mf], ["DII", ownership.dii],
-                  ["Institutional", ownership.institutional], ["Public", ownership.public]]
+                  ["Institutional", ownership.institutional], ["Public", ownership.public],
+                  ["Government", ownership.government], ["Other", ownership.other]]
       .filter(([, v]) => v && v.pct != null);
     if (rows.length) {
       return (
