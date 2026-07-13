@@ -34,10 +34,14 @@ function Detail({ label, value, tone }) {
   );
 }
 
-function Card({ r }) {
+function Card({ r, onOpen }) {
   const g = r.listing_gains;
+  const clickable = !!r.detail_id;
   return (
-    <div style={{ padding: "13px 16px", borderTop: `1px solid ${C.line}` }}>
+    <div onClick={() => clickable && onOpen(r.detail_id)}
+      onMouseEnter={e => { if (clickable) e.currentTarget.style.background = C.bg800; }}
+      onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
+      style={{ padding: "13px 16px", borderTop: `1px solid ${C.line}`, cursor: clickable ? "pointer" : "default" }}>
       <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
         <span style={{ ...sans, fontSize: 14, fontWeight: 500, color: C.text }}>{r.name}</span>
         {r.is_sme && <span style={{ ...sans, fontSize: 9, fontWeight: 700, color: "#E8B054",
@@ -47,7 +51,7 @@ function Card({ r }) {
         {r.nse_enabled && <span style={{ ...sans, fontSize: 9, color: C.gold, border: `1px solid ${C.gold}44`, borderRadius: 4, padding: "1px 5px" }}>NSE</span>}
         {r.bse_enabled && <span style={{ ...sans, fontSize: 9, color: "#8FB4D8", border: "1px solid #8FB4D844", borderRadius: 4, padding: "1px 5px" }}>BSE</span>}
         {r.document_url && (
-          <a href={r.document_url} target="_blank" rel="noopener noreferrer"
+          <a href={r.document_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
             style={{ ...sans, fontSize: 11, color: C.gold, textDecoration: "none",
                      display: "inline-flex", alignItems: "center", gap: 4, marginLeft: "auto" }}>
             RHP <ExternalLink size={10} />
@@ -90,6 +94,18 @@ export default function IPOBoard() {
   const [data, setData] = useState(null);
   const [tab, setTab] = useState("open");
   const [sme, setSme] = useState("all");   // all | mainboard | sme
+  const [openId, setOpenId] = useState(null);
+  const [ipoDetail, setIpoDetail] = useState(null);
+
+  useEffect(() => {
+    if (!openId || !API) return;
+    let dead = false;
+    setIpoDetail(null);
+    fetch(`${API}/api/ipo/detail/${encodeURIComponent(openId)}`)
+      .then(r => r.json()).then(d => { if (!dead) setIpoDetail(d); })
+      .catch(() => { if (!dead) setIpoDetail({ available: false }); });
+    return () => { dead = true; };
+  }, [openId]);
 
   useEffect(() => {
     if (!API) return;
@@ -162,7 +178,7 @@ export default function IPOBoard() {
         </div>
       ) : (
         <div style={{ border: `1px solid ${C.line}`, borderRadius: 12, background: C.panel, overflow: "hidden" }}>
-          {rows.map((r, i) => <Card key={(r.symbol || r.name || "") + i} r={r} />)}
+          {rows.map((r, i) => <Card key={(r.symbol || r.name || "") + i} r={r} onOpen={setOpenId} />)}
         </div>
       )}
       {tab === "listed" && (
@@ -170,6 +186,77 @@ export default function IPOBoard() {
           Mainboard graduates that clear the universe's size floor auto-join the terminal each month.
         </div>
       )}
+      {openId && <IPODetailModal d={ipoDetail} onClose={() => setOpenId(null)} />}
+    </div>
+  );
+}
+
+function KV({ label, value }) {
+  if (value == null || value === "" || value === "—") return null;
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", gap: 12, padding: "6px 0", borderTop: `1px solid ${C.line}` }}>
+      <span style={{ ...sans, fontSize: 12, color: C.dim }}>{label}</span>
+      <span style={{ ...mono, fontSize: 12.5, color: C.text200, textAlign: "right" }}>{value}</span>
+    </div>
+  );
+}
+
+function IPODetailModal({ d, onClose }) {
+  const basic = d?.basic || {}, pricing = d?.pricing || {}, issue = d?.issue || {};
+  const dates = d?.dates || {}, res = d?.reservation || {}, sub = d?.subscription || {};
+  const reg = d?.registrar || {}, links = d?.links || {};
+  const pr = pricing.priceRange || {};
+  const bidding = dates.bidding || {};
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(4,8,16,0.6)",
+      display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "6vh 16px", overflowY: "auto" }}>
+      <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 620, background: C.bg900,
+        border: `1px solid ${C.line2}`, borderRadius: 14, padding: "20px 22px" }}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 12 }}>
+          <span style={{ ...serif, fontSize: 18, color: C.text, flex: 1 }}>{basic.name || "IPO detail"}</span>
+          <button onClick={onClose} style={{ ...sans, fontSize: 12, color: C.dim, background: "transparent",
+            border: `1px solid ${C.line2}`, borderRadius: 7, padding: "4px 10px", cursor: "pointer" }}>Close</button>
+        </div>
+        {!d ? <div style={{ ...sans, color: C.dim, fontSize: 13, padding: "20px 0" }}>Loading…</div>
+          : d.available === false ? <div style={{ ...sans, color: C.dim, fontSize: 13, padding: "20px 0" }}>No extra detail for this IPO yet.</div>
+          : (
+          <div>
+            <KV label="Type" value={basic.type} />
+            <KV label="Industry" value={basic.industry} />
+            <KV label="Status" value={basic.status} />
+            <KV label="Price range" value={pr.min != null && pr.max != null ? `₹${pr.min}–₹${pr.max}` : (pr.value || null)} />
+            <KV label="Lot size" value={issue.lotSize || issue.lot_size} />
+            <KV label="Issue size" value={issue.size || issue.totalSize || issue.issueSize} />
+            <KV label="Bidding opens" value={bidding.start || bidding.open} />
+            <KV label="Bidding closes" value={bidding.end || bidding.close} />
+            <KV label="Allotment" value={(dates.allotment || {}).date || dates.allotment} />
+            <KV label="Listing" value={(dates.listing || {}).date || dates.listing} />
+            <KV label="Overall subscription" value={sub.overallFormatted || sub.overall} />
+            <KV label="Retail reserved" value={res.retail ? res.retail + "%" : null} />
+            <KV label="NII reserved" value={res.nonInstitutional ? res.nonInstitutional + "%" : null} />
+            <KV label="QIB reserved" value={res.qualifiedInstitutional ? res.qualifiedInstitutional + "%" : null} />
+            <KV label="Registrar" value={reg.name} />
+            <KV label="Exchanges" value={[basic && d.exchanges?.nse && "NSE", d.exchanges?.bse && "BSE"].filter(Boolean).join(" · ") || null} />
+            {(sub.daily || []).length > 0 && (
+              <div style={{ marginTop: 12 }}>
+                <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: C.dim, marginBottom: 6 }}>Day-by-day subscription</div>
+                {sub.daily.map((day, i) => (
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", ...mono, fontSize: 12, color: C.text200 }}>
+                    <span style={{ color: C.dim }}>{day.date || `Day ${i + 1}`}</span>
+                    <span>{day.subscriptionFormatted || day.subscription || day.times || "—"}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {(links.prospectus?.rhp || links.prospectus?.drhp) && (
+              <div style={{ display: "flex", gap: 14, marginTop: 14 }}>
+                {links.prospectus.rhp && <a href={links.prospectus.rhp} target="_blank" rel="noopener noreferrer" style={{ ...sans, fontSize: 12, color: C.gold, display: "inline-flex", alignItems: "center", gap: 4 }}>RHP <ExternalLink size={11} /></a>}
+                {links.prospectus.drhp && <a href={links.prospectus.drhp} target="_blank" rel="noopener noreferrer" style={{ ...sans, fontSize: 12, color: C.gold, display: "inline-flex", alignItems: "center", gap: 4 }}>DRHP <ExternalLink size={11} /></a>}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
