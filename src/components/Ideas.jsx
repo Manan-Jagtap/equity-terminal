@@ -8,6 +8,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Sparkles, Loader2, Info } from "lucide-react";
 import { C, sans, serif, mono } from "../lib/theme.js";
+import { selStyle } from "../lib/listControls.jsx";
 import { VerdictBadge } from "./primitives.jsx";
 
 const FACTORS = [
@@ -52,6 +53,8 @@ export default function Ideas({ API, onOpen }) {
   const [bt, setBt] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sector, setSector] = useState("All");
+  const [sortKey, setSortKey] = useState("alpha_score");
+  const [sortDir, setSortDir] = useState("desc");
 
   useEffect(() => {
     if (!API) { setLoading(false); return; }
@@ -70,7 +73,17 @@ export default function Ideas({ API, onOpen }) {
     () => ["All", ...Array.from(new Set(ideas.map(i => i.sector).filter(Boolean))).sort()],
     [ideas]
   );
-  const shown = sector === "All" ? ideas : ideas.filter(i => i.sector === sector);
+  const shown = useMemo(() => {
+    let out = sector === "All" ? ideas : ideas.filter(i => i.sector === sector);
+    const get = i => (sortKey === "alpha_score" ? i.alpha_score : i.factors?.[sortKey]);
+    const dir = sortDir === "asc" ? 1 : -1;
+    return [...out].sort((a, b) => {
+      const va = get(a), vb = get(b);
+      if (va == null && vb == null) return 0;
+      if (va == null) return 1; if (vb == null) return -1;
+      return (va - vb) * dir;
+    });
+  }, [ideas, sector, sortKey, sortDir]);
 
   if (loading) return (
     <div style={{ padding: 48, display: "flex", alignItems: "center", gap: 10, color: C.dim, ...sans, fontSize: 13 }}>
@@ -158,17 +171,23 @@ export default function Ideas({ API, onOpen }) {
         </div>
       </div>
 
-      {/* Sector filter */}
-      <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 12 }}>
-        {sectors.map(s => (
-          <button key={s} onClick={() => setSector(s)} style={{
-            ...sans, fontSize: 11, padding: "4px 11px", cursor: "pointer", borderRadius: 7,
-            border: `1px solid ${sector === s ? C.line2 : "transparent"}`,
-            background: sector === s ? C.bg800 : "transparent",
-            color: sector === s ? C.gold : C.dim }}>
-            {s}
-          </button>
-        ))}
+      {/* Sector + sort controls */}
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginBottom: 12 }}>
+        <select value={sector} onChange={e => setSector(e.target.value)} style={selStyle}
+          title="Filter by sector">
+          {sectors.map(s => <option key={s} value={s}>{s === "All" ? "All sectors" : s}</option>)}
+        </select>
+        <span style={{ ...sans, fontSize: 11, color: C.faint }}>sort</span>
+        <select value={sortKey} onChange={e => setSortKey(e.target.value)} style={selStyle}
+          title="Rank by this factor">
+          {[["alpha_score", "Alpha"], ["value", "Value"], ["quality", "Quality"],
+            ["momentum", "Momentum"], ["low_vol", "Low Vol"], ["growth", "Growth"],
+            ["catalyst", "Catalyst"], ["surprise", "Surprise"]].map(([k, l]) =>
+            <option key={k} value={k}>{l}</option>)}
+        </select>
+        <button onClick={() => setSortDir(d => (d === "desc" ? "asc" : "desc"))} style={selStyle}
+          title="Toggle direction">{sortDir === "desc" ? "High → Low ↓" : "Low → High ↑"}</button>
+        <span style={{ ...sans, fontSize: 11, color: C.dim }}>{shown.length} names</span>
       </div>
 
       {!shown.length ? (

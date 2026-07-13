@@ -40,6 +40,13 @@ const sectorBucket = sec => {
 export default function Screener({ companies, onOpen, loading, watched, onToggleWatch, API }) {
   const isWatched = t => watched && watched.has(t);
   const liveFeed = useLive(API);   // near-real-time CMP ticks (shared store)
+  // SEBI cap bands (₹cr): Large ≥ 67,000 (~top 100), Mid 22,000–67,000, else Small.
+  const capBand = (co, livePx) => {
+    const px = livePx ?? co.price;
+    const m = (px && co.shares) ? px * co.shares : (co.market_cap ?? null);
+    if (m == null) return null;
+    return m >= 67000 ? "Large" : m >= 22000 ? "Mid" : "Small";
+  };
   const [q, setQ] = useState("");
   const [sort, setSort] = useState("rank");
   const [sf, setSf] = useState("All");
@@ -47,6 +54,7 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
   const [vf, setVf] = useState("All");
   const [cf, setCf] = useState("All");
   const [minMos, setMinMos] = useState("");
+  const [capf, setCapf] = useState("All");   // cap band filter
   const VRANK = { BUY: 5, ACCUMULATE: 4, HOLD: 3, REDUCE: 2, TRIM: 2, AVOID: 1 };
 
   // Saved screens: name the current filter state (query/sector/sort), reload it
@@ -125,6 +133,7 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
     .filter(r => {
       if (vf !== "All" && r.verdict !== vf) return false;
       if (cf !== "All" && r.confidence.level !== cf) return false;
+      if (capf !== "All" && capBand(r.co, liveFeed.prices?.[(r.co.ticker || "").toUpperCase()]) !== capf) return false;
       const m = parseFloat(minMos);
       if (!isNaN(m) && (r.mos == null || r.mos * 100 < m)) return false;
       return true;
@@ -138,7 +147,7 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
       if (sort === "mos")       return b.sortMos - a.sortMos;
       if (sort === "roe")       return (b.roe || 0) - (a.roe || 0);
       return a.co.name.localeCompare(b.co.name);
-    }), [companies, q, sort, sf, vf, cf, minMos]);
+    }), [companies, q, sort, sf, vf, cf, minMos, capf, liveFeed]);
 
   const Th = ({ children, k }) => (
     <th onClick={() => k && setSort(k)} style={{
@@ -189,6 +198,14 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
           fontSize: 13, cursor: "pointer", outline: "none",
         }}>
           {[["All", "Any confidence"], ["high", "High conf"], ["medium", "Med conf"], ["low", "Low conf"]].map(([v, l]) =>
+            <option key={v} value={v}>{l}</option>)}
+        </select>
+        <select value={capf} onChange={e => setCapf(e.target.value)} title="Filter by market-cap band" style={{
+          ...sans, background: C.panel2, border: `1px solid ${capf !== "All" ? C.gold + "88" : C.line}`,
+          borderRadius: 8, color: capf !== "All" ? C.gold : C.text, padding: "8px 12px",
+          fontSize: 13, cursor: "pointer", outline: "none",
+        }}>
+          {[["All", "Any cap"], ["Large", "Large cap"], ["Mid", "Mid cap"], ["Small", "Small cap"]].map(([v, l]) =>
             <option key={v} value={v}>{l}</option>)}
         </select>
         <input value={minMos} onChange={e => setMinMos(e.target.value)}
