@@ -43,6 +43,9 @@ function Card({ r }) {
         {r.is_sme && <span style={{ ...sans, fontSize: 9, fontWeight: 700, color: "#E8B054",
           background: "#E8B0541a", borderRadius: 4, padding: "2px 6px" }}>SME</span>}
         <span style={{ ...mono, fontSize: 10, color: C.faint }}>{r.symbol || ""}</span>
+        {r.industry && <span style={{ ...sans, fontSize: 10, color: C.dim }}>{r.industry}</span>}
+        {r.nse_enabled && <span style={{ ...sans, fontSize: 9, color: C.gold, border: `1px solid ${C.gold}44`, borderRadius: 4, padding: "1px 5px" }}>NSE</span>}
+        {r.bse_enabled && <span style={{ ...sans, fontSize: 9, color: "#8FB4D8", border: "1px solid #8FB4D844", borderRadius: 4, padding: "1px 5px" }}>BSE</span>}
         {r.document_url && (
           <a href={r.document_url} target="_blank" rel="noopener noreferrer"
             style={{ ...sans, fontSize: 11, color: C.gold, textDecoration: "none",

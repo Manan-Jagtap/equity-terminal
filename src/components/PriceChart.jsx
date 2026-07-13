@@ -4,7 +4,7 @@
    linear/log scale, toggleable moving-average overlays, a horizontal FAIR-VALUE
    line at the model's intrinsic, volume bars, an RSI(14) pane, and 52-week
    high/low markers. Recharts + inline theme, mobile-aware. */
-import { lazy, Suspense, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 const CandleChart = lazy(() => import("./CandleChart.jsx"));
 import {
   ComposedChart, Area, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -57,7 +57,7 @@ const Toggle = ({ on, set, color, label }) => (
   }}>{label}</button>
 );
 
-export default function PriceChart({ data, intrinsic, price, ticker }) {
+export default function PriceChart({ data, intrinsic, price, ticker, API }) {
   const isMobile = useIsMobile();
   const [style, setStyle] = useState("candles");   // broker-terminal default
   const [range, setRange] = useState(252);
@@ -100,9 +100,20 @@ export default function PriceChart({ data, intrinsic, price, ticker }) {
   const peak = Math.max(...series.map(p => p.close));
   const ddNow = peak > 0 && last != null ? last / peak - 1 : null;
 
+  const [intraday, setIntraday] = useState(null);
+  useEffect(() => {
+    if (style !== "intraday" || !API || !ticker) return;
+    let dead = false;
+    setIntraday(null);
+    fetch(`${API}/api/companies/${ticker}/intraday`)
+      .then(r => r.json()).then(d => { if (!dead) setIntraday(d); })
+      .catch(() => { if (!dead) setIntraday({ available: false, values: [] }); });
+    return () => { dead = true; };
+  }, [style, API, ticker]);
+
   const StyleToggle = (
     <div style={{ display: "inline-flex", gap: 4, marginRight: 8 }}>
-      {[["candles", "Candles"], ["line", "Line"]].map(([id, lbl]) => (
+      {[["candles", "Candles"], ["line", "Line"], ["intraday", "1D"]].map(([id, lbl]) => (
         <button key={id} onClick={() => setStyle(id)} style={{
           ...sans, fontSize: 11, padding: "4px 11px", borderRadius: 7, cursor: "pointer",
           border: `1px solid ${style === id ? C.gold + "66" : C.line2}`,
@@ -111,6 +122,57 @@ export default function PriceChart({ data, intrinsic, price, ticker }) {
       ))}
     </div>
   );
+
+  if (style === "intraday") {
+    const iv = (intraday?.values || []).map((v, i) => ({
+      i, label: (v.t || "").slice(11, 16), price: v.price }));
+    const up = intraday?.change == null ? true : intraday.change >= 0;
+    const col = up ? C.green : C.red;
+    return (
+      <div style={{ padding: isMobile ? "8px 2px" : "8px 4px" }}>
+        <div style={{ marginBottom: 8, display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap" }}>
+          {StyleToggle}
+          {intraday?.price != null && (
+            <span style={{ ...mono, fontSize: 13, color: C.text }}>{inr(intraday.price)}
+              <span style={{ color: col, marginLeft: 8 }}>
+                {up ? "+" : ""}{intraday.change != null ? inr(Math.abs(intraday.change)) : ""}
+                {intraday.pct != null ? ` (${intraday.pct >= 0 ? "+" : ""}${Number(intraday.pct).toFixed(2)}%)` : ""}
+              </span>
+            </span>
+          )}
+          <span style={{ ...sans, fontSize: 10.5, color: C.faint }}>today · 1-minute ticks</span>
+        </div>
+        {!iv.length ? (
+          <div style={{ ...sans, padding: 30, color: C.dim, fontSize: 12 }}>
+            {intraday == null ? "Loading intraday…"
+              : "No intraday ticks right now — the market is closed or this name has no live feed."}
+          </div>
+        ) : (
+          <div style={{ height: isMobile ? 260 : 380 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={iv} margin={{ top: 8, right: 6, bottom: 0, left: -8 }}>
+                <defs>
+                  <linearGradient id="idg" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={col} stopOpacity={0.25} />
+                    <stop offset="100%" stopColor={col} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid stroke={C.line} strokeDasharray="2 4" vertical={false} />
+                <XAxis dataKey="label" tick={{ fill: C.dim, fontSize: 10 }} minTickGap={48} tickLine={false} axisLine={{ stroke: C.line }} />
+                <YAxis domain={["auto", "auto"]} tick={{ fill: C.dim, fontSize: 10 }} width={52} tickLine={false} axisLine={false}
+                       tickFormatter={v => "₹" + Math.round(v)} />
+                {intraday?.prev != null && <ReferenceLine y={intraday.prev} stroke={C.dim} strokeDasharray="4 4"
+                  label={{ value: "prev close", fill: C.dim, fontSize: 9, position: "insideTopRight" }} />}
+                <Tooltip contentStyle={{ background: C.bg900, border: `1px solid ${C.line2}`, borderRadius: 8, fontSize: 12 }}
+                  labelStyle={{ color: C.dim }} formatter={v => [inr(v), "Price"]} />
+                <Area type="monotone" dataKey="price" stroke={col} strokeWidth={1.7} fill="url(#idg)" dot={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   if (style === "candles") return (
     <div style={{ padding: isMobile ? "8px 2px" : "8px 4px" }}>

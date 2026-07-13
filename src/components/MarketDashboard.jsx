@@ -51,6 +51,8 @@ export default function MarketDashboard({ API, companies, onOpen }) {
   const gainers = data?.movers?.gainers || [];
   const losers  = data?.movers?.losers || [];
   const active  = data?.active || [];
+  const bseActive = data?.bse_active || [];
+  const [activeEx, setActiveEx] = useState("NSE");
   const highs   = data?.high_low?.highs || [];
   const lows    = data?.high_low?.lows || [];
   const empty = indices.length === 0 && gainers.length === 0 && active.length === 0;
@@ -132,11 +134,25 @@ export default function MarketDashboard({ API, companies, onOpen }) {
 
       {/* Most active + 52w */}
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap: 16 }}>
-        <Card title="Most Active (NSE)" icon={Activity}>
-          {active.length ? active.map((x, i) => (
-            <Row key={i} clickable={known.has((x.ticker || "").toUpperCase())} onClick={() => openIf(x.ticker)}
-              left={x.name} sub={fmtVol(x.volume) + " vol"} right={fmtN(x.price)} rightTone={C.text} pct={x.pct} />
-          )) : <Empty />}
+        <Card title={`Most Active (${activeEx})`} icon={Activity}
+          action={
+            <div style={{ display: "flex", gap: 4 }}>
+              {["NSE", "BSE"].map(ex => (
+                <button key={ex} onClick={() => setActiveEx(ex)} style={{
+                  ...sans, fontSize: 10, padding: "3px 9px", borderRadius: 6, cursor: "pointer",
+                  border: `1px solid ${activeEx === ex ? C.gold + "66" : C.line2}`,
+                  background: activeEx === ex ? C.gold + "0d" : "transparent",
+                  color: activeEx === ex ? C.gold : C.dim }}>{ex}</button>
+              ))}
+            </div>
+          }>
+          {(() => {
+            const list = activeEx === "NSE" ? active : bseActive;
+            return list.length ? list.map((x, i) => (
+              <Row key={i} clickable={known.has((x.ticker || "").toUpperCase())} onClick={() => openIf(x.ticker)}
+                left={x.name} sub={fmtVol(x.volume) + " vol"} right={fmtN(x.price)} rightTone={C.text} pct={x.pct} />
+            )) : <Empty />;
+          })()}
         </Card>
         <Card title="52-Week Highs / Lows (NSE)" icon={ArrowUpRight}>
           {highs.length || lows.length ? (
@@ -219,11 +235,12 @@ function DataHealth({ API, onOpen }) {
   );
 }
 
-const Card = ({ title, icon: Icon, children }) => (
+const Card = ({ title, icon: Icon, children, action }) => (
   <section style={{ border: `1px solid ${C.line}`, borderRadius: 12, background: C.bg900, overflow: "hidden" }}>
     <header style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 16px", borderBottom: `1px solid ${C.line}`, background: C.bg800 }}>
       {Icon && <Icon size={14} color={C.gold} strokeWidth={1.6} />}
       <span style={{ ...sans, fontSize: 12, letterSpacing: "0.08em", textTransform: "uppercase", color: C.text200, fontWeight: 600 }}>{title}</span>
+      {action && <span style={{ marginLeft: "auto" }}>{action}</span>}
     </header>
     <div style={{ padding: "6px 0" }}>{children}</div>
   </section>
