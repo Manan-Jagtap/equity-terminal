@@ -23,6 +23,7 @@ export default function MarketDashboard({ API, companies, onOpen }) {
   const [loading, setLoading] = useState(true);
   const [tick, setTick] = useState(0);
   const [idxChart, setIdxChart] = useState(null);   // index name whose chart is open
+  const [activeEx, setActiveEx] = useState("NSE"); // NSE / BSE most-active toggle
   const liveFeed = useLive(API);
 
   // Tickers in our universe → clickable through to the company page.
@@ -52,7 +53,6 @@ export default function MarketDashboard({ API, companies, onOpen }) {
   const losers  = data?.movers?.losers || [];
   const active  = data?.active || [];
   const bseActive = data?.bse_active || [];
-  const [activeEx, setActiveEx] = useState("NSE");
   const highs   = data?.high_low?.highs || [];
   const lows    = data?.high_low?.lows || [];
   const empty = indices.length === 0 && gainers.length === 0 && active.length === 0;
