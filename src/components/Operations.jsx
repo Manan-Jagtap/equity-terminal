@@ -4,6 +4,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Gauge, Loader2, TrendingUp, TrendingDown, ChevronRight } from "lucide-react";
 import { C, sans, serif, mono } from "../lib/theme.js";
+import { ListToolbar, applyControls, SortableTh } from "../lib/listControls.jsx";
 import { VerdictBadge } from "./primitives.jsx";
 
 const p1 = v => v == null ? "—" : Number(v).toFixed(1) + "%";
@@ -34,6 +35,7 @@ export default function Operations({ API, onOpen }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sort, setSort] = useState("roce");
+  const [controls, setControls] = useState({});
 
   useEffect(() => {
     if (!API) { setLoading(false); return; }
@@ -52,8 +54,8 @@ export default function Operations({ API, onOpen }) {
     if (sort === "roe")   items.sort((a, b) => n(b.roe, -1) - n(a.roe, -1));
     if (sort === "turns") items.sort((a, b) => n(b.asset_turnover, -1) - n(a.asset_turnover, -1));
     if (sort === "ccc")   items.sort((a, b) => n(a.ccc, 1e9) - n(b.ccc, 1e9));   // lower cash cycle is better
-    return items;
-  }, [data, sort]);
+    return applyControls(items, controls);
+  }, [data, sort, controls]);
 
   if (loading) return (
     <div style={{ padding: 48, display: "flex", alignItems: "center", gap: 10, color: C.dim, ...sans, fontSize: 13 }}>
@@ -77,6 +79,10 @@ export default function Operations({ API, onOpen }) {
       </div>
 
       <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
+        <ListToolbar rows={data?.items} controls={controls} setControls={setControls}
+          metrics={[["roce", "ROCE %"], ["roe", "ROE %"], ["debtor_days", "Debtor days"],
+                    ["inventory_days", "Inventory days"], ["payable_days", "Payable days"],
+                    ["ccc", "Cash cycle"], ["asset_turnover", "Asset turns"]]} />
         {SORTS.map(s => (
           <button key={s.id} onClick={() => setSort(s.id)} style={{ ...sans, fontSize: 12,
             padding: "5px 12px", borderRadius: 8, cursor: "pointer",
@@ -92,13 +98,13 @@ export default function Operations({ API, onOpen }) {
           <thead>
             <tr>
               <th style={{ ...th, textAlign: "left" }}>Company</th>
-              <th style={{ ...th, textAlign: "right" }}>ROCE</th>
-              <th style={{ ...th, textAlign: "right" }}>ROE</th>
-              <th style={{ ...th, textAlign: "right" }}>Debtor days</th>
-              <th style={{ ...th, textAlign: "right" }}>Inventory days</th>
-              <th style={{ ...th, textAlign: "right" }}>Payable days</th>
-              <th style={{ ...th, textAlign: "right" }}>Cash cycle</th>
-              <th style={{ ...th, textAlign: "right" }}>Asset turns</th>
+              <SortableTh label="ROCE" k="roce" controls={controls} setControls={setControls} style={{ ...th, textAlign: "right" }} />
+              <SortableTh label="ROE" k="roe" controls={controls} setControls={setControls} style={{ ...th, textAlign: "right" }} />
+              <SortableTh label="Debtor days" k="debtor_days" controls={controls} setControls={setControls} style={{ ...th, textAlign: "right" }} />
+              <SortableTh label="Inventory days" k="inventory_days" controls={controls} setControls={setControls} style={{ ...th, textAlign: "right" }} />
+              <SortableTh label="Payable days" k="payable_days" controls={controls} setControls={setControls} style={{ ...th, textAlign: "right" }} />
+              <SortableTh label="Cash cycle" k="ccc" controls={controls} setControls={setControls} style={{ ...th, textAlign: "right" }} />
+              <SortableTh label="Asset turns" k="asset_turnover" controls={controls} setControls={setControls} style={{ ...th, textAlign: "right" }} />
               <th style={{ ...th, textAlign: "right" }}>Verdict</th>
               <th style={{ ...th }}></th>
             </tr>

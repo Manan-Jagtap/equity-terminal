@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Landmark, Loader2, TrendingUp, TrendingDown, ChevronRight } from "lucide-react";
 import { C, sans, serif, mono } from "../lib/theme.js";
+import { ListToolbar, applyControls } from "../lib/listControls.jsx";
 
 const p1 = v => v == null ? "—" : Number(v).toFixed(1) + "%";
 
@@ -37,6 +38,7 @@ export default function Ownership({ API, onOpen }) {
   const [sort, setSort] = useState("inst");
   // Column-header sort: by holding LEVEL (pct), toggling asc/desc.
   const [colSort, setColSort] = useState(null); // {key, dir}
+  const [controls, setControls] = useState({});
 
   useEffect(() => {
     if (!API) { setLoading(false); return; }
@@ -49,7 +51,7 @@ export default function Ownership({ API, onOpen }) {
   }, [API]);
 
   const rows = useMemo(() => {
-    const items = (data?.items || []).slice();
+    const items = applyControls((data?.items || []).slice(), controls);
     if (colSort) {
       const p = r => (r[colSort.key]?.pct == null ? -999 : r[colSort.key].pct);
       items.sort((a, b) => (colSort.dir === "asc" ? p(a) - p(b) : p(b) - p(a)));
@@ -61,7 +63,7 @@ export default function Ownership({ API, onOpen }) {
     if (sort === "dii")      items.sort((a, b) => d(b, "dii") - d(a, "dii"));
     if (sort === "promoter") items.sort((a, b) => d(b, "promoter") - d(a, "promoter"));
     return items;
-  }, [data, sort, colSort]);
+  }, [data, sort, colSort, controls]);
 
   const sortableTh = (label, key, style) => (
     <th onClick={() => setColSort(v => (v?.key === key
@@ -96,6 +98,9 @@ export default function Ownership({ API, onOpen }) {
       </div>
 
       <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
+        <ListToolbar rows={data?.items} controls={controls} setControls={setControls}
+          metrics={[["promoter.pct", "Promoter %"], ["fii.pct", "FII %"], ["dii.pct", "DII %"],
+                    ["mf.pct", "MF %"], ["institutional.delta", "Instit. Δ"]]} />
         {SORTS.map(s => (
           <button key={s.id} onClick={() => setSort(s.id)} style={{ ...sans, fontSize: 12,
             padding: "5px 12px", borderRadius: 8, cursor: "pointer",

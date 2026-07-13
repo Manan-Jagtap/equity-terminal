@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { CalendarClock, Loader2, TrendingUp, TrendingDown, ChevronRight } from "lucide-react";
 import { C, sans, serif, mono } from "../lib/theme.js";
+import { ListToolbar, applyControls, selStyle } from "../lib/listControls.jsx";
 import { VerdictBadge } from "./primitives.jsx";
 
 const cr   = v => v == null ? "—" : "₹" + Number(v).toLocaleString("en-IN", { maximumFractionDigits: 0 });
@@ -30,6 +31,8 @@ function Delta({ v }) {
 
 function UpcomingCalendar({ API, onOpen }) {
   const [cal, setCal] = useState(null);
+  const [controls, setControls] = useState({});
+  const [when, setWhen] = useState("all"); // all | upcoming | done
   useEffect(() => {
     if (!API) return;
     let live = true;
@@ -38,7 +41,9 @@ function UpcomingCalendar({ API, onOpen }) {
     return () => { live = false; };
   }, [API]);
   if (!cal) return <div style={{ ...sans, padding: 32, color: C.dim, fontSize: 13 }}>Loading calendar…</div>;
-  const items = cal.items || [];
+  let items = applyControls(cal.items || [], controls);
+  if (when === "upcoming") items = items.filter(r => r.days_away >= 0);
+  if (when === "done") items = items.filter(r => r.days_away < 0);
   if (!items.length) return (
     <div style={{ ...sans, padding: 32, color: C.dim, fontSize: 13, lineHeight: 1.6 }}>
       No upcoming board meetings on file yet — the calendar fills after the next weekly sweep of exchange
@@ -46,6 +51,16 @@ function UpcomingCalendar({ API, onOpen }) {
     </div>
   );
   return (
+    <>
+    <ListToolbar rows={cal.items} controls={controls} setControls={setControls}
+      extra={
+        <select value={when} onChange={e => setWhen(e.target.value)} style={selStyle}
+          title="Show meetings by status">
+          <option value="all">All meetings</option>
+          <option value="upcoming">Upcoming only</option>
+          <option value="done">Already done</option>
+        </select>
+      } />
     <div style={{ border: `1px solid ${C.line}`, borderRadius: 12, overflow: "hidden" }}>
       {items.map((r, i) => (
         <div key={i} onClick={() => onOpen && onOpen(r.ticker)}
@@ -68,6 +83,7 @@ function UpcomingCalendar({ API, onOpen }) {
         </div>
       ))}
     </div>
+    </>
   );
 }
 
@@ -75,6 +91,7 @@ export default function Results({ API, onOpen }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [sort, setSort] = useState("latest");
+  const [controls, setControls] = useState({});
 
   useEffect(() => {
     if (!API) { setLoading(false); return; }
@@ -87,13 +104,13 @@ export default function Results({ API, onOpen }) {
   }, [API]);
 
   const rows = useMemo(() => {
-    const items = (data?.items || []).slice();
+    const items = applyControls( (data?.items || []).slice(), controls);
     const num = (x, f = -Infinity) => (x == null ? f : x);
     if (sort === "pat")   items.sort((a, b) => num(b.pat_yoy) - num(a.pat_yoy));
     if (sort === "sales") items.sort((a, b) => num(b.sales_yoy) - num(a.sales_yoy));
     if (sort === "beat")  items.sort((a, b) => num(b.surprise?.surprise_pct) - num(a.surprise?.surprise_pct));
     return items;  // "latest" keeps API order (newest report first)
-  }, [data, sort]);
+  }, [data, sort, controls]);
 
   if (loading) return (
     <div style={{ padding: 48, display: "flex", alignItems: "center", gap: 10, color: C.dim, ...sans, fontSize: 13 }}>
@@ -117,6 +134,9 @@ export default function Results({ API, onOpen }) {
       </div>
 
       <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
+        <ListToolbar rows={data?.items} controls={controls} setControls={setControls}
+          metrics={[["sales_yoy", "Sales YoY"], ["pat_yoy", "PAT YoY"], ["opm", "OPM %"],
+                    ["surprise.surprise_pct", "EPS surprise"]]} />
         {SORTS.map(s => (
           <button key={s.id} onClick={() => setSort(s.id)} style={{ ...sans, fontSize: 12,
             padding: "5px 12px", borderRadius: 8, cursor: "pointer",
