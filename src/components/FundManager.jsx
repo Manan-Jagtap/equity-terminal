@@ -16,6 +16,97 @@ const inr = v => v == null ? "—" : "₹" + Number(v).toLocaleString("en-IN", {
 const actionTone = a =>
   a.includes("EXIT") ? C.red : a.includes("TRIM") ? "#E8B054" : C.green;
 
+const REGIME = {
+  risk_on:  { label: "RISK-ON",  color: C.green },
+  risk_off: { label: "RISK-OFF", color: C.red },
+  neutral:  { label: "MIXED",    color: "#E8B054" },
+};
+
+/* The macro tape the engine read this morning — regime, breadth, trend,
+   sector leadership. Same numbers that shaped conviction and sizing. */
+function MacroStrip({ macro }) {
+  if (!macro) return null;
+  const reg = REGIME[macro.regime] || REGIME.neutral;
+  const chip = { ...mono, fontSize: 10.5, padding: "3px 9px", borderRadius: 6,
+                 border: `1px solid ${C.line2}`, color: C.text200, whiteSpace: "nowrap" };
+  return (
+    <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap",
+                  border: `1px solid ${C.line}`, borderRadius: 12, background: C.panel,
+                  padding: "10px 14px", marginBottom: 18 }}>
+      <span style={{ ...sans, fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.12em", color: C.dim }}>
+        Macro read
+      </span>
+      <span style={{ ...chip, color: reg.color, borderColor: reg.color + "55", background: reg.color + "12" }}>
+        {reg.label}
+      </span>
+      {macro.nifty?.above_200dma != null && (
+        <span style={chip}>Nifty {macro.nifty.above_200dma ? "▲ above" : "▼ below"} 200-DMA</span>
+      )}
+      {macro.breadth_200dma != null && (
+        <span style={chip} title="Share of the 1000-name universe trading above its own 200-day average">
+          breadth {(macro.breadth_200dma * 100).toFixed(0)}%
+        </span>
+      )}
+      {(macro.rs_leaders || []).length > 0 && (
+        <span style={{ ...chip, color: C.green }} title="Strongest median 12-1 momentum">
+          ↑ {macro.rs_leaders.join(" · ")}
+        </span>
+      )}
+      {(macro.rs_laggards || []).length > 0 && (
+        <span style={{ ...chip, color: C.red }} title="Weakest median 12-1 momentum">
+          ↓ {macro.rs_laggards.join(" · ")}
+        </span>
+      )}
+      {(macro.commodities || []).filter(c => Math.abs(c.pct || 0) >= 2).slice(0, 2).map(c => (
+        <span key={c.name} style={{ ...chip, color: (c.pct || 0) >= 0 ? C.green : C.red }}>
+          {c.name} {(c.pct >= 0 ? "+" : "") + c.pct?.toFixed(1)}%
+        </span>
+      ))}
+    </div>
+  );
+}
+
+/* Evidence chips: what actually voted on this action. */
+function EvidenceChips({ ev }) {
+  if (!ev) return null;
+  const chip = { ...mono, fontSize: 9.5, padding: "2px 7px", borderRadius: 5,
+                 border: `1px solid ${C.line}`, color: C.dim, whiteSpace: "nowrap" };
+  return (
+    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 5 }}>
+      {ev.suspect && (
+        <span style={{ ...chip, color: "#E8B054", borderColor: "#E8B05455", background: "#E8B05412" }}
+          title="The model's fair value conflicted with the analyst consensus and/or this name's own 5-year valuation band (or was structurally unreliable) — it was excluded from this conviction score.">
+          ⚠ MODEL SET ASIDE
+        </span>
+      )}
+      {ev.val_blend != null && (
+        <span style={chip} title={`Blended valuation view from: ${(ev.val_sources || []).join(", ") || "—"}`}>
+          val {(ev.val_blend * 100).toFixed(0)}% · {(ev.val_sources || []).length} source{(ev.val_sources || []).length === 1 ? "" : "s"}
+        </span>
+      )}
+      {ev.quality != null && (
+        <span style={{ ...chip, color: ev.quality >= 65 ? C.green : ev.quality < 45 ? C.red : C.dim }}
+          title="Accounting-quality composite (Piotroski F, accruals, cash conversion, coverage, leverage)">
+          quality {Math.round(ev.quality)}
+        </span>
+      )}
+      {ev.pe_pct_5y != null && (
+        <span style={chip} title="Where today's trailing P/E sits inside this name's own 5-year range (lower = cheaper than its history)">
+          P/E {Math.round(ev.pe_pct_5y)}th pctile
+        </span>
+      )}
+      {ev.alpha != null && (
+        <span style={chip} title="7-factor Alpha Score rank within the universe">α {Math.round(ev.alpha)}</span>
+      )}
+      {(ev.red_flags || []).map(f => (
+        <span key={f} style={{ ...chip, color: C.red, borderColor: C.red + "44" }} title="Forensic red flag from the company's own statements">
+          ⚑ {f}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function ConvictionBar({ v }) {
   return (
     <div title={`Conviction ${v}/100 — how strongly the model's own numbers back this action`}
@@ -62,9 +153,11 @@ export default function FundManager({ API, user, requestAuth, onOpen }) {
         <span style={{ ...serif, fontSize: 30, color: C.text }}>Fund Manager</span>
         {mgr?.aum ? <span style={{ ...mono, fontSize: 13, color: C.dim }}>book {inr(mgr.aum)}</span> : null}
       </div>
-      <div style={{ ...sans, fontSize: 12, color: C.faint, marginBottom: 20 }}>
-        Conviction-scored actions from the terminal's own research — verdicts, margins of safety,
-        risk-balanced sizing, momentum and holding-period tax. You decide; nothing here is SEBI-registered advice.
+      <div style={{ ...sans, fontSize: 12, color: C.faint, marginBottom: 20, maxWidth: 860, lineHeight: 1.6 }}>
+        Conviction comes from triangulated evidence — the model's fair value cross-examined against analyst
+        consensus and each name's own 5-year valuation band, plus forensic accounting quality, institutional
+        flow, results momentum and the macro tape. A model that fails cross-examination is set aside, and the
+        action says so. You decide; nothing here is SEBI-registered advice.
       </div>
 
       {empty && (
@@ -80,6 +173,7 @@ export default function FundManager({ API, user, requestAuth, onOpen }) {
 
       {!empty && (
         <>
+          <MacroStrip macro={mgr.macro} />
           {/* PM note */}
           <div style={{ border: `1px solid ${C.gold}33`, borderRadius: 12, background: C.panel, padding: "18px 22px", marginBottom: 18 }}>
             <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: C.gold, marginBottom: 8 }}>
@@ -127,16 +221,21 @@ export default function FundManager({ API, user, requestAuth, onOpen }) {
                             entry zone <span style={{ color: C.green }}>≤ {inr(a.levels.entry_below)}</span>
                           </span>
                         : null}
-                      <span style={{ color: C.dim }} title="The model's fair value — its 12–18 month anchor, re-derived every refresh">
-                        target <span style={{ color: C.gold }}>{inr(a.levels.target)}</span>
+                      <span style={{ color: C.dim }}
+                        title={a.levels.basis === "consensus"
+                          ? "The Street's mean target — quoted because the model's own fair value failed cross-examination on this name"
+                          : "The model's fair value — its 12–18 month anchor, re-derived every refresh"}>
+                        {a.levels.basis === "consensus" ? "consensus target" : "target"}{" "}
+                        <span style={{ color: C.gold }}>{inr(a.levels.target)}</span>
                       </span>
                       {a.levels.upside_pct != null && (
                         <span style={{ color: a.levels.upside_pct >= 0 ? C.green : C.red }}>
-                          {(a.levels.upside_pct * 100).toFixed(0)}% to fair
+                          {(a.levels.upside_pct * 100).toFixed(0)}% to {a.levels.basis === "consensus" ? "consensus" : "fair"}
                         </span>
                       )}
                     </div>
                   )}
+                  <EvidenceChips ev={a.evidence} />
                   <div style={{ ...sans, fontSize: 11.5, color: C.dim, lineHeight: 1.55, marginTop: 2 }}>
                     {(a.reasons || []).join(" · ")}
                   </div>
@@ -161,6 +260,14 @@ export default function FundManager({ API, user, requestAuth, onOpen }) {
             ))}
           </div>
 
+          {mgr.engine && (
+            <div style={{ ...mono, fontSize: 9.5, color: C.vfaint, marginBottom: 6 }}
+              title="Signal weights are calibrated monthly against 5 years of the terminal's own full-universe history (information coefficients vs forward 6-month returns), shrunk toward research priors.">
+              engine {mgr.engine.version}
+              {mgr.engine.evidence_as_of ? ` · evidence ${String(mgr.engine.evidence_as_of).slice(0, 10)}` : ""}
+              {mgr.engine.calibration_as_of ? ` · calibrated ${String(mgr.engine.calibration_as_of).slice(0, 10)}` : " · calibration pending — prior weights"}
+            </div>
+          )}
           <div style={{ ...sans, fontSize: 10, color: C.faint, lineHeight: 1.5 }}>{data.disclaimer}</div>
         </>
       )}
