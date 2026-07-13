@@ -228,6 +228,12 @@ export default function FundManager({ API, user, requestAuth, onOpen }) {
                         {a.levels.basis === "consensus" ? "consensus target" : "target"}{" "}
                         <span style={{ color: C.gold }}>{inr(a.levels.target)}</span>
                       </span>
+                      {a.levels.target_low != null && a.levels.target_high != null && (
+                        <span style={{ color: C.faint }}
+                          title="Corridor spanned by the analyst low/high targets and the model's fair value — a range, not false precision">
+                          range {inr(a.levels.target_low)}–{inr(a.levels.target_high)}
+                        </span>
+                      )}
                       {a.levels.upside_pct != null && (
                         <span style={{ color: a.levels.upside_pct >= 0 ? C.green : C.red }}>
                           {(a.levels.upside_pct * 100).toFixed(0)}% to {a.levels.basis === "consensus" ? "consensus" : "fair"}
@@ -239,6 +245,12 @@ export default function FundManager({ API, user, requestAuth, onOpen }) {
                   <div style={{ ...sans, fontSize: 11.5, color: C.dim, lineHeight: 1.55, marginTop: 2 }}>
                     {(a.reasons || []).join(" · ")}
                   </div>
+                  {(a.flip || []).length > 0 && (
+                    <div style={{ ...sans, fontSize: 10.5, color: C.faint, marginTop: 3, fontStyle: "italic" }}
+                      title="The evidence closest to flipping this call — what the engine is watching">
+                      Would change this call: {a.flip.join(" · ")}
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
