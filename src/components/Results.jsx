@@ -165,7 +165,7 @@ export default function Results({ API, onOpen }) {
             </tr>
           </thead>
           <tbody>
-            {rows.map((r, i) => {
+            {rows.map(r => {
               const s = r.surprise;
               return (
                 <tr key={r.ticker} onClick={() => onOpen && onOpen(r.ticker)} style={{ cursor: "pointer" }}
