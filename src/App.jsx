@@ -4,7 +4,7 @@
    first paint ships a much smaller bundle. */
 
 import { useEffect, useMemo, useState, useCallback, useRef, lazy, Suspense } from "react";
-import { TrendingUp, LayoutDashboard, List, Star, GitCompare, CalendarClock, Landmark, Gauge, History, Layers, Briefcase, Search, Loader2, LogIn, LogOut, ChevronDown, Sparkles } from "lucide-react";
+import { TrendingUp, LayoutDashboard, List, Star, GitCompare, CalendarClock, Landmark, Gauge, History, Layers, Briefcase, Search, Loader2, LogIn, LogOut, ChevronDown, Sparkles , Rocket } from "lucide-react";
 import { C, mono, sans, serif, auroraBg } from "./lib/theme.js";
 import { useIsMobile } from "./lib/useResponsive.js";
 import { SEED, buildFromApi } from "./lib/seedData.js";
@@ -27,6 +27,7 @@ const Operations  = lazy(() => import("./components/Operations.jsx"));
 const TrackRecord = lazy(() => import("./components/TrackRecord.jsx"));
 const Sectors     = lazy(() => import("./components/Sectors.jsx"));
 const FundManager = lazy(() => import("./components/FundManager.jsx"));
+const IPOBoard    = lazy(() => import("./components/IPOBoard.jsx"));
 const Portfolio   = lazy(() => import("./components/Portfolio.jsx"));
 const Ideas       = lazy(() => import("./components/Ideas.jsx"));
 
@@ -293,6 +294,7 @@ export default function App() {
     { id: "ownership", label: "Ownership", icon: Landmark },
     { id: "operations", label: "Operations", icon: Gauge },
     { id: "sectors",   label: "Sectors",   icon: Layers },
+    { id: "ipo",       label: "IPOs",      icon: Rocket },
     { id: "portfolio", label: "Portfolio", icon: Briefcase },
     { id: "manager",   label: "Fund Manager", icon: Sparkles },
     { id: "track",     label: "Track Record", icon: History },
@@ -480,6 +482,9 @@ export default function App() {
           {view === "manager" && (
             <FundManager API={API} onOpen={open} user={user} requestAuth={requestAuth} />
           )}
+          {view === "ipo" && (
+            <IPOBoard />
+          )}
           {view === "ideas" && (
             <Ideas API={API} onOpen={open} />
           )}
@@ -524,6 +529,7 @@ export default function App() {
               { id: "ownership",  label: "Ownership",  icon: Landmark },
               { id: "operations", label: "Operations", icon: Gauge },
               { id: "sectors",    label: "Sectors",    icon: Layers },
+              { id: "ipo",        label: "IPOs",       icon: Rocket },
               { id: "track",      label: "Track Rec.", icon: History },
             ].map(({ id, label, icon: Icon }) => (
               <button key={id} onClick={() => { setView(id); setMoreOpen(false); }} style={{
