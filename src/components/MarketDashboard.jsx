@@ -47,6 +47,7 @@ export default function MarketDashboard({ API, companies, onOpen }) {
   );
 
   const indices = data?.indices || [];
+  const commodities = data?.commodities || [];
   const gainers = data?.movers?.gainers || [];
   const losers  = data?.movers?.losers || [];
   const active  = data?.active || [];
@@ -100,6 +101,19 @@ export default function MarketDashboard({ API, companies, onOpen }) {
                 ? <div style={{ ...mono, fontSize: 12, color: toneOf(ix.pct), marginTop: 2 }}>{fmtP(ix.pct)} <span style={{ color: C.faint }}>·</span> {ix.net >= 0 ? "+" : ""}{fmtN(ix.net)}</div>
                 : <div style={{ ...sans, fontSize: 10.5, color: C.faint, marginTop: 3 }}>tap for full history</div>}
             </div>
+          ))}
+        </div>
+      )}
+
+      {commodities.length > 0 && (
+        <div style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "center",
+                      padding: "8px 2px 4px", marginBottom: 16 }}>
+          <span style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: C.faint }}>MCX</span>
+          {commodities.map(c => (
+            <span key={c.name} style={{ ...mono, fontSize: 12, color: C.dim, whiteSpace: "nowrap" }}>
+              {c.name} <span style={{ color: C.text200 }}>{fmtN(c.price)}</span>
+              {c.pct != null && <span style={{ color: toneOf(c.pct), marginLeft: 5 }}>{fmtP(c.pct)}</span>}
+            </span>
           ))}
         </div>
       )}
