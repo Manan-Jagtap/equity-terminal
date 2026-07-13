@@ -57,6 +57,34 @@ function MacroStrip({ macro }) {
           ↓ {macro.rs_laggards.join(" · ")}
         </span>
       )}
+      {macro.rates?.gsec_10y?.last != null && (
+        <span style={chip}
+          title={`10-year G-sec yield (FBIL), as of ${macro.rates.gsec_10y.as_of}${macro.rates.stance ? ` — policy ${macro.rates.stance.replace("_", " ")}` : ""}`}>
+          10Y {macro.rates.gsec_10y.last}%
+          {macro.rates.gsec_10y.chg_3m_bps != null &&
+            <span style={{ color: macro.rates.gsec_10y.chg_3m_bps <= 0 ? C.green : C.red }}>
+              {" "}{macro.rates.gsec_10y.chg_3m_bps > 0 ? "+" : ""}{macro.rates.gsec_10y.chg_3m_bps}bps
+            </span>}
+        </span>
+      )}
+      {macro.rates?.stance && (
+        <span style={{ ...chip,
+          color: macro.rates.stance === "easing" ? C.green : macro.rates.stance === "tightening" ? C.red : C.dim }}
+          title="Policy stance read from the repo rate's last move and the 3-month 10Y drift (RBI DBIE data)">
+          {macro.rates.stance.replace("_", " ").toUpperCase()}
+        </span>
+      )}
+      {macro.rates?.cpi_yoy?.pct != null && (
+        <span style={chip} title={`CPI inflation YoY, as of ${macro.rates.cpi_yoy.as_of}`}>
+          CPI {macro.rates.cpi_yoy.pct.toFixed(1)}%
+        </span>
+      )}
+      {macro.rates?.usdinr?.last != null && (
+        <span style={chip}
+          title={`USDINR month-end, as of ${macro.rates.usdinr.as_of}${macro.rates.usdinr.chg_3m_pct != null ? ` (${macro.rates.usdinr.chg_3m_pct > 0 ? "+" : ""}${macro.rates.usdinr.chg_3m_pct}% over 3m)` : ""}`}>
+          ₹/$ {macro.rates.usdinr.last}
+        </span>
+      )}
       {(macro.commodities || []).filter(c => Math.abs(c.pct || 0) >= 2).slice(0, 2).map(c => (
         <span key={c.name} style={{ ...chip, color: (c.pct || 0) >= 0 ? C.green : C.red }}>
           {c.name} {(c.pct >= 0 ? "+" : "") + c.pct?.toFixed(1)}%
