@@ -6,7 +6,7 @@
    (verdicts, MoS, weights, momentum, holding terms) — educational decision
    support; the owner decides. */
 import { useEffect, useState } from "react";
-import { BadgeCheck, Briefcase, Loader2, Sparkles, Landmark } from "lucide-react";
+import { BadgeCheck, Briefcase, Loader2, Sparkles, Landmark, GitCompare, ShieldAlert } from "lucide-react";
 import { C, sans, serif, mono } from "../lib/theme.js";
 import { authFetch } from "../lib/auth.js";
 import { SignInGate } from "./Watchlist.jsx";
@@ -206,6 +206,45 @@ function CashBar({ cash, onSave }) {
   );
 }
 
+/* Capital-rotation strategist — the self-funding, no-leverage way to act on a
+   high-conviction idea: trim the weakest held names to fund the strongest new
+   ones. Includes the desk's explicit no-leverage stance. */
+function RotationPanel({ rotations, leveragePolicy }) {
+  if ((!rotations || !rotations.length) && !leveragePolicy) return null;
+  return (
+    <div style={{ border: `1px solid ${C.gold}22`, borderRadius: 12, background: C.panel,
+                  padding: "16px 20px", marginBottom: 18 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+        <GitCompare size={14} color={C.gold} />
+        <span style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: C.gold }}>
+          Self-funding rotations
+        </span>
+        <span style={{ ...mono, fontSize: 10.5, color: C.faint }}>upgrade the book with no new capital</span>
+      </div>
+      {(rotations || []).map((r, i) => (
+        <div key={i} style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap",
+                              padding: "9px 0", borderTop: i ? `1px solid ${C.line}` : "none" }}>
+          <span style={{ ...mono, fontSize: 12.5, color: C.green }}>BUY {r.add?.ticker}</span>
+          <span style={{ ...mono, fontSize: 10.5, color: C.dim }}>conv {r.add?.conviction} · {inr(r.add?.size_inr)}</span>
+          <span style={{ ...sans, fontSize: 11, color: C.faint }}>← fund by trimming</span>
+          {(r.fund_from || []).map((f, j) => (
+            <span key={j} style={{ ...mono, fontSize: 11.5, color: "#E8B054" }}
+              title={f.why}>{f.ticker} {inr(f.amount)}</span>
+          ))}
+        </div>
+      ))}
+      {leveragePolicy && (
+        <div style={{ display: "flex", gap: 8, marginTop: rotations?.length ? 12 : 0,
+                      padding: "10px 12px", borderRadius: 8, background: C.bg900,
+                      border: `1px solid ${C.line}` }}>
+          <ShieldAlert size={14} color={C.dim} style={{ flexShrink: 0, marginTop: 1 }} />
+          <span style={{ ...sans, fontSize: 11, color: C.dim, lineHeight: 1.55 }}>{leveragePolicy}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* Tax-optimization panel: exemption harvesting, loss harvesting, ST→LT timing. */
 function TaxPanel({ tax }) {
   if (!tax) return null;
@@ -332,6 +371,8 @@ export default function FundManager({ API, user, requestAuth, onOpen }) {
             </div>
             <div style={{ ...serif, fontSize: 16.5, color: C.text200, lineHeight: 1.7 }}>{mgr.note}</div>
           </div>
+
+          <RotationPanel rotations={mgr.rotations} leveragePolicy={mgr.leverage_policy} />
 
           <TaxPanel tax={mgr.tax} />
 
