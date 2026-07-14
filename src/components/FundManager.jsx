@@ -160,6 +160,52 @@ function TaxMove({ color, label, value, sub }) {
   );
 }
 
+/* Dry-powder control — the investable cash the manager sizes its adds against. */
+function CashBar({ cash, onSave }) {
+  const [edit, setEdit] = useState(false);
+  const [val, setVal] = useState("");
+  const amount = cash?.amount;
+  const start = () => { setVal(amount != null ? String(amount) : ""); setEdit(true); };
+  const commit = () => { const n = Number(val); if (!isNaN(n) && n >= 0) onSave(n); setEdit(false); };
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap",
+                  border: `1px solid ${C.line}`, borderRadius: 10, background: C.panel,
+                  padding: "10px 14px", marginBottom: 18 }}>
+      <span style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: C.dim }}>
+        Investable cash
+      </span>
+      {edit ? (
+        <>
+          <input autoFocus type="number" value={val} onChange={e => setVal(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && commit()}
+            placeholder="₹ amount" style={{ ...mono, fontSize: 13, width: 130, padding: "5px 9px",
+              borderRadius: 7, background: C.bg800, color: C.text, border: `1px solid ${C.line2}`, outline: "none" }} />
+          <button onClick={commit} style={{ ...sans, fontSize: 11, padding: "5px 11px", borderRadius: 7,
+            cursor: "pointer", border: `1px solid ${C.gold}66`, background: C.gold + "14", color: C.gold }}>Save</button>
+        </>
+      ) : (
+        <>
+          <span style={{ ...mono, fontSize: 16, color: amount ? C.text : C.faint }}>
+            {amount != null ? inr(amount) : "not set"}
+          </span>
+          <button onClick={start} style={{ ...sans, fontSize: 11, padding: "5px 11px", borderRadius: 7,
+            cursor: "pointer", border: `1px solid ${C.line2}`, background: "transparent", color: C.dim }}>
+            {amount != null ? "Edit" : "Set dry powder"}
+          </button>
+        </>
+      )}
+      {cash?.deployable != null && cash.deployable > 0 && (
+        <span style={{ ...mono, fontSize: 11, color: C.green }}>
+          {inr(cash.deployable)} deployable across {cash.n_funded} add{cash.n_funded === 1 ? "" : "s"}
+        </span>
+      )}
+      <span style={{ ...sans, fontSize: 10.5, color: C.faint, marginLeft: "auto" }}>
+        the manager sizes and gates its adds against this
+      </span>
+    </div>
+  );
+}
+
 /* Tax-optimization panel: exemption harvesting, loss harvesting, ST→LT timing. */
 function TaxPanel({ tax }) {
   if (!tax) return null;
@@ -220,6 +266,7 @@ export default function FundManager({ API, user, requestAuth, onOpen }) {
   const [data, setData] = useState(null);
   // loading derives from "signed in but no payload yet" — no sync setState.
   const [loaded, setLoaded] = useState(false);
+  const [reload, setReload] = useState(0);      // bump to refetch after a cash change
   const loading = !!user && !loaded;
 
   useEffect(() => {
@@ -230,7 +277,14 @@ export default function FundManager({ API, user, requestAuth, onOpen }) {
       .then(d => { if (!dead) { setData(d); setLoaded(true); } })
       .catch(() => { if (!dead) { setData(null); setLoaded(true); } });
     return () => { dead = true; };
-  }, [API, user]);
+  }, [API, user, reload]);
+
+  const saveCash = amount => {
+    authFetch(`${API}/api/portfolio/cash`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ amount }),
+    }).then(() => setReload(n => n + 1)).catch(() => {});
+  };
 
   if (!user) return <SignInGate requestAuth={requestAuth} what="fund manager" />;
   if (loading) return (
@@ -269,6 +323,7 @@ export default function FundManager({ API, user, requestAuth, onOpen }) {
 
       {!empty && (
         <>
+          <CashBar cash={mgr.cash} onSave={saveCash} />
           <MacroStrip macro={mgr.macro} />
           {/* PM note */}
           <div style={{ border: `1px solid ${C.gold}33`, borderRadius: 12, background: C.panel, padding: "18px 22px", marginBottom: 18 }}>
@@ -346,6 +401,29 @@ export default function FundManager({ API, user, requestAuth, onOpen }) {
                     </div>
                   )}
                   <EvidenceChips ev={a.evidence} />
+                  {(a.hold_for_results || a.cash_note) && (
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 5 }}>
+                      {a.hold_for_results && (
+                        <span style={{ ...mono, fontSize: 9.5, padding: "2px 8px", borderRadius: 5,
+                          color: "#E8B054", border: "1px solid #E8B05455", background: "#E8B05412" }}
+                          title={`Reports ${a.results_due?.date} — the manager is holding for the print`}>
+                          ⏳ WAIT FOR RESULTS{a.results_due?.days_away >= 0 ? ` · ${a.results_due.days_away}d` : ""}
+                        </span>
+                      )}
+                      {a.cash_note && (
+                        <span style={{ ...mono, fontSize: 9.5, padding: "2px 8px", borderRadius: 5,
+                          color: C.dim, border: `1px solid ${C.line2}` }} title="Sized against your investable cash">
+                          {a.fundable === false ? "⛔ " : ""}{a.cash_note}
+                        </span>
+                      )}
+                      {a.fundable === true && (
+                        <span style={{ ...mono, fontSize: 9.5, padding: "2px 8px", borderRadius: 5,
+                          color: C.green, border: `1px solid ${C.green}44` }} title="Funded by your available cash">
+                          ✓ funded from cash
+                        </span>
+                      )}
+                    </div>
+                  )}
                   <div style={{ ...sans, fontSize: 11.5, color: C.dim, lineHeight: 1.55, marginTop: 2 }}>
                     {(a.reasons || []).join(" · ")}
                   </div>
