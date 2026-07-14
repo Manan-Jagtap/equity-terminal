@@ -161,7 +161,7 @@ function TaxMove({ color, label, value, sub }) {
 }
 
 /* Dry-powder control — the investable cash the manager sizes its adds against. */
-function CashBar({ cash, onSave }) {
+function CashBar({ cash, onSave, onClear, busy }) {
   const [edit, setEdit] = useState(false);
   const [val, setVal] = useState("");
   const amount = cash?.amount;
@@ -188,13 +188,25 @@ function CashBar({ cash, onSave }) {
           <span style={{ ...mono, fontSize: 16, color: amount ? C.text : C.faint }}>
             {amount != null ? inr(amount) : "not set"}
           </span>
-          <button onClick={start} style={{ ...sans, fontSize: 11, padding: "5px 11px", borderRadius: 7,
-            cursor: "pointer", border: `1px solid ${C.line2}`, background: "transparent", color: C.dim }}>
+          <button onClick={start} disabled={busy} style={{ ...sans, fontSize: 11, padding: "5px 11px", borderRadius: 7,
+            cursor: busy ? "default" : "pointer", border: `1px solid ${C.line2}`, background: "transparent", color: C.dim }}>
             {amount != null ? "Edit" : "Set dry powder"}
           </button>
+          {amount != null && (
+            <button onClick={onClear} disabled={busy} title="Remove the cash setting"
+              style={{ ...sans, fontSize: 11, padding: "5px 10px", borderRadius: 7,
+                cursor: busy ? "default" : "pointer", border: `1px solid ${C.line2}`, background: "transparent", color: C.faint }}>
+              Remove
+            </button>
+          )}
         </>
       )}
-      {cash?.deployable != null && cash.deployable > 0 && (
+      {busy && (
+        <span style={{ ...sans, fontSize: 11, color: C.dim, display: "flex", alignItems: "center", gap: 6 }}>
+          <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} /> updating…
+        </span>
+      )}
+      {!busy && cash?.deployable != null && cash.deployable > 0 && (
         <span style={{ ...mono, fontSize: 11, color: C.green }}>
           {inr(cash.deployable)} deployable across {cash.n_funded} add{cash.n_funded === 1 ? "" : "s"}
         </span>
@@ -318,11 +330,18 @@ export default function FundManager({ API, user, requestAuth, onOpen }) {
     return () => { dead = true; };
   }, [API, user, reload]);
 
+  const [cashBusy, setCashBusy] = useState(false);
   const saveCash = amount => {
+    setCashBusy(true);
     authFetch(`${API}/api/portfolio/cash`, {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ amount }),
-    }).then(() => setReload(n => n + 1)).catch(() => {});
+    }).then(() => setReload(n => n + 1)).catch(() => {}).finally(() => setCashBusy(false));
+  };
+  const clearCash = () => {
+    setCashBusy(true);
+    authFetch(`${API}/api/portfolio/cash`, { method: "DELETE" })
+      .then(() => setReload(n => n + 1)).catch(() => {}).finally(() => setCashBusy(false));
   };
 
   if (!user) return <SignInGate requestAuth={requestAuth} what="fund manager" />;
@@ -362,7 +381,7 @@ export default function FundManager({ API, user, requestAuth, onOpen }) {
 
       {!empty && (
         <>
-          <CashBar cash={mgr.cash} onSave={saveCash} />
+          <CashBar cash={mgr.cash} onSave={saveCash} onClear={clearCash} busy={cashBusy} />
           <MacroStrip macro={mgr.macro} />
           {/* PM note */}
           <div style={{ border: `1px solid ${C.gold}33`, borderRadius: 12, background: C.panel, padding: "18px 22px", marginBottom: 18 }}>

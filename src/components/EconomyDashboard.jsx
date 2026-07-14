@@ -52,15 +52,18 @@ function Spark({ data, up }) {
   );
 }
 
-/* Full-history view for one indicator — opens when its card is clicked. */
-function SeriesModal({ slug, label, unit, onClose }) {
+/* Full-history view for one indicator — opens when its card is clicked. For
+   YoY indicators (CPI, WPI, IIP…) it charts the RATE, not the index level. */
+function SeriesModal({ slug, label, unit, kind, onClose }) {
   const [data, setData] = useState(null);
   const [range, setRange] = useState("5Y");
+  const isYoy = kind === "yoy";
+  const chartUnit = isYoy ? "%" : unit;
 
   useEffect(() => {
     if (!API || !slug) return;
     let dead = false;
-    fetch(`${API}/api/macro/series/${slug}`)
+    fetch(`${API}/api/macro/series/${slug}${isYoy ? "?yoy=true" : ""}`)
       .then(r => (r.ok ? r.json() : null))
       .then(d => { if (!dead) setData(d || { points: [] }); })
       .catch(() => { if (!dead) setData({ points: [] }); });
@@ -115,9 +118,9 @@ function SeriesModal({ slug, label, unit, onClose }) {
         ) : (
           <>
             <div style={{ display: "flex", gap: 22, marginBottom: 10, ...mono, fontSize: 12 }}>
-              <span style={{ color: C.text }}>latest <b>{fmtVal(stats.last, unit)}</b></span>
-              <span style={{ color: col }}>{up ? "▲" : "▼"} {fmtVal(Math.abs(stats.chg), unit)} over {range}</span>
-              <span style={{ color: C.dim }}>range {fmtVal(stats.min, unit)} – {fmtVal(stats.max, unit)}</span>
+              <span style={{ color: C.text }}>latest <b>{fmtVal(stats.last, chartUnit)}</b></span>
+              <span style={{ color: col }}>{up ? "▲" : "▼"} {fmtVal(Math.abs(stats.chg), chartUnit)} over {range}</span>
+              <span style={{ color: C.dim }}>range {fmtVal(stats.min, chartUnit)} – {fmtVal(stats.max, chartUnit)}</span>
             </div>
             <div style={{ height: 280 }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -136,7 +139,7 @@ function SeriesModal({ slug, label, unit, onClose }) {
                     tickFormatter={v => Math.abs(v) >= 1e5 ? (v / 1e5).toFixed(1) + "L" : v} />
                   <Tooltip contentStyle={{ background: C.bg900, border: `1px solid ${C.line2}`,
                     borderRadius: 8, fontSize: 11.5, fontFamily: "'JetBrains Mono',monospace" }}
-                    formatter={v => [fmtVal(v, unit), label]}
+                    formatter={v => [fmtVal(v, chartUnit), label]}
                     labelFormatter={d => new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })} />
                   <Area type="monotone" dataKey="value" stroke={col} strokeWidth={1.7}
                     fill="url(#mgrad)" dot={false} isAnimationActive={false} />
@@ -337,7 +340,7 @@ export default function EconomyDashboard() {
       </div>
 
       {open && <SeriesModal slug={open.slug} label={open.label} unit={open.unit}
-                            onClose={() => setOpen(null)} />}
+                            kind={open.kind} onClose={() => setOpen(null)} />}
     </div>
   );
 }
