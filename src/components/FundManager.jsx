@@ -6,7 +6,7 @@
    (verdicts, MoS, weights, momentum, holding terms) — educational decision
    support; the owner decides. */
 import { useEffect, useState } from "react";
-import { BadgeCheck, Briefcase, Loader2, Sparkles } from "lucide-react";
+import { BadgeCheck, Briefcase, Loader2, Sparkles, Landmark } from "lucide-react";
 import { C, sans, serif, mono } from "../lib/theme.js";
 import { authFetch } from "../lib/auth.js";
 import { SignInGate } from "./Watchlist.jsx";
@@ -148,6 +148,74 @@ function ConvictionBar({ v }) {
   );
 }
 
+/* One tax-move tile. Module-level so it isn't recreated during render. */
+function TaxMove({ color, label, value, sub }) {
+  return (
+    <div style={{ flex: "1 1 200px", border: `1px solid ${C.line}`, borderRadius: 10,
+                  background: C.bg900, padding: "12px 14px" }}>
+      <div style={{ ...sans, fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.08em", color }}>{label}</div>
+      <div style={{ ...mono, fontSize: 18, color: C.text, marginTop: 4 }}>{value}</div>
+      <div style={{ ...sans, fontSize: 10.5, color: C.faint, marginTop: 3, lineHeight: 1.4 }}>{sub}</div>
+    </div>
+  );
+}
+
+/* Tax-optimization panel: exemption harvesting, loss harvesting, ST→LT timing. */
+function TaxPanel({ tax }) {
+  if (!tax) return null;
+  const u = tax.unrealised || {};
+  const harvest = tax.ltcg_harvest || [];
+  const losses = tax.loss_harvest || [];
+  const defers = tax.st_to_lt_deferrals || [];
+  const usable = tax.ltcg_exemption_usable || 0;
+  const shelter = losses.reduce((s, l) => s + (l.tax_shelter || 0), 0);
+  const deferSave = defers.reduce((s, d) => s + (d.saving || 0), 0);
+  if (!harvest.length && !losses.length && !defers.length) return null;
+
+  return (
+    <div style={{ border: `1px solid ${C.gold}22`, borderRadius: 12, background: C.panel,
+                  padding: "16px 20px", marginBottom: 18 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+        <Landmark size={14} color={C.gold} />
+        <span style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: C.gold }}>
+          Tax optimization
+        </span>
+        <span style={{ ...mono, fontSize: 10.5, color: C.faint }}>
+          unrealised: LT {inr(u.lt_gain)} · ST {inr(u.st_gain)} · losses {inr((u.lt_loss || 0) + (u.st_loss || 0))}
+        </span>
+      </div>
+      <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+        {harvest.length > 0 && (
+          <TaxMove color={C.green} label="Harvest LTCG free"
+            value={inr(usable)}
+            sub={`Book long-term gains inside the ₹1.25L exemption on ${harvest.length} name${harvest.length !== 1 ? "s" : ""} — tax-free, resets basis higher.`} />
+        )}
+        {losses.length > 0 && (
+          <TaxMove color="#E8B054" label="Harvest losses"
+            value={inr(shelter)}
+            sub={`Booking losses on ${losses.length} underwater name${losses.length !== 1 ? "s" : ""} shelters this much tax against gains.`} />
+        )}
+        {defers.length > 0 && (
+          <TaxMove color={C.blue} label="Defer ST→LT"
+            value={inr(deferSave)}
+            sub={`${defers.length} short-term winner${defers.length !== 1 ? "s" : ""} near the 1-year mark — waiting drops 20%→12.5%.`} />
+        )}
+      </div>
+      {harvest.length > 0 && (
+        <div style={{ ...sans, fontSize: 11, color: C.dim, marginTop: 12, lineHeight: 1.6 }}>
+          {harvest.slice(0, 4).map(h => (
+            <span key={h.ticker} style={{ marginRight: 14 }}>
+              <span style={{ ...mono, color: C.gold }}>{h.ticker}</span>{" "}
+              sell {Math.round(h.sell_fraction * 100)}% → {inr(h.harvest_gain)} gain tax-free
+            </span>
+          ))}
+        </div>
+      )}
+      <div style={{ ...sans, fontSize: 9.5, color: C.faint, marginTop: 10, lineHeight: 1.5 }}>{tax.disclaimer}</div>
+    </div>
+  );
+}
+
 export default function FundManager({ API, user, requestAuth, onOpen }) {
   const [data, setData] = useState(null);
   // loading derives from "signed in but no payload yet" — no sync setState.
@@ -210,6 +278,8 @@ export default function FundManager({ API, user, requestAuth, onOpen }) {
             <div style={{ ...serif, fontSize: 16.5, color: C.text200, lineHeight: 1.7 }}>{mgr.note}</div>
           </div>
 
+          <TaxPanel tax={mgr.tax} />
+
           {/* Action queue */}
           <div style={{ border: `1px solid ${C.line}`, borderRadius: 12, background: C.panel, padding: "16px 20px", marginBottom: 18 }}>
             <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: C.dim, marginBottom: 6 }}>
@@ -239,6 +309,12 @@ export default function FundManager({ API, user, requestAuth, onOpen }) {
                     {a.size_inr != null && (
                       <span style={{ ...mono, fontSize: 11.5, color: C.text200 }}
                         title={a.size_note || ""}>~{inr(a.size_inr)}{a.size_note ? ` ${a.size_note}` : ""}</span>
+                    )}
+                    {a.after_tax_inr != null && a.tax_estimate > 0 && (
+                      <span style={{ ...mono, fontSize: 10.5, color: C.faint }}
+                        title={`Estimated capital-gains tax ${inr(a.tax_estimate)} on this trim`}>
+                        ≈ {inr(a.after_tax_inr)} after tax
+                      </span>
                     )}
                   </div>
                   {a.levels?.target != null && (
