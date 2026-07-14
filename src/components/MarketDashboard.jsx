@@ -97,7 +97,13 @@ export default function MarketDashboard({ API, companies, onOpen }) {
               onMouseLeave={e => { e.currentTarget.style.borderColor = ""; e.currentTarget.style.background = C.bg900; }}
               style={{ flex: "0 0 auto", minWidth: 150, border: `1px solid ${C.line}`, borderRadius: 10,
                        background: C.bg900, padding: "12px 14px", cursor: "pointer" }}>
-              <div style={{ ...sans, fontSize: 11, color: C.dim, textTransform: "uppercase", letterSpacing: "0.04em", whiteSpace: "nowrap" }}>{ix.name}</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ ...sans, fontSize: 11, color: C.dim, textTransform: "uppercase", letterSpacing: "0.04em", whiteSpace: "nowrap" }}>{ix.name}</span>
+                {ix.exchange === "BSE" && (
+                  <span style={{ ...mono, fontSize: 8, color: C.faint, border: `1px solid ${C.line2}`,
+                                 borderRadius: 3, padding: "0 4px", letterSpacing: "0.03em" }}>BSE</span>
+                )}
+              </div>
               <div style={{ ...mono, fontSize: 18, color: C.text, marginTop: 4 }}>{fmtN(liveFeed.indices?.[ix.name] ?? ix.price)}</div>
               {(ix.pct != null || ix.net != null)
                 ? <div style={{ ...mono, fontSize: 12, color: toneOf(ix.pct), marginTop: 2 }}>{fmtP(ix.pct)} <span style={{ color: C.faint }}>·</span> {ix.net >= 0 ? "+" : ""}{fmtN(ix.net)}</div>
