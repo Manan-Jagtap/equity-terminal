@@ -4,7 +4,7 @@
    first paint ships a much smaller bundle. */
 
 import { useEffect, useMemo, useState, useCallback, useRef, lazy, Suspense } from "react";
-import { TrendingUp, LayoutDashboard, List, Star, GitCompare, CalendarClock, Landmark, Gauge, History, Layers, Briefcase, Search, Loader2, LogIn, LogOut, ChevronDown, Sparkles , Rocket , PiggyBank } from "lucide-react";
+import { TrendingUp, LayoutDashboard, List, Star, GitCompare, CalendarClock, Landmark, Gauge, History, Layers, Briefcase, Search, Loader2, LogIn, LogOut, ChevronDown, Sparkles , Rocket , PiggyBank , Globe2 } from "lucide-react";
 import { C, mono, sans, serif, auroraBg } from "./lib/theme.js";
 import { useIsMobile } from "./lib/useResponsive.js";
 import { SEED, buildFromApi } from "./lib/seedData.js";
@@ -29,6 +29,7 @@ const Sectors     = lazy(() => import("./components/Sectors.jsx"));
 const FundManager = lazy(() => import("./components/FundManager.jsx"));
 const IPOBoard    = lazy(() => import("./components/IPOBoard.jsx"));
 const MFPanel     = lazy(() => import("./components/MFPanel.jsx"));
+const EconomyDashboard = lazy(() => import("./components/EconomyDashboard.jsx"));
 const Portfolio   = lazy(() => import("./components/Portfolio.jsx"));
 const Ideas       = lazy(() => import("./components/Ideas.jsx"));
 
@@ -295,6 +296,7 @@ export default function App() {
     { id: "ownership", label: "Ownership", icon: Landmark },
     { id: "operations", label: "Operations", icon: Gauge },
     { id: "sectors",   label: "Sectors",   icon: Layers },
+    { id: "economy",   label: "Economy",   icon: Globe2 },
     { id: "ipo",       label: "IPOs",      icon: Rocket },
     { id: "funds",     label: "Mutual Funds", icon: PiggyBank },
     { id: "portfolio", label: "Portfolio", icon: Briefcase },
@@ -478,6 +480,9 @@ export default function App() {
           {view === "sectors" && (
             <Sectors API={API} onOpen={open} />
           )}
+          {view === "economy" && (
+            <EconomyDashboard />
+          )}
           {view === "portfolio" && (
             <Portfolio API={API} onOpen={open} user={user} requestAuth={requestAuth} onAnalyse={() => setView("manager")} />
           )}
@@ -534,6 +539,7 @@ export default function App() {
               { id: "ownership",  label: "Ownership",  icon: Landmark },
               { id: "operations", label: "Operations", icon: Gauge },
               { id: "sectors",    label: "Sectors",    icon: Layers },
+              { id: "economy",    label: "Economy",    icon: Globe2 },
               { id: "ipo",        label: "IPOs",       icon: Rocket },
               { id: "funds",      label: "Funds",      icon: PiggyBank },
               { id: "track",      label: "Track Rec.", icon: History },
