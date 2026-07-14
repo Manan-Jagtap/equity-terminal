@@ -28,6 +28,7 @@ import DCFModel from "./DCFModel.jsx";
 import ScenarioBar from "./ScenarioBar.jsx";
 import PriceChart from "./PriceChart.jsx";
 import TranscriptSummary from "./TranscriptSummary.jsx";
+import ConcallKeyPoints from "./ConcallKeyPoints.jsx";
 import OptionsTab from "./OptionsTab.jsx";
 import AnalystTab from "./AnalystTab.jsx";
 
@@ -1910,7 +1911,10 @@ function DocsTab({ co, API }) {
       )}
 
       {!loading && concalls.length > 0 && (
-        <TranscriptSummary API={API} ticker={co.ticker} />
+        <>
+          <ConcallKeyPoints API={API} ticker={co.ticker} />
+          <TranscriptSummary API={API} ticker={co.ticker} />
+        </>
       )}
 
       {!loading && !empty && (
