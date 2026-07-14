@@ -56,7 +56,7 @@ export default function ConcallKeyPoints({ API, ticker }) {
   const data = loaded.ticker === ticker ? loaded.data : null;
   if (!data) return null;                       // silent while loading / stale
   const p = data.points || {};
-  const hasAny = data.available && GROUPS.some(([k]) => (p[k] || []).length);
+  const hasAny = data.available && (GROUPS.some(([k]) => (p[k] || []).length) || (p.kpis || []).length);
 
   return (
     <div style={{ border: `1px solid ${C.line}`, borderRadius: 12, background: C.panel,
@@ -71,6 +71,21 @@ export default function ConcallKeyPoints({ API, ticker }) {
           {data.available && <ToneGauge tone={data.tone_score} direction={p.guidance_direction} />}
         </div>
       </div>
+
+      {data.available && (p.kpis || []).length > 0 && (
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
+          {p.kpis.map((k, i) => (
+            <div key={i} style={{ border: `1px solid ${C.line2}`, borderRadius: 8, background: C.bg900,
+                                  padding: "7px 11px", minWidth: 0 }}
+              title="Operational metric management cited on the latest call">
+              <div style={{ ...sans, fontSize: 9.5, color: C.faint, whiteSpace: "nowrap" }}>{k.metric}</div>
+              <div style={{ ...mono, fontSize: 14, color: C.gold, marginTop: 1 }}>
+                {k.unit && k.unit.startsWith("₹") ? `₹${Number(k.value).toLocaleString("en-IN")} ${k.unit.slice(1).trim()}` : `${k.value}${k.unit || ""}`}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {!hasAny ? (
         <div style={{ ...sans, fontSize: 12.5, color: C.dim, lineHeight: 1.6 }}>
