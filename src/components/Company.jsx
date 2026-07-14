@@ -26,6 +26,7 @@ import { technicals } from "../lib/technicals.js";
 import { useIsMobile } from "../lib/useResponsive.js";
 import DCFModel from "./DCFModel.jsx";
 import ScenarioBar from "./ScenarioBar.jsx";
+import ScoreCard from "./ScoreCard.jsx";
 import PriceChart from "./PriceChart.jsx";
 import TranscriptSummary from "./TranscriptSummary.jsx";
 import ConcallKeyPoints from "./ConcallKeyPoints.jsx";
@@ -3013,7 +3014,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
 
       {/* ── Tab content ───────────────────────────────────────── */}
       <main>
-        {tab==="overview"   && <OverviewTab    co={co2} rec={rec} cd={cd} profile={liveProfile} />}
+        {tab==="overview"   && <><ScoreCard API={API} ticker={co.ticker} /><OverviewTab co={co2} rec={rec} cd={cd} profile={liveProfile} /></>}
         {tab==="chart"      && <PriceChart     data={histPrices?.data} intrinsic={fairValue} price={price} ticker={co.ticker} API={API} />}
         {tab==="financials" && <FinancialsTab  co={co2} cd={cd} liveFinancials={liveFinancials} API={API} />}
         {tab==="ratios"     && <RatiosTab      co={co2} API={API} liveMetrics={liveMetrics} />}
