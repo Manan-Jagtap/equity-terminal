@@ -5,9 +5,9 @@
    line at the model's intrinsic, volume bars, an RSI(14) pane, and 52-week
    high/low markers. Recharts + inline theme, mobile-aware. */
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
-const CandleChart = lazy(() => import("./CandleChart.jsx"));
+const ChartTerminal = lazy(() => import("./ChartTerminal.jsx"));
 import {
-  ComposedChart, Area, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  ComposedChart, AreaChart, Area, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, ReferenceLine,
 } from "recharts";
 import { C, mono, sans } from "../lib/theme.js";
@@ -57,7 +57,7 @@ const Toggle = ({ on, set, color, label }) => (
   }}>{label}</button>
 );
 
-export default function PriceChart({ data, intrinsic, price, ticker, API, livePrice, live }) {
+export default function PriceChart({ data, intrinsic, ticker, API, livePrice, live }) {
   const isMobile = useIsMobile();
   const [style, setStyle] = useState("candles");   // broker-terminal default
   const [range, setRange] = useState(252);
@@ -77,6 +77,20 @@ export default function PriceChart({ data, intrinsic, price, ticker, API, livePr
   }, [data]);
 
   const series = useMemo(() => (range === Infinity ? full : full.slice(-range)), [full, range]);
+
+  // NOTE: every hook must run before the `if (!full.length) return` below —
+  // moving these under it changed the hook count between the empty and loaded
+  // renders and crashed the whole view (Rules of Hooks). Keep them here.
+  const [intraday, setIntraday] = useState(null);
+  useEffect(() => {
+    if (style !== "intraday" || !API || !ticker) return;
+    let dead = false;
+    setIntraday(null);
+    fetch(`${API}/api/companies/${ticker}/intraday`)
+      .then(r => r.json()).then(d => { if (!dead) setIntraday(d); })
+      .catch(() => { if (!dead) setIntraday({ available: false, values: [] }); });
+    return () => { dead = true; };
+  }, [style, API, ticker]);
 
   // 52-week high/low from the trailing year (intraday extremes when the feed
   // carries them — the external-terminal convention), regardless of range.
@@ -99,17 +113,6 @@ export default function PriceChart({ data, intrinsic, price, ticker, API, livePr
   const showFV = intrinsic != null && intrinsic > 0;
   const peak = Math.max(...series.map(p => p.close));
   const ddNow = peak > 0 && last != null ? last / peak - 1 : null;
-
-  const [intraday, setIntraday] = useState(null);
-  useEffect(() => {
-    if (style !== "intraday" || !API || !ticker) return;
-    let dead = false;
-    setIntraday(null);
-    fetch(`${API}/api/companies/${ticker}/intraday`)
-      .then(r => r.json()).then(d => { if (!dead) setIntraday(d); })
-      .catch(() => { if (!dead) setIntraday({ available: false, values: [] }); });
-    return () => { dead = true; };
-  }, [style, API, ticker]);
 
   const StyleToggle = (
     <div style={{ display: "inline-flex", gap: 4, marginRight: 8 }}>
@@ -178,7 +181,7 @@ export default function PriceChart({ data, intrinsic, price, ticker, API, livePr
     <div style={{ padding: isMobile ? "8px 2px" : "8px 4px" }}>
       <div style={{ marginBottom: 8 }}>{StyleToggle}</div>
       <Suspense fallback={<div style={{ ...sans, padding: 30, color: C.dim, fontSize: 12 }}>Loading chart engine…</div>}>
-        <CandleChart data={data} height={isMobile ? 300 : 430} livePrice={livePrice} live={live} />
+        <ChartTerminal data={data} height={isMobile ? 340 : 480} livePrice={livePrice} live={live} intrinsic={intrinsic} />
       </Suspense>
     </div>
   );
