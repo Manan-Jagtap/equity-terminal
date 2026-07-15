@@ -55,6 +55,8 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
   const [cf, setCf] = useState("All");
   const [minMos, setMinMos] = useState("");
   const [capf, setCapf] = useState("All");   // cap band filter
+  const [tf, setTf] = useState("All");       // technical filter
+  const [techMap, setTechMap] = useState(null);
   const VRANK = { BUY: 5, ACCUMULATE: 4, HOLD: 3, REDUCE: 2, TRIM: 2, AVOID: 1 };
 
   // Saved screens: name the current filter state (query/sector/sort), reload it
@@ -72,6 +74,17 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
       .catch(() => setScreens([]));
   }, [API, user]);
   useEffect(() => { reloadScreens(); }, [reloadScreens]);
+
+  // Technical read for the whole visible universe — loaded once, keyed by ticker,
+  // used only when a technical filter is active.
+  useEffect(() => {
+    if (!API) return;
+    let live = true;
+    fetch(`${API}/api/screen/technical`).then(r => r.json())
+      .then(d => { if (!live) return; const m = {}; (d.items || []).forEach(t => { m[(t.ticker || "").toUpperCase()] = t; }); setTechMap(m); })
+      .catch(() => { if (live) setTechMap({}); });
+    return () => { live = false; };
+  }, [API]);
   const saveScreen = async () => {
     if (!screenName.trim()) return;
     try {
@@ -136,6 +149,17 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
       if (capf !== "All" && capBand(r.co, liveFeed.prices?.[(r.co.ticker || "").toUpperCase()]) !== capf) return false;
       const m = parseFloat(minMos);
       if (!isNaN(m) && (r.mos == null || r.mos * 100 < m)) return false;
+      if (tf !== "All") {
+        const t = techMap && techMap[(r.co.ticker || "").toUpperCase()];
+        if (!t) return false;
+        if (tf === "above200" && !t.above_200dma) return false;
+        if (tf === "golden" && t.cross !== "golden") return false;
+        if (tf === "near_high" && !(t.pct_from_52w_high != null && t.pct_from_52w_high >= -5)) return false;
+        if (tf === "oversold" && !(t.rsi14 != null && t.rsi14 < 30)) return false;
+        if (tf === "overbought" && !(t.rsi14 != null && t.rsi14 > 70)) return false;
+        if (tf === "volspike" && !(t.vol_vs_50d != null && t.vol_vs_50d >= 2)) return false;
+        if (tf === "momo" && !(t.mom_12_1 != null && t.mom_12_1 >= 30)) return false;
+      }
       return true;
     })
     .sort((a, b) => {
@@ -147,7 +171,7 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
       if (sort === "mos")       return b.sortMos - a.sortMos;
       if (sort === "roe")       return (b.roe || 0) - (a.roe || 0);
       return a.co.name.localeCompare(b.co.name);
-    }), [companies, q, sort, sf, vf, cf, minMos, capf, liveFeed]);
+    }), [companies, q, sort, sf, vf, cf, minMos, capf, tf, techMap, liveFeed]);
 
   const Th = ({ children, k }) => (
     <th onClick={() => k && setSort(k)} style={{
@@ -206,6 +230,17 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
           fontSize: 13, cursor: "pointer", outline: "none",
         }}>
           {[["All", "Any cap"], ["Large", "Large cap"], ["Mid", "Mid cap"], ["Small", "Small cap"]].map(([v, l]) =>
+            <option key={v} value={v}>{l}</option>)}
+        </select>
+        <select value={tf} onChange={e => setTf(e.target.value)} title="Technical filter"
+          disabled={techMap == null} style={{
+          ...sans, background: C.panel2, border: `1px solid ${tf !== "All" ? C.gold + "88" : C.line}`,
+          borderRadius: 8, color: tf !== "All" ? C.gold : C.text, padding: "8px 12px",
+          fontSize: 13, cursor: techMap == null ? "wait" : "pointer", outline: "none",
+        }}>
+          {[["All", "Any technical"], ["above200", "Above 200-DMA"], ["golden", "Golden cross"],
+            ["near_high", "Near 52w high"], ["momo", "Strong momentum"], ["volspike", "Volume spike"],
+            ["oversold", "Oversold (RSI<30)"], ["overbought", "Overbought (RSI>70)"]].map(([v, l]) =>
             <option key={v} value={v}>{l}</option>)}
         </select>
         <input value={minMos} onChange={e => setMinMos(e.target.value)}
