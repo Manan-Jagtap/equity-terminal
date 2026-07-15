@@ -1826,7 +1826,7 @@ function ResearchNoteCard({ co, API }) {
 }
 
 
-function DocsTab({ co, API }) {
+function DocsTab({ co, API, profile }) {
   const [docs, setDocs]         = useState(null);
   const [loading, setLoading]   = useState(true);
 
@@ -1845,7 +1845,11 @@ function DocsTab({ co, API }) {
   const reports  = docs?.annual_reports || [];
   const ratings  = docs?.credit_ratings || [];
   const anns     = docs?.announcements || [];
-  const empty    = !loading && concalls.length === 0 && reports.length === 0 && ratings.length === 0 && anns.length === 0;
+  // Per-call AI summaries (IndianAPI) — the historical "what management said"
+  // narrative, consolidated here so it lives in exactly one place.
+  const mgmtCalls = (profile?.concalls || []).filter(c =>
+    c && typeof c.ai_summary === "string" && !c.ai_summary.startsWith("/") && c.ai_summary.trim().length > 40);
+  const empty    = !loading && concalls.length === 0 && reports.length === 0 && ratings.length === 0 && anns.length === 0 && mgmtCalls.length === 0;
 
   // The feed publishes dates at MIXED granularity: "May 2026" (concalls carry
   // no day), "30 Jun 2026", or relative ages ("1d"). Rendering through Date()
@@ -1891,7 +1895,7 @@ function DocsTab({ co, API }) {
       <div style={{ marginBottom:24 }}>
         <div style={{ ...serif, fontSize:22, color:C.text }}>{co.name} — Document Library</div>
         <div style={{ ...sans, fontSize:12, color:C.dim, marginTop:4 }}>
-          Concall transcripts, annual reports, credit ratings, exchange announcements. AI-written notes live in the AI Thesis tab.
+          Concall transcripts, annual reports, credit ratings and exchange filings — plus the earnings-call AI summary and management commentary. The independent research note lives in the AI Thesis tab.
         </div>
       </div>
 
@@ -1916,6 +1920,23 @@ function DocsTab({ co, API }) {
           <ConcallKeyPoints API={API} ticker={co.ticker} />
           <TranscriptSummary API={API} ticker={co.ticker} />
         </>
+      )}
+
+      {/* Management commentary — IndianAPI's per-call AI summaries, the historical
+          narrative for the last few calls. This is the single home for "what
+          management said"; the AI Thesis tab links here instead of repeating it. */}
+      {!loading && mgmtCalls.length > 0 && (
+        <Card style={{ marginBottom:20 }}>
+          <SectionLabel accent="EARNINGS CALLS · IndianAPI AI">MANAGEMENT COMMENTARY</SectionLabel>
+          <div style={{ display:"flex", flexDirection:"column", gap:14, marginTop:6 }}>
+            {mgmtCalls.slice(0, 4).map((c, i) => (
+              <div key={i} style={{ borderLeft:`2px solid ${C.gold}66`, paddingLeft:14 }}>
+                <div style={{ ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.1em", color:C.gold, marginBottom:4 }}>{fmtDocDate(c.date) || `Call ${i+1}`}</div>
+                <div style={{ ...sans, fontSize:13, color:C.text200, lineHeight:1.7 }}>{c.ai_summary}</div>
+              </div>
+            ))}
+          </div>
+        </Card>
       )}
 
       {!loading && !empty && (
@@ -2094,24 +2115,27 @@ function AIThesisTab({ co, profile, insights, cd, price, API, onGoTab }) {
           </Card>
         )}
 
-        {/* Management commentary — IndianAPI concall AI summaries */}
-        <Card>
-          <Sec accent="EARNINGS CALLS · IndianAPI AI" title="WHAT MANAGEMENT SAID" />
-          {concalls.length ? (
-            <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
-              {concalls.slice(0, 3).map((c, i) => (
-                <div key={i} style={{ borderLeft:`2px solid ${C.gold}66`, paddingLeft:14 }}>
-                  <div style={{ ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.1em", color:C.gold, marginBottom:4 }}>{c.date || `Call ${i+1}`}</div>
-                  <div style={{ ...sans, fontSize:13, color:C.text200, lineHeight:1.7 }}>{c.ai_summary}</div>
-                </div>
-              ))}
+        {/* Management commentary lives in the Docs tab now (single home for
+            "what management said" — the earnings-call summary, key points and
+            per-call narrative). We link there instead of repeating it here. */}
+        {concalls.length > 0 && onGoTab && (
+          <Card>
+            <Sec accent="EARNINGS CALLS" title="WHAT MANAGEMENT SAID" />
+            <div style={{ ...sans, fontSize:13, color:C.text200, lineHeight:1.7 }}>
+              Management commentary from the last {Math.min(concalls.length, 4)} earnings calls —
+              guidance, tone and the grounded call summary — lives in the Docs tab, alongside the
+              transcripts it is drawn from.
             </div>
-          ) : (
-            <div style={{ ...sans, fontSize:13, color:C.dim, lineHeight:1.7 }}>
-              IndianAPI hasn't published an AI concall summary for {co.ticker} yet. Earnings-call transcripts are linked in the News &amp; Filings tab.
-            </div>
-          )}
-        </Card>
+            <button onClick={() => onGoTab("docs")} style={{
+              ...sans, marginTop:12, display:"flex", alignItems:"center", gap:6,
+              fontSize:11, letterSpacing:"0.1em", textTransform:"uppercase", fontWeight:500,
+              padding:"7px 14px", border:`1px solid ${C.gold}66`, color:C.gold,
+              background:C.gold+"0d", cursor:"pointer",
+            }}>
+              <FolderOpen size={12} /> Open earnings-call commentary
+            </button>
+          </Card>
+        )}
 
         {/* Recent developments */}
         {anns.length > 0 && (
@@ -2131,7 +2155,7 @@ function AIThesisTab({ co, profile, insights, cd, price, API, onGoTab }) {
         {/* Bull vs Bear */}
         <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap:20 }}>
           <Card>
-            <Sec accent="THE CASE FOR" title="BULL POINTS" />
+            <Sec accent="AT A GLANCE · FROM THE DATA" title="BULL POINTS" />
             <div style={{ display:"flex", flexDirection:"column", gap:9 }}>
               {bull.map((b, i) => (
                 <div key={i} style={{ display:"flex", gap:9, alignItems:"flex-start" }}>
@@ -2142,7 +2166,7 @@ function AIThesisTab({ co, profile, insights, cd, price, API, onGoTab }) {
             </div>
           </Card>
           <Card>
-            <Sec accent="THE CASE AGAINST" title="BEAR POINTS" />
+            <Sec accent="AT A GLANCE · FROM THE DATA" title="BEAR POINTS" />
             <div style={{ display:"flex", flexDirection:"column", gap:9 }}>
               {bear.map((b, i) => (
                 <div key={i} style={{ display:"flex", gap:9, alignItems:"flex-start" }}>
@@ -3028,7 +3052,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
         {tab==="peers"      && <PeersTab       co={co2} cd={cd} allCompanies={allCompanies} API={API} onOpenTicker={onOpenTicker} />}
         {tab==="ownership"  && <OwnershipTab   profile={liveProfile} ownership={liveInsights?.ownership} />}
         {tab==="news"       && <NewsTab        co={co2} API={API} profile={liveProfile} preloaded={newsData} />}
-        {tab==="docs"       && <DocsTab        co={co2} API={API} />}
+        {tab==="docs"       && <DocsTab        co={co2} API={API} profile={liveProfile} />}
         {tab==="thesis"     && <AIThesisTab    co={co2} profile={liveProfile} insights={liveInsights} cd={cd} price={price} API={API} onGoTab={setTab} />}
         {tab==="forensics"  && <ForensicsTab   co={co2} API={API} />}
         {tab==="verdict"    && <VerdictTab     co={co2} rec={rec} cd={cd} price={price} insights={liveInsights} apiVal={apiVal} />}
