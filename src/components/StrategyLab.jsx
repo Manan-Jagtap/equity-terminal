@@ -67,8 +67,10 @@ export default function StrategyLab({ API, onOpen }) {
           A <b style={{ color: C.text200 }}>point-in-time</b> backtest of rule-based price strategies over the 5-year
           history — every signal uses only data available at each rebalance, equal-weight, benchmarked to the
           <b style={{ color: C.text200 }}> NIFTY 50</b>. Price factors only (value/quality need historical
-          fundamentals we don't store). <b style={{ color: C.text200 }}>Past simulated performance is not indicative of
-          future results</b> — a research tool, not investment advice.
+          fundamentals we don't store). <b style={{ color: C.text200 }}>Survivorship caveat:</b> the pool is today's
+          constituents, so returns — especially momentum — are flattered and may select illiquid microcaps; costs and
+          taxes are excluded. <b style={{ color: C.text200 }}>Past simulated performance is not indicative of future
+          results</b> — a research tool, not investment advice.
         </span>
       </div>
 
