@@ -289,6 +289,75 @@ export default function EconomyDashboard() {
         </div>
       )}
 
+      {/* Activity pulse + macro outlook */}
+      {(data.activity?.composite || (data.forecast?.rows || []).length > 0) && (
+        <div style={{ display: "grid", gap: 12, marginBottom: 22,
+                      gridTemplateColumns: isMobile ? "1fr" : "1.1fr 1fr" }}>
+          {data.activity && (data.activity.composite || (data.activity.indicators || []).length > 0) && (() => {
+            const a = data.activity;
+            const tone = a.label === "cooling" ? C.red : a.label === "expanding" ? C.green : C.gold;
+            return (
+              <div style={{ border: `1px solid ${C.line}`, borderRadius: 12, background: C.panel, padding: "16px 18px" }}>
+                <div style={{ ...sans, fontSize: 10.5, textTransform: "uppercase", letterSpacing: "0.12em", color: C.dim, marginBottom: 10 }}>
+                  Real-economy activity
+                </div>
+                {a.composite && (
+                  <>
+                    <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 6, flexWrap: "wrap" }}>
+                      <span style={{ ...serif, fontSize: 26, color: C.text }}>
+                        {a.composite.yoy_pct > 0 ? "+" : ""}{a.composite.yoy_pct}%
+                      </span>
+                      <span style={{ ...mono, fontSize: 11, padding: "2px 8px", borderRadius: 5,
+                                     color: tone, border: `1px solid ${tone}55`, background: tone + "12" }}>
+                        {String(a.label || "").toUpperCase()}
+                      </span>
+                    </div>
+                    <div style={{ ...sans, fontSize: 11, color: C.faint, lineHeight: 1.5 }}>
+                      {a.composite.name}{a.composite.trend ? ` · ${a.composite.trend}` : ""} · {a.composite.source}, {a.composite.as_of?.slice(0, 7)}
+                    </div>
+                  </>
+                )}
+                {(a.indicators || []).length > 0 && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
+                    {a.indicators.map(ind => (
+                      <span key={ind.slug} style={{ ...mono, fontSize: 9.5, padding: "2px 7px", borderRadius: 5,
+                                                    border: `1px solid ${C.line2}`, color: C.text200 }}>
+                        {ind.name}: {ind.yoy_pct != null ? (ind.yoy_pct > 0 ? "+" : "") + ind.yoy_pct + "%" : ind.read}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+          {(data.forecast?.rows || []).length > 0 && (
+            <div style={{ border: `1px solid ${C.line}`, borderRadius: 12, background: C.panel, padding: "16px 18px" }}>
+              <div style={{ ...sans, fontSize: 10.5, textTransform: "uppercase", letterSpacing: "0.12em", color: C.dim, marginBottom: 10 }}>
+                Macro outlook · {data.forecast.source}
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: "4px 14px", ...sans, fontSize: 12 }}>
+                <span style={{ ...mono, fontSize: 9.5, color: C.faint }}>METRIC</span>
+                <span style={{ ...mono, fontSize: 9.5, color: C.faint, textAlign: "right" }}>FY26</span>
+                <span style={{ ...mono, fontSize: 9.5, color: C.faint, textAlign: "right" }}>FY27E</span>
+                {data.forecast.rows.flatMap(r => [
+                  <span key={r.metric + "m"} style={{ color: C.text200 }}>{r.metric}</span>,
+                  <span key={r.metric + "a"} style={{ ...mono, color: C.dim, textAlign: "right" }}>{r.fy26}{r.unit}</span>,
+                  <span key={r.metric + "b"} style={{ ...mono, color: C.text, textAlign: "right" }}>{r.fy27}{r.unit}</span>,
+                ])}
+              </div>
+              {(data.forecast.crude_scenarios || []).length > 0 && (
+                <div style={{ ...sans, fontSize: 10.5, color: C.faint, marginTop: 10, lineHeight: 1.5 }}>
+                  FY27 GDP by crude: {data.forecast.crude_scenarios.map(s => `$${s.crude_usd_bbl}→${s.fy27_gdp}%`).join(" · ")}
+                </div>
+              )}
+              <div style={{ ...sans, fontSize: 10, color: C.faint, marginTop: 8 }}>
+                {data.forecast.source} forecast, {data.forecast.as_of}. {data.forecast.note} A cited reference, not advice.
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Empty state — never a blank panel if the feed is momentarily down */}
       {heroStats.length === 0 && (data.sections || []).length === 0 && (
         <div style={{ ...sans, fontSize: 13, color: C.dim, border: `1px solid ${C.line}`,
