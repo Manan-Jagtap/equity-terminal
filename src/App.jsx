@@ -189,6 +189,7 @@ export default function App() {
             roe: r.roe, pb: r.pb, pe: r.pe,
             analystTarget: r.analyst_target, analystUpside: r.analyst_upside,
             analystRating: r.analyst_rating,
+            sentiment: r.sentiment, sentimentLabel: r.sentiment_label,
           },
         }));
         setCompanies(built.length > 0 ? built : SEED);

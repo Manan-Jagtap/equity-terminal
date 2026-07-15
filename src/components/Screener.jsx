@@ -13,6 +13,7 @@ import { authFetch, getUser } from "../lib/auth.js";
 import { useLive } from "../lib/live.js";
 
 const confColor = lvl => lvl === "high" ? C.green : lvl === "medium" ? C.gold : C.red;
+const sentColor = lbl => lbl === "positive" ? C.green : lbl === "negative" ? C.red : C.gold;
 
 /* One sector→bucket mapping for BOTH the dropdown and the row filter (they
    used to duplicate this logic). Order matters: "Consumer Services" must hit
@@ -133,6 +134,7 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
           reliable: a.reliable !== false,
           confidence: { level: a.confidence || "medium", flags: [] },
           pb: a.pb ?? f.pb, pe: a.pe ?? f.pe, roe: a.roe ?? f.roe,
+          sentiment: a.sentiment ?? null, sentimentLabel: a.sentimentLabel ?? null,
           sortMos: noCall ? -Infinity : (a.mos ?? -Infinity),
         };
       }
@@ -170,6 +172,7 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
       if (sort === "composite") return b.composite - a.composite;
       if (sort === "mos")       return b.sortMos - a.sortMos;
       if (sort === "roe")       return (b.roe || 0) - (a.roe || 0);
+      if (sort === "sentiment") return (b.sentiment ?? -1) - (a.sentiment ?? -1);
       return a.co.name.localeCompare(b.co.name);
     }), [companies, q, sort, sf, vf, cf, minMos, capf, tf, techMap, liveFeed]);
 
@@ -314,13 +317,14 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
               <Th>P/B</Th>
               <Th>P/E</Th>
               <Th k="composite">Score</Th>
+              <Th k="sentiment">Sentiment</Th>
               <Th>Verdict</Th>
               <th style={{ width: 30 }}></th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={9} style={{ ...sans, textAlign: "center", padding: 40, color: C.faint }}>Loading live data…</td></tr>
+              <tr><td colSpan={10} style={{ ...sans, textAlign: "center", padding: 40, color: C.faint }}>Loading live data…</td></tr>
             ) : rows.map((r, idx) => (
               <tr
                 key={r.co.ticker || r.co.id}
@@ -364,6 +368,11 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
                 <td style={{ ...mono, textAlign: "right", padding: "11px 12px", fontSize: 12, color: C.text }}>{multiple(r.pb, 2)}</td>
                 <td style={{ ...mono, textAlign: "right", padding: "11px 12px", fontSize: 12, color: C.text }}>{multiple(r.pe, 1)}</td>
                 <td style={{ ...mono, textAlign: "right", padding: "11px 12px", fontSize: 12, color: C.text }}>{r.reliable ? fmt(r.composite) : "—"}</td>
+                <td style={{ ...mono, textAlign: "right", padding: "11px 12px", fontSize: 12 }}>
+                  {r.sentiment == null ? <span style={{ color: C.faint }}>—</span>
+                    : <span title={`Narrative momentum: ${r.sentimentLabel} — concall tone, estimate revisions, beat/miss track`}
+                        style={{ color: sentColor(r.sentimentLabel) }}>{r.sentiment}</span>}
+                </td>
                 <td style={{ textAlign: "right", padding: "11px 12px" }}><VerdictBadge verdict={r.verdict} /></td>
                 <td style={{ textAlign: "center" }}><ChevronRight size={14} color={C.faint} /></td>
               </tr>

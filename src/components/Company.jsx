@@ -2418,6 +2418,13 @@ function VerdictTab({ co, rec, cd, price, insights, apiVal }) {
   const verdictColor = /BUY|ACCUM/.test(verdict) ? C.green : /HOLD|CONF|DATA/.test(verdict) ? C.gold : C.red;
   const confColor = conf?.level === "high" ? C.green : conf?.level === "medium" ? C.gold : C.red;
 
+  // Transparent sentiment (concall tone + estimate revision + beat/miss streak).
+  // A read on NARRATIVE momentum shown beside the verdict — never blended into it.
+  const sentiment = insights?.sentiment || null;
+  const sentTone  = !sentiment ? C.dim
+    : sentiment.label === "positive" ? C.green
+    : sentiment.label === "negative" ? C.red : C.gold;
+
   // Scorecard = the engine's OWN factor scores (Valuation / Quality / Momentum /
   // Risk, 0–100). This is the transparent reasoning behind the verdict, not a
   // separate second model.
@@ -2509,6 +2516,34 @@ function VerdictTab({ co, rec, cd, price, insights, apiVal }) {
           <KV label="Analyst upside" value={analystUp==null?"—":signedPct(analystUp)} tone={analystUp==null?"neutral":analystUp>=0?"pos":"neg"} />
           <KV label="Consensus rating" value={analyst?.rating || insights?.analyst?.rating || "—"} tone="neutral" bold />
         </Card>
+
+        {sentiment && (
+          <Card>
+            <SectionLabel accent="TONE · REVISIONS · TRACK">MARKET SENTIMENT</SectionLabel>
+            <div style={{ display:"flex", alignItems:"baseline", gap:10, marginBottom:12 }}>
+              <span style={{ ...serif, fontSize:44, color:sentTone, lineHeight:1 }}>{sentiment.score}</span>
+              <span style={{ ...sans, fontSize:13, color:C.dim }}>/ 100</span>
+              <span style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.1em", color:sentTone, border:`1px solid ${sentTone}55`, borderRadius:4, padding:"3px 9px", marginLeft:"auto" }}>{sentiment.label}</span>
+            </div>
+            <Bar v={sentiment.score} />
+            <div style={{ marginTop:12 }}>
+              {sentiment.parts.map((p, i) => (
+                <div key={i} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", gap:12, padding:"7px 0", borderTop: i ? `1px solid ${C.line}` : "none" }}>
+                  <div style={{ minWidth:0 }}>
+                    <div style={{ ...sans, fontSize:12, color:C.text200 }}>{p.signal}</div>
+                    <div style={{ ...sans, fontSize:10.5, color:C.dim }}>{p.detail}</div>
+                  </div>
+                  <span style={{ ...mono, fontSize:13, color: p.contribution>0?C.green:p.contribution<0?C.red:C.dim, flexShrink:0 }}>
+                    {p.contribution>0?"+":""}{p.contribution}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div style={{ ...sans, fontSize:10, color:C.dim, marginTop:12, lineHeight:1.6 }}>
+              A transparent read on narrative momentum{sentiment.as_of ? ` (concall as of ${sentiment.as_of})` : ""} — built from signals we already show, never a black box. Not a valuation input.
+            </div>
+          </Card>
+        )}
 
         {risks.length > 0 && (
           <Card>
