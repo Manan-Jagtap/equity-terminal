@@ -4,7 +4,7 @@
    first paint ships a much smaller bundle. */
 
 import { useEffect, useMemo, useState, useCallback, useRef, lazy, Suspense } from "react";
-import { TrendingUp, LayoutDashboard, List, Star, GitCompare, CalendarClock, Landmark, Gauge, History, Layers, Briefcase, Search, Loader2, LogIn, LogOut, ChevronDown, Sparkles , Rocket , PiggyBank , Globe2 } from "lucide-react";
+import { TrendingUp, LayoutDashboard, List, Star, GitCompare, CalendarClock, Landmark, Gauge, History, Layers, Briefcase, Search, Loader2, LogIn, LogOut, ChevronDown, Sparkles , Rocket , PiggyBank , Globe2 , Boxes } from "lucide-react";
 import { C, mono, sans, serif, auroraBg } from "./lib/theme.js";
 import { useIsMobile } from "./lib/useResponsive.js";
 import { SEED, buildFromApi } from "./lib/seedData.js";
@@ -33,6 +33,7 @@ const MFPanel     = lazy(() => import("./components/MFPanel.jsx"));
 const EconomyDashboard = lazy(() => import("./components/EconomyDashboard.jsx"));
 const Portfolio   = lazy(() => import("./components/Portfolio.jsx"));
 const Ideas       = lazy(() => import("./components/Ideas.jsx"));
+const Baskets     = lazy(() => import("./components/Baskets.jsx"));
 
 const ViewLoader = () => (
   <div style={{ padding: 48, display: "flex", alignItems: "center", gap: 10, color: C.dim, ...sans, fontSize: 13 }}>
@@ -292,6 +293,7 @@ export default function App() {
     { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
     { id: "screener",  label: "Screener",  icon: List },
     { id: "ideas",     label: "Ideas",     icon: Sparkles },
+    { id: "baskets",   label: "Baskets",   icon: Boxes },
     { id: "watchlist", label: "Watchlist", icon: Star },
     { id: "compare",   label: "Compare",   icon: GitCompare },
     { id: "results",   label: "Results",   icon: CalendarClock },
@@ -501,6 +503,9 @@ export default function App() {
           {view === "ideas" && (
             <Ideas API={API} onOpen={open} />
           )}
+          {view === "baskets" && (
+            <Baskets API={API} onOpen={open} />
+          )}
           {view === "track" && (
             <TrackRecord API={API} onOpen={open} />
           )}
@@ -537,6 +542,7 @@ export default function App() {
           }}>
             {[
               { id: "ideas",      label: "Ideas",      icon: Sparkles },
+              { id: "baskets",    label: "Baskets",    icon: Boxes },
               { id: "watchlist",  label: "Watchlist",  icon: Star },
               { id: "compare",    label: "Compare",    icon: GitCompare },
               { id: "results",    label: "Results",    icon: CalendarClock },
