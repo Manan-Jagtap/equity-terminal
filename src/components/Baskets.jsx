@@ -15,6 +15,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Boxes, Loader2, Info, ChevronRight } from "lucide-react";
 import { C, sans, serif, mono } from "../lib/theme.js";
 import { VerdictBadge } from "./primitives.jsx";
+import StrategyLab from "./StrategyLab.jsx";
 
 const scoreColor = (v) => v == null ? C.dim : v >= 70 ? C.green : v >= 45 ? C.gold : C.red;
 const EXPO = [["value", "Val"], ["quality", "Qual"], ["momentum", "Mom"], ["low_vol", "LoVol"], ["growth", "Grow"]];
@@ -168,9 +169,12 @@ export default function Baskets({ API, onOpen }) {
       <div style={{ display: "flex", gap: 8, marginBottom: 18 }}>
         {tabBtn("smart_beta", "Smart-Beta")}
         {tabBtn("thematic", "Thematic")}
+        {tabBtn("lab", "Strategy Lab")}
       </div>
 
-      {!baskets.length ? (
+      {tab === "lab" ? (
+        <StrategyLab API={API} onOpen={onOpen} />
+      ) : !baskets.length ? (
         <div style={{ ...sans, fontSize: 12, color: C.dim, padding: "28px 0" }}>
           No baskets yet — they build after the daily valuation + factor recompute.
         </div>
