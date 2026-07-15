@@ -6,7 +6,7 @@
    (verdicts, MoS, weights, momentum, holding terms) — educational decision
    support; the owner decides. */
 import { useEffect, useState } from "react";
-import { BadgeCheck, Briefcase, Loader2, Sparkles, Landmark, GitCompare, ShieldAlert } from "lucide-react";
+import { BadgeCheck, Briefcase, Loader2, Sparkles, Landmark, GitCompare, ShieldAlert, Gem } from "lucide-react";
 import { C, sans, serif, mono } from "../lib/theme.js";
 import { authFetch } from "../lib/auth.js";
 import { SignInGate } from "./Watchlist.jsx";
@@ -313,6 +313,131 @@ function TaxPanel({ tax }) {
   );
 }
 
+/* Hidden gems — under-followed small/mid-cap quality compounders surfaced from
+   the full universe, each with an honest thesis and the risks stated. Universe-
+   wide discovery, independent of the user's book. "Multibagger" = the setup,
+   never a promise. */
+const gemScoreColor = s =>
+  s == null ? C.dim : s >= 80 ? C.green : s >= 65 ? "#E8B054" : C.text200;
+
+function GemStat({ label, value, tone }) {
+  if (value == null) return null;
+  return (
+    <span style={{ display: "inline-flex", flexDirection: "column", gap: 1, minWidth: 62 }}>
+      <span style={{ ...sans, fontSize: 8.5, textTransform: "uppercase", letterSpacing: "0.08em", color: C.faint }}>{label}</span>
+      <span style={{ ...mono, fontSize: 12, color: tone || C.text200 }}>{value}</span>
+    </span>
+  );
+}
+
+function HiddenGems({ API, onOpen }) {
+  const [data, setData] = useState(null);
+  const [loaded, setLoaded] = useState(false);
+  const [open, setOpen] = useState(null);   // ticker whose full thesis is expanded
+
+  useEffect(() => {
+    if (!API) return;
+    let dead = false;
+    authFetch(`${API}/api/manager/hidden-gems`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (!dead) { setData(d); setLoaded(true); } })
+      .catch(() => { if (!dead) { setData(null); setLoaded(true); } });
+    return () => { dead = true; };
+  }, [API]);
+
+  const gems = data?.gems || [];
+  return (
+    <div style={{ border: `1px solid ${C.gold}33`, borderRadius: 12, background: C.panel, padding: "18px 22px", marginBottom: 18 }}>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap", marginBottom: 6 }}>
+        <span style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: C.gold, display: "flex", alignItems: "center", gap: 6 }}>
+          <Gem size={13} /> Hidden gems · under-followed compounders
+        </span>
+        {loaded && data?.available && (
+          <span style={{ ...mono, fontSize: 10.5, color: C.faint }}>
+            {data.n_found} of {data.universe_considered} screened
+          </span>
+        )}
+      </div>
+      <div style={{ ...sans, fontSize: 12, color: C.faint, marginBottom: 14, lineHeight: 1.6, maxWidth: 820 }}>
+        Small/mid-caps with clean books, durable ROE, a real growth engine and a price that isn't already
+        discounting the story — the ingredients of a multibagger, not a promise. Anything with a red flag,
+        a pledge or a suspect model is excluded. You decide; not SEBI-registered advice.
+      </div>
+
+      {!loaded && (
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 0", ...sans, fontSize: 12.5, color: C.dim }}>
+          <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /> Screening the universe…
+        </div>
+      )}
+      {loaded && !data?.available && (
+        <div style={{ ...sans, fontSize: 12.5, color: C.dim }}>
+          {data?.message || "Hidden-gems screen is unavailable right now."}
+        </div>
+      )}
+      {loaded && data?.available && gems.length === 0 && (
+        <div style={{ ...sans, fontSize: 12.5, color: C.dim, lineHeight: 1.6 }}>
+          Nothing clears the bar today — the screen would rather show you nothing than force a name.
+          That's the honest answer, not an error.
+        </div>
+      )}
+
+      {gems.map((g, i) => {
+        const isOpen = open === g.ticker;
+        const shown = isOpen ? g.thesis : (g.thesis || []).slice(0, 2);
+        return (
+          <div key={g.ticker} style={{ borderTop: i ? `1px solid ${C.line}` : "none", padding: "13px 0" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+              <span title="Hidden-gem score (quality × growth × valuation, with an under-followed bonus)"
+                style={{ ...mono, fontSize: 13, fontWeight: 700, color: gemScoreColor(g.score),
+                         border: `1px solid ${gemScoreColor(g.score)}44`, borderRadius: 6, padding: "3px 8px", flexShrink: 0 }}>
+                {Math.round(g.score)}
+              </span>
+              <span onClick={() => onOpen && onOpen(g.ticker)} style={{ cursor: "pointer", display: "flex", gap: 8, alignItems: "baseline", minWidth: 0 }}>
+                <span style={{ ...mono, fontSize: 12.5, color: C.gold }}>{g.ticker}</span>
+                <span style={{ ...sans, fontSize: 12.5, color: C.text }}>{g.name}</span>
+              </span>
+              {g.under_followed && (
+                <span style={{ ...sans, fontSize: 9, fontWeight: 700, letterSpacing: "0.05em", color: "#E8B054",
+                               background: "#E8B05416", borderRadius: 5, padding: "2px 7px" }}>NO STREET COVERAGE</span>
+              )}
+              <span style={{ marginLeft: "auto", display: "flex", gap: 16, flexWrap: "wrap" }}>
+                <GemStat label={g.cap_tier || "Cap"} value={g.market_cap_cr != null ? inr(g.market_cap_cr) + " Cr" : null} />
+                <GemStat label="ROE" value={g.roe_pct != null ? g.roe_pct + "%" : null} tone={C.green} />
+                <GemStat label="Growth" value={g.rev_cagr_pct != null ? g.rev_cagr_pct + "%" : (g.pat_yoy_pct != null ? g.pat_yoy_pct + "% PAT" : null)} />
+                <GemStat label="MoS" value={g.mos_pct != null ? (g.mos_pct > 0 ? "+" : "") + g.mos_pct + "%" : null} tone={g.mos_pct > 0 ? C.green : C.text200} />
+                <GemStat label="P/E" value={g.pe != null ? g.pe + "x" : null} />
+                <GemStat label="Grade" value={g.grade} tone={gemScoreColor(g.overall)} />
+              </span>
+            </div>
+            <ul style={{ margin: "9px 0 0", paddingLeft: 16, listStyle: "none" }}>
+              {shown.map((t, j) => (
+                <li key={j} style={{ ...sans, fontSize: 12, color: C.text200, lineHeight: 1.6, position: "relative", marginBottom: 3 }}>
+                  <span style={{ position: "absolute", left: -14, color: C.green }}>+</span>{t}
+                </li>
+              ))}
+            </ul>
+            {(g.thesis || []).length > 2 && (
+              <button onClick={() => setOpen(isOpen ? null : g.ticker)} style={{
+                ...sans, fontSize: 10.5, color: C.gold, background: "none", border: "none",
+                cursor: "pointer", padding: "4px 0 0 2px" }}>
+                {isOpen ? "Show less" : `+${g.thesis.length - 2} more reasons`}
+              </button>
+            )}
+          </div>
+        );
+      })}
+
+      {loaded && data?.available && gems.length > 0 && (data.gems[0]?.risks || []).length > 0 && (
+        <div style={{ borderTop: `1px solid ${C.line}`, marginTop: 6, paddingTop: 10 }}>
+          {data.gems[0].risks.map((r, i) => (
+            <div key={i} style={{ ...sans, fontSize: 9.5, color: C.faint, lineHeight: 1.55 }}>! {r}</div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function FundManager({ API, user, requestAuth, onOpen }) {
   const [data, setData] = useState(null);
   // loading derives from "signed in but no payload yet" — no sync setState.
@@ -367,6 +492,9 @@ export default function FundManager({ API, user, requestAuth, onOpen }) {
         flow, results momentum and the macro tape. A model that fails cross-examination is set aside, and the
         action says so. You decide; nothing here is SEBI-registered advice.
       </div>
+
+      {/* Universe-wide discovery — shown whether or not the user holds anything. */}
+      <HiddenGems API={API} onOpen={onOpen} />
 
       {empty && (
         <div style={{ border: `1px solid ${C.line}`, borderRadius: 12, background: C.panel, padding: "48px 24px", textAlign: "center" }}>
