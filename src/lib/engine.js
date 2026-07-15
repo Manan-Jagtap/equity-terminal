@@ -24,21 +24,30 @@ export const ERP = 0.050;
 export const SECTOR_PARAMS = {
   // Non-financials
   IT_SERVICES:   { beta: 0.85, terminal_growth: 0.055, mature_roic: 0.30, mature_roe: 0.30, exit_pe: 25, exit_ev_ebitda: 16, exit_pb: null },
-  CONSUMER:      { beta: 0.72, terminal_growth: 0.055, mature_roic: 0.22, mature_roe: 0.30, exit_pe: 42, exit_ev_ebitda: 28, exit_pb: null },
-  CONSUMER_DISC: { beta: 0.95, terminal_growth: 0.055, mature_roic: 0.18, mature_roe: 0.22, exit_pe: 38, exit_ev_ebitda: 22, exit_pb: null },
-  PHARMA:        { beta: 0.78, terminal_growth: 0.050, mature_roic: 0.18, mature_roe: 0.20, exit_pe: 30, exit_ev_ebitda: 18, exit_pb: null },
+  CONSUMER:      { beta: 0.58, terminal_growth: 0.055, mature_roic: 0.22, mature_roe: 0.30, exit_pe: 42, exit_ev_ebitda: 28, exit_pb: null },
+  CONSUMER_DISC: { beta: 0.80, terminal_growth: 0.055, mature_roic: 0.18, mature_roe: 0.22, exit_pe: 38, exit_ev_ebitda: 22, exit_pb: null },
+  PHARMA:        { beta: 0.64, terminal_growth: 0.050, mature_roic: 0.18, mature_roe: 0.20, exit_pe: 30, exit_ev_ebitda: 18, exit_pb: null },
   AUTO:          { beta: 1.10, terminal_growth: 0.050, mature_roic: 0.16, mature_roe: 0.18, exit_pe: 24, exit_ev_ebitda: 13, exit_pb: null },
   METAL:         { beta: 1.30, terminal_growth: 0.040, mature_roic: 0.12, mature_roe: 0.13, exit_pe: 11, exit_ev_ebitda: 6,  exit_pb: null },
   CEMENT:        { beta: 1.05, terminal_growth: 0.050, mature_roic: 0.14, mature_roe: 0.15, exit_pe: 24, exit_ev_ebitda: 13, exit_pb: null },
   ENERGY:        { beta: 1.00, terminal_growth: 0.040, mature_roic: 0.12, mature_roe: 0.14, exit_pe: 12, exit_ev_ebitda: 7,  exit_pb: null },
+  AVIATION:      { beta: 1.35, terminal_growth: 0.050, mature_roic: 0.11, mature_roe: 0.14, exit_pe: 12, exit_ev_ebitda: 7,  exit_pb: null },
   UTILITIES:     { beta: 0.75, terminal_growth: 0.045, mature_roic: 0.11, mature_roe: 0.13, exit_pe: 15, exit_ev_ebitda: 9,  exit_pb: null },
   TELECOM:       { beta: 0.90, terminal_growth: 0.050, mature_roic: 0.13, mature_roe: 0.15, exit_pe: 32, exit_ev_ebitda: 9,  exit_pb: null },
   MANUFACTURING: { beta: 1.00, terminal_growth: 0.050, mature_roic: 0.15, mature_roe: 0.16, exit_pe: 28, exit_ev_ebitda: 15, exit_pb: null },
   CHEMICALS:     { beta: 1.05, terminal_growth: 0.050, mature_roic: 0.16, mature_roe: 0.17, exit_pe: 26, exit_ev_ebitda: 15, exit_pb: null },
   REALTY:        { beta: 1.25, terminal_growth: 0.050, mature_roic: 0.12, mature_roe: 0.13, exit_pe: 20, exit_ev_ebitda: 14, exit_pb: null },
+  PAPER:         { beta: 1.05, terminal_growth: 0.045, mature_roic: 0.11, mature_roe: 0.12, exit_pe: 12, exit_ev_ebitda: 6,  exit_pb: null },
+  SUGAR:         { beta: 1.00, terminal_growth: 0.040, mature_roic: 0.10, mature_roe: 0.12, exit_pe: 11, exit_ev_ebitda: 6,  exit_pb: null },
+  CABLES:        { beta: 1.00, terminal_growth: 0.055, mature_roic: 0.18, mature_roe: 0.18, exit_pe: 27, exit_ev_ebitda: 15, exit_pb: null },
+  CAPITAL_GOODS: { beta: 1.10, terminal_growth: 0.055, mature_roic: 0.17, mature_roe: 0.18, exit_pe: 32, exit_ev_ebitda: 22, exit_pb: null },
+  CONSTRUCTION:  { beta: 1.20, terminal_growth: 0.050, mature_roic: 0.13, mature_roe: 0.14, exit_pe: 15, exit_ev_ebitda: 9,  exit_pb: null },
+  DEFENCE:       { beta: 0.95, terminal_growth: 0.060, mature_roic: 0.20, mature_roe: 0.22, exit_pe: 34, exit_ev_ebitda: 24, exit_pb: null },
+  TEXTILES:      { beta: 1.10, terminal_growth: 0.040, mature_roic: 0.11, mature_roe: 0.12, exit_pe: 13, exit_ev_ebitda: 7,  exit_pb: null },
+  LOGISTICS:     { beta: 1.00, terminal_growth: 0.055, mature_roic: 0.14, mature_roe: 0.15, exit_pe: 26, exit_ev_ebitda: 13, exit_pb: null },
   // Financials
-  BANK:          { beta: 0.95, terminal_growth: 0.055, mature_roic: 0.15, mature_roe: 0.155, exit_pe: 16, exit_ev_ebitda: null, exit_pb: 2.4 },
-  NBFC:          { beta: 1.10, terminal_growth: 0.055, mature_roic: 0.16, mature_roe: 0.165, exit_pe: 18, exit_ev_ebitda: null, exit_pb: 3.0 },
+  BANK:          { beta: 0.95, terminal_growth: 0.055, mature_roic: 0.15, mature_roe: 0.165, exit_pe: 16, exit_ev_ebitda: null, exit_pb: 2.4 },
+  NBFC:          { beta: 1.05, terminal_growth: 0.055, mature_roic: 0.16, mature_roe: 0.18,  exit_pe: 18, exit_ev_ebitda: null, exit_pb: 3.0 },
   INSURANCE:     { beta: 0.90, terminal_growth: 0.055, mature_roic: 0.15, mature_roe: 0.16,  exit_pe: 24, exit_ev_ebitda: null, exit_pb: 2.2 },
 };
 
@@ -66,10 +75,16 @@ const _NULL_VAL = (method) => ({
 
 export function residualIncome(co, a) {
   const ke = costOfEquity(a);
-  const bvps0 = co.equity / co.shares;
+  let bvps0 = co.equity / co.shares;
+  // Asset-quality haircut on starting book (mirrors engines.py): net NPAs still
+  // on the book will likely need write-downs. nnpa × 4 ≈ fraction of equity,
+  // capped 20%. Healthy books (nnpa≈0) untouched. co.nbfc absent → no haircut.
+  const _nnpa = co.nbfc ? co.nbfc.nnpa : undefined;
+  const aqHaircut = (typeof _nnpa === "number") ? Math.min(0.20, Math.max(0.0, _nnpa) * 4) : 0.0;
+  if (aqHaircut) bvps0 = bvps0 * (1 - aqHaircut);
   const retention = 1 - a.payout;
   const N = Math.max(3, pyRound(a.fade_years));
-  const N1 = Math.max(1, Math.floor(N / 2));
+  const N1 = Math.max(1, pyRound(0.6 * N));   // elite franchises hold ROE longer
   const fRoe = a.forecast_roe, tRoe = a.terminal_roe;
   let bv = bvps0, pv = 0;
   const rows = [];
@@ -96,17 +111,24 @@ export function fcffDcf(co, a) {
   // competitive-advantage period (derive.py sets fade_years from ROIC quality).
   const ke = costOfEquity(a);
   const ew = 1 - a.debt_weight;
-  const wacc = ew * ke + a.debt_weight * a.cost_debt * (1 - a.tax_rate);
+  let wacc = ew * ke + a.debt_weight * a.cost_debt * (1 - a.tax_rate);
+  // HARD FLOOR: WACC must stay a safe margin above terminal growth (asset-light
+  // names with cheap working-capital "borrowings" otherwise collapse WACC→g and
+  // explode the terminal value). Mirrors engines.py.
+  wacc = Math.max(wacc, a.terminal_growth + 0.03);
   const N = Math.max(3, pyRound(a.fade_years));
   const N1 = Math.max(1, Math.floor(N / 2));
   const gT = a.terminal_growth;
   const g1 = a.rev_growth;
+  const m0 = a.ebit_margin;
+  const mTerm = (a.terminal_ebit_margin ?? m0);   // margins mean-revert; glide
   let rev = co.revenue, pv = 0, nopat = 0;
   const rows = [];
   for (let t = 1; t <= N; t++) {
     const g = t <= N1 ? g1 : g1 + (gT - g1) * ((t - N1) / (N - N1));
     rev = rev * (1 + g);
-    const ebit = rev * a.ebit_margin;
+    const margin = N <= 1 ? m0 : m0 + (mTerm - m0) * ((t - 1) / (N - 1));
+    const ebit = rev * margin;
     nopat = ebit * (1 - a.tax_rate);
     const fcff = nopat * (1 - a.reinvest_rate);
     const disc = Math.pow(1 + wacc, t);
@@ -145,25 +167,28 @@ export function valuate(co, a) {
 const vsector = (a) => a._valuation_sector || DEFAULT_SECTOR;
 
 export function exitMultipleValue(co, a) {
+  // Sector EV/EBITDA on 1-year-FORWARD EBITDA (forward-multiple convention).
   const p = params(vsector(a));
   const mult = p.exit_ev_ebitda;
   const rev = co.revenue, shares = co.shares;
   if (mult == null || rev == null || !shares || shares <= 0) return null;
   const margin = a.ebit_margin || 0.12;
-  const ebitda = rev * (margin + 0.03);
-  if (ebitda <= 0) return null;
-  const ev = ebitda * mult;
+  const ebitdaFwd = rev * (1 + (a.rev_growth || 0.08)) * (margin + 0.03);
+  if (ebitdaFwd <= 0) return null;
+  const ev = ebitdaFwd * mult;
   const netDebt = co.net_debt || 0;
   const val = (ev - netDebt) / shares;
   return val > 0 ? val : null;
 }
 
 export function peValue(co, a) {
+  // Sector P/E on 1-year-FORWARD earnings, per share.
   const p = params(vsector(a));
   const pe = p.exit_pe;
   const pat = co.net_profit, shares = co.shares;
   if (pe == null || pat == null || pat <= 0 || !shares || shares <= 0) return null;
-  return (pat * pe) / shares;
+  const patFwd = pat * (1 + (a.rev_growth || 0.08));
+  return (patFwd * pe) / shares;
 }
 
 export function gordonPbValue(co, a, v) {
@@ -177,10 +202,45 @@ export function gordonPbValue(co, a, v) {
   return val > 0 ? val : null;
 }
 
+/** Two-stage Dividend Discount Model, per share — a cross-check that carries
+ *  blend weight only for stable high payers. Mirrors engines.ddm_value. */
+export function ddmValue(co, a, v) {
+  const ke = v.ke;
+  const pat = co.net_profit, shares = co.shares;
+  const payout = a.payout;
+  const gT = a.terminal_growth || 0.05;
+  if (!ke || ke <= gT || !shares || shares <= 0) return null;
+  if (pat == null || pat <= 0 || !payout || payout <= 0) return null;
+  const dps0 = payout * (pat / shares);
+  if (dps0 <= 0) return null;
+  const N = Math.max(3, pyRound(a.fade_years));
+  const N1 = Math.max(1, Math.floor(N / 2));
+  const g1 = Math.min(a.rev_growth || 0.08, 0.15);   // a payer can't out-grow earnings forever
+  let d = dps0, dN = dps0, pv = 0.0;
+  for (let i = 1; i <= N; i++) {
+    const g = i <= N1 ? g1 : g1 + (gT - g1) * ((i - N1) / Math.max(1, N - N1));
+    d *= (1 + g);
+    pv += d / Math.pow(1 + ke, i);
+    if (i === N) dN = d;
+  }
+  pv += (dN * (1 + gT) / (ke - gT)) / Math.pow(1 + ke, N);
+  return pv > 0 ? pv : null;
+}
+
+/** A stable, meaningful distributor — only then does the DDM carry blend weight. */
+function isHighPayout(co, a) {
+  const pat = co.net_profit;
+  return (a.payout || 0) >= 0.40 && pat != null && pat > 0;
+}
+
 const BLEND_WEIGHTS = {
   fin:    [["Residual Income", 0.65], ["Gordon Growth P/B", 0.20], ["P/E (sector)", 0.15]],
   nonfin: [["FCFF DCF", 0.55], ["Exit Multiple", 0.30], ["P/E (sector)", 0.15]],
+  // Asset-light: earnings-based P/E is the meaningful multiple; EV/EBITDA less so.
+  nonfin_light: [["FCFF DCF", 0.55], ["Exit Multiple", 0.15], ["P/E (sector)", 0.30]],
 };
+// Sectors whose value is asset-light / earnings-driven → lean the cross-check on P/E.
+const ASSET_LIGHT = new Set(["IT_SERVICES", "CONSUMER", "CONSUMER_DISC", "PHARMA"]);
 
 export function blended(co, a) {
   const v = valuate(co, a);
@@ -191,22 +251,44 @@ export function blended(co, a) {
   if (isFin) {
     vals = { "Residual Income": primary, "Gordon Growth P/B": gordonPbValue(co, a, v),
              "P/E (sector)": peValue(co, a) };
-    spec = BLEND_WEIGHTS.fin;
+    spec = [...BLEND_WEIGHTS.fin];
+  } else if (ASSET_LIGHT.has(vsector(a))) {
+    vals = { "FCFF DCF": primary, "Exit Multiple": exitMultipleValue(co, a),
+             "P/E (sector)": peValue(co, a) };
+    spec = [...BLEND_WEIGHTS.nonfin_light];
   } else {
     vals = { "FCFF DCF": primary, "Exit Multiple": exitMultipleValue(co, a),
              "P/E (sector)": peValue(co, a) };
-    spec = BLEND_WEIGHTS.nonfin;
+    spec = [...BLEND_WEIGHTS.nonfin];
   }
 
-  const components = spec.map(([name, w]) => ({ method: name, value: vals[name] ?? null, weight: w }));
+  // Dividend Discount Model — always computed as a cross-check; carries weight
+  // only for stable high payers (else weight 0 → shown, not blended).
+  vals["Dividend Discount"] = ddmValue(co, a, v);
+  spec.push(["Dividend Discount", isHighPayout(co, a) ? 0.20 : 0.0]);
 
-  if (primary == null || primary <= 0)
-    return { blended: null, components, primary, primary_method: v.method, valuation: v };
+  const primaryMethod = v.method;
 
-  const avail = components.filter((c) => c.value != null && c.value > 0);
+  if (primary == null || primary <= 0) {
+    const components = spec.map(([name, w]) => ({ method: name, value: vals[name] ?? null, weight: w }));
+    return { blended: null, components, primary, primary_method: primaryMethod, valuation: v };
+  }
+
+  // Cross-checks are a SANITY BAND — clamp each to [0.5, 2.2]×primary before
+  // weighting so a rich sector multiple can't drag the blend far off the
+  // intrinsic. The raw (uncapped) value is still shown in the breakdown.
+  const LO = 0.5 * primary, HI = 2.2 * primary;
+  const components = spec.map(([name, w]) => {
+    const raw = vals[name] ?? null;
+    let capped = raw;
+    if (raw != null && name !== primaryMethod) capped = Math.max(LO, Math.min(HI, raw));
+    return { method: name, value: raw, capped, weight: w };
+  });
+
+  const avail = components.filter((c) => c.capped != null && c.capped > 0);
   const wsum = avail.reduce((s, c) => s + c.weight, 0) || 1.0;
-  const blend = avail.reduce((s, c) => s + c.value * (c.weight / wsum), 0);
-  return { blended: blend, components, primary, primary_method: v.method, valuation: v };
+  const blend = avail.reduce((s, c) => s + c.capped * (c.weight / wsum), 0);
+  return { blended: blend, components, primary, primary_method: primaryMethod, valuation: v };
 }
 
 // ── Interactive helpers (client-only, built on the SAME core) ────────────────
