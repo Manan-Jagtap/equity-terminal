@@ -3002,14 +3002,17 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
             { l:"P / B",            v:sm?.pb!=null?multiple(sm.pb,2):multiple(rec.f.pb, 2)         },
             { l:"ROE",              v:sm?.roe_ttm!=null?fmtPa(sm.roe_ttm):(rec.f.roe!=null?fmtPa(rec.f.roe*100):"—"), accent:C.green },
             { l:"ROA",              v:roaLive!=null?fmtPa(roaLive*100):(co.nbfc?.roa!=null?fmtPa(co.nbfc.roa*100):"—") },
-            { l:"Div Yield",        v:sm?.div_yield!=null?fmtPa(sm.div_yield):"—" },
+            // Only show a dividend-yield chip for names that actually pay one —
+            // a "—" chip on every non-payer just wastes a slot in the strip.
+            (sm?.div_yield != null && sm.div_yield > 0)
+              ? { l:"Div Yield", v:fmtPa(sm.div_yield) } : null,
             { l:"Promoter Hold",    v:promoterLive!=null?fmtPa(promoterLive)
                                       :liveInsights?.ownership?.promoter?.pct!=null?fmtPa(liveInsights.ownership.promoter.pct)
                                       :(mktData.promoterPct!=null?fmtPa(mktData.promoterPct):"—"), accent:C.gold },
             { l:"Fair Value",       v:fairValue!=null?inrOrDash(fairValue,0):"—", accent:C.gold },
             { l:"Upside",           v:fairUpside!=null?signedPct(fairUpside):"—", accent:fairUpside==null?C.dim:fairUpside>=0?C.green:C.red },
             { l:"Verdict",          v:modelVerdict||"—", accent:modelVerdictColor, large:true },
-          ].map(s => (
+          ].filter(Boolean).map(s => (
             <div key={s.l} style={{ minWidth: 0 }}>
               <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.12em", color:C.dim, fontWeight:500, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }} title={s.l}>{s.l}</div>
               <div style={{ ...mono, fontSize:s.large?18:16, color:s.accent||C.text, marginTop:4, fontWeight:s.large?600:400, letterSpacing:s.large?"0.06em":"0", whiteSpace:"nowrap" }}>{s.v}</div>

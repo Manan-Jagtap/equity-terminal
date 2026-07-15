@@ -236,18 +236,29 @@ export default function EconomyDashboard() {
 
   const heroStats = useMemo(() => {
     if (!data) return [];
-    return [
-      s.cpi_yoy && ["CPI inflation", s.cpi_yoy.pct.toFixed(2) + "%",
-        s.cpi_yoy.pct <= 4 ? C.green : s.cpi_yoy.pct >= 6 ? C.red : "#E8B054", "as of " + fmtDate(s.cpi_yoy.as_of)],
-      s.gsec_10y && ["10-yr G-sec", s.gsec_10y.last.toFixed(2) + "%",
-        C.text, (s.gsec_10y.chg_3m_bps != null ? (s.gsec_10y.chg_3m_bps >= 0 ? "+" : "") + s.gsec_10y.chg_3m_bps + "bps / 3m" : "")],
-      s.repo && ["Policy repo", s.repo.last.toFixed(2) + "%", C.text, s.repo.last_move ? "last move: " + s.repo.last_move : ""],
-      s.usdinr && ["USD / INR", "₹" + s.usdinr.last.toFixed(2),
-        s.usdinr.chg_3m_pct <= 0 ? C.green : C.red, (s.usdinr.chg_3m_pct != null ? (s.usdinr.chg_3m_pct >= 0 ? "+" : "") + s.usdinr.chg_3m_pct + "% / 3m" : "")],
-      s.fx_reserves_usd_bn && ["FX reserves", "$" + s.fx_reserves_usd_bn.last + "B",
-        C.text, (s.fx_reserves_usd_bn.chg_3m_bn != null ? (s.fx_reserves_usd_bn.chg_3m_bn >= 0 ? "+" : "") + s.fx_reserves_usd_bn.chg_3m_bn + "B / 3m" : "")],
-      s.gdp_nominal_yoy && ["GDP (nominal)", s.gdp_nominal_yoy.pct.toFixed(1) + "%", C.text, "as of " + fmtDate(s.gdp_nominal_yoy.as_of)],
-    ].filter(Boolean);
+    // A macro field can be present with a NULL inner value (mid-refresh, or a
+    // series whose latest point was dropped) — calling .toFixed on it crashed
+    // the whole panel to a blank screen. Format defensively and skip if absent.
+    const fx = (x, d = 2) => (typeof x === "number" && isFinite(x)) ? x.toFixed(d) : null;
+    const out = [];
+    if (s.cpi_yoy && fx(s.cpi_yoy.pct) != null)
+      out.push(["CPI inflation", fx(s.cpi_yoy.pct) + "%",
+        s.cpi_yoy.pct <= 4 ? C.green : s.cpi_yoy.pct >= 6 ? C.red : "#E8B054", "as of " + fmtDate(s.cpi_yoy.as_of)]);
+    if (s.gsec_10y && fx(s.gsec_10y.last) != null)
+      out.push(["10-yr G-sec", fx(s.gsec_10y.last) + "%", C.text,
+        (s.gsec_10y.chg_3m_bps != null ? (s.gsec_10y.chg_3m_bps >= 0 ? "+" : "") + s.gsec_10y.chg_3m_bps + "bps / 3m" : "")]);
+    if (s.repo && fx(s.repo.last) != null)
+      out.push(["Policy repo", fx(s.repo.last) + "%", C.text, s.repo.last_move ? "last move: " + s.repo.last_move : ""]);
+    if (s.usdinr && fx(s.usdinr.last) != null)
+      out.push(["USD / INR", "₹" + fx(s.usdinr.last),
+        (s.usdinr.chg_3m_pct || 0) <= 0 ? C.green : C.red,
+        (s.usdinr.chg_3m_pct != null ? (s.usdinr.chg_3m_pct >= 0 ? "+" : "") + s.usdinr.chg_3m_pct + "% / 3m" : "")]);
+    if (s.fx_reserves_usd_bn && s.fx_reserves_usd_bn.last != null)
+      out.push(["FX reserves", "$" + s.fx_reserves_usd_bn.last + "B", C.text,
+        (s.fx_reserves_usd_bn.chg_3m_bn != null ? (s.fx_reserves_usd_bn.chg_3m_bn >= 0 ? "+" : "") + s.fx_reserves_usd_bn.chg_3m_bn + "B / 3m" : "")]);
+    if (s.gdp_nominal_yoy && fx(s.gdp_nominal_yoy.pct, 1) != null)
+      out.push(["GDP (nominal)", fx(s.gdp_nominal_yoy.pct, 1) + "%", C.text, "as of " + fmtDate(s.gdp_nominal_yoy.as_of)]);
+    return out;
   }, [data]);
 
   if (!data) return <div style={{ ...sans, padding: 48, color: C.dim, fontSize: 13 }}>Loading the macro desk…</div>;
@@ -278,6 +289,14 @@ export default function EconomyDashboard() {
         </div>
       )}
 
+      {/* Empty state — never a blank panel if the feed is momentarily down */}
+      {heroStats.length === 0 && (data.sections || []).length === 0 && (
+        <div style={{ ...sans, fontSize: 13, color: C.dim, border: `1px solid ${C.line}`,
+                      borderRadius: 12, background: C.panel, padding: "28px 24px" }}>
+          Macro data is temporarily unavailable — please refresh in a moment.
+        </div>
+      )}
+
       {/* Sections */}
       {(data.sections || []).map(sec => (
         <div key={sec.title} style={{ marginBottom: 24 }}>
@@ -285,7 +304,7 @@ export default function EconomyDashboard() {
                         color: C.dim, marginBottom: 10 }}>{sec.title}</div>
           <div style={{ display: "grid", gap: 12,
                         gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? 150 : 210}px, 1fr))` }}>
-            {sec.series.map(r => <IndicatorCard key={r.slug} r={r} onOpen={x => setOpen(x)} />)}
+            {(sec.series || []).map(r => <IndicatorCard key={r.slug} r={r} onOpen={x => setOpen(x)} />)}
           </div>
         </div>
       ))}

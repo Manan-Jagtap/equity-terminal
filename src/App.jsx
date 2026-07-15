@@ -14,6 +14,7 @@ import Watchlist from "./components/Watchlist.jsx";
 import CommandPalette from "./components/CommandPalette.jsx";
 import AuthModal from "./components/AuthModal.jsx";
 import Landing from "./components/Landing.jsx";
+import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import { fetchWatchlist, saveWatch, removeWatch } from "./lib/watchlist.js";
 import { getUser, me, clearSession, authFetch } from "./lib/auth.js";
 
@@ -452,6 +453,7 @@ export default function App() {
 
       <main style={{ marginLeft: railVisible ? 216 : 0 }}>
         <div style={{ maxWidth: 1360, margin: "0 auto" }}>
+        <ErrorBoundary resetKey={view}>
 
         {view === "dashboard" && (
           <MarketDashboard API={API} companies={companies} onOpen={open} />
@@ -519,6 +521,7 @@ export default function App() {
             />
           )}
         </Suspense>
+        </ErrorBoundary>
         </div>
       </main>
 
