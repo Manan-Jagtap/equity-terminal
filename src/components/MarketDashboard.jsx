@@ -16,6 +16,11 @@ const fmtN = (n, d = 2) => n == null || isNaN(n) ? "—" : Number(n).toLocaleStr
 const fmtP = (n, d = 2) => n == null || isNaN(n) ? "—" : (n >= 0 ? "+" : "") + n.toFixed(d) + "%";
 const toneOf = n => n == null ? C.dim : n >= 0 ? C.green : C.red;
 const fmtVol = n => n == null ? "—" : n >= 1e7 ? (n / 1e7).toFixed(1) + " Cr" : n >= 1e5 ? (n / 1e5).toFixed(1) + " L" : Number(n).toLocaleString("en-IN");
+// Most-active rows carry value_cr (₹ crore traded) — the meaningful "activity"
+// measure. Show that; fall back to raw share volume for vendor rows without it.
+const fmtActive = x => x?.value_cr != null
+  ? "₹" + fmtN(x.value_cr, 0) + " Cr traded"
+  : fmtVol(x?.volume) + " vol";
 
 export default function MarketDashboard({ API, companies, onOpen }) {
   const isMobile = useIsMobile();
@@ -156,7 +161,7 @@ export default function MarketDashboard({ API, companies, onOpen }) {
             const list = activeEx === "NSE" ? active : bseActive;
             return list.length ? list.map((x, i) => (
               <Row key={i} clickable={known.has((x.ticker || "").toUpperCase())} onClick={() => openIf(x.ticker)}
-                left={x.name} sub={fmtVol(x.volume) + " vol"} right={fmtN(x.price)} rightTone={C.text} pct={x.pct} />
+                left={x.name} sub={fmtActive(x)} right={fmtN(x.price)} rightTone={C.text} pct={x.pct} />
             )) : <Empty />;
           })()}
         </Card>
