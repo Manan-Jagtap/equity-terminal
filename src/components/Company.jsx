@@ -3039,7 +3039,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
       {/* ── Tab content ───────────────────────────────────────── */}
       <main>
         {tab==="overview"   && <><ScoreCard API={API} ticker={co.ticker} /><OverviewTab co={co2} rec={rec} cd={cd} profile={liveProfile} /></>}
-        {tab==="chart"      && <PriceChart     data={histPrices?.data} intrinsic={fairValue} price={price} ticker={co.ticker} API={API} />}
+        {tab==="chart"      && <PriceChart     data={histPrices?.data} intrinsic={fairValue} price={price} ticker={co.ticker} API={API} livePrice={livePx} live={!!liveFeed.live} />}
         {tab==="financials" && <FinancialsTab  co={co2} cd={cd} liveFinancials={liveFinancials} API={API} />}
         {tab==="ratios"     && <RatiosTab      co={co2} API={API} liveMetrics={liveMetrics} />}
         {tab==="dcf"        && <><ScenarioBar API={API} ticker={co.ticker} assumptions={assumptions}

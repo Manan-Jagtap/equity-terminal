@@ -57,7 +57,7 @@ const Toggle = ({ on, set, color, label }) => (
   }}>{label}</button>
 );
 
-export default function PriceChart({ data, intrinsic, price, ticker, API }) {
+export default function PriceChart({ data, intrinsic, price, ticker, API, livePrice, live }) {
   const isMobile = useIsMobile();
   const [style, setStyle] = useState("candles");   // broker-terminal default
   const [range, setRange] = useState(252);
@@ -178,7 +178,7 @@ export default function PriceChart({ data, intrinsic, price, ticker, API }) {
     <div style={{ padding: isMobile ? "8px 2px" : "8px 4px" }}>
       <div style={{ marginBottom: 8 }}>{StyleToggle}</div>
       <Suspense fallback={<div style={{ ...sans, padding: 30, color: C.dim, fontSize: 12 }}>Loading chart engine…</div>}>
-        <CandleChart data={data} height={isMobile ? 300 : 430} />
+        <CandleChart data={data} height={isMobile ? 300 : 430} livePrice={livePrice} live={live} />
       </Suspense>
     </div>
   );

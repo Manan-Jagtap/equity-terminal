@@ -36,9 +36,16 @@ function aggregate(rows, unit) {
 const RANGES = [["3M", 66], ["6M", 126], ["1Y", 252], ["3Y", 756], ["5Y", Infinity]];
 const UNITS = [["D", "day"], ["W", "week"], ["M", "month"]];
 
-export default function CandleChart({ data, height = 420 }) {
+/* Today's date in IST (NSE session key), 'YYYY-MM-DD' — matches the /history
+   date format so a forming live candle appends/updates the right bar. */
+function istToday() {
+  return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+}
+
+export default function CandleChart({ data, livePrice, live, height = 420 }) {
   const holder = useRef(null);
   const chartRef = useRef(null);
+  const candlesRef = useRef(null);
   const [range, setRange] = useState(252);
   const [unit, setUnit] = useState("day");
   const [logScale, setLogScale] = useState(false);
@@ -77,6 +84,7 @@ export default function CandleChart({ data, height = 420 }) {
       wickUpColor: UP, wickDownColor: DOWN,
     });
     candles.setData(rows.map(({ time, open, high, low, close }) => ({ time, open, high, low, close })));
+    candlesRef.current = candles;
 
     const vol = chart.addSeries(HistogramSeries, {
       priceFormat: { type: "volume" }, priceScaleId: "vol",
@@ -96,15 +104,43 @@ export default function CandleChart({ data, height = 420 }) {
       if (holder.current) chart.applyOptions({ width: holder.current.clientWidth });
     });
     ro.observe(holder.current);
-    return () => { ro.disconnect(); chart.unsubscribeCrosshairMove(onMove); chart.remove(); chartRef.current = null; };
+    return () => { ro.disconnect(); chart.unsubscribeCrosshairMove(onMove); chart.remove(); chartRef.current = null; candlesRef.current = null; };
   }, [rows, height, logScale]);
+
+  // Live "today" candle: while the market is open, append (or update) a forming
+  // daily bar at the live LTP via series.update() — so the chart moves in real
+  // time without redrawing the whole series. Daily view only; weekly/monthly
+  // keep their aggregated bars. Runs whenever the 15s live poll delivers a tick.
+  const liveBar = useMemo(() => {
+    if (!(live && livePrice > 0 && unit === "day" && rows.length)) return null;
+    const today = istToday();
+    const lastBar = rows[rows.length - 1];
+    if (lastBar.time === today) {
+      return { time: today, open: lastBar.open,
+               high: Math.max(lastBar.high, livePrice),
+               low: Math.min(lastBar.low, livePrice), close: livePrice };
+    }
+    if (lastBar.time < today) {   // today's session not yet in /history → form it
+      return { time: today, open: lastBar.close,
+               high: Math.max(lastBar.close, livePrice),
+               low: Math.min(lastBar.close, livePrice), close: livePrice };
+    }
+    return null;
+  }, [live, livePrice, unit, rows]);
+
+  useEffect(() => {
+    if (liveBar && candlesRef.current) {
+      try { candlesRef.current.update(liveBar); } catch { /* series torn down */ }
+    }
+  }, [liveBar]);
 
   if (!rows.length) return (
     <div style={{ ...sans, padding: 40, color: C.dim, fontSize: 13 }}>No OHLC history yet.</div>
   );
   const last = rows[rows.length - 1];
-  const h = hover || last;
+  const h = hover || liveBar || last;
   const up = h.close >= h.open;
+  const showingLive = !hover && !!liveBar;
 
   return (
     <div>
@@ -127,6 +163,12 @@ export default function CandleChart({ data, height = 420 }) {
           border: `1px solid ${logScale ? C.green : C.line2}`,
           background: logScale ? C.green + "1a" : "transparent", color: logScale ? C.green : C.dim }}>Log</button>
         <span style={{ ...mono, fontSize: 11, color: C.dim, marginLeft: "auto", whiteSpace: "nowrap" }}>
+          {showingLive && (
+            <span style={{ color: UP, marginRight: 6 }}>
+              <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: "50%",
+                             background: UP, boxShadow: `0 0 6px ${UP}`, marginRight: 4 }} />LIVE
+            </span>
+          )}
           <span style={{ color: C.faint }}>{h.time} · </span>
           O <span style={{ color: up ? UP : DOWN }}>{h.open?.toLocaleString("en-IN")}</span>{"  "}
           H <span style={{ color: up ? UP : DOWN }}>{h.high?.toLocaleString("en-IN")}</span>{"  "}
