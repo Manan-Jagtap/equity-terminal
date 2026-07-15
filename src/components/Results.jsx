@@ -236,6 +236,14 @@ export default function Results({ API, onOpen }) {
                         {sp(s.surprise_pct)} {s.beat ? "beat" : "miss"}
                       </span>
                     ) : <span style={{ color: C.dim }}>—</span>}
+                    {r.beat_rate != null && (
+                      <div style={{ ...mono, fontSize: 9, color: C.faint, marginTop: 2 }}>
+                        {r.streak ? (r.streak > 0 ? `${r.streak}Q beat · ` : `${-r.streak}Q miss · `) : ""}
+                        beat {Math.round(r.beat_rate * 100)}%
+                        {r.estimate_momentum && r.estimate_momentum !== "steady"
+                          ? ` · est ${r.estimate_momentum === "improving" ? "↑" : "↓"}` : ""}
+                      </div>
+                    )}
                   </td>
                   <td style={{ ...td, textAlign: "right" }}><VerdictBadge verdict={r.verdict} /></td>
                   <td style={{ ...td, textAlign: "center" }}><ChevronRight size={14} color={C.faint} /></td>
