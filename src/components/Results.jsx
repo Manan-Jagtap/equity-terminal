@@ -17,6 +17,7 @@ const SORTS = [
   { id: "sales",    label: "Sales growth" },
   { id: "beat",     label: "Biggest beat" },
   { id: "upcoming", label: "Upcoming" },
+  { id: "dividends", label: "Dividends" },
 ];
 
 function Delta({ v }) {
@@ -87,6 +88,52 @@ function UpcomingCalendar({ API, onOpen }) {
   );
 }
 
+const ACT_TONE = { dividend: C.green, split: "#818CF8", bonus: C.gold };
+function actLabel(a) {
+  if (a.type === "dividend") return `₹${Number(a.value).toFixed(2)}/sh` + (a.yield_pct != null ? ` · ${a.yield_pct}%` : "");
+  if (a.type === "split") return a.ratio ? `Split (×${(1 / a.ratio).toFixed(0)})` : "Split";
+  if (a.type === "bonus") return a.ratio ? `Bonus (${Math.round(1 / a.ratio - 1)}:1)` : "Bonus";
+  return a.type;
+}
+
+function DividendCalendar({ API, onOpen }) {
+  const [d, setD] = useState(null);
+  useEffect(() => {
+    if (!API) return;
+    let live = true;
+    fetch(`${API}/api/results/corporate-actions`).then(r => r.json())
+      .then(x => { if (live) setD(x); }).catch(() => { if (live) setD({ upcoming: [], recent: [] }); });
+    return () => { live = false; };
+  }, [API]);
+  if (!d) return <div style={{ ...sans, padding: 32, color: C.dim, fontSize: 13 }}>Loading calendar…</div>;
+  const today = new Date().toISOString().slice(0, 10);
+  const Row = (a, i) => (
+    <div key={a.ticker + a.type + a.ex_date + i} onClick={() => onOpen && onOpen(a.ticker)}
+      onMouseEnter={e => e.currentTarget.style.background = C.bg800}
+      onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+      style={{ display: "flex", alignItems: "baseline", gap: 14, padding: "11px 16px",
+               borderTop: i ? `1px solid ${C.line}` : "none", cursor: "pointer" }}>
+      <span style={{ ...mono, fontSize: 12, color: a.ex_date >= today ? C.gold : C.text200, flexShrink: 0, minWidth: 92 }}>{a.ex_date}</span>
+      <span style={{ ...mono, fontSize: 9, textTransform: "uppercase", letterSpacing: "0.06em",
+                     color: ACT_TONE[a.type] || C.dim, flexShrink: 0, minWidth: 62 }}>ex · {a.type}</span>
+      <span style={{ ...sans, fontSize: 13, color: C.text, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.name}</span>
+      <span style={{ ...mono, fontSize: 11.5, color: ACT_TONE[a.type] || C.text200, flexShrink: 0 }}>{actLabel(a)}</span>
+    </div>
+  );
+  const section = (title, arr) => (arr || []).length > 0 && (
+    <div style={{ marginBottom: 18 }}>
+      <div style={{ ...sans, fontSize: 10.5, textTransform: "uppercase", letterSpacing: "0.12em", color: C.dim, marginBottom: 8 }}>{title} · {arr.length}</div>
+      <div style={{ border: `1px solid ${C.line}`, borderRadius: 12, overflow: "hidden" }}>{arr.map(Row)}</div>
+    </div>
+  );
+  if (!(d.upcoming || []).length && !(d.recent || []).length) return (
+    <div style={{ ...sans, padding: 32, color: C.dim, fontSize: 13, lineHeight: 1.6 }}>
+      No dividend / split / bonus ex-dates on file yet — the ledger fills from the corporate-actions feed on the next refresh.
+    </div>
+  );
+  return <>{section("Upcoming ex-dates", d.upcoming)}{section("Recent (last 120 days)", d.recent)}</>;
+}
+
 export default function Results({ API, onOpen }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -147,7 +194,8 @@ export default function Results({ API, onOpen }) {
         ))}
       </div>
 
-      {sort === "upcoming" ? <UpcomingCalendar API={API} onOpen={onOpen} /> : (
+      {sort === "dividends" ? <DividendCalendar API={API} onOpen={onOpen} /> :
+       sort === "upcoming" ? <UpcomingCalendar API={API} onOpen={onOpen} /> : (
       <div style={{ overflowX: "auto", border: `1px solid ${C.line}`, borderRadius: 12 }}>
         <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 880 }}>
           <thead>
