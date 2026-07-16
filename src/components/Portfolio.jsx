@@ -268,8 +268,15 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
           { l: "XIRR", v: totals.xirr != null ? pctNum(totals.xirr) : "—",
             sub: totals.xirr != null ? "annualised, incl. dividends" : "needs purchase dates",
             col: pnlColor(totals.xirr) },
+          // Capital-matched vs the index: same rupees, same buy dates, in NIFTY.
+          totals.benchmark ? {
+            l: "Alpha vs NIFTY",
+            v: (totals.benchmark.alpha >= 0 ? "+" : "−") + Math.abs(totals.benchmark.alpha * 100).toFixed(1) + "%",
+            sub: `you ${pctNum(totals.benchmark.portfolio_return)} · NIFTY ${pctNum(totals.benchmark.benchmark_return)}`,
+            col: pnlColor(totals.benchmark.alpha),
+          } : null,
           { l: "Holdings", v: String(items.length), col: C.text },
-        ].map(s => (
+        ].filter(Boolean).map(s => (
           <div key={s.l} style={{ background: C.panel2, border: `1px solid ${C.line}`, borderRadius: 10, padding: "13px 16px" }}>
             <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: C.dim }}>{s.l}</div>
             <div style={{ ...mono, fontSize: 20, color: s.col, marginTop: 5 }}>{s.v}</div>
