@@ -1,9 +1,11 @@
-/* TranscriptSummary.jsx — on-demand AI summary of the latest earnings call.
-   Calls /transcript-summary, which fetches the transcript PDF and grounds the
-   summary strictly in it. Renders the "unavailable" state honestly when no
-   transcript text could be extracted (never a fabricated summary). */
+/* TranscriptSummary.jsx — on-demand RULES-BASED summary of the latest earnings
+   call (no AI). Calls /transcript-summary, which assembles a research-note
+   narrative deterministically from the transcript text — management tone,
+   guidance, margins, capex, demand, risks, cited KPIs + a quarter-over-quarter
+   tone shift. Renders the "unavailable" state honestly when no transcript text
+   could be extracted (never a fabricated summary). */
 import { useState } from "react";
-import { Brain, Loader2, Sparkles } from "lucide-react";
+import { FileText, Loader2, Sparkles } from "lucide-react";
 import { C, sans, serif, mono } from "../lib/theme.js";
 
 function renderMd(text) {
@@ -32,7 +34,7 @@ export default function TranscriptSummary({ API, ticker }) {
     <div style={{ border: `1px solid ${C.line}`, borderRadius: 12, background: C.panel, padding: "16px 18px", marginBottom: 20 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         <span style={{ ...sans, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.1em", color: C.dim, display: "flex", alignItems: "center", gap: 6 }}>
-          <Brain size={13} color={C.gold} /> Earnings-call AI summary
+          <FileText size={13} color={C.gold} /> Earnings-call summary
         </span>
         {!data && (
           <button onClick={run} disabled={busy} style={{
@@ -57,7 +59,7 @@ export default function TranscriptSummary({ API, ticker }) {
           </div>
           {renderMd(data.summary)}
           <div style={{ ...sans, fontSize: 10, color: C.faint, marginTop: 10 }}>
-            Grounded in the transcript text only. Model-generated — verify against the source document.
+            Extracted deterministically from the transcript text (no AI) — verify against the source document.
           </div>
         </div>
       )}
