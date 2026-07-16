@@ -9,7 +9,7 @@ import {
   ArrowLeft, Building2, FileText, Activity, Calculator,
   Users, Brain, Shield, Sparkles, Check, AlertTriangle,
   Info, Loader2, TrendingUp, TrendingDown, Newspaper, Download, PieChart,
-  ShieldAlert, Star, FolderOpen, FileSpreadsheet, ExternalLink, Layers,
+  ShieldAlert, Star, FolderOpen, FileSpreadsheet, ExternalLink, Layers, Table,
 } from "lucide-react";
 import {
   ComposedChart, BarChart, Bar, LineChart, Line,
