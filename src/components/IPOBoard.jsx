@@ -13,6 +13,16 @@ import { selStyle } from "../lib/listControls.jsx";
 const API = import.meta.env.VITE_API_URL;
 
 const inr = v => (v == null ? "—" : "₹" + Number(v).toLocaleString("en-IN", { maximumFractionDigits: 2 }));
+// reservation.* are SHARE COUNTS (shares reserved per category), not percentages —
+// the old code appended "%" to the raw count (→ "54125280%"). Show them as shares.
+const fmtShares = v => {
+  if (v == null) return null;
+  const n = Number(v);
+  if (!isFinite(n)) return null;
+  if (n >= 1e7) return (n / 1e7).toFixed(2) + " Cr sh";
+  if (n >= 1e5) return (n / 1e5).toFixed(2) + " L sh";
+  return n.toLocaleString("en-IN") + " sh";
+};
 const bandOf = r => (r.min_price != null && r.max_price != null ? `${inr(r.min_price)}–${inr(r.max_price)}` : inr(r.issue_price));
 const dt = v => {
   if (!v) return "—";
@@ -232,9 +242,9 @@ function IPODetailModal({ d, onClose }) {
             <KV label="Allotment" value={(dates.allotment || {}).date || dates.allotment} />
             <KV label="Listing" value={(dates.listing || {}).date || dates.listing} />
             <KV label="Overall subscription" value={sub.overallFormatted || sub.overall} />
-            <KV label="Retail reserved" value={res.retail ? res.retail + "%" : null} />
-            <KV label="NII reserved" value={res.nonInstitutional ? res.nonInstitutional + "%" : null} />
-            <KV label="QIB reserved" value={res.qualifiedInstitutional ? res.qualifiedInstitutional + "%" : null} />
+            <KV label="Retail reserved" value={fmtShares(res.retail)} />
+            <KV label="NII reserved" value={fmtShares(res.nonInstitutional)} />
+            <KV label="QIB reserved" value={fmtShares(res.qualifiedInstitutional)} />
             <KV label="Registrar" value={reg.name} />
             <KV label="Exchanges" value={[basic && d.exchanges?.nse && "NSE", d.exchanges?.bse && "BSE"].filter(Boolean).join(" · ") || null} />
             {(sub.daily || []).length > 0 && (
