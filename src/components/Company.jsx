@@ -25,6 +25,7 @@ import { fundamentals, isFinancial } from "../lib/valuation.js";
 import { technicals } from "../lib/technicals.js";
 import { useIsMobile } from "../lib/useResponsive.js";
 import DCFModel from "./DCFModel.jsx";
+import ThreeStatementModel from "./ThreeStatementModel.jsx";
 import ScenarioBar from "./ScenarioBar.jsx";
 import ScoreCard from "./ScoreCard.jsx";
 import PriceChart from "./PriceChart.jsx";
@@ -232,6 +233,7 @@ const TABS = [
   { id:"financials", icon:FileText,   label:"Financials"    },
   { id:"ratios",     icon:Activity,   label:"Ratios & KPIs" },
   { id:"dcf",        icon:Calculator, label:"Valuation"     },
+  { id:"model",      icon:Table,      label:"Model"         },
   { id:"analyst",    icon:Sparkles,   label:"Analyst & Forward" },
   { id:"options",    icon:Layers,     label:"Options"       },
   { id:"peers",      icon:Users,      label:"Peer Universe" },
@@ -3085,6 +3087,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
             <DCFModel key={`dcf-${co.ticker}-${apiVal?.assumptions ? "seeded" : "base"}-${scnNonce}`}
               co={co2} a={assumptions} onWork={aw => setAssumptions(prev => ({ ...(prev || {}), ...aw }))}
               price={price} setPrice={setPrice} apiVal={apiVal} /></>}
+        {tab==="model"      && <ThreeStatementModel co={co2} price={price} apiVal={apiVal} />}
         {tab==="analyst"    && <AnalystTab     co={co2} API={API} price={price} />}
         {tab==="options"    && <OptionsTab     co={co2} API={API} />}
         {tab==="peers"      && <PeersTab       co={co2} cd={cd} allCompanies={allCompanies} API={API} onOpenTicker={onOpenTicker} />}
