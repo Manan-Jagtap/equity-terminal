@@ -182,11 +182,19 @@ export function exitMultipleValue(co, a) {
 }
 
 export function peValue(co, a) {
-  // Sector P/E on 1-year-FORWARD earnings, per share.
+  // Sector P/E on 1-year-FORWARD earnings, per share. Financials scale the
+  // (growth-lender) sector P/E by realized-vs-mature ROE — a 13.5%-ROE HFC is
+  // not worth an 18x Bajaj-Finance multiple.
   const p = params(vsector(a));
-  const pe = p.exit_pe;
+  let pe = p.exit_pe;
   const pat = co.net_profit, shares = co.shares;
   if (pe == null || pat == null || pat <= 0 || !shares || shares <= 0) return null;
+  if (co.type === "financial") {
+    const eq = co.equity;
+    const roe = (eq && eq > 0) ? pat / eq : null;
+    const mature = p.mature_roe || 0.15;
+    if (roe != null && mature) pe = pe * Math.max(0.4, Math.min(1.0, roe / mature));
+  }
   const patFwd = pat * (1 + (a.rev_growth || 0.08));
   return (patFwd * pe) / shares;
 }
