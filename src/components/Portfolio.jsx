@@ -3,7 +3,7 @@
    /api/portfolio endpoints. All amounts ₹ Indian-formatted. */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Briefcase, Loader2, Plus, Trash2, ChevronRight, Sparkles, Upload } from "lucide-react";
+import { Briefcase, Loader2, Plus, Trash2, ChevronRight, Sparkles, Upload, Receipt, FileText } from "lucide-react";
 import { C, sans, serif, mono } from "../lib/theme.js";
 import { inr, signedPct } from "../lib/formatters.js";
 import { VerdictBadge } from "./primitives.jsx";
@@ -65,6 +65,20 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
       .catch(() => { if (!dead) setAnalysis(null); });
     return () => { dead = true; };
   }, [API, user, data, showAnalysis]);
+
+  // Glanceable digest — value/P&L, movers, model flags, tax opportunities, and
+  // what changed since the last look. Fetched only while the Digest card is open.
+  const [showDigest, setShowDigest] = useState(false);
+  const [digest, setDigest] = useState(null);
+  useEffect(() => {
+    if (!API || !user || !showDigest) return;
+    let dead = false;
+    authFetch(`${API}/api/portfolio/digest`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (!dead) setDigest(d); })
+      .catch(() => { if (!dead) setDigest(null); });
+    return () => { dead = true; };
+  }, [API, user, data, showDigest]);
 
   const add = async e => {
     e.preventDefault();
@@ -285,6 +299,74 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
         ))}
       </div>
 
+      {/* Digest — glanceable "what's up with my book" + since-last-look */}
+      {showDigest && digest && items.length > 0 && (
+        <div style={{ border: `1px solid ${C.gold}44`, borderRadius: 12, background: C.panel, padding: "16px 20px", marginBottom: 18 }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 12 }}>
+            <FileText size={13} color={C.gold} />
+            <span style={{ ...sans, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.1em", color: C.gold }}>Digest</span>
+            {digest.since_last
+              ? <span style={{ ...sans, fontSize: 11.5, color: pnlColor(digest.since_last.delta) }}>
+                  since {digest.since_last.prev_date}: {digest.since_last.delta >= 0 ? "+" : "−"}{inr(Math.abs(digest.since_last.delta))}
+                  {digest.since_last.delta_pct != null && <> ({pctNum(digest.since_last.delta_pct)})</>}
+                </span>
+              : <span style={{ ...sans, fontSize: 11, color: C.dim }}>your book at a glance · {digest.headline?.as_of}</span>}
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 20 }}>
+            {/* Movers */}
+            <div>
+              <div style={{ ...sans, fontSize: 10, color: C.faint, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Biggest movers</div>
+              {[...(digest.movers?.gainers || []), ...(digest.movers?.losers || [])].length === 0
+                ? <div style={{ ...sans, fontSize: 12, color: C.dim }}>No cost basis to compare yet.</div>
+                : [...(digest.movers?.gainers || []), ...(digest.movers?.losers || [])].map(m => (
+                  <div key={m.ticker} onClick={() => onOpen && onOpen(m.ticker)}
+                    style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", cursor: "pointer" }}>
+                    <span style={{ ...mono, fontSize: 12, color: C.gold }}>{m.ticker}</span>
+                    <span style={{ ...mono, fontSize: 12, color: pnlColor(m.pnl_pct) }}>{pctNum(m.pnl_pct)}</span>
+                  </div>
+                ))}
+            </div>
+            {/* Needs attention */}
+            <div>
+              <div style={{ ...sans, fontSize: 10, color: C.faint, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Needs attention</div>
+              {(digest.attention || []).length === 0
+                ? <div style={{ ...sans, fontSize: 12, color: C.green }}>Nothing flagged — no model sells, no over-concentration, no earnings this week.</div>
+                : (digest.attention || []).map((a, i) => (
+                  <div key={i} onClick={() => a.ticker && onOpen && onOpen(a.ticker)}
+                    style={{ display: "flex", gap: 7, alignItems: "baseline", padding: "4px 0", cursor: a.ticker ? "pointer" : "default" }}>
+                    <span style={{ width: 6, height: 6, borderRadius: 3, flexShrink: 0, marginTop: 4,
+                                   background: a.kind === "verdict" ? C.red : a.kind === "results" ? C.gold : "#E8B054" }} />
+                    <span style={{ ...sans, fontSize: 11.5, color: C.text200 }}>
+                      {a.ticker && <span style={{ ...mono, color: C.gold }}>{a.ticker}</span>} {a.text}
+                    </span>
+                  </div>
+                ))}
+            </div>
+            {/* Tax opportunities */}
+            <div>
+              <div style={{ ...sans, fontSize: 10, color: C.faint, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Tax opportunities</div>
+              {digest.tax
+                ? <>
+                    {[["Harvestable losses", digest.tax.harvest_n ? `${digest.tax.harvest_n} · ${inr(digest.tax.harvest_loss)}` : "none"],
+                      ["ST→LT timing", digest.tax.timing_n ? `${digest.tax.timing_n} · saves ${inr(digest.tax.timing_saving)}` : "none"],
+                      ["Tax if sold today", digest.tax.estimated_tax != null ? inr(digest.tax.estimated_tax) : "—"]].map(([l, v]) => (
+                      <div key={l} style={{ display: "flex", justifyContent: "space-between", padding: "4px 0" }}>
+                        <span style={{ ...sans, fontSize: 12, color: C.dim }}>{l}</span>
+                        <span style={{ ...mono, fontSize: 12, color: C.text }}>{v}</span>
+                      </div>
+                    ))}
+                    <div onClick={() => { setShowAnalysis(true); }}
+                      style={{ ...sans, fontSize: 10.5, color: C.gold, cursor: "pointer", marginTop: 6 }}>
+                      full breakdown in Analyse →
+                    </div>
+                  </>
+                : <div style={{ ...sans, fontSize: 12, color: C.dim }}>Add purchase dates to see the tax view.</div>}
+            </div>
+          </div>
+          <div style={{ ...sans, fontSize: 10, color: C.faint, marginTop: 12, lineHeight: 1.5 }}>{digest.disclaimer}</div>
+        </div>
+      )}
+
       {/* Portfolio X-ray — factor exposure + inverse-vol sizing */}
       {showAnalysis && xray?.xray && xray.xray.n > 0 && (
         <div style={{ border: `1px solid ${C.line}`, borderRadius: 12, background: C.panel, padding: "16px 18px", marginBottom: 18 }}>
@@ -440,6 +522,16 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
             color: showAnalysis ? C.bg : C.gold, background: showAnalysis ? C.gold : C.gold + "0d",
           }}>
           <Sparkles size={13} /> {showAnalysis ? "Hide analysis" : "Analyse"}
+        </button>
+        <button type="button" onClick={() => setShowDigest(v => !v)}
+          title={showDigest ? "Hide the digest" : "A glanceable summary of your book: movers, model flags, tax opportunities and what changed since your last look"}
+          style={{
+            ...sans, display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 500,
+            padding: "8px 14px", borderRadius: 8, cursor: "pointer",
+            border: `1px solid ${C.gold}${showDigest ? "" : "66"}`,
+            color: showDigest ? C.bg : C.gold, background: showDigest ? C.gold : C.gold + "0d",
+          }}>
+          <FileText size={13} /> {showDigest ? "Hide digest" : "Digest"}
         </button>
         <button type="button" onClick={() => setPasteOpen(v => !v)} disabled={importing}
           title="Paste your holdings straight from your broker's page or a spreadsheet — no file needed"
@@ -693,6 +785,80 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
               </div>
             </div>
           </div>
+
+          {/* ── Capital gains & tax (estimated) ────────────────────────── */}
+          {analysis.tax && (
+            <div style={{ border: `1px solid ${C.line}`, borderRadius: 12, background: C.panel, padding: "16px 20px" }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 14 }}>
+                <Receipt size={13} color={C.gold} />
+                <span style={{ ...sans, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.1em", color: C.dim }}>Capital gains &amp; tax</span>
+                <span style={{ ...sans, fontSize: 11, color: C.faint }}>if the whole book were sold today · one lot per name</span>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: 20 }}>
+                {/* Unrealised ST / LT split */}
+                <div>
+                  <div style={{ ...sans, fontSize: 10, color: C.faint, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Unrealised gains</div>
+                  {[["Short-term", analysis.tax.short_term], ["Long-term", analysis.tax.long_term]].map(([l, t]) => (
+                    <div key={l} style={{ padding: "6px 0", borderTop: `1px solid ${C.line}` }}>
+                      <div style={{ display: "flex", justifyContent: "space-between" }}>
+                        <span style={{ ...sans, fontSize: 12, color: l === "Long-term" ? C.green : "#E8B054" }}>{l} net</span>
+                        <span style={{ ...mono, fontSize: 12.5, color: pnlColor(t?.net) }}>{t?.net >= 0 ? "+" : "−"}{inr(Math.abs(t?.net || 0))}</span>
+                      </div>
+                      <div style={{ ...sans, fontSize: 10.5, color: C.dim, marginTop: 2 }}>
+                        gains {inr(t?.gain || 0)} · losses {inr(t?.loss || 0)}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {/* Estimated liability */}
+                <div>
+                  <div style={{ ...sans, fontSize: 10, color: C.faint, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Estimated tax</div>
+                  {[["STCG (20%)", analysis.tax.estimated_tax?.stcg],
+                    ["LTCG (12.5%)", analysis.tax.estimated_tax?.ltcg],
+                    ["Total", analysis.tax.estimated_tax?.total]].map(([l, v], i) => (
+                    <div key={l} style={{ display: "flex", justifyContent: "space-between", padding: "5px 0", borderTop: `1px solid ${C.line}` }}>
+                      <span style={{ ...sans, fontSize: 12, color: i === 2 ? C.text : C.dim, fontWeight: i === 2 ? 600 : 400 }}>{l}</span>
+                      <span style={{ ...mono, fontSize: 12.5, color: i === 2 ? C.text : C.text200 }}>{inr(v || 0)}</span>
+                    </div>
+                  ))}
+                  <div style={{ ...sans, fontSize: 10.5, color: C.dim, marginTop: 6 }}>
+                    {analysis.tax.estimated_tax?.effective_rate != null
+                      ? `≈ ${(analysis.tax.estimated_tax.effective_rate * 100).toFixed(1)}% of unrealised gains · `
+                      : ""}
+                    ₹1.25L LTCG exemption applied
+                  </div>
+                </div>
+                {/* Opportunities */}
+                <div>
+                  <div style={{ ...sans, fontSize: 10, color: C.faint, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Opportunities</div>
+                  {(analysis.tax.lt_timing || []).length > 0 && (
+                    <div style={{ marginBottom: 8 }}>
+                      <div style={{ ...sans, fontSize: 11, color: C.green, marginBottom: 3 }}>Wait for long-term</div>
+                      {(analysis.tax.lt_timing || []).slice(0, 3).map(t => (
+                        <div key={t.ticker} onClick={() => onOpen && onOpen(t.ticker)} style={{ ...sans, fontSize: 11, color: C.text200, cursor: "pointer", padding: "2px 0" }}>
+                          <span style={{ ...mono, color: C.gold }}>{t.ticker}</span> turns LT in <span style={{ color: C.gold }}>{t.days_to_lt}d</span> — saves {inr(t.tax_saving)}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {(analysis.tax.harvest || []).length > 0 && (
+                    <div>
+                      <div style={{ ...sans, fontSize: 11, color: C.red, marginBottom: 3 }}>Loss-harvest candidates</div>
+                      {(analysis.tax.harvest || []).slice(0, 3).map(h => (
+                        <div key={h.ticker} onClick={() => onOpen && onOpen(h.ticker)} style={{ ...sans, fontSize: 11, color: C.text200, cursor: "pointer", padding: "2px 0" }}>
+                          <span style={{ ...mono, color: C.gold }}>{h.ticker}</span> {h.term === "long" ? "LT" : "ST"} loss {inr(h.loss)}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {(analysis.tax.lt_timing || []).length === 0 && (analysis.tax.harvest || []).length === 0 && (
+                    <div style={{ ...sans, fontSize: 12, color: C.dim }}>No harvest or timing opportunities right now.</div>
+                  )}
+                </div>
+              </div>
+              <div style={{ ...sans, fontSize: 10, color: C.faint, marginTop: 12, lineHeight: 1.5 }}>{analysis.tax.note}</div>
+            </div>
+          )}
 
           {/* ── Strategist ─────────────────────────────────────────────── */}
           {(analysis.recommendations || []).length > 0 && (
