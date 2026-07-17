@@ -1,0 +1,44 @@
+name: CI
+
+# Three gates on every push/PR:
+#   1. Both parity harnesses vs the committed backend fixtures — the client's
+#      engine.js/derive.js must stay bit-identical to the backend (60/60, 48/48).
+#   2. Production build.
+#   3. Playwright runtime smoke in seed mode — catches "builds fine, crashes at
+#      runtime" failures a build cannot see (real incident 16 Jul 2026).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-parity-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install
+        run: npm ci
+      - name: Engine parity (must be 60/60)
+        run: node tests/engineParity.mjs
+      - name: Derive parity (must be 48/48)
+        run: node tests/deriveParity.mjs
+      - name: Build
+        run: npm run build
+      - name: Install Playwright chromium
+        run: npx playwright install --with-deps chromium
+      - name: Runtime smoke (seed mode)
+        run: npx playwright test
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
