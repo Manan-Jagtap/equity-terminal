@@ -7,6 +7,13 @@
       "runtimeArgs": ["run", "dev"],
       "port": 5173,
       "env": { "VITE_API_URL": "https://equity-terminal-backend-production.up.railway.app" }
+    },
+    {
+      "name": "terminal-local",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 5173,
+      "env": { "VITE_API_URL": "http://localhost:8000" }
     }
   ]
 }
