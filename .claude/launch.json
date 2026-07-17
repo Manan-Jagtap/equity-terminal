@@ -14,6 +14,13 @@
       "runtimeArgs": ["run", "dev"],
       "port": 5173,
       "env": { "VITE_API_URL": "http://localhost:8000" }
+    },
+    {
+      "name": "terminal-mumbai",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 5173,
+      "env": { "VITE_API_URL": "http://localhost:5173", "VITE_DEV_PROXY": "http://3.110.160.88" }
     }
   ]
 }
