@@ -28,6 +28,12 @@ export function recommend(co, a) {
   const f     = fundamentals(co);
   const t     = technicals(co);
   const conf  = dataQuality(co);
+  // The DERIVED assumption block (lib/derive.js — the backend's own derivation
+  // run locally): grounded margin / leverage for the quality & risk legs, in
+  // place of whatever the caller's seed assumptions guessed.
+  const da    = blend.assumptions || {};
+  const ebitMargin = da.ebit_margin ?? a?.ebitMargin ?? 0.12;
+  const debtWeight = da.debt_weight ?? a?.debtWeight ?? 0.25;
 
   const mos = iv != null && co.price > 0 ? (iv - co.price) / co.price : null;
   const reliable = iv != null && conf.score >= 0.5;
@@ -59,9 +65,9 @@ export function recommend(co, a) {
   } else {
     quality =
       0.40 * clamp(((f.roe ?? 0.12) - 0.10) / 0.15 * 100, 0, 100) +
-      0.35 * clamp((a.ebitMargin ?? 0.12) / 0.20 * 100, 0, 100) +
-      0.25 * clamp((0.5 - (a.debtWeight ?? 0.25)) / 0.5 * 100, 0, 100);
-    qnote = `ROE ${((f.roe || 0) * 100).toFixed(1)}%, EBIT margin ${((a.ebitMargin || 0.12) * 100).toFixed(1)}%`;
+      0.35 * clamp(ebitMargin / 0.20 * 100, 0, 100) +
+      0.25 * clamp((0.5 - debtWeight) / 0.5 * 100, 0, 100);
+    qnote = `ROE ${((f.roe || 0) * 100).toFixed(1)}%, EBIT margin ${(ebitMargin * 100).toFixed(1)}%`;
   }
   reasons.push({ label: "Quality", score: clamp(quality, 0, 100), note: qnote, good: quality > 60, bad: quality < 40, weight: 0.28 });
 
@@ -88,7 +94,7 @@ export function recommend(co, a) {
     if ((co.nbfc?.crar ?? 0.18) < 0.16) { risk += 20; flags.push("Thin CRAR"); }
     if ((co.nbfc?.nim ?? 0.09) < 0.07)  { risk += 15; flags.push("Thin NIM"); }
   } else {
-    if ((a.debtWeight ?? 0.25) > 0.45)  { risk += 25; flags.push("High leverage"); }
+    if (debtWeight > 0.45)  { risk += 25; flags.push("High leverage"); }
   }
   if (mos != null && mos < -0.30) { risk += 15; flags.push("Significantly overvalued"); }
   if (co.netProfit != null && co.netProfit < 0) { risk += 25; flags.push("Loss-making"); }
@@ -113,6 +119,11 @@ export function recommend(co, a) {
   else if (mos >= -0.10)                   verdict = "HOLD";
   else if (mos >= -0.25)                   verdict = "TRIM";
   else                                     verdict = "AVOID";
+  // Mirrors backend engines.recommend's lender divergence gate: a financial
+  // showing an extreme MoS is far more likely mis-modeled (book quality,
+  // regulatory overhang) than a giveaway — never a confident BUY.
+  if (fin && mos != null && mos >= 0.80 && (verdict === "BUY" || verdict === "ACCUMULATE"))
+    verdict = "LOW CONF";
 
   return {
     v,

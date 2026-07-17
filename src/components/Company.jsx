@@ -2664,6 +2664,11 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
   const hasRealPrices = (histPrices?.data?.length || 0) > 10;
   const co2 = useMemo(() => {
     const base = { ...co, price, assumptions, syntheticSeries: !hasRealPrices };
+    // Full multi-year statements (exact backend shape) → lib/derive.js grounds
+    // the client fallback in the SAME history the backend derives from, so the
+    // header's client-recomputed intrinsic converges on the backend's.
+    if (liveFinancials?.statements && Object.keys(liveFinancials.statements).length)
+      base.statements = liveFinancials.statements;
     if (liveStatement) {
       // Net profit applies to all; operating lines only to non-financials
       // (banks/insurers use the Residual-Income model on equity & ROE).
@@ -2686,7 +2691,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
       }
     }
     return base;
-  }, [co, price, assumptions, hasRealPrices, liveStatement, liveInsights]);
+  }, [co, price, assumptions, hasRealPrices, liveStatement, liveInsights, liveFinancials]);
   const rec  = useMemo(() => recommend(co2, assumptions), [co2, assumptions]);
   const set  = useCallback(k => val => setAssumptions(prev => ({ ...prev, [k]: val })), [setAssumptions]);
 

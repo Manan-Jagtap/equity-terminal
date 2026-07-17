@@ -407,5 +407,9 @@ export function toEngineCo(co, price) {
     net_debt: co.netDebt ?? null,
     net_profit: co.netProfit ?? null,
     price: price ?? co.price ?? null,
+    // Asset-quality block: backend build_company includes it, and the RI model
+    // reads nbfc.nnpa for its starting-book haircut. Omitting it silently
+    // skipped the haircut on every client-side recompute of a lender.
+    nbfc: co.nbfc ?? undefined,
   };
 }

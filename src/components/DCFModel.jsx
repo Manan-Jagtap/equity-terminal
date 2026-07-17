@@ -21,6 +21,7 @@ import { C, mono, sans, serif } from "../lib/theme.js";
 import { useIsMobile } from "../lib/useResponsive.js";
 import SegmentSOTP from "./SegmentSOTP.jsx";
 import * as engine from "../lib/engine.js";
+import { deriveClientAssumptions, isEngineDialect } from "../lib/derive.js";
 
 /* ── Primitives ─────────────────────────────────────────────────── */
 const Card = ({ children, style }) => (
@@ -77,9 +78,18 @@ export default function DCFModel({ co, price, apiVal, a, onWork }) {
   // that's how a loaded scenario or a shared ?scenario= link actually reaches
   // the sliders (they were disconnected before: wiring audit #5). The parent
   // re-keys this component on scenario load, so useState re-seeds.
-  const base = { ...(apiVal?.assumptions || {}),
-                 ...Object.fromEntries(ENGINE_KEYS.filter(k => a?.[k] !== undefined)
-                                                  .map(k => [k, a[k]])) };
+  // FALLBACK floor: when the backend valuation hasn't loaded (seed mode), seed
+  // the sliders from lib/derive.js — the backend's own derivation run locally —
+  // so the tab opens AT the same base case the screener/header shows. The `a`
+  // overlay only applies when the shared state is unambiguously engine-dialect
+  // (a loaded scenario / backend-seeded block): legacy camelCase seed
+  // assumptions share the beta/erp/payout key names and must not leak in.
+  const base = { ...deriveClientAssumptions(co, null),
+                 ...(apiVal?.assumptions || {}),
+                 ...(isEngineDialect(a)
+                   ? Object.fromEntries(ENGINE_KEYS.filter(k => a?.[k] !== undefined)
+                                                   .map(k => [k, a[k]]))
+                   : {}) };
   const vs = base._valuation_sector || co.valuation_sector || co.template_code || "MANUFACTURING";
   const sp = engine.params(vs);
 
