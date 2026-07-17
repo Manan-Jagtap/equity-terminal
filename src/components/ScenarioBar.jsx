@@ -11,15 +11,19 @@ export default function ScenarioBar({ API, ticker, assumptions, setAssumptions }
   const [list, setList]   = useState([]);
   const [name, setName]   = useState("");
   const [busy, setBusy]   = useState(false);
+  // getUser() returns a fresh object each render; key the effect on the stable
+  // identity string, not the object, or reload() refetches /api/scenarios on
+  // every commit (a continuous loop on the DCF tab for every signed-in user).
   const user = getUser();
+  const userKey = user?.email || user?.id || null;
 
   const reload = useCallback(() => {
-    if (!API || !user || !ticker) { setList([]); return; }
+    if (!API || !userKey || !ticker) { setList([]); return; }
     authFetch(`${API}/api/scenarios?ticker=${encodeURIComponent(ticker)}`)
       .then(r => (r.ok ? r.json() : { items: [] }))
       .then(d => setList(d.items || []))
       .catch(() => setList([]));
-  }, [API, user, ticker]);
+  }, [API, userKey, ticker]);
   useEffect(() => { reload(); }, [reload]);
 
   const save = async () => {

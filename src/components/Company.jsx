@@ -1259,47 +1259,9 @@ function RatiosTab({ co, API, liveMetrics }) {
   );
 }
 
-/* ── DCF Tab ─────────────────────────────────────────────────────── */
-function buildDCF({ basePAT, growthN, growthY, growthFar, growthFarY, terminal, coe, shares }) {
-  let pat = basePAT; let total = 0;
-  const projection = [];
-  for (let i = 1; i <= growthY; i++) {
-    pat *= (1 + growthN / 100);
-    const df = 1 / Math.pow(1 + coe / 100, i);
-    const pv = pat * df;
-    total += pv;
-    projection.push({ year: "Y" + i, pat, pv, growth: growthN });
-  }
-  for (let j = 1; j <= growthFarY; j++) {
-    pat *= (1 + growthFar / 100);
-    const t = growthY + j;
-    const df = 1 / Math.pow(1 + coe / 100, t);
-    const pv = pat * df;
-    total += pv;
-    projection.push({ year: "Y" + t, pat, pv, growth: growthFar });
-  }
-  const finalPAT = pat * (1 + terminal / 100);
-  const tv = finalPAT / (coe / 100 - terminal / 100);
-  const tvPV = tv / Math.pow(1 + coe / 100, growthY + growthFarY);
-  const equity = total + tvPV;
-  const perShare = equity / shares;
-  return { projection, equity, tv, tvPV, perShare, sumOpsPV: total };
-}
-
-function SliderRow({ label, value, setValue, min, max, step, fmtFn, hint }) {
-  return (
-    <div style={{ marginBottom:16 }}>
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", marginBottom:6 }}>
-        <label style={{ ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.1em", color:C.dim, fontWeight:500 }}>{label}</label>
-        <span style={{ ...mono, fontSize:15, color:C.gold, fontWeight:500 }}>{fmtFn ? fmtFn(value) : value.toFixed(1)+"%"}</span>
-      </div>
-      <input type="range" min={min} max={max} step={step} value={value} onChange={e => setValue(parseFloat(e.target.value))} style={{ width:"100%" }} />
-      {hint && <div style={{ ...sans, fontSize:10, color:C.vfaint, marginTop:4 }}>{hint}</div>}
-    </div>
-  );
-}
-
-/* DCFTab removed — dead code with hardcoded fallbacks (wiring audit); DCFModel is the live valuation tab. */
+/* DCFTab / buildDCF / local SliderRow removed — dead code from the retired
+   inline DCF tab (audit E4). The live valuation tab is DCFModel.jsx, which owns
+   its own engine-parity math and slider row. */
 
 /* ── Dynamic peer comparison (consistent basis) ──────────────────────
    Every peer's P/E, P/B, ROE, intrinsic and MoS are computed with the SAME
@@ -1650,12 +1612,17 @@ function NewsTab({ co, API, profile, preloaded }) {
   useEffect(() => {
     if (preloaded) { setNews(preloaded); setLoading(false); setError(null); return; }
     if (!API) { setLoading(false); return; }
+    // Stale-response guard: a slow response for a previous ticker must not
+    // overwrite the current one on a rapid switch (audit E9 — the only Company
+    // effect that lacked it).
+    let dead = false;
     setLoading(true);
     setError(null); // clear any stale error from a previous ticker/fetch
     fetch(`${API}/api/companies/${co.ticker}/news`)
       .then(r => r.json())
-      .then(d => { setNews(d); setLoading(false); })
-      .catch(e => { setError(e.message); setLoading(false); });
+      .then(d => { if (!dead) { setNews(d); setLoading(false); } })
+      .catch(e => { if (!dead) { setError(e.message); setLoading(false); } });
+    return () => { dead = true; };
   }, [co.ticker, API, preloaded]);
 
   const typeColor = t => t === "announcement" ? C.blue : t === "result" ? C.green : C.text200;
@@ -2811,7 +2778,11 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
     return mcap + (debt || 0) - (cash || 0);
   }, [liveFinancials, mcap]);
 
-  // Price chart data — fetch real OHLCV with dates from API
+  // Price chart data — fetch real OHLCV with dates from API. Carry high/low/
+  // volume through: the header's 52W High/Low reads p.high/p.low (else it
+  // silently falls back to min/max of CLOSES and disagrees with the Chart tab's
+  // intraday range), and the ADV chip reads p.volume (else it is always null and
+  // never renders). /history serves {date,open,high,low,close,volume}.
   const priceChartData = useMemo(() => {
     if (histPrices?.data?.length > 0) {
       // Use real dates from /history endpoint
@@ -2821,13 +2792,17 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
           date:  p.date,
           label: p.date ? p.date.slice(5).replace("-", "/") : "", // "MM/DD"
           close: p.close,
+          high:  p.high ?? null,
+          low:   p.low ?? null,
+          volume: p.volume ?? null,
           sma20: null,
           sma50: null,
         }));
     }
     // Fallback: synthetic series
     return (co.series || []).map((p, i) => ({
-      date: null, label: String(i), close: p.close, sma20: null, sma50: null,
+      date: null, label: String(i), close: p.close, high: null, low: null,
+      volume: null, sma20: null, sma50: null,
     }));
   }, [histPrices, co.series]);
 

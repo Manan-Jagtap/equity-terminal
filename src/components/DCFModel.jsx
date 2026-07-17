@@ -84,12 +84,17 @@ export default function DCFModel({ co, price, apiVal, a, onWork }) {
   // overlay only applies when the shared state is unambiguously engine-dialect
   // (a loaded scenario / backend-seeded block): legacy camelCase seed
   // assumptions share the beta/erp/payout key names and must not leak in.
-  const base = { ...deriveClientAssumptions(co, null),
-                 ...(apiVal?.assumptions || {}),
-                 ...(isEngineDialect(a)
-                   ? Object.fromEntries(ENGINE_KEYS.filter(k => a?.[k] !== undefined)
-                                                   .map(k => [k, a[k]]))
-                   : {}) };
+  // Memoized: deriveClientAssumptions runs the whole backend-parity derivation,
+  // and it's only needed to SEED the sliders (useState reads it on mount). The
+  // component is re-keyed on scenario/ticker load, so this recomputes exactly
+  // when it must, not on every render/slider drag (audit E5).
+  const base = useMemo(() => ({
+    ...deriveClientAssumptions(co, null),
+    ...(apiVal?.assumptions || {}),
+    ...(isEngineDialect(a)
+      ? Object.fromEntries(ENGINE_KEYS.filter(k => a?.[k] !== undefined).map(k => [k, a[k]]))
+      : {}),
+  }), [co, apiVal, a]);
   const vs = base._valuation_sector || co.valuation_sector || co.template_code || "MANUFACTURING";
   const sp = engine.params(vs);
 
@@ -122,25 +127,29 @@ export default function DCFModel({ co, price, apiVal, a, onWork }) {
   };
   const coSnake = useMemo(() => engine.toEngineCo(co, price), [co, price]);
 
+  // Serialize the working assumptions ONCE per render and reuse the string as
+  // the stable memo/effect key everywhere below (audit E5 — it was stringified
+  // 3× per render and re-used inline in useMemo deps, the classic perf trap on
+  // every slider drag).
+  const aKey = JSON.stringify(aWork);
+
   // Mirror sliders up into the shared assumptions so Save-scenario captures
   // what the user actually set (guarded: only fires when values change).
-  const workJson = JSON.stringify(aWork);
   const lastMirror = useRef(null);
   useEffect(() => {
-    if (onWork && lastMirror.current !== workJson) {
-      lastMirror.current = workJson;
+    if (onWork && lastMirror.current !== aKey) {
+      lastMirror.current = aKey;
       onWork(aWork);
     }
-  }, [workJson]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [aKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const eb  = useMemo(() => engine.blended(coSnake, aWork), [coSnake, JSON.stringify(aWork)]);
+  const eb  = useMemo(() => engine.blended(coSnake, aWork), [coSnake, aKey]);
   const v   = eb.valuation;
   const iv  = eb.blended;
   const mos = (iv != null && price) ? iv / price - 1 : null;
 
   // Untouched → backend canonical (identical to screener & header); touched →
   // the live engine recompute. Same model either way, so no jump on first touch.
-  const aKey = JSON.stringify(aWork);
   const baseKeyRef = useRef(null);
   if (baseKeyRef.current === null) baseKeyRef.current = aKey;
   const touched = aKey !== baseKeyRef.current;
@@ -165,8 +174,8 @@ export default function DCFModel({ co, price, apiVal, a, onWork }) {
   const [mcResult, setMcResult] = useState(null);
   const runMC = () => setMcResult(engine.monteCarlo(coSnake, aWork, 500));
 
-  const sens    = useMemo(() => engine.sensitivity(coSnake, aWork), [coSnake, JSON.stringify(aWork)]);
-  const reverse = useMemo(() => engine.reverseDCF(coSnake, aWork), [coSnake, JSON.stringify(aWork)]);
+  const sens    = useMemo(() => engine.sensitivity(coSnake, aWork), [coSnake, aKey]);
+  const reverse = useMemo(() => engine.reverseDCF(coSnake, aWork), [coSnake, aKey]);
   const fwdDriver = isF ? forecastROE : revGrowth;
 
   // Projection chart from the engine's own schedule rows.

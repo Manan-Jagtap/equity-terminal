@@ -27,19 +27,33 @@ async function tick() {
   } catch { /* network blip — keep the last snapshot */ }
 }
 
+const _onVisible = () => { if (document.visibilityState === "visible") tick(); };  // instant catch-up
+
 function ensurePolling(API) {
   if (!API) return;
   api = API;
   if (!timer) {
     tick();
     timer = setInterval(tick, 15000);
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") tick();   // instant catch-up
-    });
+    document.addEventListener("visibilitychange", _onVisible);
   }
 }
 
-const subscribe = fn => { subs.add(fn); return () => subs.delete(fn); };
+function stopPolling() {
+  if (timer) { clearInterval(timer); timer = null; }
+  document.removeEventListener("visibilitychange", _onVisible);
+}
+
+const subscribe = fn => {
+  subs.add(fn);
+  return () => {
+    subs.delete(fn);
+    // No subscribers left → stop the interval and drop the listener (audit E7:
+    // the shared poller and visibilitychange handler used to run for the app's
+    // lifetime and leak the listener). Re-arms automatically on the next mount.
+    if (subs.size === 0) stopPolling();
+  };
+};
 const getSnapshot = () => state;
 
 /* → { available, live, prices: {TICKER: ltp}, indices: {name: ltp}, as_of } */

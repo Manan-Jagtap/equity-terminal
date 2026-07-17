@@ -62,18 +62,23 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
 
   // Saved screens: name the current filter state (query/sector/sort), reload it
   // with one click. Auth-scoped like scenarios; silent when signed out.
+  // getUser() parses localStorage and returns a NEW object every render, so it
+  // must NOT sit in a hook dep list — keying reloadScreens on `user` made the
+  // effect refetch /api/screens on every commit (a non-stop backend loop for
+  // every signed-in user). Depend on the stable identity string instead.
   const user = getUser();
+  const userKey = user?.email || user?.id || null;
   const [screens, setScreens] = useState([]);
   const [screenName, setScreenName] = useState("");
   const reloadScreens = useCallback(() => {
     // No sync clear here: the whole row is gated on `user`, and a user change
     // re-fetches, so a stale list is never rendered.
-    if (!API || !user) return;
+    if (!API || !userKey) return;
     authFetch(`${API}/api/screens`)
       .then(r => (r.ok ? r.json() : { items: [] }))
       .then(d => setScreens(d.items || []))
       .catch(() => setScreens([]));
-  }, [API, user]);
+  }, [API, userKey]);
   useEffect(() => { reloadScreens(); }, [reloadScreens]);
 
   // Technical read for the whole visible universe — loaded once, keyed by ticker,
