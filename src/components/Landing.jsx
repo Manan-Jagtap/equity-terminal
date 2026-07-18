@@ -8,6 +8,7 @@
 import { useState } from "react";
 import { TrendingUp, ShieldCheck, LineChart, Sparkles, History, LogIn } from "lucide-react";
 import { C, mono, sans, serif } from "../lib/theme.js";
+import BrandMark from "./BrandMark.jsx";
 import { useIsMobile } from "../lib/useResponsive.js";
 import PrivacyPolicy from "./PrivacyPolicy.jsx";
 
@@ -43,7 +44,7 @@ export default function Landing({ onSignIn }) {
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       {/* Header */}
       <header style={{ display: "flex", alignItems: "center", gap: 9, padding: `18px ${PAD}px`, borderBottom: `1px solid ${C.line}` }}>
-        <TrendingUp size={20} color={C.gold} strokeWidth={1.8} />
+        <BrandMark size={22} />
         <span style={{ ...serif, fontSize: 22, color: C.text }}>EquityVerdict</span>
         <button onClick={onSignIn} style={{
           ...sans, display: "flex", alignItems: "center", gap: 7, marginLeft: "auto",

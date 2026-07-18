@@ -6,6 +6,7 @@
 import { useEffect, useMemo, useState, useCallback, useRef, lazy, Suspense } from "react";
 import { TrendingUp, LayoutDashboard, List, Star, GitCompare, CalendarClock, Landmark, Gauge, History, Layers, Briefcase, Search, Loader2, LogIn, LogOut, ChevronDown, Sparkles , Rocket , PiggyBank , Globe2 , Boxes } from "lucide-react";
 import { C, mono, sans, serif, auroraBg } from "./lib/theme.js";
+import BrandMark from "./components/BrandMark.jsx";
 import { useIsMobile } from "./lib/useResponsive.js";
 import { SEED, buildFromApi } from "./lib/seedData.js";
 import PageSkeleton from "./components/Skeleton.jsx";
@@ -421,7 +422,7 @@ export default function App() {
           background: "rgba(8,13,26,0.78)", backdropFilter: "blur(16px)",
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 9, padding: "2px 8px 14px" }}>
-            <TrendingUp size={20} color={C.gold} strokeWidth={1.8} />
+            <BrandMark size={22} />
             <span style={{ ...serif, fontSize: 18, fontWeight: 600, color: C.text }}>EquityVerdict</span>
           </div>
 
@@ -519,7 +520,7 @@ export default function App() {
           display: "flex", alignItems: "center", gap: 10,
           padding: "13px 16px", borderBottom: `1px solid ${C.line}`,
         }}>
-          <TrendingUp size={19} color={C.gold} strokeWidth={1.8} />
+          <BrandMark size={21} />
           <span style={{ ...serif, fontSize: 18, fontWeight: 600, color: C.text }}>EquityVerdict</span>
           <button onClick={() => setPaletteOpen(true)} aria-label="Search" style={{
             marginLeft: "auto", display: "flex", padding: 8, borderRadius: 9, cursor: "pointer",
