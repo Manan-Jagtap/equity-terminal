@@ -18,6 +18,7 @@ import {
 } from "recharts";
 
 import { C, mono, sans, serif, gridBg, sectorAccent } from "../lib/theme.js";
+import FvRange from "./FvRange.jsx";
 import { useLive, liveDotStyle } from "../lib/live.js";
 import { fmt, inr, pct, cr, multiple, inrOrDash, signedPct } from "../lib/formatters.js";
 import { recommend } from "../lib/recommend.js";
@@ -2479,6 +2480,7 @@ function VerdictTab({ co, rec, cd, price, insights, apiVal }) {
         <Card>
           <SectionLabel accent="MODEL vs STREET">RATING DRIVERS</SectionLabel>
           <KV label="Blended fair value (today)" value={inrOrDash(dcfIv,0)} tone="gold" />
+          <FvRange co={co} price={price} base={dcfIv} />
           <KV label="Margin of safety" value={dcfMos==null?"—":signedPct(dcfMos)} tone={dcfMos==null?"neutral":dcfMos>=0?"pos":"neg"} />
           <KV label="Engine verdict" value={verdict} tone={/BUY|ACCUM/.test(verdict)?"pos":/HOLD|CONF|DATA/.test(verdict)?"neutral":"neg"} />
           <KV label="Analyst target (12M)" value={tgt==null?"—":"₹"+fmtN(tgt,0)} tone="gold" />

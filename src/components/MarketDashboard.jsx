@@ -5,6 +5,7 @@
 import { useEffect, useState, useMemo, lazy, Suspense } from "react";
 import { TrendingUp, TrendingDown, Activity, ArrowUpRight, ArrowDownRight, Loader2, RefreshCw, ShieldCheck, ShieldAlert, ChevronDown } from "lucide-react";
 import { C, mono, sans, serif } from "../lib/theme.js";
+import PageSkeleton from "./Skeleton.jsx";
 import { useIsMobile } from "../lib/useResponsive.js";
 import { useLive, liveDotStyle } from "../lib/live.js";
 
@@ -45,11 +46,7 @@ export default function MarketDashboard({ API, companies, onOpen }) {
   const PAD = isMobile ? 16 : 32;
 
   if (loading && !data) return (
-    <div style={{ padding: 80, textAlign: "center", color: C.dim }}>
-      <Loader2 size={24} style={{ animation: "spin 1s linear infinite" }} />
-      <div style={{ ...sans, marginTop: 12, fontSize: 13 }}>Loading market…</div>
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-    </div>
+    <PageSkeleton label="Loading market…" cards={6} rows={8} />
   );
 
   const indices = data?.indices || [];

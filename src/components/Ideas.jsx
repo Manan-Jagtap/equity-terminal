@@ -8,6 +8,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Sparkles, Loader2, Info } from "lucide-react";
 import { C, sans, serif, mono } from "../lib/theme.js";
+import PageSkeleton from "./Skeleton.jsx";
 import { selStyle } from "../lib/listControls.jsx";
 import { VerdictBadge } from "./primitives.jsx";
 
@@ -85,11 +86,7 @@ export default function Ideas({ API, onOpen }) {
     });
   }, [ideas, sector, sortKey, sortDir]);
 
-  if (loading) return (
-    <div style={{ padding: 48, display: "flex", alignItems: "center", gap: 10, color: C.dim, ...sans, fontSize: 13 }}>
-      <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> Ranking the universe…
-    </div>
-  );
+  if (loading) return <PageSkeleton label="Ranking the universe…" cards={3} />;
 
   const th = { ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.07em",
                color: C.dim, textAlign: "right", padding: "9px 10px", whiteSpace: "nowrap" };

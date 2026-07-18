@@ -14,6 +14,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Boxes, Loader2, Info, ChevronRight } from "lucide-react";
 import { C, sans, serif, mono } from "../lib/theme.js";
+import PageSkeleton from "./Skeleton.jsx";
 import { VerdictBadge } from "./primitives.jsx";
 import StrategyLab from "./StrategyLab.jsx";
 
@@ -132,11 +133,7 @@ export default function Baskets({ API, onOpen }) {
 
   const baskets = useMemo(() => (data ? (data[tab] || []) : []), [data, tab]);
 
-  if (loading) return (
-    <div style={{ padding: 48, display: "flex", alignItems: "center", gap: 10, color: C.dim, ...sans, fontSize: 13 }}>
-      <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> Building baskets…
-    </div>
-  );
+  if (loading) return <PageSkeleton label="Building baskets…" cards={4} />;
 
   const tabBtn = (id, label) => (
     <button onClick={() => setTab(id)} style={{

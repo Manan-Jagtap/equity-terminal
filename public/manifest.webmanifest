@@ -1,0 +1,13 @@
+{
+  "name": "EquityVerdict — Independent Equity Research for Indian Markets",
+  "short_name": "EquityVerdict",
+  "description": "Transparent valuations, factor rankings and portfolio analytics for Nifty 500 companies — research that shows its work.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#060A13",
+  "theme_color": "#060A13",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

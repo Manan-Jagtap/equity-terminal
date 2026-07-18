@@ -8,6 +8,7 @@
 import { useEffect, useState } from "react";
 import { BadgeCheck, Briefcase, Loader2, Sparkles, Landmark, GitCompare, ShieldAlert, Gem } from "lucide-react";
 import { C, sans, serif, mono } from "../lib/theme.js";
+import PageSkeleton from "./Skeleton.jsx";
 import { authFetch } from "../lib/auth.js";
 import { SignInGate } from "./Watchlist.jsx";
 
@@ -470,11 +471,7 @@ export default function FundManager({ API, user, requestAuth, onOpen }) {
   };
 
   if (!user) return <SignInGate requestAuth={requestAuth} what="fund manager" />;
-  if (loading) return (
-    <div style={{ padding: 48, display: "flex", alignItems: "center", gap: 10, color: C.dim, ...sans, fontSize: 13 }}>
-      <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> Reading your book…
-    </div>
-  );
+  if (loading) return <PageSkeleton label="Reading your book…" cards={4} />;
 
   const mgr = data?.manager;
   const empty = !mgr || !mgr.aum;

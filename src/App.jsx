@@ -8,6 +8,7 @@ import { TrendingUp, LayoutDashboard, List, Star, GitCompare, CalendarClock, Lan
 import { C, mono, sans, serif, auroraBg } from "./lib/theme.js";
 import { useIsMobile } from "./lib/useResponsive.js";
 import { SEED, buildFromApi } from "./lib/seedData.js";
+import PageSkeleton from "./components/Skeleton.jsx";
 import Screener from "./components/Screener.jsx";
 import MarketDashboard from "./components/MarketDashboard.jsx";
 import Watchlist from "./components/Watchlist.jsx";
@@ -35,11 +36,7 @@ const Portfolio   = lazy(() => import("./components/Portfolio.jsx"));
 const Ideas       = lazy(() => import("./components/Ideas.jsx"));
 const Baskets     = lazy(() => import("./components/Baskets.jsx"));
 
-const ViewLoader = () => (
-  <div style={{ padding: 48, display: "flex", alignItems: "center", gap: 10, color: C.dim, ...sans, fontSize: 13 }}>
-    <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> Loading…
-  </div>
-);
+const ViewLoader = () => <PageSkeleton label="Loading…" />;
 
 /* ── Visibility whitelist ────────────────────────────────────────────────────
    What the terminal shows is driven by the backend /api/universe (the SINGLE
