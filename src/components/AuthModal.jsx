@@ -6,7 +6,7 @@
 import { useEffect, useRef, useState } from "react";
 import { TrendingUp, Loader2, Lock } from "lucide-react";
 import { C, mono, sans, serif } from "../lib/theme.js";
-import { login, signup } from "../lib/auth.js";
+import { login, signup, verifySignup, resendCode } from "../lib/auth.js";
 import PrivacyPolicy from "./PrivacyPolicy.jsx";
 
 export default function AuthModal({ open, onClose, API, onAuthed }) {
@@ -18,6 +18,9 @@ export default function AuthModal({ open, onClose, API, onAuthed }) {
   const [policyOpen, setPolicyOpen] = useState(false);
   const [err, setErr]     = useState(null);
   const [busy, setBusy]   = useState(false);
+  const [verifyFor, setVerifyFor] = useState(null);  // email awaiting its code
+  const [code, setCode]   = useState("");
+  const [resent, setResent] = useState(false);
   const emailRef = useRef(null);
 
   /* Reset on every open. */
@@ -25,6 +28,7 @@ export default function AuthModal({ open, onClose, API, onAuthed }) {
     if (open) {
       setMode("signin"); setEmail(""); setPw(""); setName(""); setConsent(false);
       setPolicyOpen(false); setErr(null); setBusy(false);
+      setVerifyFor(null); setCode(""); setResent(false);
       setTimeout(() => emailRef.current?.focus(), 10);
     }
   }, [open]);
@@ -46,17 +50,21 @@ export default function AuthModal({ open, onClose, API, onAuthed }) {
     if (busy || !email.trim() || !pw || signupIncomplete) return;
     setBusy(true); setErr(null);
     try {
-      const user = mode === "signin"
+      const res = mode === "signin"
         ? await login(API, email.trim(), pw)
         : await signup(API, email.trim(), pw, name.trim(), consent);
-      onAuthed(user);
+      if (res && res.pending_verification) {
+        setVerifyFor(res.email);          // step 2: enter the emailed code
+        return;
+      }
+      onAuthed(res);
       onClose();
     } catch (ex) {
       setErr(ex.message || "Something went wrong. Please try again.");
     } finally { setBusy(false); }
   };
 
-  const switchMode = m => { setMode(m); setErr(null); };
+  const switchMode = m => { setMode(m); setErr(null); setVerifyFor(null); setCode(""); };
 
   const field = {
     ...mono, fontSize: 13, width: "100%", boxSizing: "border-box",
@@ -105,7 +113,46 @@ export default function AuthModal({ open, onClose, API, onAuthed }) {
           ))}
         </div>
 
-        {/* Form */}
+        {/* Step 2: email-ownership verification (account exists only after this) */}
+        {verifyFor ? (
+          <form style={{ padding: "22px 28px 26px" }}
+            onSubmit={async e => {
+              e.preventDefault();
+              if (busy || code.trim().length < 6) return;
+              setBusy(true); setErr(null);
+              try {
+                const user = await verifySignup(API, verifyFor, code.trim());
+                onAuthed(user);
+                onClose();
+              } catch (ex) {
+                setErr(ex.message || "Incorrect code — check the email and try again.");
+              } finally { setBusy(false); }
+            }}>
+            <div style={{ ...sans, fontSize: 13, color: C.dim, lineHeight: 1.6, marginBottom: 16 }}>
+              We emailed a 6-digit code to <span style={{ color: C.text }}>{verifyFor}</span>.
+              Enter it below to activate your account. Check spam if it isn't there in a minute.
+            </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={label}>Verification code</label>
+              <input value={code} autoFocus inputMode="numeric" maxLength={6}
+                onChange={e => setCode(e.target.value.replace(/\D/g, ""))}
+                placeholder="000000" style={{ ...field, letterSpacing: "0.4em", textAlign: "center", fontSize: 20 }} />
+            </div>
+            {err && <div style={{ ...sans, fontSize: 12.5, color: C.red, marginBottom: 12 }}>{err}</div>}
+            <button type="submit" disabled={busy || code.length < 6} style={{
+              ...sans, width: "100%", padding: "13px 0", fontSize: 14.5, fontWeight: 600,
+              borderRadius: 9, border: "none", cursor: busy ? "default" : "pointer",
+              background: C.green, color: "#06231A", opacity: busy || code.length < 6 ? 0.6 : 1,
+            }}>{busy ? "Verifying…" : "Verify & create account"}</button>
+            <button type="button" disabled={resent}
+              onClick={async () => { setResent(true); try { await resendCode(API, verifyFor); } catch { /* silent */ } }}
+              style={{ ...sans, width: "100%", marginTop: 10, padding: "10px 0", fontSize: 12.5,
+                       background: "transparent", border: "none", cursor: resent ? "default" : "pointer",
+                       color: resent ? C.faint : C.dim, textDecoration: resent ? "none" : "underline" }}>
+              {resent ? "Code re-sent — give it a minute" : "Resend code"}
+            </button>
+          </form>
+        ) : (
         <form onSubmit={submit} style={{ padding: "22px 28px 26px" }}>
           {mode === "signup" && (
             <div style={{ marginBottom: 14 }}>
@@ -165,6 +212,7 @@ export default function AuthModal({ open, onClose, API, onAuthed }) {
             Your watchlist and portfolio are private to your account.
           </div>
         </form>
+        )}
       </div>
       <PrivacyPolicy open={policyOpen} onClose={() => setPolicyOpen(false)} />
     </div>

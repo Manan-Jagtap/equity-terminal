@@ -68,8 +68,21 @@ async function authPost(API, path, body) {
 export async function signup(API, email, password, name, consent = false) {
   const data = await authPost(API, "/api/auth/signup",
                               { email, password, name, consent });
+  // With SMTP configured server-side, the account doesn't exist yet — the
+  // caller must collect the emailed 6-digit code and call verifySignup.
+  if (data.pending_verification) return data;
   setSession(data.token, data.user);
   return data.user;
+}
+
+export async function verifySignup(API, email, code) {
+  const data = await authPost(API, "/api/auth/verify", { email, code });
+  setSession(data.token, data.user);
+  return data.user;
+}
+
+export async function resendCode(API, email) {
+  return authPost(API, "/api/auth/resend-code", { email });
 }
 
 export async function login(API, email, password) {
