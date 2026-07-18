@@ -62,3 +62,33 @@ test("company page opens and the DCF tab computes a fair value", async ({ page }
   await expect(page.getByText(/-?\d+(\.\d+)?%\s*MoS/i).first()).toBeVisible();
   expect(errors, `page errors: ${errors.join(" | ")}`).toHaveLength(0);
 });
+
+test("every sidebar view renders without page errors", async ({ page }) => {
+  // The 18 Jul lesson: the old suite only visited 3 views, so a crash in any
+  // other tab could ship. Walk ALL of them (seed mode; gated views render
+  // their sign-in gate, which still must not throw).
+  const errors = collectPageErrors(page);
+  await page.goto("/");
+  const tabs = ["Screener", "Ideas", "Baskets", "Watchlist", "Compare",
+    "Results", "Ownership", "Operations", "Sectors", "Economy", "IPOs",
+    "Mutual Funds", "Portfolio", "Fund Manager", "Track Record", "Dashboard"];
+  for (const t of tabs) {
+    await page.getByRole("button", { name: t, exact: true }).click();
+    await page.waitForTimeout(350);
+  }
+  expect(errors, `page errors: ${errors.join(" | ")}`).toHaveLength(0);
+});
+
+test("navigation writes URLs and browser back restores the previous view", async ({ page }) => {
+  const errors = collectPageErrors(page);
+  await page.goto("/");
+  await page.getByRole("button", { name: "Screener" }).click();
+  await expect(page).toHaveURL(/#\/screener$/);
+  await page.getByRole("button", { name: "Economy" }).click();
+  await expect(page).toHaveURL(/#\/economy$/);
+  await page.goBack();
+  await expect(page).toHaveURL(/#\/screener$/);
+  // The view actually changed back, not just the URL.
+  await expect(page.locator("tr", { hasText: "Bajaj Finance" })).toBeVisible({ timeout: 15000 });
+  expect(errors, `page errors: ${errors.join(" | ")}`).toHaveLength(0);
+});

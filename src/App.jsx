@@ -20,21 +20,38 @@ import { fetchWatchlist, saveWatch, removeWatch } from "./lib/watchlist.js";
 import { getUser, me, clearSession, authFetch } from "./lib/auth.js";
 
 /* Heavy views are code-split: each loads on first visit. Dashboard and
-   Screener stay eager — they are the landing experience. */
-const Company     = lazy(() => import("./components/Company.jsx"));
-const Compare     = lazy(() => import("./components/Compare.jsx"));
-const Results     = lazy(() => import("./components/Results.jsx"));
-const Ownership   = lazy(() => import("./components/Ownership.jsx"));
-const Operations  = lazy(() => import("./components/Operations.jsx"));
-const TrackRecord = lazy(() => import("./components/TrackRecord.jsx"));
-const Sectors     = lazy(() => import("./components/Sectors.jsx"));
-const FundManager = lazy(() => import("./components/FundManager.jsx"));
-const IPOBoard    = lazy(() => import("./components/IPOBoard.jsx"));
-const MFPanel     = lazy(() => import("./components/MFPanel.jsx"));
-const EconomyDashboard = lazy(() => import("./components/EconomyDashboard.jsx"));
-const Portfolio   = lazy(() => import("./components/Portfolio.jsx"));
-const Ideas       = lazy(() => import("./components/Ideas.jsx"));
-const Baskets     = lazy(() => import("./components/Baskets.jsx"));
+   Screener stay eager — they are the landing experience.
+
+   lazyReload: a chunk fetch fails when the user's open session predates a
+   fresh deploy (old HTML asks for hashed chunk files the CDN no longer has) —
+   the "Something went wrong loading this view" boundary. One automatic reload
+   picks up the new build invisibly; the sessionStorage guard stops a reload
+   loop if the failure is anything else. */
+const lazyReload = (factory) => lazy(() =>
+  factory().then((m) => { sessionStorage.removeItem("ev-chunk-reload"); return m; })
+    .catch((err) => {
+      if (!sessionStorage.getItem("ev-chunk-reload")) {
+        sessionStorage.setItem("ev-chunk-reload", "1");
+        window.location.reload();
+        return new Promise(() => {});   // reloading — never settle
+      }
+      throw err;
+    }));
+
+const Company     = lazyReload(() => import("./components/Company.jsx"));
+const Compare     = lazyReload(() => import("./components/Compare.jsx"));
+const Results     = lazyReload(() => import("./components/Results.jsx"));
+const Ownership   = lazyReload(() => import("./components/Ownership.jsx"));
+const Operations  = lazyReload(() => import("./components/Operations.jsx"));
+const TrackRecord = lazyReload(() => import("./components/TrackRecord.jsx"));
+const Sectors     = lazyReload(() => import("./components/Sectors.jsx"));
+const FundManager = lazyReload(() => import("./components/FundManager.jsx"));
+const IPOBoard    = lazyReload(() => import("./components/IPOBoard.jsx"));
+const MFPanel     = lazyReload(() => import("./components/MFPanel.jsx"));
+const EconomyDashboard = lazyReload(() => import("./components/EconomyDashboard.jsx"));
+const Portfolio   = lazyReload(() => import("./components/Portfolio.jsx"));
+const Ideas       = lazyReload(() => import("./components/Ideas.jsx"));
+const Baskets     = lazyReload(() => import("./components/Baskets.jsx"));
 
 const ViewLoader = () => <PageSkeleton label="Loading…" />;
 
@@ -242,6 +259,74 @@ export default function App() {
     }
     setView("company");
   };
+
+  // ── URL ↔ state routing: every navigation writes a #/route and browser
+  // back/forward restore it exactly — the SPA behaves like real pages.
+  // Hash-based so the static host needs no rewrite config. `navFromHash`
+  // distinguishes "user pressed back" (replaceState — the browser already
+  // moved in history) from "user clicked something" (pushState — a new entry).
+  const VIEW_IDS = ["dashboard", "screener", "ideas", "baskets", "watchlist",
+    "compare", "results", "ownership", "operations", "sectors", "economy",
+    "ipo", "funds", "portfolio", "manager", "track"];
+  const navFromHash = useRef(false);
+  const routeRef = useRef({});
+  routeRef.current = { view, selectedId, companies };
+  const openRef = useRef(open);
+  openRef.current = open;
+
+  useEffect(() => {
+    const apply = () => {
+      const { view: cv, selectedId: cs, companies: cos } = routeRef.current;
+      const h = decodeURIComponent(window.location.hash.replace(/^#\/?/, ""));
+      const [v, id] = h.split("/");
+      if (v === "company" && id) {
+        const t = id.toUpperCase();
+        if (cv === "company" && (cs || "").toUpperCase() === t) return;
+        if (cos.some(c => ((c.ticker || c.id) || "").toUpperCase() === t)) {
+          navFromHash.current = true;
+          openRef.current(t);
+          setTimeout(() => { navFromHash.current = false; }, 0);
+        }
+      } else if (VIEW_IDS.includes(v) && cv !== v) {
+        navFromHash.current = true;
+        setView(v);
+        setTimeout(() => { navFromHash.current = false; }, 0);
+      }
+    };
+    apply();                                   // deep link on first paint
+    window.addEventListener("popstate", apply);
+    return () => window.removeEventListener("popstate", apply);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Deep link straight to a company: retry once real data replaces the seed.
+  useEffect(() => {
+    const h = decodeURIComponent(window.location.hash.replace(/^#\/?/, ""));
+    const [v, id] = h.split("/");
+    if (v === "company" && id && view !== "company") {
+      const t = id.toUpperCase();
+      if (companies.some(c => ((c.ticker || c.id) || "").toUpperCase() === t)) {
+        navFromHash.current = true;
+        openRef.current(t);
+        setTimeout(() => { navFromHash.current = false; }, 0);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [companies]);
+
+  // State → URL (the writer). Empty initial hash is replaced, not pushed, so
+  // the first Back never lands on a blank route.
+  useEffect(() => {
+    const want = view === "company" && selectedId
+      ? `#/company/${encodeURIComponent(String(selectedId))}`
+      : `#/${view}`;
+    if (window.location.hash === want) return;
+    if (navFromHash.current || !window.location.hash) {
+      history.replaceState(null, "", want);
+    } else {
+      history.pushState(null, "", want);
+    }
+  }, [view, selectedId]);
 
   // Apply a resolved shared scenario as soon as its company is available:
   // open the name, then overlay the shared assumptions on the company's own
