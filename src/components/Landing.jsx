@@ -44,7 +44,7 @@ export default function Landing({ onSignIn }) {
       {/* Header */}
       <header style={{ display: "flex", alignItems: "center", gap: 9, padding: `18px ${PAD}px`, borderBottom: `1px solid ${C.line}` }}>
         <TrendingUp size={20} color={C.gold} strokeWidth={1.8} />
-        <span style={{ ...serif, fontSize: 22, color: C.text }}>Equity Terminal</span>
+        <span style={{ ...serif, fontSize: 22, color: C.text }}>EquityVerdict</span>
         <button onClick={onSignIn} style={{
           ...sans, display: "flex", alignItems: "center", gap: 7, marginLeft: "auto",
           padding: "8px 16px", borderRadius: 8, cursor: "pointer", fontSize: 13, fontWeight: 500,
@@ -96,7 +96,7 @@ export default function Landing({ onSignIn }) {
       {/* Compliance footer — deliberately prominent, not fine print. */}
       <footer style={{ marginTop: "auto", borderTop: `1px solid ${C.line}`, padding: `18px ${PAD}px 26px` }}>
         <p style={{ ...sans, fontSize: 11.5, lineHeight: 1.65, color: C.faint, maxWidth: 880, margin: "0 auto", textAlign: "center" }}>
-          Equity Terminal is a research and analytics tool for educational purposes. Nothing on this
+          EquityVerdict is a research and analytics tool for educational purposes. Nothing on this
           platform is investment advice or a recommendation to buy or sell any security. Model outputs
           (intrinsic values, verdicts, scores) are automated estimates that can be wrong. Securities
           markets are subject to market risk. Do your own diligence or consult a SEBI-registered

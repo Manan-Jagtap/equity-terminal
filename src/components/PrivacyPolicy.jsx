@@ -61,7 +61,7 @@ export default function PrivacyPolicy({ open, onClose }) {
           </button>
         </div>
         <p style={{ ...sans, fontSize: 13, lineHeight: 1.65, color: C.text200, marginTop: 14 }}>
-          Equity Terminal collects the minimum personal data needed to run a private,
+          EquityVerdict collects the minimum personal data needed to run a private,
           secure research account. This page explains exactly what that means.
         </p>
         {SECTIONS.map(([title, items]) => (
@@ -75,7 +75,7 @@ export default function PrivacyPolicy({ open, onClose }) {
         <p style={{ ...sans, fontSize: 12, lineHeight: 1.6, color: C.dim, marginTop: 20, borderTop: `1px solid ${C.line}`, paddingTop: 14 }}>
           Contact for privacy requests, deletion, and grievances:{" "}
           <a href="mailto:mananjagtap27@gmail.com" style={{ color: C.gold }}>mananjagtap27@gmail.com</a>.
-          Equity Terminal is a research tool and does not provide investment advice; see the
+          EquityVerdict is a research tool and does not provide investment advice; see the
           disclaimer on every page.
         </p>
       </div>

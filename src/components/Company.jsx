@@ -2259,7 +2259,7 @@ function ForensicsTab({ co, API }) {
           <div style={{ position:"absolute", inset:0, ...gridBg, opacity:0.4, pointerEvents:"none" }} />
           <div style={{ position:"relative", display:"grid", gridTemplateColumns:"1fr 1fr", gap:32, alignItems:"center" }}>
             <div>
-              <div style={{ ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.18em", color:C.gold, marginBottom:8 }}>Equity Terminal · Forensic Screen</div>
+              <div style={{ ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.18em", color:C.gold, marginBottom:8 }}>EquityVerdict · Forensic Screen</div>
               <div style={{ display:"flex", alignItems:"baseline", gap:14 }}>
                 <span style={{ ...serif, fontSize:88, color:gradeColor, lineHeight:1 }}>{grade || "—"}</span>
                 <div>
@@ -2420,7 +2420,7 @@ function VerdictTab({ co, rec, cd, price, insights, apiVal }) {
           <div style={{ position:"absolute", inset:0, ...gridBg, opacity:0.4, pointerEvents:"none" }} />
           <div style={{ position:"relative", display:"grid", gridTemplateColumns:"1fr 1fr", gap:32 }}>
             <div>
-              <div style={{ ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.18em", color:C.gold, marginBottom:8 }}>Equity Terminal · Independent Verdict</div>
+              <div style={{ ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.18em", color:C.gold, marginBottom:8 }}>EquityVerdict · Independent Verdict</div>
               <div style={{ ...serif, fontSize:88, color:verdictColor, lineHeight:1 }}>{verdict}</div>
               <div style={{ display:"flex", gap:28, marginTop:16, flexWrap:"wrap" }}>
                 {[
@@ -3080,7 +3080,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
       </main>
 
       <footer style={{ borderTop:`1px solid ${C.line}`, padding:"20px 32px", display:"flex", justifyContent:"space-between", ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.1em", color:C.dim+"99", marginTop:48 }}>
-        <span>Equity Terminal v0.3 — Sector-Aware Valuation Platform</span>
+        <span>EquityVerdict v0.3 — Sector-Aware Valuation Platform</span>
         <span>Educational use only · Not SEBI-registered advice</span>
       </footer>
     </div>

@@ -1,4 +1,4 @@
-/* Design tokens — Equity Terminal "Aurora" theme.
+/* Design tokens — EquityVerdict "Aurora" theme.
 
    Deep-space indigo base with a luminous mint-cyan accent: dark enough for
    long research sessions, cool and alive instead of flat black. Signals are

@@ -86,7 +86,7 @@ export default function AuthModal({ open, onClose, API, onAuthed }) {
         <div style={{ padding: "26px 28px 18px", textAlign: "center", borderBottom: `1px solid ${C.line}` }}>
           <div style={{ display: "inline-flex", alignItems: "center", gap: 9 }}>
             <TrendingUp size={19} color={C.gold} strokeWidth={1.8} />
-            <span style={{ ...serif, fontSize: 24, color: C.text }}>Equity Terminal</span>
+            <span style={{ ...serif, fontSize: 24, color: C.text }}>EquityVerdict</span>
           </div>
           <div style={{ ...sans, fontSize: 12, color: C.faint, marginTop: 6 }}>
             Independent equity research for Indian markets

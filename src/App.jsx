@@ -1,4 +1,4 @@
-/* Equity Terminal — app root.
+/* EquityVerdict — app root.
    Auth-aware: validates the stored session on boot, gates watchlist /
    portfolio behind sign-in, and lazy-loads the heavy views so the
    first paint ships a much smaller bundle. */
@@ -340,7 +340,7 @@ export default function App() {
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 9, padding: "2px 8px 14px" }}>
             <TrendingUp size={20} color={C.gold} strokeWidth={1.8} />
-            <span style={{ ...serif, fontSize: 18, fontWeight: 600, color: C.text }}>Equity Terminal</span>
+            <span style={{ ...serif, fontSize: 18, fontWeight: 600, color: C.text }}>EquityVerdict</span>
           </div>
 
           <button onClick={() => setPaletteOpen(true)} title="Search companies (⌘K)" style={{
@@ -438,7 +438,7 @@ export default function App() {
           padding: "13px 16px", borderBottom: `1px solid ${C.line}`,
         }}>
           <TrendingUp size={19} color={C.gold} strokeWidth={1.8} />
-          <span style={{ ...serif, fontSize: 18, fontWeight: 600, color: C.text }}>Equity Terminal</span>
+          <span style={{ ...serif, fontSize: 18, fontWeight: 600, color: C.text }}>EquityVerdict</span>
           <button onClick={() => setPaletteOpen(true)} aria-label="Search" style={{
             marginLeft: "auto", display: "flex", padding: 8, borderRadius: 9, cursor: "pointer",
             border: `1px solid ${C.line2}`, background: "transparent",
