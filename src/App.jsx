@@ -6,7 +6,7 @@
 import { useEffect, useMemo, useState, useCallback, useRef, lazy, Suspense } from "react";
 import { LayoutDashboard, List, Star, GitCompare, CalendarClock, Landmark, Gauge, History, Layers, Briefcase, Search, LogOut, ChevronDown, Sparkles , Rocket , PiggyBank , Globe2 , Boxes, Shield } from "lucide-react";
 import { C, mono, sans, serif, auroraBg } from "./lib/theme.js";
-import { motion, useReducedMotion } from "motion/react";
+import { m, useReducedMotion } from "motion/react";
 import { pick } from "./design/motion.js";
 import BrandMark from "./components/BrandMark.jsx";
 import { useIsMobile } from "./lib/useResponsive.js";
@@ -604,7 +604,7 @@ export default function App() {
           }}>
             <Search size={16} color={C.dim} strokeWidth={1.6} />
           </button>
-          <button onClick={signOut} title="Sign out" style={{
+          <button onClick={signOut} title="Sign out" aria-label="Sign out" style={{
             display: "flex", padding: 8, borderRadius: 9, cursor: "pointer",
             border: `1px solid ${C.line2}`, background: "transparent",
           }}>
@@ -634,7 +634,7 @@ export default function App() {
         <ErrorBoundary resetKey={view}>
         {/* Keyed by view only: switching companies keeps <Company> mounted
             (tab/scroll state survives); switching views plays the entrance. */}
-        <motion.div key={view} variants={viewMotion.slideUp} initial="hidden" animate="show">
+        <m.div key={view} variants={viewMotion.slideUp} initial="hidden" animate="show">
 
         {view === "dashboard" && (
           <MarketDashboard API={API} companies={companies} onOpen={open} />
@@ -708,7 +708,7 @@ export default function App() {
             />
           )}
         </Suspense>
-        </motion.div>
+        </m.div>
         </ErrorBoundary>
         {/* UX-01: an unavoidable disclaimer on EVERY logged-in view (verdicts,
             scores and targets appear on most of them, including the company
