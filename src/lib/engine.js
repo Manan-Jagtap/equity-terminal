@@ -39,6 +39,8 @@ export const SECTOR_PARAMS = {
   REALTY:        { beta: 1.25, terminal_growth: 0.050, mature_roic: 0.12, mature_roe: 0.13, exit_pe: 20, exit_ev_ebitda: 14, exit_pb: null },
   PAPER:         { beta: 1.05, terminal_growth: 0.045, mature_roic: 0.11, mature_roe: 0.12, exit_pe: 12, exit_ev_ebitda: 6,  exit_pb: null },
   SUGAR:         { beta: 1.00, terminal_growth: 0.040, mature_roic: 0.10, mature_roe: 0.12, exit_pe: 11, exit_ev_ebitda: 6,  exit_pb: null },
+  // Thin-margin pass-through distribution/trading (DAT-02) — mirrors sector_params.py.
+  DISTRIBUTION:  { beta: 1.00, terminal_growth: 0.045, mature_roic: 0.12, mature_roe: 0.14, exit_pe: 14, exit_ev_ebitda: 8,  exit_pb: null },
   CABLES:        { beta: 1.00, terminal_growth: 0.055, mature_roic: 0.18, mature_roe: 0.18, exit_pe: 27, exit_ev_ebitda: 15, exit_pb: null },
   CAPITAL_GOODS: { beta: 1.10, terminal_growth: 0.055, mature_roic: 0.17, mature_roe: 0.18, exit_pe: 32, exit_ev_ebitda: 22, exit_pb: null },
   CONSTRUCTION:  { beta: 1.20, terminal_growth: 0.050, mature_roic: 0.13, mature_roe: 0.14, exit_pe: 15, exit_ev_ebitda: 9,  exit_pb: null },

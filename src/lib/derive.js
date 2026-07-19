@@ -172,7 +172,8 @@ function _deriveNonfinancial(statements, vs) {
   else if (cagr !== null) revGrowth = cagr;
   else if (yoy !== null) revGrowth = yoy;
   else revGrowth = p.terminal_growth + 0.03;
-  const growthHi = cyclical ? 0.08 : semiCyclical ? 0.12 : 0.18;
+  // DISTRIBUTION joins the 12% tier (DAT-02) — mirrors derive.py growth_hi.
+  const growthHi = cyclical ? 0.08 : (semiCyclical || vs === "DISTRIBUTION") ? 0.12 : 0.18;
   revGrowth = _clamp(revGrowth, 0.02, growthHi);
   drivers.rev_growth = `0.65·CAGR(${_pct(cagr)})+0.35·YoY(${_pct(yoy)}) capped` +
     (cyclical ? " (cyclical)" : semiCyclical ? " (mid-cycle)" : "");

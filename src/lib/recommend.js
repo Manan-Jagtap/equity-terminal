@@ -111,9 +111,10 @@ export function recommend(co, a) {
   let verdict;
   if (iv == null)            verdict = "NO DATA";
   else if (conf.score < 0.5) verdict = "LOW CONF";
-  // Mirrors backend engines.recommend: an intrinsic >3x price from a generic
-  // sector model is more likely mis-modeled than a hidden multi-bagger.
-  else if (mos != null && mos > 2.0)       verdict = "LOW CONF";
+  // Mirrors backend engines.recommend (DAT-02): an intrinsic more than DOUBLE
+  // the price from a generic sector model is more likely mis-modeled than a
+  // hidden multi-bagger (was 2.0; tightened with the backend).
+  else if (mos != null && mos > 1.0)       verdict = "LOW CONF";
   else if (composite >= 68 && mos > 0.15 && conf.level === "high") verdict = "BUY";
   else if (composite >= 58 && mos > 0.05)  verdict = "ACCUMULATE";
   else if (mos >= -0.10)                   verdict = "HOLD";

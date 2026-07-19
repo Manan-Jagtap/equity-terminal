@@ -62,6 +62,9 @@ export function dataQuality(co) {
   if (co.dataWarning) penal(0.45, co.dataWarning);
 
   score = Math.max(0, Math.min(1, score));
+  // DAT-02(c), mirrors data_quality.py: a synthetic price series can never be a
+  // HIGH-confidence call — cap just under the high threshold.
+  if (co.syntheticSeries) score = Math.min(score, 0.79);
   const level = score >= 0.8 ? "high" : score >= 0.5 ? "medium" : "low";
 
   return { score, level, flags };
