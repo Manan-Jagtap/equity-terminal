@@ -4,7 +4,7 @@
    first paint ships a much smaller bundle. */
 
 import { useEffect, useMemo, useState, useCallback, useRef, lazy, Suspense } from "react";
-import { LayoutDashboard, List, Star, GitCompare, CalendarClock, Landmark, Gauge, History, Layers, Briefcase, Search, LogOut, ChevronDown, Sparkles , Rocket , PiggyBank , Globe2 , Boxes } from "lucide-react";
+import { LayoutDashboard, List, Star, GitCompare, CalendarClock, Landmark, Gauge, History, Layers, Briefcase, Search, LogOut, ChevronDown, Sparkles , Rocket , PiggyBank , Globe2 , Boxes, Shield } from "lucide-react";
 import { C, mono, sans, serif, auroraBg } from "./lib/theme.js";
 import BrandMark from "./components/BrandMark.jsx";
 import { useIsMobile } from "./lib/useResponsive.js";
@@ -18,7 +18,7 @@ import AuthModal from "./components/AuthModal.jsx";
 import Landing from "./components/Landing.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import { fetchWatchlist, saveWatch, removeWatch } from "./lib/watchlist.js";
-import { getUser, me, clearSession, authFetch } from "./lib/auth.js";
+import { getUser, me, clearSession, authFetch, logoutAll } from "./lib/auth.js";
 
 /* Heavy views are code-split: each loads on first visit. Dashboard and
    Screener stay eager — they are the landing experience.
@@ -114,6 +114,18 @@ export default function App() {
     setUser(null);
     setUserMenu(false);
   }, []);
+
+  // SEC-01: revoke every other session (leaked/old tokens) — this tab stays in.
+  const signOutEverywhere = useCallback(async () => {
+    if (!window.confirm("Sign out of all other devices? Any other logged-in session will be signed out. This device stays signed in.")) return;
+    try {
+      await logoutAll(API);
+      setUserMenu(false);
+      window.alert("Signed out of all other devices.");
+    } catch {
+      window.alert("Couldn't sign out other devices — please try again.");
+    }
+  }, [API]);
 
   // DPDP right-to-erasure: typed email confirmation, then the backend wipes
   // the account + every personal row and we drop the local session.
@@ -506,6 +518,16 @@ export default function App() {
                     onMouseEnter={e => { e.currentTarget.style.background = C.bg800; e.currentTarget.style.color = C.text; }}
                     onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.dim; }}>
                     <LogOut size={14} strokeWidth={1.6} />Sign out
+                  </button>
+                  <button onClick={signOutEverywhere} style={{
+                    ...sans, display: "flex", alignItems: "center", gap: 8, width: "100%",
+                    padding: "10px 14px", fontSize: 12, textAlign: "left",
+                    background: "transparent", border: "none", cursor: "pointer", color: C.dim,
+                    borderTop: `1px solid ${C.line}`,
+                  }}
+                    onMouseEnter={e => { e.currentTarget.style.background = C.bg800; e.currentTarget.style.color = C.text; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.dim; }}>
+                    <Shield size={13} strokeWidth={1.6} />Sign out everywhere
                   </button>
                   <button onClick={deleteAccount} style={{
                     ...sans, display: "flex", alignItems: "center", gap: 8, width: "100%",

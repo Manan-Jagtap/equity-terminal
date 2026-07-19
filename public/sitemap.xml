@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- UX-05: the crawlable public surface. The app is a hash-routed SPA behind a
+     login gate, so per-company pages are NOT yet independently crawlable — that
+     needs server-side rendering / prerender (the remaining part of UX-05). Until
+     then this lists the public landing page. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://equityverdict.com/</loc>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>

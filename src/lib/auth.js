@@ -91,6 +91,19 @@ export async function login(API, email, password) {
   return data.user;
 }
 
+/* SEC-01: "sign out everywhere" — the backend bumps this account's token
+   version (killing every other device's token) and returns a fresh token for
+   THIS session, which we persist so the current tab stays signed in. */
+export async function logoutAll(API) {
+  const r = await fetch(`${API}/api/auth/logout-all`, {
+    method: "POST", headers: authHeaders(),
+  });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.detail || `Request failed (${r.status})`);
+  if (data.token) setSession(data.token, data.user);
+  return data.user;
+}
+
 /* Validate the stored token against the backend. Returns the fresh user,
    or null (and clears the session) when the token is missing/invalid. */
 export async function me(API) {
