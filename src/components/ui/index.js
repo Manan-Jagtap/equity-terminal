@@ -20,3 +20,4 @@ export { default as ValuationPanel } from "./ValuationPanel.jsx";
 export { default as FinancialsTable } from "./FinancialsTable.jsx";
 export { default as Sparkline } from "./Sparkline.jsx";
 export { default as CompanyRow } from "./CompanyRow.jsx";
+export { default as NumberTicker } from "./NumberTicker.jsx";

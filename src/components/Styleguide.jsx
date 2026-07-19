@@ -9,12 +9,29 @@ import { pick } from "../design/motion.js";
 import {
   Button, Input, Badge, VerdictBadge, Card, Tabs, Tooltip, TooltipProvider,
   Modal, ToastProvider, useToast, Skeleton, SkeletonText, Table, StatTile,
-  AlphaScore, ValuationPanel, FinancialsTable, Sparkline, CompanyRow,
+  AlphaScore, ValuationPanel, FinancialsTable, Sparkline, CompanyRow, NumberTicker,
 } from "./ui/index.js";
 
 /* deterministic demo series (no Math.random — stable screenshots/diffs) */
 const SPARK_UP = [412, 418, 409, 425, 431, 428, 440, 452, 447, 461];
 const SPARK_DOWN = [512, 505, 511, 498, 488, 492, 471, 465, 470, 452];
+
+/* NumberTicker demo: cycle deterministic "LTP updates" and watch the tween. */
+const TICKS = [2772.75, 2781.4, 2765.1, 2790.0, 2772.75];
+function TickerDemo() {
+  const [i, setI] = useState(0);
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap" }}>
+      <span style={{ fontFamily: font.mono, fontSize: 34, color: color.text }}>
+        <NumberTicker value={TICKS[i]} format={(v) => fmtNum.inr(v, 2)} />
+      </span>
+      <Button onClick={() => setI((x) => (x + 1) % TICKS.length)}>Next tick ↻</Button>
+      <span style={{ fontSize: 12, color: color.text3 }}>
+        instant on first paint · tweens on change · instant under reduced-motion
+      </span>
+    </div>
+  );
+}
 
 /* Toast needs the provider above it — tiny demo child so the hook is legal. */
 function ToastDemo() {
@@ -372,6 +389,10 @@ export default function Styleguide() {
             <CompanyRow ticker="TCS" name="Tata Consultancy Services" sector="IT"
               price={3418.6} delta={0.0039} verdict="HOLD" spark={SPARK_UP.map(v => 3300 + v / 4)} onOpen={() => {}} />
           </div>
+        </Section>
+
+        <Section title="Phase 3 · NumberTicker (motion explains the change — live prices tween)">
+          <TickerDemo />
         </Section>
 
         <Section title="Later composites">
