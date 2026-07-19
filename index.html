@@ -49,6 +49,12 @@
         scroll-behavior: auto !important;
       }
     }
+    /* #118 mobile polish: iOS Safari ZOOMS the whole page in when a focused
+       input's font is < 16px (our terminal inputs are 13px). Bump inputs to 16px
+       on small screens so focusing a field never triggers that jarring zoom. */
+    @media (max-width: 640px) {
+      input, select, textarea { font-size: 16px !important; }
+    }
   </style>
   <body>
     <div id="root"></div>

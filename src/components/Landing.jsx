@@ -20,8 +20,8 @@ const PILLARS = [
   },
   {
     icon: History,
-    title: "A track record that can't be faked",
-    body: "Every verdict is snapshotted daily and graded in public — wins and losses, dividend-adjusted, never backfilled. The model keeps score on itself.",
+    title: "An append-only public track record",
+    body: "Every verdict is snapshotted daily and graded in public — wins and losses, dividend-adjusted, nothing backfilled. The model keeps score on itself.",
   },
   {
     icon: Sparkles,
@@ -65,7 +65,7 @@ export default function Landing({ onSignIn }) {
           }}>with every number traceable.</span>
         </h1>
         <p style={{ ...sans, fontSize: isMobile ? 14.5 : 16.5, lineHeight: 1.65, color: C.dim, margin: "22px auto 0", maxWidth: 620 }}>
-          Sector-correct valuations, a falsifiable public track record, and a
+          Sector-correct valuations, an append-only public track record, and a
           multi-factor idea engine for Indian equities — built for people who want
           to see the working, not just the answer.
         </p>
