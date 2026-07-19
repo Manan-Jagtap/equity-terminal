@@ -611,6 +611,18 @@ export default function App() {
           )}
         </Suspense>
         </ErrorBoundary>
+        {/* UX-01: an unavoidable disclaimer on EVERY logged-in view (verdicts,
+            scores and targets appear on most of them, including the company
+            page's default Business tab). Compulsory login means the logged-out
+            landing disclaimer is otherwise never seen again. */}
+        <div style={{ ...sans, fontSize: 10.5, lineHeight: 1.6, color: C.faint,
+          borderTop: `1px solid ${C.line}`, marginTop: 28, paddingTop: 14, paddingBottom: 8 }}>
+          EquityVerdict is an independent research &amp; analytics tool provided for educational
+          purposes only. It is <b style={{ color: C.dim }}>not investment advice</b> and is not a SEBI-registered
+          research analyst or investment adviser. Verdicts, scores, fair values and target prices are
+          transparent model outputs — not recommendations to buy or sell any security. Do your own
+          diligence and consult a registered adviser before investing.
+        </div>
         </div>
       </main>
 

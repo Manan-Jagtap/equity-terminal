@@ -117,7 +117,10 @@ export function recommend(co, a) {
   else if (composite >= 68 && mos > 0.15 && conf.level === "high") verdict = "BUY";
   else if (composite >= 58 && mos > 0.05)  verdict = "ACCUMULATE";
   else if (mos >= -0.10)                   verdict = "HOLD";
-  else if (mos >= -0.25)                   verdict = "TRIM";
+  // ARC-01: backend engines.recommend emits "REDUCE" here, not "TRIM" — this
+  // client mirror had drifted (the parity harness covers valuation math, not the
+  // verdict string), so the fallback verdict could disagree with the server.
+  else if (mos >= -0.25)                   verdict = "REDUCE";
   else                                     verdict = "AVOID";
   // Mirrors backend engines.recommend's lender divergence gate: a financial
   // showing an extreme MoS is far more likely mis-modeled (book quality,

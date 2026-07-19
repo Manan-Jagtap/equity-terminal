@@ -8,6 +8,17 @@ import { Layers, Loader2, TrendingUp, TrendingDown } from "lucide-react";
 import { C, sans, serif, mono } from "../lib/theme.js";
 import { multiple, signedPct } from "../lib/formatters.js";
 
+// UX-13: human-readable sector labels — the raw valuation_sector enum
+// ("CONSUMER_DISC", "IT_SERVICES") must never leak into the UI.
+const SECTOR_LABELS = {
+  CONSUMER_DISC: "Consumer Discretionary", CONSUMER: "Consumer",
+  IT_SERVICES: "IT Services", CAPITAL_GOODS: "Capital Goods",
+  FMCG: "FMCG", NBFC: "NBFC", INDIGO: "Aviation", FEDFINA: "NBFC",
+};
+const prettySector = s => SECTOR_LABELS[s]
+  || (s || "Other").replace(/_/g, " ").toLowerCase()
+       .replace(/\b\w/g, c => c.toUpperCase());
+
 const median = arr => {
   const a = arr.filter(v => v != null && isFinite(v) && v > 0).sort((x, y) => x - y);
   if (!a.length) return null;
@@ -165,9 +176,9 @@ export default function Sectors({ API, onOpen }) {
                      background: C.panel, padding: "16px 18px",
                      gridColumn: openSector === s.name ? "1 / -1" : undefined }}>
             <div onClick={() => setOpenSector(v => (v === s.name ? null : s.name))}
-              title={openSector === s.name ? "Collapse" : `Show all ${s.n} ${s.name} names`}
+              title={openSector === s.name ? "Collapse" : `Show all ${s.n} ${prettySector(s.name)} names`}
               style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 12, cursor: "pointer" }}>
-              <span style={{ ...serif, fontSize: 19, color: C.text }}>{s.name}</span>
+              <span style={{ ...serif, fontSize: 19, color: C.text }}>{prettySector(s.name)}</span>
               <span style={{ ...sans, fontSize: 11, color: openSector === s.name ? C.gold : C.faint }}>
                 {s.n} {s.n === 1 ? "company" : "companies"} {openSector === s.name ? "▾" : "▸"}
               </span>

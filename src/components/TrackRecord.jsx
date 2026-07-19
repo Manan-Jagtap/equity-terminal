@@ -121,6 +121,19 @@ export default function TrackRecord({ API, onOpen }) {
         this page is the model grading its own work in public.
       </div>
 
+      {/* DAT-05: sample-size honesty — until the ledger is long enough, the spread
+          is noise, not evidence of skill. Never let this page read as proven edge. */}
+      {data?.snapshot_days != null && data.snapshot_days < 180 && (
+        <div style={{ ...sans, fontSize: 11.5, lineHeight: 1.55, color: C.text200,
+          background: C.gold + "12", border: `1px solid ${C.gold}33`, borderRadius: 8,
+          padding: "10px 14px", marginBottom: 18 }}>
+          <b style={{ color: C.gold }}>Early sample — not yet statistically meaningful.</b>{" "}
+          The record spans only {data.snapshot_days} trading day{data.snapshot_days === 1 ? "" : "s"}; a few months
+          of data cannot distinguish skill from luck, and returns shown are gross of costs, taxes and slippage.
+          Treat this as a live experiment being run in the open, not a proven edge. Judge it over years, not weeks.
+        </div>
+      )}
+
       {/* Headline spread */}
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
         <div style={{ background: "rgba(16,14,10,0.6)", border: `1px solid ${C.line2}`, padding: "14px 20px", minWidth: 230 }}>

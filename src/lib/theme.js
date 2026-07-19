@@ -24,8 +24,10 @@ export const C = {
   text:    "#E8EEFA",
   text200: "#BFCCE4",
   dim:     "#7E8FB0",
-  faint:   "#526180",
-  vfaint:  "#39466B",
+  // UX-04 (WCAG 1.4.3): faint lightened #526180→#6E7FA3 so sub-labels, hints and
+  // the disclaimer copy clear 4.5:1 on the base canvas (#526180 measured 3.19:1).
+  faint:   "#6E7FA3",
+  vfaint:  "#39466B",   // decoration only — never body text (fails AA by design)
 
   // Primary accent — aurora mint-cyan (key name `gold` kept for stability)
   gold:    "#3EE6C1",

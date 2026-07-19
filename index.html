@@ -24,6 +24,20 @@
     /* Shared by components/Skeleton.jsx (inline styles can't declare keyframes). */
     @keyframes ev-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
     @keyframes spin { to { transform: rotate(360deg); } }
+    /* UX-02 (WCAG 2.4.7): a visible keyboard-focus ring. Components strip the
+       browser outline on inputs/selects for aesthetics; restore it for keyboard
+       users only (:focus-visible doesn't fire on mouse click). */
+    :focus-visible { outline: 2px solid #3EE6C1; outline-offset: 2px; border-radius: 2px; }
+    /* UX-07 (WCAG 2.3.3 + vestibular safety): honour "reduce motion" — freeze the
+       shimmer/spin/blink/fade animations and transitions for users who ask. */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
   </style>
   <body>
     <div id="root"></div>

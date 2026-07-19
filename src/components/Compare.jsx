@@ -113,7 +113,7 @@ export default function Compare({ API, companies = [], onOpen, seed = [] }) {
         <span style={{ ...sans, fontSize: 13, color: C.dim }}>up to {MAX} names, side by side</span>
       </div>
       <div style={{ ...sans, fontSize: 12, color: C.faint, marginBottom: 18 }}>
-        Model verdict, valuation, multiples, analyst consensus and forensic quality — best in each row highlighted in gold.
+        Model verdict, valuation, multiples, analyst consensus and forensic quality — best in each row highlighted.
       </div>
 
       {/* Picker */}

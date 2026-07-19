@@ -39,7 +39,7 @@ import AnalystTab from "./AnalystTab.jsx";
 function verdictTone(v) {
   if (v === "BUY" || v === "ACCUMULATE") return C.green;
   if (v === "HOLD") return C.gold;
-  if (v === "TRIM" || v === "AVOID") return C.red;
+  if (v === "REDUCE" || v === "TRIM" || v === "AVOID") return C.red;
   return C.dim; // NO DATA / LOW CONF
 }
 
@@ -241,7 +241,9 @@ const TABS = [
   { id:"ownership",  icon:PieChart,   label:"Ownership"     },
   { id:"news",       icon:Newspaper,  label:"News"          },
   { id:"docs",       icon:FolderOpen, label:"Docs"          },
-  { id:"thesis",     icon:Brain,      label:"AI Thesis"     },
+  // ARC-02: the "AI Thesis" tab is retired — the platform is AI-free, so it only
+  // ever showed a "being enabled for this account" placeholder that promised a
+  // feature we don't offer. Tab removed; the dead render branch is now unreachable.
   { id:"forensics",  icon:ShieldAlert,label:"Forensics"     },
   { id:"verdict",    icon:Shield,     label:"Verdict"       },
 ];
@@ -1865,7 +1867,7 @@ function DocsTab({ co, API, profile }) {
       <div style={{ marginBottom:24 }}>
         <div style={{ ...serif, fontSize:22, color:C.text }}>{co.name} — Document Library</div>
         <div style={{ ...sans, fontSize:12, color:C.dim, marginTop:4 }}>
-          Concall transcripts, annual reports, credit ratings and exchange filings — plus the earnings-call AI summary and management commentary. The independent research note lives in the AI Thesis tab.
+          Concall transcripts, annual reports, credit ratings and exchange filings, plus management commentary from recent earnings calls.
         </div>
       </div>
 
@@ -2079,7 +2081,15 @@ function AIThesisTab({ co, profile, insights, cd, price, API, onGoTab }) {
             <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "repeat(4,1fr)", gap:16 }}>
               <Stat l="Sales CAGR (5y)" v={sales5 || "—"} />
               <Stat l="Profit CAGR (5y)" v={profit5 || "—"} />
-              <Stat l="ROE" v={roeLast || pctS(sm.roe_ttm)} tone={C.green} />
+              {/* UX-03: a zero/negative ROE is missing or nonsensical data, not a
+                  real 0% — never render it as a green "0.0%" (kills first-impression
+                  trust on blue-chips whose ROE failed to ingest). Show "—" instead. */}
+              {(() => {
+                const roeNum = roeLast != null ? parseFloat(String(roeLast)) : sm?.roe_ttm;
+                const roeOK = Number.isFinite(roeNum) && roeNum > 0;
+                return <Stat l="ROE" v={roeOK ? (roeLast || pctS(sm.roe_ttm)) : "—"}
+                             tone={roeOK ? C.green : C.dim} />;
+              })()}
               <Stat l="Net Margin" v={pctS(sm.npm_ttm)} />
             </div>
           </Card>
@@ -3019,7 +3029,12 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
               : { l:"EV", v:evLive!=null ? "₹"+fmtCr(evLive) : "—" },
             { l:"P / E (TTM)",      v:sm?.pe!=null?multiple(sm.pe,2):multiple(rec.f.pe, 2)         },
             { l:"P / B",            v:sm?.pb!=null?multiple(sm.pb,2):multiple(rec.f.pb, 2)         },
-            { l:"ROE",              v:sm?.roe_ttm!=null?fmtPa(sm.roe_ttm):(rec.f.roe!=null?fmtPa(rec.f.roe*100):"—"), accent:C.green },
+            // UX-03: guard against a 0%/negative ROE rendering as a green "0.0%".
+            (() => {
+              const roeSrc = sm?.roe_ttm != null ? sm.roe_ttm : (rec.f.roe != null ? rec.f.roe * 100 : null);
+              const ok = roeSrc != null && roeSrc > 0;
+              return { l:"ROE", v: ok ? fmtPa(roeSrc) : "—", accent: ok ? C.green : undefined };
+            })(),
             { l:"ROA",              v:roaLive!=null?fmtPa(roaLive*100):(co.nbfc?.roa!=null?fmtPa(co.nbfc.roa*100):"—") },
             // Only show a dividend-yield chip for names that actually pay one —
             // a "—" chip on every non-payer just wastes a slot in the strip.
