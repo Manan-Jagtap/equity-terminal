@@ -7,9 +7,16 @@ import '@fontsource-variable/inter'
 import '@fontsource-variable/jetbrains-mono'
 import './design/tokens.css'
 import App from './App.jsx'
+// Redesign Phase 2b: overlay providers at the root — every screen (legacy or
+// rebuilt) can use ui/ Tooltip + useToast without local wrapping.
+import { TooltipProvider, ToastProvider } from './components/ui/index.js'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <App />
+    <TooltipProvider>
+      <ToastProvider>
+        <App />
+      </ToastProvider>
+    </TooltipProvider>
   </StrictMode>,
 )

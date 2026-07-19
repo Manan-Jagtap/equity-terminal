@@ -15,7 +15,7 @@ import {
   AreaChart, Area, YAxis, Tooltip, ResponsiveContainer, ReferenceLine,
   PieChart, Pie, Cell,
 } from "recharts";
-import { C, mono, sans, serif, gridBg } from "../lib/theme.js";
+import { C, mono, sans, serif, gridBg, series } from "../lib/theme.js";
 import { useIsMobile } from "../lib/useResponsive.js";
 import { selStyle } from "../lib/listControls.jsx";
 
@@ -49,7 +49,7 @@ function FundMark({ name, size = 46 }) {
   );
 }
 
-const DONUT = ["#3EE6C1", "#2BC9A8", "#22D3EE", "#60A5FA", "#818CF8", "#A78BFA", "#C08BD8", "#4ADE80", "#FACC15", "#FB923C"];
+const DONUT = series;
 
 /* ════════════════════════════════════════════════════════════════
    Root: owns the catalog + which fund (if any) is open.

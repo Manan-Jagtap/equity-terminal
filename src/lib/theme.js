@@ -1,73 +1,86 @@
-/* Design tokens — EquityVerdict "Aurora" theme.
+/* Legacy theme adapter — Redesign Phase 2b.
 
-   Deep-space indigo base with a luminous mint-cyan accent: dark enough for
-   long research sessions, cool and alive instead of flat black. Signals are
-   unmistakable (spring green / coral), depth comes from aurora gradients
-   rather than borders, and every sector carries its own accent hue on the
-   company page (see sectorAccent).
+   The "Aurora" palette is retired. This file keeps its STABLE SEMANTIC KEYS
+   (that was always the contract: `gold` = primary accent) but every value now
+   derives from the redesign tokens (src/design/tokens.css|js): warm obsidian,
+   one amber accent, muted verdict-ladder signals, warm hairlines.
 
-   Single source of truth: components must read from here, never hard-code.
-   NOTE: token KEYS are semantic and stable — `gold` = primary accent
-   (historical name, kept so 25 components re-skin without edits). */
+   New components must import src/design/tokens.js + components/ui directly;
+   THIS adapter exists so the ~25 legacy screens re-skin without edits while
+   they await structural rebuild. Do not add new keys here.               */
 
 export const C = {
-  // Abyss scale (deep space navy)
-  bg:      "#060A13",   // abyss-950
-  bg900:   "#0A101E",   // abyss-900
-  bg800:   "#101A2C",   // abyss-800
-  bg700:   "#16223A",   // abyss-700
-  bg600:   "#1E2E4E",   // abyss-600
-  bg500:   "#293B63",   // abyss-500
-  bg400:   "#3E5788",   // abyss-400
+  // Surface scale (warm obsidian, progressively raised)
+  bg:      "#0a0907",   // = --ev-bg
+  bg900:   "#12100d",   // = --ev-bg-raise
+  bg800:   "#1a1713",   // = --ev-bg-over
+  bg700:   "#241f19",
+  bg600:   "#2e2820",
+  bg500:   "#3b3329",
+  bg400:   "#4f4536",
 
-  // Text scale (cool porcelain)
-  text:    "#E8EEFA",
-  text200: "#BFCCE4",
-  dim:     "#7E8FB0",
-  // UX-04 (WCAG 1.4.3): faint lightened #526180→#6E7FA3 so sub-labels, hints and
-  // the disclaimer copy clear 4.5:1 on the base canvas (#526180 measured 3.19:1).
-  faint:   "#6E7FA3",
-  vfaint:  "#39466B",   // decoration only — never body text (fails AA by design)
+  // Text scale (warm off-white)
+  text:    "#f2ede4",   // = --ev-text        (15.9:1)
+  text200: "#b7ad9d",   // = --ev-text-2      (8.3:1)
+  dim:     "#9a9080",   //                     (~6.3:1)
+  // UX-04 (WCAG 1.4.3) still holds: faint stays ≥4.5:1 on the base canvas.
+  faint:   "#7d7566",   // = --ev-text-3      (4.6:1 — AA floor)
+  vfaint:  "#453e33",   // decoration only — never body text (fails AA by design)
 
-  // Primary accent — aurora mint-cyan (key name `gold` kept for stability)
-  gold:    "#3EE6C1",
-  gold500: "#2BC9A8",
-  gold600: "#1FA085",
-  gold700: "#177862",
-  goldDim: "#1FA085",
+  // Primary accent — warm amber-gold (the key finally means what it says)
+  gold:    "#e8b45a",   // = --ev-accent
+  gold500: "#d9a24a",
+  gold600: "#b8863a",
+  gold700: "#8a6429",
+  goldDim: "#b8863a",
 
-  // Signal colors
-  green:   "#4ADE80",   // spring green — unambiguous positive
-  green500:"#22B563",
-  red:     "#FB7185",   // coral — negative without alarm-red harshness
-  red500:  "#E5484D",
-  blue:    "#60A5FA",   // info (announcements, FCF lines)
+  // Signal colors — muted verdict ladder, never neon
+  green:   "#57c48a",   // = --ev-buy
+  green500:"#3da46e",
+  red:     "#d97b6c",   // = --ev-avoid
+  red500:  "#c25f50",
+  blue:    "#85a8c8",   // info (announcements, FCF lines) — desaturated steel
 
   // Panel surfaces
-  panel:   "#0A101E",   // = bg900
-  panel2:  "#101A2C",   // = bg800
+  panel:   "#12100d",   // = bg900
+  panel2:  "#1a1713",   // = bg800
 
-  // Borders — cool hairlines
-  line:    "rgba(147,171,255,0.09)",
-  line2:   "rgba(147,171,255,0.16)",
+  // Borders — warm hairlines
+  line:    "rgba(242,237,228,0.08)",   // = --ev-line
+  line2:   "rgba(242,237,228,0.14)",   // = --ev-line-2
 };
 
-// Sector accent hues — each stock page carries its industry's color.
-// Muted-luminous family chosen to sit on the abyss base at the same perceived
-// brightness as the brand accent, so no sector feels louder than another.
+/* Categorical ramp for multi-series charts/chips — muted, warm-compatible,
+   all ~equal perceived brightness on the obsidian base. Order matters:
+   accent first, then maximally-separated hues. */
+export const series = [
+  "#e8b45a",  // amber (accent)
+  "#57c48a",  // green
+  "#85a8c8",  // steel blue
+  "#9d8fd4",  // lavender
+  "#d99a5b",  // amber-orange
+  "#5fb3b3",  // teal
+  "#b98fc9",  // orchid
+  "#c9a86a",  // gold
+  "#c98a94",  // rose
+  "#a8a29a",  // warm steel
+];
+
+// Sector accent hues — kept per-sector for identity, but desaturated into the
+// warm family so no sector shouts over the single amber brand accent.
 const SECTOR_ACCENTS = [
-  [/financial|bank|nbfc|insurance/, "#818CF8"],   // indigo — institutions
-  [/tech|information/,              "#22D3EE"],   // cyan — software
-  [/pharma|health/,                 "#4ADE80"],   // green — life
-  [/auto/,                          "#FB923C"],   // orange — motion
-  [/fmcg|consumer/,                 "#D8919F"],   // muted rose — retail
-  [/energy|oil|power|gas|utilit/,   "#FACC15"],   // amber — energy
-  [/metal|mining/,                  "#94A3B8"],   // steel — heavy industry
-  [/chem/,                          "#A78BFA"],   // violet — chemistry
+  [/financial|bank|nbfc|insurance/, "#9d8fd4"],   // muted lavender — institutions
+  [/tech|information/,              "#5fb3b3"],   // muted teal — software
+  [/pharma|health/,                 "#57c48a"],   // buy green — life
+  [/auto/,                          "#d99a5b"],   // amber-orange — motion
+  [/fmcg|consumer/,                 "#c98a94"],   // muted rose — retail
+  [/energy|oil|power|gas|utilit/,   "#c9a86a"],   // gold — energy
+  [/metal|mining/,                  "#a8a29a"],   // warm steel — heavy industry
+  [/chem/,                          "#a78bda"],   // muted violet — chemistry
   [/realty|real estate|construction|cement|capital goods|engineering|industrial|defence/,
-                                    "#D08B7E"],   // muted terracotta — built world
-  [/telecom/,                       "#38BDF8"],   // sky — networks
-  [/textile|media|service/,         "#C08BD8"],   // muted orchid — culture/services
+                                    "#c08573"],   // terracotta — built world
+  [/telecom/,                       "#85a8c8"],   // steel blue — networks
+  [/textile|media|service/,         "#b98fc9"],   // muted orchid — culture/services
 ];
 export function sectorAccent(sector) {
   const s = (sector || "").toLowerCase();
@@ -75,24 +88,23 @@ export function sectorAccent(sector) {
   return C.gold;
 }
 
-// Depth helpers
+// Depth helpers — hairlines over fills; whispers, not washes.
 export const gridBg = {
   backgroundImage: `
-    linear-gradient(rgba(147,171,255,.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(147,171,255,.03) 1px, transparent 1px)`,
+    linear-gradient(rgba(242,237,228,.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(242,237,228,.02) 1px, transparent 1px)`,
   backgroundSize: "56px 56px",
 };
 
-// The aurora wash behind the whole app — two soft radial glows (cyan top-right,
-// indigo bottom-left) that give the abyss base depth without distracting.
+// The wash behind the whole app: one faint warm glow top-right (candlelight,
+// not aurora) + an even fainter deep-umber lift bottom-left.
 export const auroraBg = {
   backgroundImage: `
-    radial-gradient(1100px 700px at 85% -10%, rgba(62,230,193,0.07), transparent 60%),
-    radial-gradient(900px 650px at -10% 108%, rgba(99,102,241,0.09), transparent 55%),
-    radial-gradient(700px 500px at 50% 120%, rgba(56,189,248,0.05), transparent 60%)`,
+    radial-gradient(1100px 700px at 85% -10%, rgba(232,180,90,0.05), transparent 60%),
+    radial-gradient(900px 650px at -10% 108%, rgba(120,90,50,0.05), transparent 55%)`,
   backgroundAttachment: "fixed",
 };
 
-export const mono  = { fontFamily: "'JetBrains Mono',monospace", fontVariantNumeric: "tabular-nums" };
-export const serif = { fontFamily: "'Space Grotesk','Inter',-apple-system,sans-serif", letterSpacing: "-0.01em" };
-export const sans  = { fontFamily: "'Inter',-apple-system,system-ui,sans-serif" };
+export const mono  = { fontFamily: "'JetBrains Mono Variable','JetBrains Mono',ui-monospace,monospace", fontVariantNumeric: "tabular-nums" };
+export const serif = { fontFamily: "'Inter Variable','Inter',-apple-system,sans-serif", letterSpacing: "-0.011em" };
+export const sans  = { fontFamily: "'Inter Variable','Inter',-apple-system,system-ui,sans-serif" };

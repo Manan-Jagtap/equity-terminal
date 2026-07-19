@@ -139,14 +139,14 @@ export function atr(rows, period = 14) {
 /* Registry the chart UI drives — kind: "overlay" (price pane) or "pane" (own sub-pane). */
 export const INDICATORS = {
   sma20:  { label: "SMA 20",  kind: "overlay", color: "#F59E0B", fn: r => sma(r, 20) },
-  sma50:  { label: "SMA 50",  kind: "overlay", color: "#818CF8", fn: r => sma(r, 50) },
+  sma50:  { label: "SMA 50",  kind: "overlay", color: "#9d8fd4", fn: r => sma(r, 50) },
   sma200: { label: "SMA 200", kind: "overlay", color: "#EF5350", fn: r => sma(r, 200) },
-  ema20:  { label: "EMA 20",  kind: "overlay", color: "#22D3EE", fn: r => ema(r, 20) },
+  ema20:  { label: "EMA 20",  kind: "overlay", color: "#5fb3b3", fn: r => ema(r, 20) },
   ema50:  { label: "EMA 50",  kind: "overlay", color: "#A78BFA", fn: r => ema(r, 50) },
   bollinger: { label: "Bollinger 20,2", kind: "overlay-band", color: "#94A3B8", fn: r => bollinger(r, 20, 2) },
   vwap:   { label: "VWAP",    kind: "overlay", color: "#10B981", fn: r => vwap(r) },
   rsi:    { label: "RSI 14",  kind: "pane", color: "#F59E0B", fn: r => rsi(r, 14) },
-  macd:   { label: "MACD 12,26,9", kind: "pane-macd", color: "#22D3EE", fn: r => macd(r) },
-  stoch:  { label: "Stochastic 14,3", kind: "pane-stoch", color: "#818CF8", fn: r => stochastic(r) },
+  macd:   { label: "MACD 12,26,9", kind: "pane-macd", color: "#5fb3b3", fn: r => macd(r) },
+  stoch:  { label: "Stochastic 14,3", kind: "pane-stoch", color: "#9d8fd4", fn: r => stochastic(r) },
   atr:    { label: "ATR 14",  kind: "pane", color: "#A78BFA", fn: r => atr(r, 14) },
 };

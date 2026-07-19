@@ -10,9 +10,9 @@ import { C, sans, mono } from "../lib/theme.js";
 
 const GROUPS = [
   ["guidance", "Guidance & outlook", C.gold],
-  ["margins", "Margins & costs", "#60A5FA"],
-  ["capex", "Capex & capacity", "#4ADE80"],
-  ["demand", "Demand & orders", "#22D3EE"],
+  ["margins", "Margins & costs", "#85a8c8"],
+  ["capex", "Capex & capacity", "#57c48a"],
+  ["demand", "Demand & orders", "#5fb3b3"],
   ["risks", "Risks & watch-items", C.red],
 ];
 
