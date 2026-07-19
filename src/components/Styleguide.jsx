@@ -2,7 +2,26 @@
    Every token, type step, color, and (as Phase 1 lands) component state is
    inspectable here. If a UI decision isn't visible on this page, it isn't a
    system decision. Reached via #/styleguide (real route in Phase 0b). */
-import { color, font, space, radius, verdictColor, fmtNum } from "../design/tokens.js";
+import { useState } from "react";
+import { motion, useReducedMotion } from "motion/react";
+import { color, font, space, radius, chart, zIndex, verdictColor, fmtNum } from "../design/tokens.js";
+import { pick } from "../design/motion.js";
+import {
+  Button, Input, Badge, VerdictBadge, Card, Tabs, Tooltip, TooltipProvider,
+  Modal, ToastProvider, useToast, Skeleton, SkeletonText, Table, StatTile,
+} from "./ui/index.js";
+
+/* Toast needs the provider above it — tiny demo child so the hook is legal. */
+function ToastDemo() {
+  const toast = useToast();
+  return (
+    <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+      <Button onClick={() => toast("Watchlist updated")}>Info toast</Button>
+      <Button onClick={() => toast("Scenario saved", { tone: "success" })}>Success toast</Button>
+      <Button variant="danger" onClick={() => toast("Export failed — retry", { tone: "error" })}>Error toast</Button>
+    </div>
+  );
+}
 
 const Section = ({ title, children }) => (
   <section style={{ marginBottom: 48 }}>
@@ -22,12 +41,16 @@ const Swatch = ({ name, value, ink }) => (
 );
 
 export default function Styleguide() {
+  const reduce = useReducedMotion();
+  const v = pick(reduce);
+  const [replay, setReplay] = useState(0);
   const typeRamp = [
     ["display", 34, 600], ["3xl", 28, 600], ["2xl", 23, 600], ["xl", 19, 500],
     ["lg", 16, 500], ["md (body)", 13, 400], ["sm", 12, 400], ["xs", 11, 400],
   ];
   const verdicts = ["BUY", "ACCUMULATE", "HOLD", "REDUCE", "AVOID", "LOW CONF"];
   return (
+    <TooltipProvider><ToastProvider>
     <div className="ev-grain" style={{ fontFamily: font.ui, color: color.text,
       background: color.bg, minHeight: "100vh", padding: "48px 32px", position: "relative" }}>
       <div style={{ maxWidth: 880, margin: "0 auto", position: "relative", zIndex: 1 }}>
@@ -107,15 +130,195 @@ export default function Styleguide() {
           </p>
         </Section>
 
-        <Section title="Phase 1 components will register here">
+        <Section title="Motion — presets (transforms/opacity only · reduced-motion aware)">
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+            <button onClick={() => setReplay(r => r + 1)} style={{ fontFamily: font.ui,
+              fontSize: 12, fontWeight: 600, background: "transparent", color: color.accent,
+              border: `1px solid ${color.accent}55`, borderRadius: radius.md,
+              padding: "7px 14px", cursor: "pointer" }}>Replay ↻</button>
+            <span style={{ fontSize: 12, color: color.text3 }}>
+              prefers-reduced-motion:{" "}
+              <strong style={{ color: reduce ? color.reduce : color.buy }}>
+                {reduce ? "ON — instant" : "off"}</strong>
+            </span>
+          </div>
+          <motion.div key={replay} variants={v.stagger} initial="hidden" animate="show"
+            style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            {["fade", "slideUp", "scaleIn", "stagger", "hoverLift"].map(name => (
+              <motion.div key={name} variants={v.staggerItem}
+                whileHover={reduce ? undefined : { y: -1 }}
+                style={{ background: color.bgRaise, border: `1px solid ${color.line}`,
+                  borderRadius: radius.md, padding: "12px 16px", fontFamily: font.mono,
+                  fontSize: 12, color: color.text2, cursor: "default" }}>
+                {name}</motion.div>
+            ))}
+          </motion.div>
+          <p style={{ fontSize: 12, color: color.text3, marginTop: 12, lineHeight: 1.55 }}>
+            fade · slideUp (spring) · scaleIn (spring) · stagger 0.03s/item · hoverLift ≤2px.
+            Consumers call <code style={{ fontFamily: font.mono, color: color.text2 }}>pick(useReducedMotion())</code> —
+            the same hidden→show→exit graph collapses to opacity-only instant under reduced-motion.
+          </p>
+        </Section>
+
+        <Section title="Data-viz palette (chart chrome from the system; series stay on-brand)">
+          <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 14 }}>
+            {chart.series.map((c, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ width: 22, height: 22, borderRadius: 4, background: c,
+                  boxShadow: `0 0 0 1px ${color.line2}` }} />
+                <code style={{ fontFamily: font.mono, fontSize: 11, color: color.text3 }}>series[{i}]</code>
+              </div>
+            ))}
+          </div>
+          <div style={{ display: "flex", gap: 24, fontFamily: font.mono, fontSize: 12 }}>
+            <span style={{ color: chart.up }}>▲ up = buy</span>
+            <span style={{ color: chart.down }}>▼ down = avoid</span>
+            <span style={{ color: color.text3 }}>grid · axis = tertiary text</span>
+          </div>
+        </Section>
+
+        <Section title="Stacking order (z-index scale — overlays never guess)">
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            {Object.entries(zIndex).filter(([k]) => k !== "base" && k !== "grain").map(([k, z]) => (
+              <span key={k} style={{ fontFamily: font.mono, fontSize: 11, color: color.text3,
+                border: `1px solid ${color.line}`, borderRadius: radius.sm, padding: "3px 9px" }}>
+                {k} <span style={{ color: color.text2 }}>{z}</span></span>
+            ))}
+          </div>
+        </Section>
+
+        <Section title="Phase 1 · Button — variants × sizes × states">
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 12 }}>
+            <Button variant="primary">Primary</Button>
+            <Button variant="quiet">Quiet</Button>
+            <Button variant="ghost">Ghost</Button>
+            <Button variant="danger">Danger</Button>
+          </div>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
+            <Button variant="primary" size="sm">Small</Button>
+            <Button variant="quiet" size="sm">Small quiet</Button>
+            <Button variant="primary" disabled>Disabled</Button>
+            <Button variant="primary" loading>Loading</Button>
+            <Button variant="quiet" loading>Loading</Button>
+          </div>
+        </Section>
+
+        <Section title="Phase 1 · Input — default / affix+mono / error / disabled">
+          <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", maxWidth: 760 }}>
+            <Input label="Search company" placeholder="TCS, Infosys…" hint="⌘K works anywhere" />
+            <Input label="Growth rate" mono defaultValue="12.0" suffix="%" prefix="g" />
+            <Input label="Email" defaultValue="not-an-email" error="Enter a valid email address" />
+            <Input label="Locked field" placeholder="Managed by admin" disabled />
+          </div>
+        </Section>
+
+        <Section title="Phase 1 · Badge + VerdictBadge (glyph — never color alone)">
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 12 }}>
+            <Badge>NEUTRAL</Badge>
+            <Badge tone="accent">LIVE</Badge>
+            <Badge tone="accent" fill>F&amp;O</Badge>
+            <Badge tone="up" fill>+3.9%</Badge>
+            <Badge tone="down" fill>−2.1%</Badge>
+          </div>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            {["BUY", "ACCUMULATE", "HOLD", "REDUCE", "AVOID", "LOW CONF"].map(v => (
+              <VerdictBadge key={v} verdict={v} />
+            ))}
+          </div>
+        </Section>
+
+        <Section title="Phase 1 · Card / StatTile">
+          <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+            <Card style={{ width: 250 }}>
+              <div style={{ fontSize: 13, color: color.text2, marginBottom: 6 }}>Static card</div>
+              <div style={{ fontSize: 12, color: color.text3 }}>bg-raise · elev-1 · r-lg</div>
+            </Card>
+            <Card interactive style={{ width: 250 }} onClick={() => {}}>
+              <div style={{ fontSize: 13, color: color.text2, marginBottom: 6 }}>Interactive card</div>
+              <div style={{ fontSize: 12, color: color.text3 }}>hover: elev-2 + 1px lift</div>
+            </Card>
+          </div>
+          <div style={{ display: "flex", gap: 40, flexWrap: "wrap", marginTop: 20 }}>
+            <StatTile label="Nifty 50" value={fmtNum.inr(24837.2, 1)} delta={0.0112} />
+            <StatTile label="Portfolio" value={fmtNum.cr(4.21)} delta={-0.0087} />
+            <StatTile label="Coverage" value="1,001" delta={null} />
+          </div>
+        </Section>
+
+        <Section title="Phase 1 · Tabs (Radix — arrow keys, ARIA)">
+          <Tabs
+            tabs={[
+              { id: "ov", label: "Overview", content: <p style={{ fontSize: 13, color: color.text2, margin: 0 }}>Underline style; accent marks active.</p> },
+              { id: "fin", label: "Financials", content: <p style={{ fontSize: 13, color: color.text2, margin: 0 }}>Content swaps without height jumps.</p> },
+              { id: "val", label: "Valuation", content: <p style={{ fontSize: 13, color: color.text2, margin: 0 }}>Third pane.</p> },
+            ]}
+          />
+        </Section>
+
+        <Section title="Phase 1 · Tooltip / Modal / Toast (overlay stack in action)">
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 14 }}>
+            <Tooltip content="Margin of safety = (fair value − price) / fair value">
+              <Button variant="ghost">Hover: what is MoS?</Button>
+            </Tooltip>
+            <Modal
+              title="Save scenario?"
+              description="Your DCF overrides become a shareable link. Nothing about the base model changes."
+              trigger={<Button variant="primary">Open modal</Button>}
+            >
+              <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
+                <Button variant="ghost">Cancel</Button>
+                <Button variant="primary">Save</Button>
+              </div>
+            </Modal>
+          </div>
+          <ToastDemo />
+        </Section>
+
+        <Section title="Phase 1 · Skeleton (reduced-motion: shimmer stops, block stays)">
+          <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
+            <div style={{ width: 220 }}><SkeletonText lines={3} /></div>
+            <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+              <Skeleton width={36} height={36} radius={999} />
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <Skeleton width={120} />
+                <Skeleton width={80} height={10} />
+              </div>
+            </div>
+          </div>
+        </Section>
+
+        <Section title="Phase 1 · Table (numbers right-aligned tabular mono)">
+          <Table
+            sticky
+            columns={[
+              { key: "name", label: "Company" },
+              { key: "verdict", label: "Verdict" },
+              { key: "price", label: "Price", num: true },
+              { key: "mos", label: "MoS", num: true },
+            ]}
+            rows={[
+              { id: 1, name: "Tata Consultancy Services", verdict: "HOLD", price: 3418.6, mos: 0.04 },
+              { id: 2, name: "HDFC Bank", verdict: "ACCUMULATE", price: 1712.4, mos: 0.18 },
+              { id: 3, name: "Vedanta", verdict: "REDUCE", price: 452.1, mos: -0.21 },
+            ]}
+            renderCell={(row, c) =>
+              c.key === "verdict" ? <VerdictBadge verdict={row.verdict} fill={false} />
+              : c.key === "price" ? fmtNum.inr(row.price, 1)
+              : c.key === "mos" ? fmtNum.signedPct(row.mos)
+              : row[c.key]}
+            onRowClick={() => {}}
+          />
+        </Section>
+
+        <Section title="Phase 2 composites will register here">
           <p style={{ fontSize: 12, color: color.text3 }}>
-            Button · Input · Badge · Card · Table · Tabs · Tooltip · Modal · Toast ·
-            Skeleton → VerdictBadge · AlphaScore · ValuationPanel · FinancialsTable ·
-            PriceChart · CompanyRow · StatTile · CommandPalette — each with every state
-            and a reduced-motion variant, or it doesn't ship.
+            AlphaScore · ValuationPanel · FinancialsTable · PriceChart · CompanyRow ·
+            CommandPalette — each with every state and a reduced-motion variant,
+            or it doesn't ship.
           </p>
         </Section>
       </div>
     </div>
+    </ToastProvider></TooltipProvider>
   );
 }

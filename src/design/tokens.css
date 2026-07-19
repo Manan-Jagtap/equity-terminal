@@ -66,6 +66,19 @@
 
   /* ── Focus ring (glowing accent — a signature motif) ── */
   --ev-focus: 0 0 0 2px var(--ev-bg), 0 0 0 4px var(--ev-accent);
+
+  /* ── Stacking order: one scale, so overlays never guess a z-index ── */
+  --ev-z-base: 0; --ev-z-grain: 0; --ev-z-content: 1;
+  --ev-z-sticky: 100; --ev-z-header: 200; --ev-z-dropdown: 300;
+  --ev-z-overlay: 400; --ev-z-modal: 500; --ev-z-toast: 600; --ev-z-tooltip: 700;
+
+  /* ── Data-viz: chart chrome derives from the system; series stay on-brand
+        (never import TradingView cyan/red — it fights the warm canvas) ── */
+  --ev-chart-grid: rgba(242, 237, 228, 0.06);
+  --ev-chart-axis: var(--ev-text-3);
+  --ev-chart-up:   var(--ev-buy);
+  --ev-chart-down: var(--ev-avoid);
+  --ev-chart-area: rgba(232, 180, 90, 0.12);   /* accent fill @ ~12% under lines */
 }
 
 /* Numbers are the hero: every numeric cell opts in to tabular alignment. */

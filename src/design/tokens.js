@@ -28,6 +28,24 @@ export const font = {
 export const space = { s1: 4, s2: 8, s3: 12, s4: 16, s5: 24, s6: 32, s7: 48, s8: 64 };
 export const radius = { sm: 6, md: 10, lg: 14, pill: 999 };
 
+/* Stacking order — mirror of --ev-z-* (overlays reference this, never a literal) */
+export const zIndex = {
+  base: 0, grain: 0, content: 1, sticky: 100, header: 200,
+  dropdown: 300, overlay: 400, modal: 500, toast: 600, tooltip: 700,
+};
+
+/* Data-viz palette — chart chrome from the system, series stay on-brand.
+   Recharts/props read these; keep in lockstep with --ev-chart-* in tokens.css. */
+export const chart = {
+  grid: "rgba(242,237,228,0.06)",
+  axis: color.text3,
+  up: color.buy, down: color.avoid,
+  area: "rgba(232,180,90,0.12)",
+  volumeOpacity: 0.4,
+  /* categorical ramp for multi-series (≤6; accent-led, verdict-spread, never neon) */
+  series: [color.accent, color.buy, color.reduce, color.text2, color.avoid, color.hold],
+};
+
 /* Motion: tight duration scale + shared springs (Framer/Motion configs).
    Rule: transforms/opacity only; honor prefers-reduced-motion at call sites
    via the useReducedMotion hook — these are the ONLY curves allowed. */
