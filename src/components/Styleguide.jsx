@@ -9,7 +9,12 @@ import { pick } from "../design/motion.js";
 import {
   Button, Input, Badge, VerdictBadge, Card, Tabs, Tooltip, TooltipProvider,
   Modal, ToastProvider, useToast, Skeleton, SkeletonText, Table, StatTile,
+  AlphaScore, ValuationPanel, FinancialsTable, Sparkline, CompanyRow,
 } from "./ui/index.js";
+
+/* deterministic demo series (no Math.random — stable screenshots/diffs) */
+const SPARK_UP = [412, 418, 409, 425, 431, 428, 440, 452, 447, 461];
+const SPARK_DOWN = [512, 505, 511, 498, 488, 492, 471, 465, 470, 452];
 
 /* Toast needs the provider above it — tiny demo child so the hook is legal. */
 function ToastDemo() {
@@ -310,11 +315,70 @@ export default function Styleguide() {
           />
         </Section>
 
-        <Section title="Phase 2 composites will register here">
+        <Section title="Phase 2 · AlphaScore (number-first; band rides the verdict ladder)">
+          <div style={{ display: "flex", gap: 40, flexWrap: "wrap" }}>
+            <AlphaScore score={82} />
+            <AlphaScore score={58} />
+            <AlphaScore score={43} />
+            <AlphaScore score={17} />
+            <AlphaScore score={null} />
+          </div>
+        </Section>
+
+        <Section title="Phase 2 · ValuationPanel (verdict story + bear/base/bull rail)">
+          <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", maxWidth: 880 }}>
+            <Card>
+              <ValuationPanel
+                price={1712.4} fair={2020} verdict="ACCUMULATE" confidence="HIGH" mos={0.18}
+                band={{ bear: 1490, base: 2020, bull: 2340 }}
+              />
+            </Card>
+            <Card>
+              <ValuationPanel
+                price={452.1} fair={374} verdict="LOW CONF" confidence="LOW" mos={-0.21}
+                band={null}
+                footnote="Band withheld — inputs failed the integrity gate. No number beats a wrong number."
+              />
+            </Card>
+          </div>
+        </Section>
+
+        <Section title="Phase 2 · FinancialsTable (emphasis rows · negatives in red)">
+          <FinancialsTable
+            years={["FY23", "FY24", "FY25"]}
+            rows={[
+              { label: "Revenue", values: [225458, 240893, 255324], emph: true },
+              { label: "EBIT", values: [54873, 58312, 61505] },
+              { label: "EBIT margin", values: [0.243, 0.242, 0.241], format: "pct" },
+              { label: "Other income", values: [4212, -318, 3894] },
+              { label: "PAT", values: [42303, 45908, 48553], emph: true },
+              { label: "P/E (year-end)", values: [27.4, 29.1, 26.2], format: "x" },
+            ]}
+          />
+        </Section>
+
+        <Section title="Phase 2 · CompanyRow + Sparkline (screener/watchlist row)">
+          <div style={{ display: "flex", gap: 24, alignItems: "center", marginBottom: 14 }}>
+            <Sparkline data={SPARK_UP} width={140} height={40} ariaLabel="Ten-day trend, rising" />
+            <Sparkline data={SPARK_DOWN} width={140} height={40} ariaLabel="Ten-day trend, falling" />
+            <code style={{ fontFamily: font.mono, fontSize: 11, color: color.text3 }}>
+              pure SVG · up=buy · down=avoid</code>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 2, maxWidth: 720 }}>
+            <CompanyRow ticker="HDFCBANK" name="HDFC Bank" sector="BANK"
+              price={1712.4} delta={0.0112} verdict="ACCUMULATE" spark={SPARK_UP} onOpen={() => {}} />
+            <CompanyRow ticker="VEDL" name="Vedanta" sector="METALS"
+              price={452.1} delta={-0.0187} verdict="REDUCE" spark={SPARK_DOWN} onOpen={() => {}} />
+            <CompanyRow ticker="TCS" name="Tata Consultancy Services" sector="IT"
+              price={3418.6} delta={0.0039} verdict="HOLD" spark={SPARK_UP.map(v => 3300 + v / 4)} onOpen={() => {}} />
+          </div>
+        </Section>
+
+        <Section title="Later composites">
           <p style={{ fontSize: 12, color: color.text3 }}>
-            AlphaScore · ValuationPanel · FinancialsTable · PriceChart · CompanyRow ·
-            CommandPalette — each with every state and a reduced-motion variant,
-            or it doesn't ship.
+            CommandPalette (⌘K nav spine) and full PriceChart theming land with the
+            screens pass — each with every state and a reduced-motion variant, or it
+            doesn't ship.
           </p>
         </Section>
       </div>

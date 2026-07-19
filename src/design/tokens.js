@@ -61,10 +61,17 @@ export const motionTokens = {
    ₹ crore for company-scale sums, ₹ absolute for per-share, thousands via
    en-IN, explicit +/− signs on deltas, one decimal on percents. */
 export const fmtNum = {
-  inr: (v, d = 0) => v == null || isNaN(v) ? "—" :
-    "₹" + Number(v).toLocaleString("en-IN", { maximumFractionDigits: d }),
-  cr: (v) => v == null || isNaN(v) ? "—" :
-    "₹" + Number(v).toLocaleString("en-IN", { maximumFractionDigits: 0 }) + " cr",
+  /* negatives use accounting parentheses: (₹318 cr), never "₹-318" */
+  inr: (v, d = 0) => {
+    if (v == null || isNaN(v)) return "—";
+    const s = "₹" + Math.abs(Number(v)).toLocaleString("en-IN", { maximumFractionDigits: d });
+    return v < 0 ? `(${s})` : s;
+  },
+  cr: (v) => {
+    if (v == null || isNaN(v)) return "—";
+    const s = "₹" + Math.abs(Number(v)).toLocaleString("en-IN", { maximumFractionDigits: 0 }) + " cr";
+    return v < 0 ? `(${s})` : s;
+  },
   pct: (v, d = 1) => v == null || isNaN(v) ? "—" : (v * 100).toFixed(d) + "%",
   signedPct: (v, d = 1) => v == null || isNaN(v) ? "—" :
     (v >= 0 ? "+" : "−") + Math.abs(v * 100).toFixed(d) + "%",

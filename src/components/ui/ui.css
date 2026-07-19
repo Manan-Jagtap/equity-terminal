@@ -223,6 +223,69 @@
 .evc-table[data-hover="true"] tbody tr:hover { background: var(--ev-bg-raise); }
 .evc-table[data-hover="true"] tbody tr { cursor: pointer; }
 
+/* ── AlphaScore ─────────────────────────────────────────────────────────── */
+.evc-alpha { display: flex; flex-direction: column; gap: 6px; min-width: 132px; }
+.evc-alpha-row { display: flex; align-items: baseline; gap: 8px; }
+.evc-alpha-value {
+  font-family: var(--ev-font-mono); font-variant-numeric: tabular-nums;
+  font-size: var(--ev-fs-2xl); font-weight: 500; color: var(--ev-text); line-height: 1;
+}
+.evc-alpha-band { font-size: var(--ev-fs-xs); font-weight: 600; letter-spacing: var(--ev-track-label); text-transform: uppercase; }
+.evc-alpha-track { display: flex; gap: 3px; }
+.evc-alpha-seg {
+  flex: 1; height: 4px; border-radius: 2px; background: var(--ev-line-2);
+  transition: background var(--ev-t-base) var(--ev-ease);
+}
+.evc-alpha-seg[data-on="true"] { background: var(--evc-alpha-c, var(--ev-accent)); }
+
+/* ── ValuationPanel ─────────────────────────────────────────────────────── */
+.evc-vpanel { display: flex; flex-direction: column; gap: var(--ev-s4); }
+.evc-vpanel-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.evc-vpanel-stats { display: flex; gap: var(--ev-s6); flex-wrap: wrap; }
+.evc-vpanel-foot { font-size: var(--ev-fs-xs); color: var(--ev-text-3); line-height: 1.5; }
+
+/* range rail: bear→bull hairline band, base + price markers */
+.evc-rail { position: relative; height: 44px; }
+.evc-rail-track {
+  position: absolute; top: 8px; left: 0; right: 0; height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--ev-avoid) 0%, var(--ev-hold) 50%, var(--ev-buy) 100%);
+  opacity: 0.35;
+}
+.evc-rail-mark { position: absolute; top: 3px; width: 2px; height: 14px; border-radius: 1px; transform: translateX(-1px); }
+.evc-rail-mark[data-kind="base"]  { background: var(--ev-accent); }
+.evc-rail-mark[data-kind="price"] { background: var(--ev-text); }
+.evc-rail-lab {
+  position: absolute; top: 22px; transform: translateX(-50%);
+  font-family: var(--ev-font-mono); font-variant-numeric: tabular-nums;
+  font-size: var(--ev-fs-2xs); color: var(--ev-text-3); white-space: nowrap;
+}
+.evc-rail-lab[data-kind="base"] { color: var(--ev-accent); }
+.evc-rail-lab[data-kind="price"] { color: var(--ev-text-2); }
+
+/* ── FinancialsTable emphasis rows (Revenue / PAT etc.) ─────────────────── */
+.evc-table tr[data-emph="true"] td { color: var(--ev-text); font-weight: 600; border-top: 1px solid var(--ev-line-2); }
+.evc-table td[data-neg="true"] { color: var(--ev-avoid); }
+
+/* ── CompanyRow ─────────────────────────────────────────────────────────── */
+.evc-crow {
+  display: flex; align-items: center; gap: var(--ev-s4);
+  padding: 10px 14px; border-radius: var(--ev-r-md); cursor: pointer;
+  border: 1px solid transparent;
+  transition: background var(--ev-t-fast) var(--ev-ease), border-color var(--ev-t-fast) var(--ev-ease);
+}
+.evc-crow:hover, .evc-crow:focus-visible { background: var(--ev-bg-raise); border-color: var(--ev-line); }
+.evc-crow-id { flex: 1 1 40%; min-width: 0; }
+.evc-crow-ticker { font-family: var(--ev-font-mono); font-size: var(--ev-fs-md); font-weight: 600; color: var(--ev-text); }
+.evc-crow-name {
+  font-size: var(--ev-fs-sm); color: var(--ev-text-3);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.evc-crow-num { text-align: right; }
+.evc-crow-price { font-family: var(--ev-font-mono); font-variant-numeric: tabular-nums; font-size: var(--ev-fs-md); color: var(--ev-text); }
+.evc-crow-delta { font-family: var(--ev-font-mono); font-variant-numeric: tabular-nums; font-size: var(--ev-fs-xs); }
+@media (max-width: 560px) { .evc-crow-spark { display: none; } }
+
 /* ── StatTile ───────────────────────────────────────────────────────────── */
 .evc-stat { display: flex; flex-direction: column; gap: 4px; min-width: 120px; }
 .evc-stat-label {
