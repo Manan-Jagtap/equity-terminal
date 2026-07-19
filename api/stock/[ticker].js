@@ -47,7 +47,7 @@ export default async function handler(req, res) {
     }
   } catch { /* fall through to the not-found page */ }
 
-  const appUrl = `https://equityverdict.com/#/company/${encodeURIComponent(ticker)}`;
+  const appUrl = `https://equityverdict.com/company/${encodeURIComponent(ticker)}`;
   const canonical = `https://equityverdict.com/stock/${encodeURIComponent(ticker)}`;
 
   if (!co) {

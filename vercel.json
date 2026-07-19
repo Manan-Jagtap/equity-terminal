@@ -1,7 +1,8 @@
 {
   "rewrites": [
     { "source": "/stock/:ticker", "destination": "/api/stock/:ticker" },
-    { "source": "/sitemap.xml", "destination": "/api/sitemap" }
+    { "source": "/sitemap.xml", "destination": "/api/sitemap" },
+    { "source": "/((?!api/|stock/|.*\\.).*)", "destination": "/index.html" }
   ],
   "headers": [
     {
