@@ -1,0 +1,92 @@
+/* ─────────────────────────────────────────────────────────────────────────────
+   EquityVerdict Design Tokens — the single source of truth (Phase 0).
+   Thesis: "a precision instrument that feels calm" — warm obsidian canvas,
+   numbers as the hero, one signature accent, hairlines over heavy fills.
+   No component may use a magic number; everything derives from these.
+   ──────────────────────────────────────────────────────────────────────────── */
+:root {
+  /* ── Surfaces: warm obsidian, layered (background → raised → overlay) ── */
+  --ev-bg:        #0a0907;   /* base canvas (warm near-black) */
+  --ev-bg-raise:  #12100d;   /* raised panels/cards */
+  --ev-bg-over:   #1a1713;   /* overlays, popovers, sticky headers */
+  --ev-bg-input:  #0e0c0a;   /* form fields (slightly sunken) */
+
+  /* ── Text: high-contrast off-white, muted secondary tier ── */
+  --ev-text:      #f2ede4;   /* primary — 15.9:1 on bg */
+  --ev-text-2:    #b7ad9d;   /* secondary — 8.3:1 */
+  --ev-text-3:    #7d7566;   /* tertiary/labels — 4.6:1 (AA floor; never smaller than 12px) */
+
+  /* ── Hairlines instead of heavy card fills ── */
+  --ev-line:      rgba(242, 237, 228, 0.08);
+  --ev-line-2:    rgba(242, 237, 228, 0.14);
+
+  /* ── The one signature accent (focus, primary actions, live emphasis) ── */
+  --ev-accent:    #e8b45a;   /* warm amber-gold — 9.2:1 on bg */
+  --ev-accent-dim:#e8b45a33;
+  --ev-accent-ink:#231a08;   /* text on accent fills */
+
+  /* ── Verdict ladder: disciplined, muted, never neon.
+        Also drives upside/downside + score bands. Never color alone. ── */
+  --ev-buy:        #57c48a;  /* confident green   — 8.6:1 */
+  --ev-accumulate: #8fbf6f;  /* green-lean        — 8.9:1 */
+  --ev-hold:       #c9a86a;  /* neutral gold      — 8.4:1 */
+  --ev-reduce:     #d99a5b;  /* amber-orange      — 8.1:1 */
+  --ev-avoid:      #d97b6c;  /* restrained red    — 6.9:1 */
+  --ev-nocall:     #8a8171;  /* LOW CONF / NO DATA — honest grey */
+  --ev-up:   var(--ev-buy);
+  --ev-down: var(--ev-avoid);
+
+  /* ── Type system ── */
+  --ev-font-ui:   "Inter Variable", system-ui, -apple-system, sans-serif;
+  --ev-font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, monospace;
+  /* Modular scale (1.2) anchored at 13px body for terminal density */
+  --ev-fs-2xs: 10px;  --ev-fs-xs: 11px;  --ev-fs-sm: 12px;  --ev-fs-md: 13px;
+  --ev-fs-lg: 16px;   --ev-fs-xl: 19px;  --ev-fs-2xl: 23px; --ev-fs-3xl: 28px;
+  --ev-fs-display: 34px;
+  --ev-lh-tight: 1.25; --ev-lh-body: 1.55;
+  --ev-track-ui: -0.011em;      /* grotesk "software" feel */
+  --ev-track-label: 0.08em;     /* uppercase micro-labels */
+
+  /* ── Space (8pt base, halves allowed below 8) ── */
+  --ev-s1: 4px; --ev-s2: 8px; --ev-s3: 12px; --ev-s4: 16px;
+  --ev-s5: 24px; --ev-s6: 32px; --ev-s7: 48px; --ev-s8: 64px;
+
+  /* ── Radii ── */
+  --ev-r-sm: 6px; --ev-r-md: 10px; --ev-r-lg: 14px; --ev-r-pill: 999px;
+
+  /* ── Elevation: hairline + faint lift, not heavy shadows ── */
+  --ev-elev-1: 0 1px 0 rgba(0,0,0,0.4), 0 0 0 1px var(--ev-line);
+  --ev-elev-2: 0 8px 24px rgba(0,0,0,0.35), 0 0 0 1px var(--ev-line-2);
+  --ev-elev-3: 0 24px 64px rgba(0,0,0,0.5), 0 0 0 1px var(--ev-line-2);
+
+  /* ── Motion tokens: tight scale, two curves, springs live in JS ── */
+  --ev-t-fast: 120ms; --ev-t-base: 200ms; --ev-t-slow: 320ms;
+  --ev-ease: cubic-bezier(0.22, 1, 0.36, 1);        /* decisive settle */
+  --ev-ease-inout: cubic-bezier(0.65, 0, 0.35, 1);  /* symmetric moves */
+
+  /* ── Focus ring (glowing accent — a signature motif) ── */
+  --ev-focus: 0 0 0 2px var(--ev-bg), 0 0 0 4px var(--ev-accent);
+}
+
+/* Numbers are the hero: every numeric cell opts in to tabular alignment. */
+.ev-num {
+  font-family: var(--ev-font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+/* Warm grain on the base canvas so dark feels crafted, not flat (pure CSS,
+   no asset, GPU-cheap; sits under everything, never intercepts input). */
+.ev-grain::before {
+  content: "";
+  position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  opacity: 0.035;
+  background-image: repeating-conic-gradient(rgba(242,237,228,0.6) 0% 0.0001%, transparent 0.0002% 0.04%);
+  background-size: 157px 157px;
+}
+
+:focus-visible { outline: none; box-shadow: var(--ev-focus); border-radius: var(--ev-r-sm); }
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --ev-t-fast: 0.001ms; --ev-t-base: 0.001ms; --ev-t-slow: 0.001ms; }
+}

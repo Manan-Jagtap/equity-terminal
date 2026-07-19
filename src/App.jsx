@@ -45,6 +45,7 @@ const Results     = lazyReload(() => import("./components/Results.jsx"));
 const Ownership   = lazyReload(() => import("./components/Ownership.jsx"));
 const Operations  = lazyReload(() => import("./components/Operations.jsx"));
 const TrackRecord = lazyReload(() => import("./components/TrackRecord.jsx"));
+const Styleguide  = lazyReload(() => import("./components/Styleguide.jsx"));  // internal, redesign Phase 0
 const Sectors     = lazyReload(() => import("./components/Sectors.jsx"));
 const FundManager = lazyReload(() => import("./components/FundManager.jsx"));
 const IPOBoard    = lazyReload(() => import("./components/IPOBoard.jsx"));
@@ -281,7 +282,7 @@ export default function App() {
   // moved in history) from "user clicked something" (pushState — a new entry).
   const VIEW_IDS = ["dashboard", "screener", "ideas", "baskets", "watchlist",
     "compare", "results", "ownership", "operations", "sectors", "economy",
-    "ipo", "funds", "portfolio", "manager", "track"];
+    "ipo", "funds", "portfolio", "manager", "track", "styleguide"];
   const navFromHash = useRef(false);
   const routeRef = useRef({});
   routeRef.current = { view, selectedId, companies };
@@ -639,6 +640,9 @@ export default function App() {
           )}
           {view === "track" && (
             <TrackRecord API={API} onOpen={open} />
+          )}
+          {view === "styleguide" && (
+            <Styleguide />
           )}
           {view === "company" && selected && assumptions && (
             <Company
