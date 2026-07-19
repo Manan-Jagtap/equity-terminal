@@ -831,25 +831,25 @@
     "CF": {}
    }
   },
-  "vs": "LOGISTICS",
+  "vs": "TEXTILES",
   "is_financial": false,
   "exp": {
-   "beta": 1.0,
+   "beta": 1.1,
    "risk_free": 0.069,
    "erp": 0.05,
-   "rev_growth": 0.085,
+   "rev_growth": 0.07,
    "ebit_margin": 0.2499,
    "terminal_ebit_margin": 0.2499,
    "tax_rate": 0.2872,
-   "reinvest_rate": 0.2785,
+   "reinvest_rate": 0.2388,
    "debt_weight": 0.4087,
    "cost_debt": 0.0857,
-   "fade_years": 15,
-   "terminal_growth": 0.055,
+   "fade_years": 8,
+   "terminal_growth": 0.04,
    "forecast_roe": 0.15,
-   "terminal_roe": 0.15,
+   "terminal_roe": 0.12,
    "payout": 0.25,
-   "_valuation_sector": "LOGISTICS"
+   "_valuation_sector": "TEXTILES"
   }
  },
  {
@@ -1311,199 +1311,1080 @@
  },
  {
   "statements": {
-   "2022": {
-    "PL": {
-     "revenue": 316953.12,
-     "ebitda": 71506.34,
-     "pbt": 61222.25,
-     "tax": 9225.77,
-     "pat": 47809.68,
-     "depreciation": 18489.34,
-     "interest_expense": 6081.18,
-     "ebit": 62034.81
-    },
-    "BS": {
-     "borrowings": 139674.58,
-     "receivables": 46087.1,
-     "inventory": 19186.36,
-     "payables": 58688.46,
-     "net_worth": 287296.45
-    },
-    "CF": {
-     "capex": -56022.12
-    }
-   },
-   "2023": {
-    "PL": {
-     "revenue": 320985.68,
-     "ebitda": 71986.72,
-     "pbt": 61441.43,
-     "tax": 17923.83,
-     "pat": 47207.81,
-     "depreciation": 16215.68,
-     "interest_expense": 4696.8,
-     "ebit": 64390.7
-    },
-    "BS": {
-     "borrowings": 21507.44,
-     "receivables": 38891.41,
-     "inventory": 61657.96,
-     "payables": 45003.11,
-     "net_worth": 328663.11,
-     "cash": 13985.72
-    },
-    "CF": {
-     "capex": -37866.0
-    }
-   },
    "2024": {
     "PL": {
-     "revenue": 299417.85,
-     "ebitda": 76522.24,
-     "pbt": 55052.63,
-     "tax": 12480.13,
-     "pat": 42684.79,
-     "depreciation": 15930.26,
-     "interest_expense": 1958.22,
-     "ebit": 58243.75
+     "revenue": 45507.98,
+     "ebitda": 13475.1,
+     "pbt": 10228.93,
+     "tax": 2276.74,
+     "pat": 7521.07,
+     "depreciation": 1382.87,
+     "interest_expense": 76.36,
+     "ebit": 11557.48
     },
     "BS": {
-     "borrowings": 141574.05,
-     "receivables": 45164.88,
-     "inventory": 87955.29,
-     "payables": 32703.75,
-     "net_worth": 108515.8,
-     "investments": 38085.2
+     "borrowings": 19980.04,
+     "receivables": 2703.08,
+     "inventory": 7553.16,
+     "payables": 1939.08,
+     "net_worth": 18996.6,
+     "cash": 3747.6,
+     "investments": 9812.65
     },
     "CF": {
-     "capex": -47298.41
+     "capex": -3749.42
     }
    },
    "2025": {
     "PL": {
-     "revenue": 302402.81,
-     "ebitda": 93922.63,
-     "pbt": 70089.14,
-     "tax": 20231.94,
-     "pat": 50801.36,
-     "depreciation": 15633.09,
-     "interest_expense": 6422.96,
-     "ebit": 77091.28
+     "revenue": 47343.47,
+     "ebitda": 16024.19,
+     "pbt": 11932.92,
+     "tax": 3183.07,
+     "pat": 8207.29,
+     "depreciation": 538.87,
+     "interest_expense": 1170.48,
+     "ebit": 12591.3
     },
     "BS": {
-     "borrowings": 142112.91,
-     "receivables": 67192.02,
-     "inventory": 68214.98,
-     "payables": 30883.17,
-     "net_worth": 174199.28,
-     "cash": 4872.91,
-     "goodwill": 32112.26
+     "borrowings": 24495.38,
+     "receivables": 8856.76,
+     "inventory": 10380.74,
+     "payables": 4909.0,
+     "net_worth": 17646.96,
+     "cash": 4776.04
     },
     "CF": {
-     "capex": -62686.09
+     "capex": -567.14
     }
    },
    "2026": {
     "PL": {
-     "revenue": 306288.83,
-     "ebitda": 86347.47,
-     "pbt": 65649.75,
-     "tax": 14421.19,
-     "pat": 47966.48,
-     "depreciation": 17121.13,
-     "interest_expense": 8989.55,
-     "ebit": 71941.79
+     "revenue": 52001.56,
+     "ebitda": 14231.79,
+     "pbt": 10595.77,
+     "tax": 1867.96,
+     "pat": 7612.85,
+     "depreciation": 3099.9,
+     "interest_expense": 635.61,
+     "ebit": 10709.66
     },
     "BS": {
-     "borrowings": 130862.62,
-     "receivables": 57069.67,
-     "inventory": 88168.72,
-     "payables": 30526.94,
-     "net_worth": 307013.16
+     "borrowings": 14318.74,
+     "receivables": 8136.54,
+     "inventory": 3356.97,
+     "payables": 2526.63,
+     "net_worth": 20837.97
     },
     "CF": {
-     "capex": -73616.14
+     "capex": -4112.16
     }
    }
   },
-  "vs": "AUTO",
+  "vs": "LOGISTICS",
   "is_financial": false,
   "exp": {
-   "beta": 1.1,
+   "beta": 1.0,
    "risk_free": 0.069,
    "erp": 0.05,
-   "rev_growth": 0.02,
-   "ebit_margin": 0.2349,
-   "terminal_ebit_margin": 0.2212,
-   "tax_rate": 0.2267,
-   "reinvest_rate": 0.6515,
-   "debt_weight": 0.2989,
+   "rev_growth": 0.08,
+   "ebit_margin": 0.254,
+   "terminal_ebit_margin": 0.254,
+   "tax_rate": 0.2226,
+   "reinvest_rate": 0.3753,
+   "debt_weight": 0.4073,
    "cost_debt": 0.06,
-   "fade_years": 10,
-   "terminal_growth": 0.05,
+   "fade_years": 15,
+   "terminal_growth": 0.055,
    "forecast_roe": 0.15,
-   "terminal_roe": 0.18,
+   "terminal_roe": 0.15,
    "payout": 0.25,
-   "_valuation_sector": "AUTO"
+   "_valuation_sector": "LOGISTICS"
   }
  },
  {
   "statements": {
    "2022": {
     "PL": {
-     "pat": 35806.96
+     "pat": 68628.4
     },
     "BS": {
-     "net_worth": 305686.65
+     "net_worth": 447824.2
     },
     "CF": {
-     "dividends": -2481.05
+     "dividends": -37473.45
     }
    },
    "2023": {
     "PL": {
-     "pat": 29876.84
+     "pat": 78349.84
     },
     "BS": {
-     "net_worth": 336483.89
+     "net_worth": 499063.61
     },
     "CF": {
-     "dividends": -11488.73
+     "dividends": -34377.24
     }
    },
    "2024": {
     "PL": {
-     "pat": 21879.96
+     "pat": 78244.77
     },
     "BS": {
-     "equity": 10745.64,
-     "reserves": 347442.32
+     "equity": 16184.12,
+     "reserves": 523286.7
     },
     "CF": {
-     "dividends": -6897.84
+     "dividends": -33728.97
     }
    },
    "2025": {
     "PL": {
-     "pat": 10647.45
+     "pat": 88301.81
     },
     "BS": {
-     "net_worth": 373034.39
+     "net_worth": 597404.06
     },
     "CF": {
-     "dividends": -5881.27
+     "dividends": -7770.08
     }
    },
    "2026": {
     "PL": {
-     "pat": 3760.39
+     "pat": 96053.16
     },
     "BS": {
-     "net_worth": 382129.09
+     "net_worth": 667918.61
     },
     "CF": {
-     "dividends": -862.6
+     "dividends": -13129.01
     }
+   }
+  },
+  "vs": "INSURANCE",
+  "is_financial": true,
+  "exp": {
+   "beta": 0.9,
+   "risk_free": 0.069,
+   "erp": 0.05,
+   "forecast_roe": 0.1458,
+   "terminal_roe": 0.1458,
+   "payout": 0.1367,
+   "fade_years": 10,
+   "terminal_growth": 0.055,
+   "rev_growth": 0.1,
+   "ebit_margin": 0.12,
+   "tax_rate": 0.25,
+   "reinvest_rate": 0.35,
+   "debt_weight": 0.2,
+   "cost_debt": 0.085,
+   "_valuation_sector": "INSURANCE"
+  }
+ },
+ {
+  "statements": {
+   "2020": {
+    "PL": {
+     "revenue": 382545.01,
+     "ebitda": 118154.78,
+     "pbt": 100303.31,
+     "tax": 24208.62,
+     "pat": 72671.22,
+     "depreciation": 11562.11,
+     "interest_expense": 3737.64,
+     "ebit": 104088.12
+    },
+    "BS": {
+     "borrowings": 201912.32,
+     "receivables": 61936.74,
+     "inventory": 71600.2,
+     "payables": 52530.96,
+     "net_worth": 126838.41
+    },
+    "CF": {}
+   },
+   "2021": {
+    "PL": {
+     "revenue": 449362.29,
+     "ebitda": 159181.95,
+     "pbt": 126300.46,
+     "tax": 36249.28,
+     "pat": 99620.92,
+     "depreciation": 12146.69,
+     "interest_expense": 2134.08,
+     "ebit": 134071.62
+    },
+    "BS": {
+     "borrowings": 45142.08,
+     "receivables": 88053.85,
+     "inventory": 68081.19,
+     "payables": 63323.45,
+     "net_worth": 266719.64,
+     "investments": 67703.64
+    },
+    "CF": {}
+   },
+   "2022": {
+    "PL": {
+     "revenue": 551859.36,
+     "ebitda": 193775.73,
+     "pbt": 166084.52,
+     "tax": 27518.01,
+     "pat": 115814.95,
+     "depreciation": 13027.12,
+     "interest_expense": 15642.22,
+     "ebit": 172679.82
+    },
+    "BS": {
+     "borrowings": 218363.78,
+     "receivables": 48318.54,
+     "inventory": 114042.31,
+     "payables": 32616.27,
+     "net_worth": 318000.0,
+     "investments": 156291.95,
+     "goodwill": 57327.93
+    },
+    "CF": {}
+   },
+   "2023": {
+    "PL": {
+     "revenue": 613327.79,
+     "ebitda": 196704.43,
+     "pbt": 139296.0,
+     "tax": 21333.8,
+     "pat": 106937.82,
+     "depreciation": 13829.23,
+     "interest_expense": 18310.08,
+     "ebit": 157855.38
+    },
+    "BS": {
+     "borrowings": 305788.09,
+     "receivables": 52038.92,
+     "inventory": 150787.03,
+     "payables": 113082.06,
+     "net_worth": 438698.17
+    },
+    "CF": {}
+   },
+   "2024": {
+    "PL": {
+     "revenue": 772921.06,
+     "ebitda": 276044.11,
+     "pbt": 232578.08,
+     "tax": 36084.77,
+     "pat": 158335.72,
+     "depreciation": 9234.37,
+     "interest_expense": 10698.61,
+     "ebit": 258971.69
+    },
+    "BS": {
+     "borrowings": 232308.32,
+     "receivables": 165984.81,
+     "inventory": 181958.53,
+     "payables": 139963.87,
+     "net_worth": 459140.77,
+     "cash": 31572.18,
+     "goodwill": 79768.32
+    },
+    "CF": {}
+   },
+   "2025": {
+    "PL": {
+     "revenue": 889822.64,
+     "ebitda": 309773.46,
+     "pbt": 268059.88,
+     "tax": 44097.71,
+     "pat": 199691.64,
+     "depreciation": 18646.8,
+     "interest_expense": 16251.19,
+     "ebit": 290737.13
+    },
+    "BS": {
+     "borrowings": 468997.05,
+     "receivables": 154302.94,
+     "inventory": 47981.05,
+     "payables": 106940.42,
+     "net_worth": 455592.18,
+     "cash": 104970.81,
+     "investments": 187809.79
+    },
+    "CF": {}
+   },
+   "2026": {
+    "PL": {
+     "revenue": 1023269.87,
+     "ebitda": 360300.2,
+     "pbt": 311057.71,
+     "tax": 49246.75,
+     "pat": 237750.09,
+     "depreciation": 17966.69,
+     "interest_expense": 25792.04,
+     "ebit": 318303.99
+    },
+    "BS": {
+     "borrowings": 518102.8,
+     "receivables": 179600.59,
+     "inventory": 233000.13,
+     "payables": 192223.24,
+     "net_worth": 795860.54,
+     "cash": 145340.75
+    },
+    "CF": {}
+   }
+  },
+  "vs": "CEMENT",
+  "is_financial": false,
+  "exp": {
+   "beta": 1.05,
+   "risk_free": 0.069,
+   "erp": 0.05,
+   "rev_growth": 0.12,
+   "ebit_margin": 0.3302,
+   "terminal_ebit_margin": 0.3225,
+   "tax_rate": 0.1583,
+   "reinvest_rate": 0.4264,
+   "debt_weight": 0.3943,
+   "cost_debt": 0.06,
+   "fade_years": 15,
+   "terminal_growth": 0.05,
+   "forecast_roe": 0.15,
+   "terminal_roe": 0.15,
+   "payout": 0.25,
+   "_valuation_sector": "CEMENT"
+  }
+ },
+ {
+  "statements": {
+   "2023": {
+    "PL": {
+     "revenue": 208078.89,
+     "ebitda": 39548.53,
+     "pbt": 21256.32,
+     "tax": 5132.81,
+     "pat": 14713.97,
+     "depreciation": 7982.59,
+     "interest_expense": 3890.04,
+     "ebit": 24963.7
+    },
+    "BS": {
+     "borrowings": 79834.41,
+     "receivables": 35288.35,
+     "inventory": 55843.03,
+     "payables": 33322.79,
+     "net_worth": 67428.7,
+     "investments": 35319.61
+    },
+    "CF": {
+     "capex": -70946.44
+    }
+   },
+   "2024": {
+    "PL": {
+     "revenue": 269677.37,
+     "ebitda": 51489.33,
+     "pbt": 36538.56,
+     "tax": 7444.72,
+     "pat": 27319.64,
+     "depreciation": 6179.81,
+     "interest_expense": 7847.09,
+     "ebit": 37377.67
+    },
+    "BS": {
+     "borrowings": 94487.42,
+     "receivables": 67128.49,
+     "inventory": 43109.2,
+     "payables": 33370.98,
+     "net_worth": 167860.05,
+     "cash": 7747.92
+    },
+    "CF": {
+     "capex": -50046.19
+    }
+   },
+   "2025": {
+    "PL": {
+     "revenue": 360473.74,
+     "ebitda": 65269.41,
+     "pbt": 39737.27,
+     "tax": 11425.82,
+     "pat": 31642.51,
+     "depreciation": 19223.83,
+     "interest_expense": 6410.16,
+     "ebit": 46709.68
+    },
+    "BS": {
+     "borrowings": 101581.5,
+     "receivables": 35977.98,
+     "inventory": 40301.61,
+     "payables": 63519.62,
+     "net_worth": 258965.67
+    },
+    "CF": {
+     "capex": -40014.26
+    }
+   },
+   "2026": {
+    "PL": {
+     "revenue": 441254.38,
+     "ebitda": 82918.06,
+     "pbt": 46179.09,
+     "tax": 11303.81,
+     "pat": 35322.73,
+     "depreciation": 8279.53,
+     "interest_expense": 12708.15,
+     "ebit": 53910.07
+    },
+    "BS": {
+     "borrowings": 228031.4,
+     "receivables": 104153.99,
+     "inventory": 101107.43,
+     "payables": 77705.07,
+     "net_worth": 175580.95,
+     "cash": 19232.66,
+     "investments": 69289.43,
+     "goodwill": 16513.12
+    },
+    "CF": {
+     "capex": -50905.83
+    }
+   }
+  },
+  "vs": "CONSTRUCTION",
+  "is_financial": false,
+  "exp": {
+   "beta": 1.2,
+   "risk_free": 0.069,
+   "erp": 0.05,
+   "rev_growth": 0.18,
+   "ebit_margin": 0.1259,
+   "terminal_ebit_margin": 0.1259,
+   "tax_rate": 0.2448,
+   "reinvest_rate": 0.65,
+   "debt_weight": 0.565,
+   "cost_debt": 0.06,
+   "fade_years": 8,
+   "terminal_growth": 0.05,
+   "forecast_roe": 0.15,
+   "terminal_roe": 0.14,
+   "payout": 0.25,
+   "_valuation_sector": "CONSTRUCTION"
+  }
+ },
+ {
+  "statements": {
+   "2023": {
+    "PL": {
+     "pat": 64186.47
+    },
+    "BS": {
+     "equity": 12299.34,
+     "reserves": 397678.73
+    },
+    "CF": {
+     "dividends": -17873.59
+    }
+   },
+   "2024": {
+    "PL": {
+     "pat": 55024.03
+    },
+    "BS": {
+     "net_worth": 444194.66
+    },
+    "CF": {
+     "dividends": -29533.15
+    }
+   },
+   "2025": {
+    "PL": {
+     "pat": 44726.53
+    },
+    "BS": {
+     "equity": 14702.1,
+     "reserves": 475367.79
+    },
+    "CF": {
+     "dividends": -18734.62
+    }
+   },
+   "2026": {
+    "PL": {
+     "pat": 31065.94
+    },
+    "BS": {
+     "net_worth": 525459.5
+    },
+    "CF": {
+     "dividends": -1933.79
+    }
+   }
+  },
+  "vs": "INSURANCE",
+  "is_financial": true,
+  "exp": {
+   "beta": 0.9,
+   "risk_free": 0.069,
+   "erp": 0.05,
+   "forecast_roe": 0.065,
+   "terminal_roe": 0.08,
+   "payout": 0.4189,
+   "fade_years": 8,
+   "terminal_growth": 0.055,
+   "rev_growth": 0.1,
+   "ebit_margin": 0.12,
+   "tax_rate": 0.25,
+   "reinvest_rate": 0.35,
+   "debt_weight": 0.2,
+   "cost_debt": 0.085,
+   "_valuation_sector": "INSURANCE"
+  }
+ },
+ {
+  "statements": {
+   "2023": {
+    "PL": {
+     "revenue": 247030.25,
+     "ebitda": 63654.93,
+     "pbt": 52345.88,
+     "tax": 12613.51,
+     "pat": 39629.96,
+     "depreciation": 4860.68,
+     "interest_expense": 5760.65,
+     "ebit": 58195.64
+    },
+    "BS": {
+     "borrowings": 20229.1,
+     "receivables": 51930.63,
+     "inventory": 24017.41,
+     "payables": 10909.35,
+     "net_worth": 279444.23,
+     "investments": 71479.75
+    },
+    "CF": {
+     "capex": -17316.13
+    }
+   },
+   "2024": {
+    "PL": {
+     "revenue": 256763.79,
+     "ebitda": 67996.24,
+     "pbt": 56101.08,
+     "tax": 9861.87,
+     "pat": 41673.76,
+     "depreciation": 13992.73,
+     "interest_expense": 3962.36,
+     "ebit": 56902.04
+    },
+    "BS": {
+     "borrowings": 48129.0,
+     "receivables": 34205.79,
+     "inventory": 53680.14,
+     "payables": 12509.93,
+     "net_worth": 277476.2
+    },
+    "CF": {
+     "capex": -15679.03
+    }
+   },
+   "2025": {
+    "PL": {
+     "revenue": 284605.64,
+     "ebitda": 85988.45,
+     "pbt": 67647.39,
+     "tax": 17496.47,
+     "pat": 51293.64,
+     "depreciation": 9124.95,
+     "interest_expense": 5387.54,
+     "ebit": 70364.99
+    },
+    "BS": {
+     "borrowings": 26591.21,
+     "receivables": 66829.91,
+     "inventory": 23661.09,
+     "payables": 43216.53,
+     "net_worth": 320084.79,
+     "investments": 30106.28,
+     "goodwill": 1018.55
+    },
+    "CF": {
+     "capex": -8573.07
+    }
+   },
+   "2026": {
+    "PL": {
+     "revenue": 283627.32,
+     "ebitda": 95191.16,
+     "pbt": 73834.73,
+     "tax": 11179.61,
+     "pat": 51600.07,
+     "depreciation": 3145.85,
+     "interest_expense": 5613.31,
+     "ebit": 80669.86
+    },
+    "BS": {
+     "borrowings": 95081.11,
+     "receivables": 22284.33,
+     "inventory": 24549.33,
+     "payables": 53906.97,
+     "net_worth": 97572.54
+    },
+    "CF": {
+     "capex": -8149.92
+    }
+   }
+  },
+  "vs": "PAPER",
+  "is_financial": false,
+  "exp": {
+   "beta": 1.05,
+   "risk_free": 0.069,
+   "erp": 0.05,
+   "rev_growth": 0.0294,
+   "ebit_margin": 0.2414,
+   "terminal_ebit_margin": 0.2414,
+   "tax_rate": 0.1758,
+   "reinvest_rate": 0.1908,
+   "debt_weight": 0.4935,
+   "cost_debt": 0.12,
+   "fade_years": 8,
+   "terminal_growth": 0.045,
+   "forecast_roe": 0.15,
+   "terminal_roe": 0.12,
+   "payout": 0.25,
+   "_valuation_sector": "PAPER"
+  }
+ },
+ {
+  "statements": {
+   "2024": {
+    "PL": {
+     "revenue": 107664.4,
+     "ebitda": 44352.83,
+     "pbt": 38074.79,
+     "tax": 5936.67,
+     "pat": 28235.02,
+     "depreciation": 4028.01,
+     "interest_expense": 973.09,
+     "ebit": 40206.82
+    },
+    "BS": {
+     "borrowings": 29256.1,
+     "receivables": 20890.59,
+     "inventory": 12696.78,
+     "payables": 15253.45,
+     "net_worth": 93152.91,
+     "investments": 31153.5
+    },
+    "CF": {
+     "capex": -2311.15
+    }
+   },
+   "2025": {
+    "PL": {
+     "revenue": 130256.93,
+     "ebitda": 49961.63,
+     "pbt": 38353.62,
+     "tax": 11215.21,
+     "pat": 26946.76,
+     "depreciation": 2687.41,
+     "interest_expense": 3003.61,
+     "ebit": 40761.74
+    },
+    "BS": {
+     "borrowings": 35801.17,
+     "receivables": 19752.15,
+     "inventory": 30144.19,
+     "payables": 18667.88,
+     "net_worth": 119409.27,
+     "cash": 2960.0,
+     "goodwill": 45.54
+    },
+    "CF": {
+     "capex": -3499.61
+    }
+   },
+   "2026": {
+    "PL": {
+     "revenue": 149111.79,
+     "ebitda": 60059.59,
+     "pbt": 45981.63,
+     "tax": 10606.91,
+     "pat": 33765.06,
+     "depreciation": 4810.94,
+     "interest_expense": 3673.71,
+     "ebit": 48476.0
+    },
+    "BS": {
+     "borrowings": 69950.54,
+     "receivables": 21099.28,
+     "inventory": 9958.38,
+     "payables": 22840.74,
+     "net_worth": 151181.04,
+     "goodwill": 12836.84
+    },
+    "CF": {
+     "capex": -11317.57
+    }
+   }
+  },
+  "vs": "DEFENCE",
+  "is_financial": false,
+  "exp": {
+   "beta": 0.95,
+   "risk_free": 0.069,
+   "erp": 0.05,
+   "rev_growth": 0.1656,
+   "ebit_margin": 0.3251,
+   "terminal_ebit_margin": 0.3251,
+   "tax_rate": 0.2307,
+   "reinvest_rate": 0.65,
+   "debt_weight": 0.3163,
+   "cost_debt": 0.0682,
+   "fade_years": 8,
+   "terminal_growth": 0.06,
+   "forecast_roe": 0.15,
+   "terminal_roe": 0.22,
+   "payout": 0.25,
+   "_valuation_sector": "DEFENCE"
+  }
+ },
+ {
+  "statements": {
+   "2024": {
+    "PL": {
+     "pat": 123847.08
+    },
+    "BS": {
+     "net_worth": 411320.45
+    },
+    "CF": {
+     "dividends": -22859.59
+    }
+   },
+   "2025": {
+    "PL": {
+     "pat": 152376.41
+    },
+    "BS": {
+     "net_worth": 475319.28
+    },
+    "CF": {
+     "dividends": -88797.74
+    }
+   },
+   "2026": {
+    "PL": {
+     "pat": 207763.79
+    },
+    "BS": {
+     "equity": 17607.33,
+     "reserves": 569303.81
+    },
+    "CF": {
+     "dividends": -103644.75
+    }
+   }
+  },
+  "vs": "INSURANCE",
+  "is_financial": true,
+  "exp": {
+   "beta": 0.9,
+   "risk_free": 0.069,
+   "erp": 0.05,
+   "forecast_roe": 0.3,
+   "terminal_roe": 0.258,
+   "payout": 0.4989,
+   "fade_years": 10,
+   "terminal_growth": 0.055,
+   "rev_growth": 0.1,
+   "ebit_margin": 0.12,
+   "tax_rate": 0.25,
+   "reinvest_rate": 0.35,
+   "debt_weight": 0.2,
+   "cost_debt": 0.085,
+   "_valuation_sector": "INSURANCE"
+  }
+ },
+ {
+  "statements": {
+   "2021": {
+    "PL": {
+     "revenue": 72407.58,
+     "ebitda": 20482.12,
+     "pbt": 14882.87,
+     "tax": 3490.13,
+     "pat": 10549.25,
+     "depreciation": 2912.17,
+     "interest_expense": 822.17,
+     "ebit": 15552.09
+    },
+    "BS": {
+     "borrowings": 13707.89,
+     "receivables": 7616.55,
+     "inventory": 4966.98,
+     "payables": 5001.05,
+     "net_worth": 29031.78,
+     "goodwill": 3213.68
+    },
+    "CF": {
+     "capex": -3130.06
+    }
+   },
+   "2022": {
+    "PL": {
+     "revenue": 86528.61,
+     "ebitda": 26830.44,
+     "pbt": 20831.37,
+     "tax": 5681.14,
+     "pat": 15569.69,
+     "depreciation": 4963.14,
+     "interest_expense": 1491.76,
+     "ebit": 20891.83
+    },
+    "BS": {
+     "borrowings": 34357.77,
+     "receivables": 14936.35,
+     "inventory": 22609.85,
+     "payables": 13425.6,
+     "net_worth": 65257.12,
+     "cash": 1994.5
+    },
+    "CF": {
+     "capex": -1484.28
+    }
+   },
+   "2023": {
+    "PL": {
+     "revenue": 114903.6,
+     "ebitda": 32659.83,
+     "pbt": 24783.88,
+     "tax": 5095.59,
+     "pat": 19689.23,
+     "depreciation": 4688.87,
+     "interest_expense": 615.59,
+     "ebit": 28402.96
+    },
+    "BS": {
+     "borrowings": 36530.53,
+     "receivables": 24114.2,
+     "inventory": 25161.92,
+     "payables": 5877.66,
+     "net_worth": 117495.37
+    },
+    "CF": {
+     "capex": -10261.3
+    }
+   },
+   "2024": {
+    "PL": {
+     "revenue": 141351.32,
+     "ebitda": 47858.68,
+     "pbt": 35557.24,
+     "tax": 5405.57,
+     "pat": 26807.38,
+     "depreciation": 5048.09,
+     "interest_expense": 3695.15,
+     "ebit": 39116.84
+    },
+    "BS": {
+     "borrowings": 13363.54,
+     "receivables": 23917.93,
+     "inventory": 9560.91,
+     "payables": 17659.36,
+     "net_worth": 87576.75
+    },
+    "CF": {
+     "capex": -3216.55
+    }
+   },
+   "2025": {
+    "PL": {
+     "revenue": 177195.86,
+     "ebitda": 59891.72,
+     "pbt": 43459.72,
+     "tax": 8468.99,
+     "pat": 31295.97,
+     "depreciation": 7665.11,
+     "interest_expense": 1853.72,
+     "ebit": 50123.38
+    },
+    "BS": {
+     "borrowings": 86046.03,
+     "receivables": 38562.06,
+     "inventory": 31561.97,
+     "payables": 8760.75,
+     "net_worth": 87245.05,
+     "cash": 8417.67,
+     "goodwill": 12765.8
+    },
+    "CF": {
+     "capex": -9411.29
+    }
+   },
+   "2026": {
+    "PL": {
+     "revenue": 217936.24,
+     "ebitda": 61810.61,
+     "pbt": 48793.21,
+     "tax": 11795.46,
+     "pat": 33374.55,
+     "depreciation": 3156.0,
+     "interest_expense": 5259.5,
+     "ebit": 49115.25
+    },
+    "BS": {
+     "borrowings": 127088.51,
+     "receivables": 33544.85,
+     "inventory": 18853.26,
+     "payables": 24061.29,
+     "net_worth": 68101.2,
+     "cash": 10106.57
+    },
+    "CF": {
+     "capex": -3882.51
+    }
+   }
+  },
+  "vs": "CONSUMER",
+  "is_financial": false,
+  "exp": {
+   "beta": 0.58,
+   "risk_free": 0.069,
+   "erp": 0.05,
+   "rev_growth": 0.18,
+   "ebit_margin": 0.2767,
+   "terminal_ebit_margin": 0.2638,
+   "tax_rate": 0.1949,
+   "reinvest_rate": 0.65,
+   "debt_weight": 0.6,
+   "cost_debt": 0.06,
+   "fade_years": 10,
+   "terminal_growth": 0.055,
+   "forecast_roe": 0.15,
+   "terminal_roe": 0.3,
+   "payout": 0.25,
+   "_valuation_sector": "CONSUMER"
+  }
+ },
+ {
+  "statements": {
+   "2023": {
+    "PL": {
+     "revenue": 73997.73,
+     "ebitda": 24272.11,
+     "pbt": 19507.56,
+     "tax": 3944.98,
+     "pat": 13792.14,
+     "depreciation": 1169.21,
+     "interest_expense": 706.08,
+     "ebit": 22256.87
+    },
+    "BS": {
+     "borrowings": 28180.95,
+     "receivables": 5240.5,
+     "inventory": 21030.13,
+     "payables": 3514.02,
+     "net_worth": 72912.16
+    },
+    "CF": {}
+   },
+   "2024": {
+    "PL": {
+     "revenue": 83890.58,
+     "ebitda": 26140.16,
+     "pbt": 20829.2,
+     "tax": 4137.14,
+     "pat": 15251.13,
+     "depreciation": 4788.65,
+     "interest_expense": 1386.64,
+     "ebit": 21950.66
+    },
+    "BS": {
+     "borrowings": 19777.45,
+     "receivables": 5525.26,
+     "inventory": 4399.19,
+     "payables": 11564.39,
+     "net_worth": 44298.94,
+     "cash": 10858.89,
+     "investments": 2028.2,
+     "goodwill": 7361.18
+    },
+    "CF": {}
+   },
+   "2025": {
+    "PL": {
+     "revenue": 102184.09,
+     "ebitda": 36391.0,
+     "pbt": 24871.83,
+     "tax": 6382.03,
+     "pat": 17018.86,
+     "depreciation": 1034.85,
+     "interest_expense": 454.91,
+     "ebit": 28758.72
+    },
+    "BS": {
+     "borrowings": 55907.59,
+     "receivables": 8764.09,
+     "inventory": 10245.34,
+     "payables": 13124.58,
+     "net_worth": 31405.35,
+     "cash": 2250.43
+    },
+    "CF": {}
+   },
+   "2026": {
+    "PL": {
+     "revenue": 114594.31,
+     "ebitda": 46302.49,
+     "pbt": 33713.09,
+     "tax": 6760.92,
+     "pat": 26590.13,
+     "depreciation": 3536.41,
+     "interest_expense": 2222.04,
+     "ebit": 37382.73
+    },
+    "BS": {
+     "borrowings": 55725.3,
+     "receivables": 25845.51,
+     "inventory": 27330.9,
+     "payables": 22349.18,
+     "net_worth": 82531.38,
+     "investments": 24590.02
+    },
+    "CF": {}
+   }
+  },
+  "vs": "METAL",
+  "is_financial": false,
+  "exp": {
+   "beta": 1.3,
+   "risk_free": 0.069,
+   "erp": 0.05,
+   "rev_growth": 0.08,
+   "ebit_margin": 0.2911,
+   "terminal_ebit_margin": 0.2911,
+   "tax_rate": 0.2005,
+   "reinvest_rate": 0.3806,
+   "debt_weight": 0.4031,
+   "cost_debt": 0.06,
+   "fade_years": 8,
+   "terminal_growth": 0.04,
+   "forecast_roe": 0.15,
+   "terminal_roe": 0.13,
+   "payout": 0.25,
+   "_valuation_sector": "METAL"
+  }
+ },
+ {
+  "statements": {
+   "2026": {
+    "PL": {
+     "pat": 9642.65
+    },
+    "BS": {
+     "net_worth": 112600.83
+    },
+    "CF": {}
    }
   },
   "vs": "BANK",
@@ -1512,9 +2393,9 @@
    "beta": 0.95,
    "risk_free": 0.069,
    "erp": 0.05,
-   "forecast_roe": 0.06,
-   "terminal_roe": 0.08,
-   "payout": 0.3153,
+   "forecast_roe": 0.0856,
+   "terminal_roe": 0.0856,
+   "payout": 0.2,
    "fade_years": 8,
    "terminal_growth": 0.055,
    "rev_growth": 0.1,
@@ -1530,142 +2411,160 @@
   "statements": {
    "2020": {
     "PL": {
-     "revenue": 366536.24,
-     "ebitda": 55667.68,
-     "pbt": 37436.63,
-     "tax": 6265.25,
-     "pat": 29341.25,
-     "depreciation": 16045.62,
-     "interest_expense": 4618.85
+     "revenue": 362242.4,
+     "ebitda": 28732.48,
+     "pbt": 11791.24,
+     "tax": 2882.53,
+     "pat": 9246.05,
+     "depreciation": 14792.47,
+     "interest_expense": 945.63,
+     "ebit": 12323.25
     },
     "BS": {
-     "borrowings": 125087.0,
-     "receivables": 87664.69,
-     "inventory": 58321.79,
-     "payables": 49011.34,
-     "net_worth": 210208.85,
-     "investments": 24420.01
+     "borrowings": 155781.34,
+     "receivables": 33349.26,
+     "inventory": 97248.67,
+     "payables": 36787.23,
+     "net_worth": 360852.58
     },
-    "CF": {}
+    "CF": {
+     "capex": -13118.6
+    }
    },
    "2021": {
     "PL": {
-     "revenue": 376210.86,
-     "ebitda": 57092.41,
-     "pbt": 29130.89,
-     "tax": 7256.55,
-     "pat": 20503.57,
-     "depreciation": 16662.99,
-     "interest_expense": 1204.67
+     "revenue": 429634.08,
+     "ebitda": 26929.3,
+     "pbt": 16785.95,
+     "tax": 2958.48,
+     "pat": 11599.4,
+     "depreciation": 16645.07,
+     "interest_expense": 9985.32,
+     "ebit": 17323.19
     },
     "BS": {
-     "borrowings": 59253.07,
-     "receivables": 24812.35,
-     "inventory": 104329.03,
-     "payables": 30665.38,
-     "net_worth": 147801.01,
-     "investments": 104523.75
+     "borrowings": 100472.19,
+     "receivables": 66353.17,
+     "inventory": 88942.54,
+     "payables": 25684.24,
+     "net_worth": 294772.67
     },
-    "CF": {}
+    "CF": {
+     "capex": -25050.49
+    }
    },
    "2022": {
     "PL": {
-     "revenue": 384033.08,
-     "ebitda": 56712.14,
-     "pbt": 34352.44,
-     "tax": 8287.32,
-     "pat": 27377.73,
-     "depreciation": 13635.75,
-     "interest_expense": 1199.11
+     "revenue": 477892.5,
+     "ebitda": 34489.13,
+     "pbt": 15944.37,
+     "tax": 3683.96,
+     "pat": 12426.38,
+     "depreciation": 17755.37,
+     "interest_expense": 5612.48,
+     "ebit": 17189.89
     },
     "BS": {
-     "borrowings": 15667.3,
-     "receivables": 58474.94,
-     "inventory": 65507.67,
-     "payables": 62781.24,
-     "net_worth": 122443.19,
-     "cash": 24397.9
+     "borrowings": 158514.56,
+     "receivables": 113792.8,
+     "inventory": 60079.06,
+     "payables": 52695.48,
+     "net_worth": 163146.62
     },
-    "CF": {}
+    "CF": {
+     "capex": -21615.18
+    }
    },
    "2023": {
     "PL": {
-     "revenue": 383020.69,
-     "ebitda": 50606.21,
-     "pbt": 37996.31,
-     "tax": 7321.78,
-     "pat": 26705.58,
-     "depreciation": 4192.49,
-     "interest_expense": 10721.55
+     "revenue": 532681.62,
+     "ebitda": 58833.86,
+     "pbt": 19172.3,
+     "tax": 3765.16,
+     "pat": 13750.29,
+     "depreciation": 13156.56,
+     "interest_expense": 13299.87,
+     "ebit": 20442.47
     },
     "BS": {
-     "borrowings": 10181.67,
-     "receivables": 63523.79,
-     "inventory": 77039.94,
-     "payables": 69611.39,
-     "net_worth": 186794.35,
-     "cash": 33259.37
+     "borrowings": 270478.32,
+     "receivables": 72694.78,
+     "inventory": 145968.46,
+     "payables": 80742.59,
+     "net_worth": 336331.87
     },
-    "CF": {}
+    "CF": {
+     "capex": -44097.77
+    }
    },
    "2024": {
     "PL": {
-     "revenue": 399864.57,
-     "ebitda": 59872.7,
-     "pbt": 35802.57,
-     "tax": 10257.46,
-     "pat": 24431.29,
-     "depreciation": 8438.26,
-     "interest_expense": 632.39
+     "revenue": 601095.47,
+     "ebitda": 64569.34,
+     "pbt": 21019.51,
+     "tax": 5986.32,
+     "pat": 15306.33,
+     "depreciation": 26879.69,
+     "interest_expense": 14299.3,
+     "ebit": 21709.11
     },
     "BS": {
-     "borrowings": 86120.48,
-     "receivables": 72617.67,
-     "inventory": 28800.25,
-     "payables": 74908.2,
-     "net_worth": 457321.11
+     "borrowings": 178566.45,
+     "receivables": 149741.17,
+     "inventory": 123479.06,
+     "payables": 72258.92,
+     "net_worth": 363188.52,
+     "cash": 60653.25,
+     "goodwill": 24966.41
     },
-    "CF": {}
+    "CF": {
+     "capex": -8334.37
+    }
    },
    "2025": {
     "PL": {
-     "revenue": 398103.52,
-     "ebitda": 67486.87,
-     "pbt": 42826.72,
-     "tax": 12819.6,
-     "pat": 30502.32,
-     "depreciation": 14659.59,
-     "interest_expense": 7535.01
+     "revenue": 721653.51,
+     "ebitda": 48260.32,
+     "pbt": 25124.2,
+     "tax": 6249.28,
+     "pat": 19454.6,
+     "depreciation": 15153.72,
+     "interest_expense": 7485.01,
+     "ebit": 27455.47
     },
     "BS": {
-     "borrowings": 114248.72,
-     "receivables": 21391.62,
-     "inventory": 26740.11,
-     "payables": 24507.27,
-     "net_worth": 284587.74,
-     "investments": 75937.5,
-     "goodwill": 27099.64
+     "borrowings": 124719.23,
+     "receivables": 154627.19,
+     "inventory": 68015.1,
+     "payables": 87743.22,
+     "net_worth": 339528.68
     },
-    "CF": {}
+    "CF": {
+     "capex": -26422.83
+    }
    },
    "2026": {
     "PL": {
-     "revenue": 409874.71,
-     "ebitda": 60002.14,
-     "pbt": 33903.03,
-     "tax": 9527.59,
-     "pat": 26109.02,
-     "depreciation": 20057.09,
-     "interest_expense": 5018.36
+     "revenue": 849838.4,
+     "ebitda": 76945.75,
+     "pbt": 30948.62,
+     "tax": 6404.97,
+     "pat": 24354.38,
+     "depreciation": 35564.51,
+     "interest_expense": 14329.43,
+     "ebit": 32812.36
     },
     "BS": {
-     "borrowings": 141441.73,
-     "receivables": 99504.25,
-     "inventory": 44494.83,
-     "payables": 55456.47,
-     "net_worth": 320239.92
+     "borrowings": 160202.31,
+     "receivables": 50891.65,
+     "inventory": 112033.42,
+     "payables": 107207.37,
+     "net_worth": 986227.38,
+     "cash": 13123.82
     },
-    "CF": {}
+    "CF": {
+     "capex": -74375.0
+    }
    }
   },
   "vs": "CEMENT",
@@ -1674,13 +2573,13 @@
    "beta": 1.05,
    "risk_free": 0.069,
    "erp": 0.05,
-   "rev_growth": 0.021,
-   "ebit_margin": 0.1122,
-   "terminal_ebit_margin": 0.1122,
-   "tax_rate": 0.2865,
-   "reinvest_rate": 0.1501,
-   "debt_weight": 0.3064,
-   "cost_debt": 0.06,
+   "rev_growth": 0.12,
+   "ebit_margin": 0.0534,
+   "terminal_ebit_margin": 0.0473,
+   "tax_rate": 0.2487,
+   "reinvest_rate": 0.65,
+   "debt_weight": 0.1397,
+   "cost_debt": 0.0747,
    "fade_years": 10,
    "terminal_growth": 0.05,
    "forecast_roe": 0.15,
@@ -1691,117 +2590,163 @@
  },
  {
   "statements": {
-   "2024": {
+   "2023": {
     "PL": {
-     "revenue": 139070.77,
-     "ebitda": 57053.84,
-     "pbt": 47354.17,
-     "tax": 9534.61,
-     "pat": 36695.98,
-     "depreciation": 3980.26,
-     "interest_expense": 2255.55
+     "revenue": 319021.31,
+     "ebitda": 42734.85,
+     "pbt": 26029.04,
+     "tax": 4612.43,
+     "pat": 18363.12,
+     "depreciation": 9980.65,
+     "interest_expense": 1333.07,
+     "ebit": 28475.36
     },
     "BS": {
-     "borrowings": 76507.91,
-     "receivables": 33908.47,
-     "inventory": 37082.77,
-     "payables": 18439.91,
-     "net_worth": 42329.36,
-     "cash": 10535.07,
-     "investments": 12407.62
+     "borrowings": 102168.07,
+     "receivables": 31929.11,
+     "inventory": 68012.92,
+     "payables": 30435.46,
+     "net_worth": 295042.33,
+     "cash": 10450.37
     },
     "CF": {
-     "capex": -9147.98
+     "capex": -92888.76
+    }
+   },
+   "2024": {
+    "PL": {
+     "revenue": 291471.41,
+     "ebitda": 38187.9,
+     "pbt": 25205.99,
+     "tax": 6043.73,
+     "pat": 19188.5,
+     "depreciation": 10499.28,
+     "interest_expense": 4983.09,
+     "ebit": 28109.11
+    },
+    "BS": {
+     "borrowings": 163496.36,
+     "receivables": 51798.79,
+     "inventory": 83226.06,
+     "payables": 14282.16,
+     "net_worth": 316538.17,
+     "cash": 26336.2,
+     "investments": 41994.95,
+     "goodwill": 31268.84
+    },
+    "CF": {
+     "capex": -43937.52
     }
    },
    "2025": {
     "PL": {
-     "revenue": 147992.91,
-     "ebitda": 67118.39,
-     "pbt": 56563.07,
-     "tax": 10090.02,
-     "pat": 43637.26,
-     "depreciation": 1805.26,
-     "interest_expense": 2859.89
+     "revenue": 290510.11,
+     "ebitda": 40063.86,
+     "pbt": 25670.2,
+     "tax": 6607.94,
+     "pat": 17700.36,
+     "depreciation": 16331.39,
+     "interest_expense": 6883.34,
+     "ebit": 28730.14
     },
     "BS": {
-     "borrowings": 15563.44,
-     "receivables": 35773.51,
-     "inventory": 11424.77,
-     "payables": 26314.32,
-     "net_worth": 138640.58
+     "borrowings": 115392.45,
+     "receivables": 18783.16,
+     "inventory": 61978.91,
+     "payables": 15668.78,
+     "net_worth": 170905.14,
+     "cash": 21170.51,
+     "investments": 29275.63
     },
     "CF": {
-     "capex": -5055.88
+     "capex": -95953.38
     }
    },
    "2026": {
     "PL": {
-     "revenue": 149573.88,
-     "ebitda": 60398.35,
-     "pbt": 46348.92,
-     "tax": 9120.49,
-     "pat": 31859.13,
-     "depreciation": 6738.1,
-     "interest_expense": 3115.08
+     "revenue": 269698.08,
+     "ebitda": 35403.25,
+     "pbt": 24759.14,
+     "tax": 7100.11,
+     "pat": 18694.19,
+     "depreciation": 11111.16,
+     "interest_expense": 3341.4,
+     "ebit": 26171.92
     },
     "BS": {
-     "borrowings": 42772.67,
-     "receivables": 9482.47,
-     "inventory": 28695.88,
-     "payables": 6522.17,
-     "net_worth": 85248.28,
-     "cash": 12454.77
+     "borrowings": 41113.59,
+     "receivables": 43064.89,
+     "inventory": 55970.17,
+     "payables": 15952.03,
+     "net_worth": 245973.49,
+     "cash": 33307.75,
+     "goodwill": 29385.99
     },
     "CF": {
-     "capex": -8620.08
+     "capex": -47332.62
     }
    }
   },
-  "vs": "CONSTRUCTION",
+  "vs": "CONSUMER",
   "is_financial": false,
   "exp": {
-   "beta": 1.2,
+   "beta": 0.58,
    "risk_free": 0.069,
    "erp": 0.05,
-   "rev_growth": 0.0278,
-   "ebit_margin": 0.3282,
-   "terminal_ebit_margin": 0.3282,
-   "tax_rate": 0.1968,
-   "reinvest_rate": 0.2141,
-   "debt_weight": 0.3341,
-   "cost_debt": 0.12,
+   "rev_growth": 0.02,
+   "ebit_margin": 0.097,
+   "terminal_ebit_margin": 0.0969,
+   "tax_rate": 0.2574,
+   "reinvest_rate": 0.6455,
+   "debt_weight": 0.1432,
+   "cost_debt": 0.0705,
    "fade_years": 8,
-   "terminal_growth": 0.05,
+   "terminal_growth": 0.055,
    "forecast_roe": 0.15,
-   "terminal_roe": 0.14,
+   "terminal_roe": 0.3,
    "payout": 0.25,
-   "_valuation_sector": "CONSTRUCTION"
+   "_valuation_sector": "CONSUMER"
   }
  },
  {
   "statements": {
-   "2026": {
+   "2024": {
     "PL": {
-     "pat": 149853.37
+     "pat": 104992.16
     },
     "BS": {
-     "net_worth": 493342.86
+     "net_worth": 426387.56
     },
-    "CF": {
-     "dividends": -28176.74
-    }
+    "CF": {}
+   },
+   "2025": {
+    "PL": {
+     "pat": 123511.71
+    },
+    "BS": {
+     "net_worth": 488497.31
+    },
+    "CF": {}
+   },
+   "2026": {
+    "PL": {
+     "pat": 151290.43
+    },
+    "BS": {
+     "net_worth": 569451.59
+    },
+    "CF": {}
    }
   },
-  "vs": "INSURANCE",
+  "vs": "BANK",
   "is_financial": true,
   "exp": {
-   "beta": 0.9,
+   "beta": 0.95,
    "risk_free": 0.069,
    "erp": 0.05,
-   "forecast_roe": 0.3,
-   "terminal_roe": 0.258,
-   "payout": 0.188,
+   "forecast_roe": 0.2528,
+   "terminal_roe": 0.2265,
+   "payout": 0.2,
    "fade_years": 15,
    "terminal_growth": 0.055,
    "rev_growth": 0.1,
@@ -1810,858 +2755,120 @@
    "reinvest_rate": 0.35,
    "debt_weight": 0.2,
    "cost_debt": 0.085,
-   "_valuation_sector": "INSURANCE"
-  }
- },
- {
-  "statements": {
-   "2023": {
-    "PL": {
-     "revenue": 238736.0,
-     "ebitda": 110510.32,
-     "pbt": 96270.12,
-     "tax": 20685.97,
-     "pat": 66323.1,
-     "depreciation": 7922.83,
-     "interest_expense": 6944.36,
-     "ebit": 102570.77
-    },
-    "BS": {
-     "borrowings": 137811.73,
-     "receivables": 29008.26,
-     "inventory": 52169.83,
-     "payables": 41547.97,
-     "equity": 12157.53,
-     "reserves": 230993.01,
-     "cash": 6856.87
-    },
-    "CF": {}
-   },
-   "2024": {
-    "PL": {
-     "revenue": 264246.09,
-     "ebitda": 116809.74,
-     "pbt": 104202.51,
-     "tax": 24062.37,
-     "pat": 82736.02,
-     "depreciation": 8969.39,
-     "interest_expense": 4378.77,
-     "ebit": 105413.12
-    },
-    "BS": {
-     "borrowings": 84970.07,
-     "receivables": 45166.67,
-     "inventory": 37933.62,
-     "payables": 12194.8,
-     "equity": 10011.09,
-     "reserves": 190210.7,
-     "cash": 18790.41,
-     "goodwill": 1371.98
-    },
-    "CF": {}
-   },
-   "2025": {
-    "PL": {
-     "revenue": 264994.7,
-     "ebitda": 131548.31,
-     "pbt": 119485.89,
-     "tax": 26126.73,
-     "pat": 82813.53,
-     "depreciation": 3321.31,
-     "interest_expense": 1289.45,
-     "ebit": 122863.18
-    },
-    "BS": {
-     "borrowings": 2769.4,
-     "receivables": 45134.84,
-     "inventory": 60741.31,
-     "payables": 16325.08,
-     "equity": 8582.4,
-     "reserves": 163065.65,
-     "cash": 31713.84
-    },
-    "CF": {}
-   },
-   "2026": {
-    "PL": {
-     "revenue": 292323.89,
-     "ebitda": 133752.46,
-     "pbt": 111111.6,
-     "tax": 22695.0,
-     "pat": 78335.21,
-     "depreciation": 17311.74,
-     "interest_expense": 1737.39,
-     "ebit": 121562.29
-    },
-    "BS": {
-     "borrowings": 88430.02,
-     "receivables": 51083.38,
-     "inventory": 29817.61,
-     "payables": 31697.42,
-     "equity": 15648.6,
-     "reserves": 297323.49
-    },
-    "CF": {}
-   }
-  },
-  "vs": "PAPER",
-  "is_financial": false,
-  "exp": {
-   "beta": 1.05,
-   "risk_free": 0.069,
-   "erp": 0.05,
-   "rev_growth": 0.08,
-   "ebit_margin": 0.4227,
-   "terminal_ebit_margin": 0.4227,
-   "tax_rate": 0.2187,
-   "reinvest_rate": 0.3471,
-   "debt_weight": 0.2203,
-   "cost_debt": 0.12,
-   "fade_years": 8,
-   "terminal_growth": 0.045,
-   "forecast_roe": 0.15,
-   "terminal_roe": 0.12,
-   "payout": 0.25,
-   "_valuation_sector": "PAPER"
+   "_valuation_sector": "BANK"
   }
  },
  {
   "statements": {
    "2022": {
     "PL": {
-     "revenue": 377478.88,
-     "ebitda": 75402.67,
-     "pbt": 61980.18,
-     "tax": 13965.83,
-     "pat": 46443.48,
-     "depreciation": 9596.97,
-     "interest_expense": 7454.53,
-     "ebit": 66031.52
+     "revenue": 7008.41,
+     "ebitda": 3634.47,
+     "pbt": 3075.81,
+     "tax": 515.44,
+     "pat": 2342.58,
+     "depreciation": 144.26,
+     "interest_expense": 91.35,
+     "ebit": 3167.06
     },
     "BS": {
-     "borrowings": 116201.85,
-     "receivables": 60264.71,
-     "inventory": 45031.15,
-     "payables": 53029.27,
-     "net_worth": 126654.7,
-     "cash": 41833.73,
-     "investments": 74715.46
+     "borrowings": 2907.93,
+     "receivables": 872.01,
+     "inventory": 1244.82,
+     "payables": 791.87,
+     "equity": 222.38,
+     "reserves": 4225.23
     },
     "CF": {}
    },
    "2023": {
     "PL": {
-     "revenue": 439780.62,
-     "ebitda": 127110.69,
-     "pbt": 83205.79,
-     "tax": 20059.83,
-     "pat": 56829.66,
-     "depreciation": 22952.43,
-     "interest_expense": 8170.35,
-     "ebit": 95474.32
+     "revenue": 7309.36,
+     "ebitda": 2964.1,
+     "pbt": 2383.94,
+     "tax": 573.7,
+     "pat": 1737.02,
+     "depreciation": 203.08,
+     "interest_expense": 190.3,
+     "ebit": 2774.57
     },
     "BS": {
-     "borrowings": 49667.02,
-     "receivables": 40691.34,
-     "inventory": 105619.75,
-     "payables": 65808.46,
-     "net_worth": 507725.03,
-     "cash": 35687.3
+     "borrowings": 714.36,
+     "receivables": 1611.08,
+     "inventory": 1382.62,
+     "payables": 969.35,
+     "equity": 391.56,
+     "reserves": 7439.69,
+     "cash": 100.59,
+     "investments": 2057.04
     },
     "CF": {}
    },
    "2024": {
     "PL": {
-     "revenue": 526543.45,
-     "ebitda": 119592.88,
-     "pbt": 76679.29,
-     "tax": 11535.41,
-     "pat": 54081.94,
-     "depreciation": 6034.47,
-     "interest_expense": 2605.16,
-     "ebit": 88073.66
+     "revenue": 7318.32,
+     "ebitda": 3153.68,
+     "pbt": 2371.9,
+     "tax": 428.53,
+     "pat": 1784.14,
+     "depreciation": 76.0,
+     "interest_expense": 14.42,
+     "ebit": 2695.85
     },
     "BS": {
-     "borrowings": 207550.93,
-     "receivables": 82967.26,
-     "inventory": 85910.26,
-     "payables": 58575.21,
-     "net_worth": 613559.06
+     "borrowings": 842.72,
+     "receivables": 883.6,
+     "inventory": 462.49,
+     "payables": 1453.02,
+     "equity": 201.65,
+     "reserves": 3831.3
     },
     "CF": {}
    },
    "2025": {
     "PL": {
-     "revenue": 646140.13,
-     "ebitda": 147546.81,
-     "pbt": 104886.41,
-     "tax": 25623.28,
-     "pat": 73442.89,
-     "depreciation": 29638.63,
-     "interest_expense": 16081.6,
-     "ebit": 107200.53
+     "revenue": 7147.91,
+     "ebitda": 2978.01,
+     "pbt": 2238.01,
+     "tax": 557.8,
+     "pat": 1632.55,
+     "depreciation": 183.29,
+     "interest_expense": 186.61,
+     "ebit": 2426.84
     },
     "BS": {
-     "borrowings": 357562.88,
-     "receivables": 125580.12,
-     "inventory": 165019.4,
-     "payables": 29815.38,
-     "net_worth": 555343.5,
-     "investments": 57191.83,
-     "goodwill": 44449.13
+     "borrowings": 4142.95,
+     "receivables": 668.65,
+     "inventory": 2132.51,
+     "payables": 446.03,
+     "equity": 196.15,
+     "reserves": 3726.89,
+     "investments": 1925.62
     },
     "CF": {}
    },
    "2026": {
     "PL": {
-     "revenue": 772368.49,
-     "ebitda": 210958.59,
-     "pbt": 167105.6,
-     "tax": 48903.87,
-     "pat": 129996.92,
-     "depreciation": 16662.9,
-     "interest_expense": 6608.9,
-     "ebit": 167971.39
+     "revenue": 7185.99,
+     "ebitda": 2977.28,
+     "pbt": 2474.26,
+     "tax": 727.54,
+     "pat": 1849.73,
+     "depreciation": 76.31,
+     "interest_expense": 132.12,
+     "ebit": 2590.43
     },
     "BS": {
-     "borrowings": 260847.72,
-     "receivables": 66008.76,
-     "inventory": 79859.92,
-     "payables": 65826.31,
-     "net_worth": 842975.55,
-     "cash": 81833.16,
-     "goodwill": 74281.96
+     "borrowings": 4258.11,
+     "receivables": 1601.69,
+     "inventory": 603.07,
+     "payables": 974.46,
+     "equity": 297.09,
+     "reserves": 5644.74,
+     "cash": 673.29,
+     "investments": 1550.25
     },
     "CF": {}
-   }
-  },
-  "vs": "CHEMICALS",
-  "is_financial": false,
-  "exp": {
-   "beta": 1.05,
-   "risk_free": 0.069,
-   "erp": 0.05,
-   "rev_growth": 0.18,
-   "ebit_margin": 0.1749,
-   "terminal_ebit_margin": 0.1749,
-   "tax_rate": 0.2443,
-   "reinvest_rate": 0.65,
-   "debt_weight": 0.2363,
-   "cost_debt": 0.06,
-   "fade_years": 10,
-   "terminal_growth": 0.05,
-   "forecast_roe": 0.15,
-   "terminal_roe": 0.17,
-   "payout": 0.25,
-   "_valuation_sector": "CHEMICALS"
-  }
- },
- {
-  "statements": {
-   "2024": {
-    "PL": {
-     "pat": 44860.04
-    },
-    "BS": {
-     "net_worth": 276672.4
-    },
-    "CF": {}
-   },
-   "2025": {
-    "PL": {
-     "pat": 50439.21
-    },
-    "BS": {
-     "net_worth": 302622.18
-    },
-    "CF": {}
-   },
-   "2026": {
-    "PL": {
-     "pat": 59173.77
-    },
-    "BS": {
-     "net_worth": 340783.69
-    },
-    "CF": {}
-   }
-  },
-  "vs": "INSURANCE",
-  "is_financial": true,
-  "exp": {
-   "beta": 0.9,
-   "risk_free": 0.069,
-   "erp": 0.05,
-   "forecast_roe": 0.1667,
-   "terminal_roe": 0.1647,
-   "payout": 0.2,
-   "fade_years": 12,
-   "terminal_growth": 0.055,
-   "rev_growth": 0.1,
-   "ebit_margin": 0.12,
-   "tax_rate": 0.25,
-   "reinvest_rate": 0.35,
-   "debt_weight": 0.2,
-   "cost_debt": 0.085,
-   "_valuation_sector": "INSURANCE"
-  }
- },
- {
-  "statements": {
-   "2022": {
-    "PL": {
-     "revenue": 388830.58,
-     "ebitda": 86491.85,
-     "pbt": 59239.56,
-     "tax": 13071.06,
-     "pat": 44950.12,
-     "depreciation": 17906.92,
-     "interest_expense": 1539.77,
-     "ebit": 61119.85
-    },
-    "BS": {
-     "borrowings": 91759.92,
-     "receivables": 51767.45,
-     "inventory": 58255.15,
-     "payables": 56092.43,
-     "net_worth": 213899.19,
-     "investments": 30275.73,
-     "goodwill": 31068.33
-    },
-    "CF": {}
-   },
-   "2023": {
-    "PL": {
-     "revenue": 394309.69,
-     "ebitda": 83688.29,
-     "pbt": 53154.62,
-     "tax": 12705.95,
-     "pat": 36582.49,
-     "depreciation": 20433.03,
-     "interest_expense": 2177.29,
-     "ebit": 53595.19
-    },
-    "BS": {
-     "borrowings": 129611.56,
-     "receivables": 98450.09,
-     "inventory": 20532.07,
-     "payables": 48722.76,
-     "net_worth": 172153.54,
-     "investments": 58748.06
-    },
-    "CF": {}
-   },
-   "2024": {
-    "PL": {
-     "revenue": 424008.85,
-     "ebitda": 90197.37,
-     "pbt": 65257.47,
-     "tax": 17969.21,
-     "pat": 51129.44,
-     "depreciation": 18338.83,
-     "interest_expense": 9954.12,
-     "ebit": 72950.15
-    },
-    "BS": {
-     "borrowings": 93654.75,
-     "receivables": 46935.74,
-     "inventory": 64414.61,
-     "payables": 33697.35,
-     "net_worth": 346620.9,
-     "cash": 17998.98,
-     "goodwill": 17128.99
-    },
-    "CF": {}
-   },
-   "2025": {
-    "PL": {
-     "revenue": 446567.39,
-     "ebitda": 74482.03,
-     "pbt": 61546.46,
-     "tax": 11284.9,
-     "pat": 42364.9,
-     "depreciation": 21464.05,
-     "interest_expense": 10862.63,
-     "ebit": 65317.07
-    },
-    "BS": {
-     "borrowings": 251362.19,
-     "receivables": 104806.6,
-     "inventory": 53438.65,
-     "payables": 67613.68,
-     "net_worth": 484780.65,
-     "cash": 21956.07,
-     "investments": 22263.82
-    },
-    "CF": {}
-   },
-   "2026": {
-    "PL": {
-     "revenue": 432375.07,
-     "ebitda": 78064.43,
-     "pbt": 57403.86,
-     "tax": 15876.2,
-     "pat": 44867.16,
-     "depreciation": 21488.9,
-     "interest_expense": 11659.86,
-     "ebit": 65447.79
-    },
-    "BS": {
-     "borrowings": 11551.22,
-     "receivables": 90171.97,
-     "inventory": 54170.65,
-     "payables": 65431.04,
-     "net_worth": 391921.54
-    },
-    "CF": {}
-   }
-  },
-  "vs": "IT_SERVICES",
-  "is_financial": false,
-  "exp": {
-   "beta": 0.85,
-   "risk_free": 0.069,
-   "erp": 0.05,
-   "rev_growth": 0.02,
-   "ebit_margin": 0.1514,
-   "terminal_ebit_margin": 0.1514,
-   "tax_rate": 0.2754,
-   "reinvest_rate": 0.1,
-   "debt_weight": 0.0286,
-   "cost_debt": 0.12,
-   "fade_years": 8,
-   "terminal_growth": 0.055,
-   "forecast_roe": 0.15,
-   "terminal_roe": 0.3,
-   "payout": 0.25,
-   "_valuation_sector": "IT_SERVICES"
-  }
- },
- {
-  "statements": {
-   "2026": {
-    "PL": {
-     "revenue": 184292.38,
-     "ebitda": 21219.8,
-     "pbt": 10226.9,
-     "tax": 2476.73,
-     "pat": 7078.32,
-     "depreciation": 8019.74,
-     "interest_expense": 3780.39,
-     "ebit": 11549.44
-    },
-    "BS": {
-     "borrowings": 28053.93,
-     "receivables": 35249.59,
-     "inventory": 11108.86,
-     "payables": 14517.94,
-     "equity": 3448.3,
-     "reserves": 65517.68,
-     "investments": 16669.2
-    },
-    "CF": {
-     "capex": -14215.11
-    }
-   }
-  },
-  "vs": "IT_SERVICES",
-  "is_financial": false,
-  "exp": {
-   "beta": 0.85,
-   "risk_free": 0.069,
-   "erp": 0.05,
-   "rev_growth": 0.085,
-   "ebit_margin": 0.0627,
-   "terminal_ebit_margin": 0.0627,
-   "tax_rate": 0.2422,
-   "reinvest_rate": 0.2833,
-   "debt_weight": 0.2892,
-   "cost_debt": 0.12,
-   "fade_years": 8,
-   "terminal_growth": 0.055,
-   "forecast_roe": 0.15,
-   "terminal_roe": 0.3,
-   "payout": 0.25,
-   "_valuation_sector": "IT_SERVICES"
-  }
- },
- {
-  "statements": {
-   "2022": {
-    "PL": {
-     "pat": 1895.84
-    },
-    "BS": {
-     "equity": 235.5,
-     "reserves": 7614.37
-    },
-    "CF": {
-     "dividends": -463.04
-    }
-   },
-   "2023": {
-    "PL": {
-     "pat": 1933.56
-    },
-    "BS": {
-     "net_worth": 8810.1
-    },
-    "CF": {
-     "dividends": -1098.27
-    }
-   },
-   "2024": {
-    "PL": {
-     "pat": 2226.37
-    },
-    "BS": {
-     "net_worth": 10097.77
-    },
-    "CF": {
-     "dividends": -981.51
-    }
-   },
-   "2025": {
-    "PL": {
-     "pat": 2093.66
-    },
-    "BS": {
-     "net_worth": 11197.33
-    },
-    "CF": {
-     "dividends": -114.08
-    }
-   },
-   "2026": {
-    "PL": {
-     "pat": 2305.13
-    },
-    "BS": {
-     "net_worth": 13102.6
-    },
-    "CF": {
-     "dividends": -816.05
-    }
-   }
-  },
-  "vs": "NBFC",
-  "is_financial": true,
-  "exp": {
-   "beta": 1.05,
-   "risk_free": 0.069,
-   "erp": 0.05,
-   "forecast_roe": 0.187,
-   "terminal_roe": 0.1849,
-   "payout": 0.354,
-   "fade_years": 10,
-   "terminal_growth": 0.055,
-   "rev_growth": 0.1,
-   "ebit_margin": 0.12,
-   "tax_rate": 0.25,
-   "reinvest_rate": 0.35,
-   "debt_weight": 0.2,
-   "cost_debt": 0.085,
-   "_valuation_sector": "NBFC"
-  }
- },
- {
-  "statements": {
-   "2026": {
-    "PL": {
-     "revenue": 221336.83,
-     "ebitda": 40799.75,
-     "pbt": 27480.69,
-     "tax": 7644.08,
-     "pat": 19304.86,
-     "depreciation": 10944.77,
-     "interest_expense": 5345.8,
-     "ebit": 30472.14
-    },
-    "BS": {
-     "borrowings": 129485.16,
-     "receivables": 35088.7,
-     "inventory": 34733.48,
-     "payables": 19894.53,
-     "net_worth": 74604.77,
-     "cash": 7770.98
-    },
-    "CF": {
-     "capex": -16911.13
-    }
-   }
-  },
-  "vs": "CEMENT",
-  "is_financial": false,
-  "exp": {
-   "beta": 1.05,
-   "risk_free": 0.069,
-   "erp": 0.05,
-   "rev_growth": 0.08,
-   "ebit_margin": 0.1349,
-   "terminal_ebit_margin": 0.136,
-   "tax_rate": 0.2782,
-   "reinvest_rate": 0.5714,
-   "debt_weight": 0.6,
-   "cost_debt": 0.06,
-   "fade_years": 10,
-   "terminal_growth": 0.05,
-   "forecast_roe": 0.15,
-   "terminal_roe": 0.15,
-   "payout": 0.25,
-   "_valuation_sector": "CEMENT"
-  }
- },
- {
-  "statements": {
-   "2024": {
-    "PL": {
-     "revenue": 70435.04,
-     "ebitda": 30290.65,
-     "pbt": 21514.5,
-     "tax": 4077.53,
-     "pat": 16530.15,
-     "depreciation": 3249.39,
-     "interest_expense": 325.08,
-     "ebit": 25226.02
-    },
-    "BS": {
-     "borrowings": 9926.43,
-     "receivables": 16003.77,
-     "inventory": 10156.97,
-     "payables": 10274.22,
-     "equity": 3024.52,
-     "reserves": 57465.81,
-     "cash": 1935.23
-    },
-    "CF": {}
-   },
-   "2025": {
-    "PL": {
-     "revenue": 90337.07,
-     "ebitda": 38057.61,
-     "pbt": 29955.74,
-     "tax": 4572.74,
-     "pat": 21013.82,
-     "depreciation": 1227.37,
-     "interest_expense": 1669.68,
-     "ebit": 33042.01
-    },
-    "BS": {
-     "borrowings": 11008.41,
-     "receivables": 4845.99,
-     "inventory": 12268.15,
-     "payables": 9794.49,
-     "equity": 3875.52,
-     "reserves": 73634.79
-    },
-    "CF": {}
-   },
-   "2026": {
-    "PL": {
-     "revenue": 105635.65,
-     "ebitda": 45826.18,
-     "pbt": 37659.04,
-     "tax": 9550.84,
-     "pat": 26062.21,
-     "depreciation": 2485.38,
-     "interest_expense": 2580.49,
-     "ebit": 41338.39
-    },
-    "BS": {
-     "borrowings": 16679.29,
-     "receivables": 6121.97,
-     "inventory": 6143.92,
-     "payables": 6863.72,
-     "equity": 3520.27,
-     "reserves": 66885.06,
-     "cash": 13687.15
-    },
-    "CF": {}
-   }
-  },
-  "vs": "ENERGY",
-  "is_financial": false,
-  "exp": {
-   "beta": 1.0,
-   "risk_free": 0.069,
-   "erp": 0.05,
-   "rev_growth": 0.08,
-   "ebit_margin": 0.3658,
-   "terminal_ebit_margin": 0.3658,
-   "tax_rate": 0.1895,
-   "reinvest_rate": 0.3486,
-   "debt_weight": 0.1915,
-   "cost_debt": 0.12,
-   "fade_years": 8,
-   "terminal_growth": 0.04,
-   "forecast_roe": 0.15,
-   "terminal_roe": 0.14,
-   "payout": 0.25,
-   "_valuation_sector": "ENERGY"
-  }
- },
- {
-  "statements": {
-   "2022": {
-    "PL": {
-     "pat": 24692.91
-    },
-    "BS": {
-     "net_worth": 356886.16
-    },
-    "CF": {}
-   },
-   "2023": {
-    "PL": {
-     "pat": 21358.58
-    },
-    "BS": {
-     "net_worth": 377269.48
-    },
-    "CF": {}
-   },
-   "2024": {
-    "PL": {
-     "pat": 15156.97
-    },
-    "BS": {
-     "net_worth": 390118.06
-    },
-    "CF": {}
-   },
-   "2025": {
-    "PL": {
-     "pat": 9783.91
-    },
-    "BS": {
-     "equity": 12088.53,
-     "reserves": 390862.62
-    },
-    "CF": {}
-   },
-   "2026": {
-    "PL": {
-     "pat": 4258.48
-    },
-    "BS": {
-     "net_worth": 409623.05
-    },
-    "CF": {}
-   }
-  },
-  "vs": "INSURANCE",
-  "is_financial": true,
-  "exp": {
-   "beta": 0.9,
-   "risk_free": 0.069,
-   "erp": 0.05,
-   "forecast_roe": 0.06,
-   "terminal_roe": 0.08,
-   "payout": 0.2,
-   "fade_years": 8,
-   "terminal_growth": 0.055,
-   "rev_growth": 0.1,
-   "ebit_margin": 0.12,
-   "tax_rate": 0.25,
-   "reinvest_rate": 0.35,
-   "debt_weight": 0.2,
-   "cost_debt": 0.085,
-   "_valuation_sector": "INSURANCE"
-  }
- },
- {
-  "statements": {
-   "2023": {
-    "PL": {
-     "revenue": 70391.77,
-     "ebitda": 20963.67,
-     "pbt": 16134.28,
-     "tax": 3191.57,
-     "pat": 12417.48,
-     "depreciation": 1098.38,
-     "interest_expense": 924.0,
-     "ebit": 17102.95
-    },
-    "BS": {
-     "borrowings": 6075.09,
-     "receivables": 14866.01,
-     "inventory": 8694.91,
-     "payables": 5200.41,
-     "net_worth": 53137.54
-    },
-    "CF": {
-     "capex": -1073.26
-    }
-   },
-   "2024": {
-    "PL": {
-     "revenue": 75662.65,
-     "ebitda": 27068.28,
-     "pbt": 23431.98,
-     "tax": 6555.17,
-     "pat": 18696.28,
-     "depreciation": 4198.75,
-     "interest_expense": 2222.77,
-     "ebit": 23638.67
-    },
-    "BS": {
-     "borrowings": 12783.27,
-     "receivables": 16243.51,
-     "inventory": 14006.94,
-     "payables": 3144.57,
-     "net_worth": 75789.32,
-     "cash": 6914.31,
-     "investments": 14009.14
-    },
-    "CF": {
-     "capex": -2168.52
-    }
-   },
-   "2025": {
-    "PL": {
-     "revenue": 82083.38,
-     "ebitda": 26135.48,
-     "pbt": 21903.54,
-     "tax": 5392.21,
-     "pat": 16984.04,
-     "depreciation": 3225.84,
-     "interest_expense": 512.31,
-     "ebit": 22680.34
-    },
-    "BS": {
-     "borrowings": 22692.71,
-     "receivables": 5921.06,
-     "inventory": 20512.24,
-     "payables": 11263.78,
-     "net_worth": 47987.99,
-     "cash": 9588.03
-    },
-    "CF": {
-     "capex": -5867.96
-    }
-   },
-   "2026": {
-    "PL": {
-     "revenue": 89593.39,
-     "ebitda": 34861.31,
-     "pbt": 26008.88,
-     "tax": 5594.25,
-     "pat": 19761.84,
-     "depreciation": 4094.52,
-     "interest_expense": 2290.4,
-     "ebit": 28472.59
-    },
-    "BS": {
-     "borrowings": 42183.08,
-     "receivables": 16916.87,
-     "inventory": 10884.02,
-     "payables": 5885.1,
-     "net_worth": 39562.41,
-     "cash": 10953.04
-    },
-    "CF": {
-     "capex": -7532.22
-    }
    }
   },
   "vs": "TEXTILES",
@@ -2670,12 +2877,12 @@
    "beta": 1.1,
    "risk_free": 0.069,
    "erp": 0.05,
-   "rev_growth": 0.08,
-   "ebit_margin": 0.2944,
-   "terminal_ebit_margin": 0.2944,
-   "tax_rate": 0.2462,
-   "reinvest_rate": 0.3775,
-   "debt_weight": 0.516,
+   "rev_growth": 0.02,
+   "ebit_margin": 0.3684,
+   "terminal_ebit_margin": 0.3684,
+   "tax_rate": 0.2492,
+   "reinvest_rate": 0.1,
+   "debt_weight": 0.4175,
    "cost_debt": 0.06,
    "fade_years": 8,
    "terminal_growth": 0.04,
@@ -2689,95 +2896,93 @@
   "statements": {
    "2023": {
     "PL": {
-     "revenue": 103570.86,
-     "ebitda": 23135.5,
-     "pbt": 15484.24,
-     "tax": 3805.81,
-     "pat": 12279.9,
-     "depreciation": 1327.01,
-     "interest_expense": 158.19,
-     "ebit": 15636.96
+     "revenue": 327392.76,
+     "ebitda": 70710.31,
+     "pbt": 46186.87,
+     "tax": 11073.81,
+     "pat": 34753.09,
+     "depreciation": 18404.8,
+     "interest_expense": 1611.07,
+     "ebit": 52055.59
     },
     "BS": {
-     "borrowings": 2054.01,
-     "receivables": 14357.82,
-     "inventory": 8404.17,
-     "payables": 18957.51,
-     "net_worth": 84573.33,
-     "cash": 14342.05,
-     "investments": 11261.06,
-     "goodwill": 8900.21
+     "borrowings": 100160.29,
+     "receivables": 71596.91,
+     "inventory": 37231.37,
+     "payables": 44008.38,
+     "net_worth": 150559.34,
+     "cash": 23950.68
     },
     "CF": {
-     "capex": -1693.7
+     "capex": -88438.19
     }
    },
    "2024": {
     "PL": {
-     "revenue": 128293.05,
-     "ebitda": 25701.59,
-     "pbt": 19622.06,
-     "tax": 3158.99,
-     "pat": 14881.48,
-     "depreciation": 1841.62,
-     "interest_expense": 1156.68,
-     "ebit": 20670.0
+     "revenue": 318375.32,
+     "ebitda": 64892.85,
+     "pbt": 46930.51,
+     "tax": 12201.71,
+     "pat": 35321.74,
+     "depreciation": 18085.61,
+     "interest_expense": 3970.45,
+     "ebit": 54462.15
     },
     "BS": {
-     "borrowings": 2319.13,
-     "receivables": 13816.54,
-     "inventory": 19026.95,
-     "payables": 24040.5,
-     "net_worth": 90342.34,
-     "investments": 11084.41
+     "borrowings": 190149.85,
+     "receivables": 27306.42,
+     "inventory": 80172.5,
+     "payables": 33121.83,
+     "net_worth": 235408.79,
+     "cash": 8855.1
     },
     "CF": {
-     "capex": -10640.94
+     "capex": -51867.4
     }
    },
    "2025": {
     "PL": {
-     "revenue": 150388.89,
-     "ebitda": 29718.93,
-     "pbt": 22055.43,
-     "tax": 4148.86,
-     "pat": 16449.09,
-     "depreciation": 6242.01,
-     "interest_expense": 672.32,
-     "ebit": 23167.33
+     "revenue": 324734.68,
+     "ebitda": 55601.56,
+     "pbt": 40855.88,
+     "tax": 11311.13,
+     "pat": 32351.55,
+     "depreciation": 14016.72,
+     "interest_expense": 6201.53,
+     "ebit": 41760.88
     },
     "BS": {
-     "borrowings": 73153.54,
-     "receivables": 24498.28,
-     "inventory": 12306.78,
-     "payables": 27863.82,
-     "net_worth": 90679.1,
-     "cash": 19862.12
+     "borrowings": 15717.37,
+     "receivables": 35861.46,
+     "inventory": 75266.97,
+     "payables": 53651.8,
+     "net_worth": 249629.35,
+     "goodwill": 24429.63
     },
     "CF": {
-     "capex": -6734.73
+     "capex": -74264.65
     }
    },
    "2026": {
     "PL": {
-     "revenue": 184368.36,
-     "ebitda": 36656.43,
-     "pbt": 27708.65,
-     "tax": 5415.64,
-     "pat": 18937.25,
-     "depreciation": 10603.38,
-     "interest_expense": 992.48,
-     "ebit": 29577.3
+     "revenue": 336896.91,
+     "ebitda": 78903.97,
+     "pbt": 47358.34,
+     "tax": 7821.93,
+     "pat": 37160.34,
+     "depreciation": 8807.6,
+     "interest_expense": 8764.53,
+     "ebit": 53468.15
     },
     "BS": {
-     "borrowings": 21041.44,
-     "receivables": 17911.16,
-     "inventory": 28532.02,
-     "payables": 36736.04,
-     "net_worth": 163119.84
+     "borrowings": 147602.92,
+     "receivables": 73798.96,
+     "inventory": 43702.61,
+     "payables": 60719.23,
+     "net_worth": 233370.71
     },
     "CF": {
-     "capex": -2842.47
+     "capex": -66437.86
     }
    }
   },
@@ -2787,13 +2992,13 @@
    "beta": 1.25,
    "risk_free": 0.069,
    "erp": 0.05,
-   "rev_growth": 0.18,
-   "ebit_margin": 0.1604,
-   "terminal_ebit_margin": 0.1591,
-   "tax_rate": 0.1881,
-   "reinvest_rate": 0.65,
-   "debt_weight": 0.1143,
-   "cost_debt": 0.06,
+   "rev_growth": 0.02,
+   "ebit_margin": 0.1587,
+   "terminal_ebit_margin": 0.1588,
+   "tax_rate": 0.26,
+   "reinvest_rate": 0.6833,
+   "debt_weight": 0.3874,
+   "cost_debt": 0.12,
    "fade_years": 8,
    "terminal_growth": 0.05,
    "forecast_roe": 0.15,
@@ -2804,39 +3009,50 @@
  },
  {
   "statements": {
-   "2024": {
+   "2022": {
     "PL": {
-     "pat": 7828.62
+     "pat": 43341.78
     },
     "BS": {
-     "net_worth": 61240.96
+     "net_worth": 183267.41
     },
-    "CF": {
-     "dividends": -1992.25
-    }
+    "CF": {}
+   },
+   "2023": {
+    "PL": {
+     "pat": 46889.43
+    },
+    "BS": {
+     "net_worth": 220417.27
+    },
+    "CF": {}
+   },
+   "2024": {
+    "PL": {
+     "pat": 48430.13
+    },
+    "BS": {
+     "net_worth": 256366.44
+    },
+    "CF": {}
    },
    "2025": {
     "PL": {
-     "pat": 7771.88
+     "pat": 43831.64
     },
     "BS": {
-     "net_worth": 67501.28
+     "net_worth": 287435.05
     },
-    "CF": {
-     "dividends": -2338.56
-    }
+    "CF": {}
    },
    "2026": {
     "PL": {
-     "pat": 7516.85
+     "pat": 38624.46
     },
     "BS": {
-     "equity": 2216.07,
-     "reserves": 71653.01
+     "net_worth": 319422.48
     },
-    "CF": {
-     "dividends": -4111.92
-    }
+    "CF": {}
    }
   },
   "vs": "NBFC",
@@ -2845,10 +3061,10 @@
    "beta": 1.05,
    "risk_free": 0.069,
    "erp": 0.05,
-   "forecast_roe": 0.1215,
-   "terminal_roe": 0.1215,
-   "payout": 0.3009,
-   "fade_years": 8,
+   "forecast_roe": 0.133,
+   "terminal_roe": 0.133,
+   "payout": 0.2,
+   "fade_years": 10,
    "terminal_growth": 0.055,
    "rev_growth": 0.1,
    "ebit_margin": 0.12,
@@ -2861,28 +3077,149 @@
  },
  {
   "statements": {
-   "2026": {
+   "2020": {
     "PL": {
-     "revenue": 28237.73,
-     "ebitda": 2485.38,
-     "pbt": 1101.37,
-     "tax": 234.53,
-     "pat": 773.21,
-     "depreciation": 1309.83,
-     "interest_expense": 430.21,
-     "ebit": 1189.57
+     "revenue": 76791.41,
+     "ebitda": 39430.39,
+     "pbt": 32263.08,
+     "tax": 5585.22,
+     "pat": 25367.62,
+     "depreciation": 4486.48,
+     "interest_expense": 522.35,
+     "ebit": 33408.27
     },
     "BS": {
-     "borrowings": 3243.34,
-     "receivables": 3512.89,
-     "inventory": 5477.54,
-     "payables": 5536.9,
-     "net_worth": 16446.46,
-     "goodwill": 808.19
+     "borrowings": 38874.8,
+     "receivables": 6604.1,
+     "inventory": 14142.28,
+     "payables": 7573.72,
+     "net_worth": 77626.39
     },
-    "CF": {
-     "capex": -922.63
-    }
+    "CF": {}
+   },
+   "2021": {
+    "PL": {
+     "revenue": 87406.01,
+     "ebitda": 44315.47,
+     "pbt": 34965.27,
+     "tax": 5251.74,
+     "pat": 24359.71,
+     "depreciation": 4969.05,
+     "interest_expense": 402.84,
+     "ebit": 38635.97
+    },
+    "BS": {
+     "borrowings": 767.24,
+     "receivables": 5921.59,
+     "inventory": 7152.11,
+     "payables": 12540.77,
+     "net_worth": 38563.41,
+     "goodwill": 4146.72
+    },
+    "CF": {}
+   },
+   "2022": {
+    "PL": {
+     "revenue": 101438.05,
+     "ebitda": 40927.35,
+     "pbt": 32660.53,
+     "tax": 5569.36,
+     "pat": 25956.24,
+     "depreciation": 2853.39,
+     "interest_expense": 2272.29,
+     "ebit": 37382.3
+    },
+    "BS": {
+     "borrowings": 14172.3,
+     "receivables": 24309.44,
+     "inventory": 11858.22,
+     "payables": 19331.11,
+     "net_worth": 111521.32
+    },
+    "CF": {}
+   },
+   "2023": {
+    "PL": {
+     "revenue": 121901.94,
+     "ebitda": 53928.41,
+     "pbt": 45476.26,
+     "tax": 13496.86,
+     "pat": 35371.46,
+     "depreciation": 2732.31,
+     "interest_expense": 2830.84,
+     "ebit": 46853.44
+    },
+    "BS": {
+     "borrowings": 62374.04,
+     "receivables": 12671.75,
+     "inventory": 9147.88,
+     "payables": 11946.65,
+     "net_worth": 137033.02
+    },
+    "CF": {}
+   },
+   "2024": {
+    "PL": {
+     "revenue": 147144.85,
+     "ebitda": 66384.5,
+     "pbt": 58559.98,
+     "tax": 10743.37,
+     "pat": 42551.63,
+     "depreciation": 6127.8,
+     "interest_expense": 929.59,
+     "ebit": 61981.44
+    },
+    "BS": {
+     "borrowings": 26837.88,
+     "receivables": 33705.39,
+     "inventory": 43338.05,
+     "payables": 21883.8,
+     "net_worth": 171729.4,
+     "cash": 10203.85,
+     "investments": 29622.29
+    },
+    "CF": {}
+   },
+   "2025": {
+    "PL": {
+     "revenue": 173917.12,
+     "ebitda": 84910.99,
+     "pbt": 72273.65,
+     "tax": 13805.19,
+     "pat": 53512.94,
+     "depreciation": 3574.01,
+     "interest_expense": 1070.15,
+     "ebit": 77588.6
+    },
+    "BS": {
+     "borrowings": 15376.19,
+     "receivables": 26239.78,
+     "inventory": 47373.11,
+     "payables": 24097.33,
+     "net_worth": 61618.58,
+     "cash": 17052.13
+    },
+    "CF": {}
+   },
+   "2026": {
+    "PL": {
+     "revenue": 198680.76,
+     "ebitda": 102780.06,
+     "pbt": 75505.57,
+     "tax": 11533.84,
+     "pat": 53257.88,
+     "depreciation": 2224.66,
+     "interest_expense": 4024.96,
+     "ebit": 87969.76
+    },
+    "BS": {
+     "borrowings": 12963.13,
+     "receivables": 26032.38,
+     "inventory": 34491.15,
+     "payables": 21189.35,
+     "net_worth": 165551.5
+    },
+    "CF": {}
    }
   },
   "vs": "IT_SERVICES",
@@ -2891,14 +3228,14 @@
    "beta": 0.85,
    "risk_free": 0.069,
    "erp": 0.05,
-   "rev_growth": 0.085,
-   "ebit_margin": 0.0421,
-   "terminal_ebit_margin": 0.0421,
-   "tax_rate": 0.2129,
-   "reinvest_rate": 0.2833,
-   "debt_weight": 0.1647,
+   "rev_growth": 0.1688,
+   "ebit_margin": 0.4428,
+   "terminal_ebit_margin": 0.4397,
+   "tax_rate": 0.1835,
+   "reinvest_rate": 0.467,
+   "debt_weight": 0.0726,
    "cost_debt": 0.12,
-   "fade_years": 8,
+   "fade_years": 10,
    "terminal_growth": 0.055,
    "forecast_roe": 0.15,
    "terminal_roe": 0.3,
@@ -2908,426 +3245,103 @@
  },
  {
   "statements": {
-   "2026": {
-    "PL": {
-     "revenue": 232061.28,
-     "ebitda": 27055.94,
-     "pbt": 18544.42,
-     "tax": 4092.9,
-     "pat": 13817.94,
-     "depreciation": 8797.44,
-     "interest_expense": 4109.45,
-     "ebit": 21562.75
-    },
-    "BS": {
-     "borrowings": 75898.43,
-     "receivables": 20438.42,
-     "inventory": 68484.44,
-     "payables": 16139.43,
-     "net_worth": 212793.72,
-     "investments": 63616.43
-    },
-    "CF": {
-     "capex": -26212.42
-    }
-   }
-  },
-  "vs": "SUGAR",
-  "is_financial": false,
-  "exp": {
-   "beta": 1.0,
-   "risk_free": 0.069,
-   "erp": 0.05,
-   "rev_growth": 0.07,
-   "ebit_margin": 0.0929,
-   "terminal_ebit_margin": 0.0929,
-   "tax_rate": 0.2207,
-   "reinvest_rate": 0.65,
-   "debt_weight": 0.2629,
-   "cost_debt": 0.06,
-   "fade_years": 8,
-   "terminal_growth": 0.04,
-   "forecast_roe": 0.15,
-   "terminal_roe": 0.12,
-   "payout": 0.25,
-   "_valuation_sector": "SUGAR"
-  }
- },
- {
-  "statements": {
-   "2022": {
-    "PL": {
-     "pat": 18098.99
-    },
-    "BS": {
-     "net_worth": 410692.5
-    },
-    "CF": {}
-   },
-   "2023": {
-    "PL": {
-     "pat": 27337.5
-    },
-    "BS": {
-     "net_worth": 425191.23
-    },
-    "CF": {}
-   },
    "2024": {
     "PL": {
-     "pat": 38619.35
+     "revenue": 139801.0,
+     "ebitda": 68861.86,
+     "pbt": 57542.65,
+     "tax": 8697.94,
+     "pat": 41130.77,
+     "depreciation": 3123.39,
+     "interest_expense": 2234.27,
+     "ebit": 58568.43
     },
     "BS": {
-     "net_worth": 445533.98
+     "borrowings": 30003.83,
+     "receivables": 10784.35,
+     "inventory": 21721.84,
+     "payables": 27913.24,
+     "equity": 3340.76,
+     "reserves": 63474.37
     },
     "CF": {}
    },
    "2025": {
     "PL": {
-     "pat": 48369.31
+     "revenue": 131854.8,
+     "ebitda": 59394.8,
+     "pbt": 50114.76,
+     "tax": 13295.75,
+     "pat": 39444.32,
+     "depreciation": 6032.03,
+     "interest_expense": 2492.66,
+     "ebit": 50303.38
     },
     "BS": {
-     "equity": 14270.16,
-     "reserves": 461401.98
+     "borrowings": 75459.48,
+     "receivables": 30845.4,
+     "inventory": 12676.62,
+     "payables": 8419.65,
+     "equity": 6542.87,
+     "reserves": 124314.48,
+     "cash": 11585.84,
+     "goodwill": 2695.0
     },
     "CF": {}
    },
    "2026": {
     "PL": {
-     "pat": 59134.63
+     "revenue": 131895.11,
+     "ebitda": 61972.62,
+     "pbt": 55422.95,
+     "tax": 12059.15,
+     "pat": 42499.23,
+     "depreciation": 3462.26,
+     "interest_expense": 1176.54,
+     "ebit": 57177.47
     },
     "BS": {
-     "net_worth": 501085.99
+     "borrowings": 17740.07,
+     "receivables": 7161.52,
+     "inventory": 33599.9,
+     "payables": 8051.94,
+     "equity": 5315.31,
+     "reserves": 100990.92,
+     "cash": 19462.57
     },
     "CF": {}
    }
   },
-  "vs": "BANK",
-  "is_financial": true,
-  "exp": {
-   "beta": 0.95,
-   "risk_free": 0.069,
-   "erp": 0.05,
-   "forecast_roe": 0.1023,
-   "terminal_roe": 0.1023,
-   "payout": 0.2,
-   "fade_years": 8,
-   "terminal_growth": 0.055,
-   "rev_growth": 0.1,
-   "ebit_margin": 0.12,
-   "tax_rate": 0.25,
-   "reinvest_rate": 0.35,
-   "debt_weight": 0.2,
-   "cost_debt": 0.085,
-   "_valuation_sector": "BANK"
-  }
- },
- {
-  "statements": {
-   "2020": {
-    "PL": {
-     "revenue": 279180.27,
-     "ebitda": 81700.91,
-     "pbt": 67764.59,
-     "tax": 18738.0,
-     "pat": 48152.57,
-     "depreciation": 11029.43,
-     "interest_expense": 669.74,
-     "ebit": 73141.73
-    },
-    "BS": {
-     "borrowings": 116106.06,
-     "receivables": 68514.28,
-     "inventory": 61455.59,
-     "payables": 22994.02,
-     "net_worth": 197101.7,
-     "investments": 11685.49
-    },
-    "CF": {
-     "capex": -16311.4
-    }
-   },
-   "2021": {
-    "PL": {
-     "revenue": 282059.91,
-     "ebitda": 94280.79,
-     "pbt": 80321.75,
-     "tax": 14202.97,
-     "pat": 62399.75,
-     "depreciation": 8464.79,
-     "interest_expense": 2330.18,
-     "ebit": 80376.99
-    },
-    "BS": {
-     "borrowings": 74281.86,
-     "receivables": 47418.83,
-     "inventory": 31848.16,
-     "payables": 31381.51,
-     "net_worth": 116918.0,
-     "cash": 17708.7
-    },
-    "CF": {
-     "capex": -23852.04
-    }
-   },
-   "2022": {
-    "PL": {
-     "revenue": 278704.42,
-     "ebitda": 99324.0,
-     "pbt": 73313.86,
-     "tax": 14320.02,
-     "pat": 56250.38,
-     "depreciation": 13692.86,
-     "interest_expense": 7948.66,
-     "ebit": 85041.0
-    },
-    "BS": {
-     "borrowings": 11397.62,
-     "receivables": 48879.89,
-     "inventory": 49802.62,
-     "payables": 48830.26,
-     "net_worth": 185475.4,
-     "goodwill": 3381.19
-    },
-    "CF": {
-     "capex": -22233.75
-    }
-   },
-   "2023": {
-    "PL": {
-     "revenue": 273760.13,
-     "ebitda": 101938.47,
-     "pbt": 85682.4,
-     "tax": 23716.14,
-     "pat": 61542.76,
-     "depreciation": 14734.36,
-     "interest_expense": 8073.47,
-     "ebit": 89296.11
-    },
-    "BS": {
-     "borrowings": 88054.06,
-     "receivables": 34976.76,
-     "inventory": 43247.97,
-     "payables": 28900.23,
-     "net_worth": 221126.95,
-     "investments": 52045.29
-    },
-    "CF": {
-     "capex": -21592.77
-    }
-   },
-   "2024": {
-    "PL": {
-     "revenue": 286421.35,
-     "ebitda": 106534.28,
-     "pbt": 75152.21,
-     "tax": 11426.78,
-     "pat": 58964.91,
-     "depreciation": 11572.36,
-     "interest_expense": 391.62,
-     "ebit": 84680.58
-    },
-    "BS": {
-     "borrowings": 66349.6,
-     "receivables": 44279.94,
-     "inventory": 60725.53,
-     "payables": 50263.94,
-     "net_worth": 222579.22,
-     "goodwill": 29657.15
-    },
-    "CF": {
-     "capex": -5607.01
-    }
-   },
-   "2025": {
-    "PL": {
-     "revenue": 292415.95,
-     "ebitda": 88943.68,
-     "pbt": 74365.15,
-     "tax": 14431.82,
-     "pat": 50926.08,
-     "depreciation": 6793.87,
-     "interest_expense": 3748.77,
-     "ebit": 82136.02
-    },
-    "BS": {
-     "borrowings": 40752.09,
-     "receivables": 41044.57,
-     "inventory": 16868.14,
-     "payables": 31762.42,
-     "net_worth": 107776.92,
-     "cash": 23971.14,
-     "goodwill": 2762.13
-    },
-    "CF": {
-     "capex": -19406.57
-    }
-   },
-   "2026": {
-    "PL": {
-     "revenue": 274359.94,
-     "ebitda": 80730.37,
-     "pbt": 72711.6,
-     "tax": 21639.37,
-     "pat": 56139.51,
-     "depreciation": 13798.37,
-     "interest_expense": 6434.24,
-     "ebit": 73262.21
-    },
-    "BS": {
-     "borrowings": 98701.24,
-     "receivables": 50586.14,
-     "inventory": 70205.8,
-     "payables": 27905.13,
-     "net_worth": 219649.99,
-     "goodwill": 10130.27
-    },
-    "CF": {
-     "capex": -13765.59
-    }
-   }
-  },
-  "vs": "CEMENT",
+  "vs": "CONSUMER",
   "is_financial": false,
   "exp": {
-   "beta": 1.05,
+   "beta": 0.58,
    "risk_free": 0.069,
    "erp": 0.05,
    "rev_growth": 0.08,
-   "ebit_margin": 0.3072,
-   "terminal_ebit_margin": 0.2983,
-   "tax_rate": 0.1941,
-   "reinvest_rate": 0.3739,
-   "debt_weight": 0.31,
-   "cost_debt": 0.0786,
+   "ebit_margin": 0.4189,
+   "terminal_ebit_margin": 0.4189,
+   "tax_rate": 0.2176,
+   "reinvest_rate": 0.2321,
+   "debt_weight": 0.143,
+   "cost_debt": 0.06,
    "fade_years": 15,
-   "terminal_growth": 0.05,
-   "forecast_roe": 0.15,
-   "terminal_roe": 0.15,
-   "payout": 0.25,
-   "_valuation_sector": "CEMENT"
-  }
- },
- {
-  "statements": {
-   "2024": {
-    "PL": {
-     "revenue": 381906.84,
-     "ebitda": 167560.77,
-     "pbt": 137020.29,
-     "tax": 26849.14,
-     "pat": 98477.72,
-     "depreciation": 7078.11,
-     "interest_expense": 2273.48,
-     "ebit": 156639.21
-    },
-    "BS": {
-     "borrowings": 133290.08,
-     "receivables": 37863.61,
-     "inventory": 98235.45,
-     "payables": 21696.47,
-     "net_worth": 322365.12,
-     "cash": 51804.24
-    },
-    "CF": {
-     "capex": -18582.78
-    }
-   },
-   "2025": {
-    "PL": {
-     "revenue": 484484.8,
-     "ebitda": 202279.15,
-     "pbt": 186928.78,
-     "tax": 49134.39,
-     "pat": 134019.72,
-     "depreciation": 9551.75,
-     "interest_expense": 532.54,
-     "ebit": 187559.25
-    },
-    "BS": {
-     "borrowings": 6966.21,
-     "receivables": 80101.25,
-     "inventory": 74329.56,
-     "payables": 77773.17,
-     "net_worth": 526288.38
-    },
-    "CF": {
-     "capex": -21477.17
-    }
-   },
-   "2026": {
-    "PL": {
-     "revenue": 553510.56,
-     "ebitda": 230161.25,
-     "pbt": 198899.06,
-     "tax": 39678.34,
-     "pat": 141321.62,
-     "depreciation": 19099.58,
-     "interest_expense": 13154.25,
-     "ebit": 201209.75
-    },
-    "BS": {
-     "borrowings": 155116.1,
-     "receivables": 129010.96,
-     "inventory": 95997.32,
-     "payables": 36083.51,
-     "net_worth": 543074.43,
-     "cash": 26700.64,
-     "investments": 141268.17,
-     "goodwill": 49020.92
-    },
-    "CF": {
-     "capex": -49494.5
-    }
-   }
-  },
-  "vs": "CONSUMER_DISC",
-  "is_financial": false,
-  "exp": {
-   "beta": 0.8,
-   "risk_free": 0.069,
-   "erp": 0.05,
-   "rev_growth": 0.18,
-   "ebit_margin": 0.3871,
-   "terminal_ebit_margin": 0.3871,
-   "tax_rate": 0.1995,
-   "reinvest_rate": 0.65,
-   "debt_weight": 0.2222,
-   "cost_debt": 0.0806,
-   "fade_years": 12,
    "terminal_growth": 0.055,
    "forecast_roe": 0.15,
-   "terminal_roe": 0.22,
+   "terminal_roe": 0.3,
    "payout": 0.25,
-   "_valuation_sector": "CONSUMER_DISC"
+   "_valuation_sector": "CONSUMER"
   }
  },
  {
   "statements": {
-   "2024": {
-    "PL": {
-     "pat": 94287.28
-    },
-    "BS": {
-     "net_worth": 312423.68
-    },
-    "CF": {}
-   },
-   "2025": {
-    "PL": {
-     "pat": 114610.24
-    },
-    "BS": {
-     "net_worth": 368809.02
-    },
-    "CF": {}
-   },
    "2026": {
     "PL": {
-     "pat": 134417.77
+     "pat": 124606.8
     },
     "BS": {
-     "net_worth": 458077.77
+     "equity": 14233.42,
+     "reserves": 460214.02
     },
     "CF": {}
    }
@@ -3338,8 +3352,8 @@
    "beta": 0.9,
    "risk_free": 0.069,
    "erp": 0.05,
-   "forecast_roe": 0.3,
-   "terminal_roe": 0.258,
+   "forecast_roe": 0.2626,
+   "terminal_roe": 0.2318,
    "payout": 0.2,
    "fade_years": 15,
    "terminal_growth": 0.055,
@@ -3354,141 +3368,50 @@
  },
  {
   "statements": {
-   "2022": {
-    "PL": {
-     "revenue": 312222.68,
-     "ebitda": 103681.04,
-     "pbt": 83268.61,
-     "tax": 16451.63,
-     "pat": 60842.73,
-     "depreciation": 16997.8,
-     "interest_expense": 1063.78,
-     "ebit": 87194.3
-    },
-    "BS": {
-     "borrowings": 175441.81,
-     "receivables": 21071.95,
-     "inventory": 84928.6,
-     "payables": 23796.85,
-     "net_worth": 272154.62,
-     "goodwill": 31722.14
-    },
-    "CF": {
-     "capex": -37404.12
-    }
-   },
-   "2023": {
-    "PL": {
-     "revenue": 418094.69,
-     "ebitda": 130844.56,
-     "pbt": 97695.17,
-     "tax": 16345.09,
-     "pat": 74779.66,
-     "depreciation": 7809.0,
-     "interest_expense": 7293.99,
-     "ebit": 113128.28
-    },
-    "BS": {
-     "borrowings": 94112.04,
-     "receivables": 48415.19,
-     "inventory": 94967.6,
-     "payables": 54592.07,
-     "net_worth": 382439.37,
-     "investments": 91911.77
-    },
-    "CF": {
-     "capex": -123967.09
-    }
-   },
-   "2024": {
-    "PL": {
-     "revenue": 501266.04,
-     "ebitda": 128648.32,
-     "pbt": 97302.3,
-     "tax": 25374.0,
-     "pat": 71900.94,
-     "depreciation": 19368.93,
-     "interest_expense": 10886.29,
-     "ebit": 110643.19
-    },
-    "BS": {
-     "borrowings": 43897.21,
-     "receivables": 50858.35,
-     "inventory": 93760.4,
-     "payables": 58285.28,
-     "net_worth": 204117.0,
-     "cash": 35821.67
-    },
-    "CF": {
-     "capex": -149031.2
-    }
-   },
-   "2025": {
-    "PL": {
-     "revenue": 654705.35,
-     "ebitda": 155252.92,
-     "pbt": 121029.05,
-     "tax": 19913.25,
-     "pat": 96076.54,
-     "depreciation": 34535.91,
-     "interest_expense": 16696.82,
-     "ebit": 140993.2
-    },
-    "BS": {
-     "borrowings": 167007.96,
-     "receivables": 35539.69,
-     "inventory": 75558.32,
-     "payables": 114370.62,
-     "net_worth": 785193.93,
-     "investments": 90308.77
-    },
-    "CF": {
-     "capex": -120124.1
-    }
-   },
    "2026": {
     "PL": {
-     "revenue": 849584.25,
-     "ebitda": 224909.35,
-     "pbt": 184304.38,
-     "tax": 33226.57,
-     "pat": 143027.54,
-     "depreciation": 27225.19,
-     "interest_expense": 1405.47,
-     "ebit": 185351.85
+     "revenue": 371038.29,
+     "ebitda": 175094.95,
+     "pbt": 147490.93,
+     "tax": 25646.83,
+     "pat": 110422.0,
+     "depreciation": 15890.27,
+     "interest_expense": 612.45,
+     "ebit": 165311.37
     },
     "BS": {
-     "borrowings": 232153.81,
-     "receivables": 205252.6,
-     "inventory": 132082.54,
-     "payables": 150645.07,
-     "net_worth": 364152.07,
-     "investments": 43620.23
+     "borrowings": 57229.31,
+     "receivables": 66194.75,
+     "inventory": 95278.07,
+     "payables": 60445.05,
+     "net_worth": 161084.6,
+     "cash": 53589.26,
+     "goodwill": 26297.31
     },
     "CF": {
-     "capex": -212289.58
+     "capex": -29854.18
     }
    }
   },
-  "vs": "ENERGY",
+  "vs": "CEMENT",
   "is_financial": false,
   "exp": {
-   "beta": 1.0,
+   "beta": 1.05,
    "risk_free": 0.069,
    "erp": 0.05,
    "rev_growth": 0.08,
-   "ebit_margin": 0.2207,
-   "terminal_ebit_margin": 0.2207,
-   "tax_rate": 0.1803,
-   "reinvest_rate": 0.75,
-   "debt_weight": 0.3893,
+   "ebit_margin": 0.4072,
+   "terminal_ebit_margin": 0.4225,
+   "tax_rate": 0.1739,
+   "reinvest_rate": 0.16,
+   "debt_weight": 0.2621,
    "cost_debt": 0.06,
-   "fade_years": 8,
-   "terminal_growth": 0.04,
+   "fade_years": 15,
+   "terminal_growth": 0.05,
    "forecast_roe": 0.15,
-   "terminal_roe": 0.14,
+   "terminal_roe": 0.15,
    "payout": 0.25,
-   "_valuation_sector": "ENERGY"
+   "_valuation_sector": "CEMENT"
   }
  },
  {
@@ -3742,13 +3665,13 @@
     }
    }
   },
-  "vs": "CONSUMER",
+  "vs": "SUGAR",
   "is_financial": false,
   "exp": {
-   "beta": 0.58,
+   "beta": 1.0,
    "risk_free": 0.069,
    "erp": 0.05,
-   "rev_growth": 0.18,
+   "rev_growth": 0.08,
    "ebit_margin": 0.0739,
    "terminal_ebit_margin": 0.0739,
    "tax_rate": 0.2601,
@@ -3756,11 +3679,11 @@
    "debt_weight": 0.1936,
    "cost_debt": 0.1194,
    "fade_years": 8,
-   "terminal_growth": 0.055,
+   "terminal_growth": 0.04,
    "forecast_roe": 0.15,
-   "terminal_roe": 0.3,
+   "terminal_roe": 0.12,
    "payout": 0.25,
-   "_valuation_sector": "CONSUMER"
+   "_valuation_sector": "SUGAR"
   }
  },
  {
@@ -4012,29 +3935,446 @@
  },
  {
   "statements": {
-   "2026": {
+   "2024": {
     "PL": {
-     "revenue": 203632.55,
-     "ebitda": 33329.14,
-     "pbt": 16859.96,
-     "tax": 2916.26,
-     "pat": 12313.26,
-     "depreciation": 8166.96,
-     "interest_expense": 2630.74,
-     "ebit": 19177.15
+     "revenue": 131637.07,
+     "ebitda": 23262.07,
+     "pbt": 13344.57,
+     "tax": 3976.3,
+     "pat": 9338.24,
+     "depreciation": 4704.03,
+     "interest_expense": 424.71,
+     "ebit": 15190.59
     },
     "BS": {
-     "borrowings": 70860.29,
-     "receivables": 24704.73,
-     "inventory": 32271.04,
-     "payables": 21712.42,
-     "net_worth": 216732.2,
-     "cash": 23861.52,
-     "investments": 60203.4
+     "borrowings": 65879.81,
+     "receivables": 30864.6,
+     "inventory": 12151.39,
+     "payables": 10379.25,
+     "net_worth": 50041.32,
+     "cash": 8020.88
     },
     "CF": {
-     "capex": -10133.53
+     "capex": -37739.29
     }
+   },
+   "2025": {
+    "PL": {
+     "revenue": 128065.54,
+     "ebitda": 25083.27,
+     "pbt": 15017.07,
+     "tax": 2686.73,
+     "pat": 10259.62,
+     "depreciation": 1647.14,
+     "interest_expense": 3335.18,
+     "ebit": 17330.56
+    },
+    "BS": {
+     "borrowings": 29840.2,
+     "receivables": 10230.74,
+     "inventory": 16885.0,
+     "payables": 9838.99,
+     "net_worth": 87076.95,
+     "cash": 10213.9,
+     "investments": 8681.95
+    },
+    "CF": {
+     "capex": -40167.25
+    }
+   },
+   "2026": {
+    "PL": {
+     "revenue": 137799.79,
+     "ebitda": 22383.89,
+     "pbt": 15369.28,
+     "tax": 4497.38,
+     "pat": 11800.76,
+     "depreciation": 7870.64,
+     "interest_expense": 2904.17,
+     "ebit": 16951.41
+    },
+    "BS": {
+     "borrowings": 65419.55,
+     "receivables": 30633.68,
+     "inventory": 21181.92,
+     "payables": 18197.71,
+     "net_worth": 50274.88,
+     "investments": 16401.41
+    },
+    "CF": {
+     "capex": -30891.94
+    }
+   }
+  },
+  "vs": "IT_SERVICES",
+  "is_financial": false,
+  "exp": {
+   "beta": 0.85,
+   "risk_free": 0.069,
+   "erp": 0.05,
+   "rev_growth": 0.0416,
+   "ebit_margin": 0.123,
+   "terminal_ebit_margin": 0.123,
+   "tax_rate": 0.2926,
+   "reinvest_rate": 0.6694,
+   "debt_weight": 0.5655,
+   "cost_debt": 0.0781,
+   "fade_years": 8,
+   "terminal_growth": 0.055,
+   "forecast_roe": 0.15,
+   "terminal_roe": 0.3,
+   "payout": 0.25,
+   "_valuation_sector": "IT_SERVICES"
+  }
+ },
+ {
+  "statements": {
+   "2021": {
+    "PL": {
+     "revenue": 198283.09,
+     "ebitda": 24525.25,
+     "pbt": 12139.43,
+     "tax": 2473.1,
+     "pat": 8574.37,
+     "depreciation": 11803.55,
+     "interest_expense": 3968.72,
+     "ebit": 12537.12
+    },
+    "BS": {
+     "borrowings": 14900.05,
+     "receivables": 39578.38,
+     "inventory": 29187.95,
+     "payables": 21665.84,
+     "net_worth": 172847.36,
+     "cash": 22402.69,
+     "goodwill": 4515.02
+    },
+    "CF": {
+     "capex": -9951.92
+    }
+   },
+   "2022": {
+    "PL": {
+     "revenue": 259212.5,
+     "ebitda": 27780.05,
+     "pbt": 14480.91,
+     "tax": 3779.68,
+     "pat": 9870.97,
+     "depreciation": 4449.72,
+     "interest_expense": 6100.04,
+     "ebit": 16439.06
+    },
+    "BS": {
+     "borrowings": 150913.99,
+     "receivables": 36171.87,
+     "inventory": 41333.24,
+     "payables": 11231.5,
+     "net_worth": 158343.21
+    },
+    "CF": {
+     "capex": -23011.1
+    }
+   },
+   "2023": {
+    "PL": {
+     "revenue": 301778.67,
+     "ebitda": 28108.34,
+     "pbt": 14073.13,
+     "tax": 3720.24,
+     "pat": 10357.07,
+     "depreciation": 16190.01,
+     "interest_expense": 2008.6,
+     "ebit": 15579.1
+    },
+    "BS": {
+     "borrowings": 131106.21,
+     "receivables": 42532.1,
+     "inventory": 23293.99,
+     "payables": 42062.28,
+     "net_worth": 322937.28,
+     "investments": 6282.66
+    },
+    "CF": {
+     "capex": -15157.23
+    }
+   },
+   "2024": {
+    "PL": {
+     "revenue": 378586.06,
+     "ebitda": 33455.63,
+     "pbt": 20363.33,
+     "tax": 5852.61,
+     "pat": 14064.5,
+     "depreciation": 19016.47,
+     "interest_expense": 7273.8,
+     "ebit": 20568.87
+    },
+    "BS": {
+     "borrowings": 63419.64,
+     "receivables": 28948.47,
+     "inventory": 83055.9,
+     "payables": 49793.09,
+     "net_worth": 180416.81,
+     "cash": 21219.24,
+     "investments": 36261.85
+    },
+    "CF": {
+     "capex": -27324.0
+    }
+   },
+   "2025": {
+    "PL": {
+     "revenue": 454268.76,
+     "ebitda": 43755.99,
+     "pbt": 26597.87,
+     "tax": 7175.82,
+     "pat": 18332.25,
+     "depreciation": 9892.69,
+     "interest_expense": 669.4,
+     "ebit": 27192.58
+    },
+    "BS": {
+     "borrowings": 44170.14,
+     "receivables": 68160.92,
+     "inventory": 74309.69,
+     "payables": 80487.28,
+     "net_worth": 403438.15
+    },
+    "CF": {
+     "capex": -21957.99
+    }
+   },
+   "2026": {
+    "PL": {
+     "revenue": 597847.69,
+     "ebitda": 78972.49,
+     "pbt": 30324.7,
+     "tax": 6070.74,
+     "pat": 23349.08,
+     "depreciation": 31920.76,
+     "interest_expense": 8892.51,
+     "ebit": 35046.31
+    },
+    "BS": {
+     "borrowings": 130515.3,
+     "receivables": 99063.74,
+     "inventory": 110994.01,
+     "payables": 110475.19,
+     "net_worth": 427020.61,
+     "investments": 137728.4,
+     "goodwill": 14113.45
+    },
+    "CF": {
+     "capex": -13915.54
+    }
+   }
+  },
+  "vs": "CONSUMER_DISC",
+  "is_financial": false,
+  "exp": {
+   "beta": 0.8,
+   "risk_free": 0.069,
+   "erp": 0.05,
+   "rev_growth": 0.18,
+   "ebit_margin": 0.0586,
+   "terminal_ebit_margin": 0.0589,
+   "tax_rate": 0.2698,
+   "reinvest_rate": 0.65,
+   "debt_weight": 0.2341,
+   "cost_debt": 0.06,
+   "fade_years": 8,
+   "terminal_growth": 0.055,
+   "forecast_roe": 0.15,
+   "terminal_roe": 0.22,
+   "payout": 0.25,
+   "_valuation_sector": "CONSUMER_DISC"
+  }
+ },
+ {
+  "statements": {
+   "2026": {
+    "PL": {
+     "pat": 90772.87
+    },
+    "BS": {
+     "net_worth": 371822.93
+    },
+    "CF": {
+     "dividends": -10667.17
+    }
+   }
+  },
+  "vs": "INSURANCE",
+  "is_financial": true,
+  "exp": {
+   "beta": 0.9,
+   "risk_free": 0.069,
+   "erp": 0.05,
+   "forecast_roe": 0.2441,
+   "terminal_roe": 0.2189,
+   "payout": 0.1175,
+   "fade_years": 15,
+   "terminal_growth": 0.055,
+   "rev_growth": 0.1,
+   "ebit_margin": 0.12,
+   "tax_rate": 0.25,
+   "reinvest_rate": 0.35,
+   "debt_weight": 0.2,
+   "cost_debt": 0.085,
+   "_valuation_sector": "INSURANCE"
+  }
+ },
+ {
+  "statements": {
+   "2020": {
+    "PL": {
+     "revenue": 401240.62,
+     "ebitda": 122209.16,
+     "pbt": 105610.01,
+     "tax": 27215.43,
+     "pat": 74414.77,
+     "depreciation": 18724.77,
+     "interest_expense": 3744.65,
+     "ebit": 113642.08
+    },
+    "BS": {
+     "borrowings": 105174.3,
+     "receivables": 99023.43,
+     "inventory": 22029.66,
+     "payables": 61372.52,
+     "net_worth": 158772.6,
+     "investments": 97350.02,
+     "goodwill": 25774.17
+    },
+    "CF": {}
+   },
+   "2021": {
+    "PL": {
+     "revenue": 476993.3,
+     "ebitda": 169220.78,
+     "pbt": 116483.07,
+     "tax": 25556.43,
+     "pat": 83299.28,
+     "depreciation": 20426.43,
+     "interest_expense": 9803.09,
+     "ebit": 136816.3
+    },
+    "BS": {
+     "borrowings": 172579.87,
+     "receivables": 98135.71,
+     "inventory": 84834.47,
+     "payables": 55369.99,
+     "net_worth": 454606.36,
+     "investments": 75613.0
+    },
+    "CF": {}
+   },
+   "2022": {
+    "PL": {
+     "revenue": 585169.82,
+     "ebitda": 189233.43,
+     "pbt": 159269.28,
+     "tax": 41410.7,
+     "pat": 121519.66,
+     "depreciation": 34963.27,
+     "interest_expense": 4927.64,
+     "ebit": 174742.1
+    },
+    "BS": {
+     "borrowings": 225995.64,
+     "receivables": 31158.31,
+     "inventory": 133960.37,
+     "payables": 56980.93,
+     "net_worth": 404731.59,
+     "cash": 51546.74,
+     "investments": 35932.26,
+     "goodwill": 22392.99
+    },
+    "CF": {}
+   },
+   "2023": {
+    "PL": {
+     "revenue": 751607.92,
+     "ebitda": 200598.16,
+     "pbt": 177453.62,
+     "tax": 33928.8,
+     "pat": 121967.66,
+     "depreciation": 44263.08,
+     "interest_expense": 22384.45,
+     "ebit": 185557.83
+    },
+    "BS": {
+     "borrowings": 326359.59,
+     "receivables": 66246.82,
+     "inventory": 194759.65,
+     "payables": 100295.72,
+     "net_worth": 725159.75,
+     "cash": 85538.14
+    },
+    "CF": {}
+   },
+   "2024": {
+    "PL": {
+     "revenue": 880903.39,
+     "ebitda": 247907.21,
+     "pbt": 202809.88,
+     "tax": 35725.0,
+     "pat": 143765.99,
+     "depreciation": 14463.26,
+     "interest_expense": 13493.59,
+     "ebit": 208621.5
+    },
+    "BS": {
+     "borrowings": 423657.07,
+     "receivables": 113810.18,
+     "inventory": 75689.67,
+     "payables": 107418.82,
+     "net_worth": 368539.54
+    },
+    "CF": {}
+   },
+   "2025": {
+    "PL": {
+     "revenue": 1135975.6,
+     "ebitda": 331986.08,
+     "pbt": 283270.04,
+     "tax": 66713.72,
+     "pat": 205786.15,
+     "depreciation": 62016.38,
+     "interest_expense": 32815.78,
+     "ebit": 300839.23
+    },
+    "BS": {
+     "borrowings": 54353.4,
+     "receivables": 192292.53,
+     "inventory": 120484.81,
+     "payables": 154462.01,
+     "net_worth": 739217.8,
+     "cash": 148460.83
+    },
+    "CF": {}
+   },
+   "2026": {
+    "PL": {
+     "revenue": 1434613.72,
+     "ebitda": 441654.71,
+     "pbt": 345573.01,
+     "tax": 75094.2,
+     "pat": 249986.2,
+     "depreciation": 19241.64,
+     "interest_expense": 3426.32,
+     "ebit": 388160.49
+    },
+    "BS": {
+     "borrowings": 817797.25,
+     "receivables": 356604.55,
+     "inventory": 375874.78,
+     "payables": 280500.94,
+     "net_worth": 1615748.28,
+     "cash": 21910.77,
+     "investments": 313052.52
+    },
+    "CF": {}
    }
   },
   "vs": "CEMENT",
@@ -4043,14 +4383,14 @@
    "beta": 1.05,
    "risk_free": 0.069,
    "erp": 0.05,
-   "rev_growth": 0.08,
-   "ebit_margin": 0.1236,
-   "terminal_ebit_margin": 0.1118,
-   "tax_rate": 0.173,
-   "reinvest_rate": 0.5714,
-   "debt_weight": 0.2464,
-   "cost_debt": 0.06,
-   "fade_years": 10,
+   "rev_growth": 0.12,
+   "ebit_margin": 0.2377,
+   "terminal_ebit_margin": 0.2508,
+   "tax_rate": 0.2173,
+   "reinvest_rate": 0.65,
+   "debt_weight": 0.3361,
+   "cost_debt": 0.12,
+   "fade_years": 12,
    "terminal_growth": 0.05,
    "forecast_roe": 0.15,
    "terminal_roe": 0.15,
@@ -4060,155 +4400,248 @@
  },
  {
   "statements": {
+   "2020": {
+    "PL": {
+     "revenue": 17714.38,
+     "ebitda": 1569.29,
+     "pbt": 490.28,
+     "tax": 140.65,
+     "pat": 337.46,
+     "depreciation": 567.0,
+     "interest_expense": 156.84,
+     "ebit": 567.98
+    },
+    "BS": {
+     "borrowings": 6439.44,
+     "receivables": 1769.38,
+     "inventory": 3882.77,
+     "payables": 3427.16,
+     "net_worth": 13639.29,
+     "cash": 1078.18,
+     "goodwill": 283.59
+    },
+    "CF": {
+     "capex": -1333.71
+    }
+   },
+   "2021": {
+    "PL": {
+     "revenue": 19305.02,
+     "ebitda": 1111.61,
+     "pbt": 591.88,
+     "tax": 172.16,
+     "pat": 465.15,
+     "depreciation": 1139.57,
+     "interest_expense": 406.87,
+     "ebit": 678.89
+    },
+    "BS": {
+     "borrowings": 4303.31,
+     "receivables": 2089.95,
+     "inventory": 4470.17,
+     "payables": 2968.53,
+     "net_worth": 6800.27,
+     "cash": 841.85
+    },
+    "CF": {
+     "capex": -1604.95
+    }
+   },
+   "2022": {
+    "PL": {
+     "revenue": 22254.9,
+     "ebitda": 1860.28,
+     "pbt": 863.49,
+     "tax": 131.59,
+     "pat": 602.97,
+     "depreciation": 1119.87,
+     "interest_expense": 118.37,
+     "ebit": 899.82
+    },
+    "BS": {
+     "borrowings": 9289.56,
+     "receivables": 4671.03,
+     "inventory": 6584.9,
+     "payables": 3112.65,
+     "net_worth": 14930.96
+    },
+    "CF": {
+     "capex": -1226.2
+    }
+   },
    "2023": {
     "PL": {
-     "revenue": 78009.23,
-     "ebitda": 8182.77,
-     "pbt": 4502.44,
-     "tax": 682.7,
-     "pat": 3330.86,
-     "depreciation": 1283.33,
-     "interest_expense": 464.15,
-     "ebit": 5090.23
+     "revenue": 23425.79,
+     "ebitda": 2100.54,
+     "pbt": 684.7,
+     "tax": 153.81,
+     "pat": 504.54,
+     "depreciation": 335.85,
+     "interest_expense": 60.58,
+     "ebit": 738.26
     },
     "BS": {
-     "borrowings": 39999.27,
-     "receivables": 13638.87,
-     "inventory": 9567.85,
-     "payables": 7160.82,
-     "net_worth": 46696.66,
-     "cash": 11164.18
+     "borrowings": 8146.39,
+     "receivables": 3222.0,
+     "inventory": 1636.26,
+     "payables": 4111.32,
+     "net_worth": 17123.19,
+     "cash": 858.86,
+     "investments": 3486.96
     },
-    "CF": {}
+    "CF": {
+     "capex": -1905.36
+    }
    },
    "2024": {
     "PL": {
-     "revenue": 93486.64,
-     "ebitda": 12249.84,
-     "pbt": 5818.47,
-     "tax": 1234.85,
-     "pat": 4358.29,
-     "depreciation": 4902.15,
-     "interest_expense": 1132.71,
-     "ebit": 5941.89
+     "revenue": 26674.17,
+     "ebitda": 3025.03,
+     "pbt": 929.42,
+     "tax": 165.3,
+     "pat": 662.76,
+     "depreciation": 343.01,
+     "interest_expense": 639.01,
+     "ebit": 977.36
     },
     "BS": {
-     "borrowings": 46684.05,
-     "receivables": 13961.66,
-     "inventory": 6610.05,
-     "payables": 16785.06,
-     "net_worth": 57801.84,
-     "cash": 7497.85,
-     "investments": 9341.03
+     "borrowings": 8050.23,
+     "receivables": 5984.87,
+     "inventory": 2257.78,
+     "payables": 4608.74,
+     "net_worth": 8219.06,
+     "cash": 559.46,
+     "investments": 4468.13
     },
-    "CF": {}
+    "CF": {
+     "capex": -515.48
+    }
    },
    "2025": {
     "PL": {
-     "revenue": 111214.23,
-     "ebitda": 15364.24,
-     "pbt": 7241.2,
-     "tax": 1942.66,
-     "pat": 5235.24,
-     "depreciation": 2331.98,
-     "interest_expense": 3306.03,
-     "ebit": 7613.11
+     "revenue": 29258.16,
+     "ebitda": 2878.07,
+     "pbt": 949.72,
+     "tax": 257.82,
+     "pat": 720.99,
+     "depreciation": 1535.44,
+     "interest_expense": 359.95,
+     "ebit": 972.56
     },
     "BS": {
-     "borrowings": 42388.94,
-     "receivables": 8346.46,
-     "inventory": 26358.53,
-     "payables": 11367.23,
-     "net_worth": 98995.55,
-     "cash": 6143.28
+     "borrowings": 271.6,
+     "receivables": 2029.05,
+     "inventory": 4683.25,
+     "payables": 4096.4,
+     "net_worth": 21070.53,
+     "cash": 4329.86
     },
-    "CF": {}
+    "CF": {
+     "capex": -294.51
+    }
    },
    "2026": {
     "PL": {
-     "revenue": 123913.43,
-     "ebitda": 14408.23,
-     "pbt": 8194.1,
-     "tax": 2260.72,
-     "pat": 5961.23,
-     "depreciation": 2514.81,
-     "interest_expense": 2783.36,
-     "ebit": 8194.86
+     "revenue": 32292.78,
+     "ebitda": 2272.54,
+     "pbt": 991.97,
+     "tax": 208.82,
+     "pat": 709.38,
+     "depreciation": 936.73,
+     "interest_expense": 369.75,
+     "ebit": 1138.66
     },
     "BS": {
-     "borrowings": 10656.03,
-     "receivables": 25451.8,
-     "inventory": 16895.68,
-     "payables": 24194.57,
-     "net_worth": 38711.0,
-     "cash": 8834.52,
-     "investments": 19999.46
+     "borrowings": 10989.56,
+     "receivables": 3810.37,
+     "inventory": 8786.69,
+     "payables": 2288.91,
+     "net_worth": 30314.63,
+     "cash": 3950.52
     },
-    "CF": {}
+    "CF": {
+     "capex": -728.05
+    }
    }
   },
-  "vs": "DEFENCE",
+  "vs": "CHEMICALS",
   "is_financial": false,
-  "exp": {
-   "beta": 0.95,
-   "risk_free": 0.069,
-   "erp": 0.05,
-   "rev_growth": 0.1484,
-   "ebit_margin": 0.0661,
-   "terminal_ebit_margin": 0.066,
-   "tax_rate": 0.2683,
-   "reinvest_rate": 0.65,
-   "debt_weight": 0.2159,
-   "cost_debt": 0.12,
-   "fade_years": 8,
-   "terminal_growth": 0.06,
-   "forecast_roe": 0.15,
-   "terminal_roe": 0.22,
-   "payout": 0.25,
-   "_valuation_sector": "DEFENCE"
-  }
- },
- {
-  "statements": {
-   "2024": {
-    "PL": {
-     "pat": 74126.74
-    },
-    "BS": {
-     "equity": 8488.02,
-     "reserves": 274446.14
-    },
-    "CF": {}
-   },
-   "2025": {
-    "PL": {
-     "pat": 85237.34
-    },
-    "BS": {
-     "net_worth": 323931.14
-    },
-    "CF": {}
-   },
-   "2026": {
-    "PL": {
-     "pat": 106602.47
-    },
-    "BS": {
-     "net_worth": 397063.69
-    },
-    "CF": {}
-   }
-  },
-  "vs": "NBFC",
-  "is_financial": true,
   "exp": {
    "beta": 1.05,
    "risk_free": 0.069,
    "erp": 0.05,
-   "forecast_roe": 0.2658,
-   "terminal_roe": 0.2401,
-   "payout": 0.2,
-   "fade_years": 15,
+   "rev_growth": 0.0997,
+   "ebit_margin": 0.0353,
+   "terminal_ebit_margin": 0.0352,
+   "tax_rate": 0.2105,
+   "reinvest_rate": 0.75,
+   "debt_weight": 0.2661,
+   "cost_debt": 0.12,
+   "fade_years": 10,
+   "terminal_growth": 0.05,
+   "forecast_roe": 0.15,
+   "terminal_roe": 0.17,
+   "payout": 0.25,
+   "_valuation_sector": "CHEMICALS"
+  }
+ },
+ {
+  "statements": {
+   "2023": {
+    "PL": {
+     "pat": 29225.4
+    },
+    "BS": {
+     "net_worth": 271953.11
+    },
+    "CF": {
+     "dividends": -13274.65
+    }
+   },
+   "2024": {
+    "PL": {
+     "pat": 22520.43
+    },
+    "BS": {
+     "net_worth": 293100.27
+    },
+    "CF": {
+     "dividends": -1950.3
+    }
+   },
+   "2025": {
+    "PL": {
+     "pat": 14018.46
+    },
+    "BS": {
+     "net_worth": 310137.75
+    },
+    "CF": {
+     "dividends": -6704.07
+    }
+   },
+   "2026": {
+    "PL": {
+     "pat": 5444.47
+    },
+    "BS": {
+     "net_worth": 320723.84
+    },
+    "CF": {
+     "dividends": -2762.62
+    }
+   }
+  },
+  "vs": "BANK",
+  "is_financial": true,
+  "exp": {
+   "beta": 0.95,
+   "risk_free": 0.069,
+   "erp": 0.05,
+   "forecast_roe": 0.06,
+   "terminal_roe": 0.08,
+   "payout": 0.4782,
+   "fade_years": 8,
    "terminal_growth": 0.055,
    "rev_growth": 0.1,
    "ebit_margin": 0.12,
@@ -4216,7 +4649,7 @@
    "reinvest_rate": 0.35,
    "debt_weight": 0.2,
    "cost_debt": 0.085,
-   "_valuation_sector": "NBFC"
+   "_valuation_sector": "BANK"
   }
  }
 ]
