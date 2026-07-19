@@ -17,7 +17,7 @@ export const color = {
 /* Verdict → token (single place; badge/label/sign pairing is the component's job) */
 export const verdictColor = (v) => ({
   BUY: color.buy, ACCUMULATE: color.accumulate, HOLD: color.hold,
-  REDUCE: color.reduce, AVOID: color.avoid,
+  TRIM: color.reduce, REDUCE: color.reduce, AVOID: color.avoid,
 }[v] || color.nocall);
 
 export const font = {

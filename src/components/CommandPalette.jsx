@@ -5,9 +5,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Search, CornerDownLeft, ArrowRight, Calculator } from "lucide-react";
 import { C, mono, sans, serif } from "../lib/theme.js";
+import { zIndex } from "../design/tokens.js";
 import { inr, signedPct } from "../lib/formatters.js";
 import { VerdictBadge } from "./primitives.jsx";
 import useModalA11y from "../lib/useModalA11y.js";
+import "./ui/ui.css";
 
 /* Command language: type a destination ("SECTORS", "IDEAS", "TRACK") to jump
    straight there — the Bloomberg-style keyboard-first navigation. */
@@ -107,13 +109,21 @@ export default function CommandPalette({ open, setOpen, companies, onOpenCompany
     return () => window.removeEventListener("keydown", onKey);
   }, [setOpen]);
 
-  /* Reset + focus on every open. */
+  /* Reset on every open — state adjusted during render (no cascading
+     effect render); only the DOM focus (an external system) stays in an
+     effect. Active row resets whenever the query changes, same pattern. */
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (open) { setQ(""); setActive(0); }
+  }
+  const [prevQ, setPrevQ] = useState(q);
+  if (q !== prevQ) {
+    setPrevQ(q);
+    setActive(0);
+  }
   useEffect(() => {
-    if (open) {
-      setQ("");
-      setActive(0);
-      setTimeout(() => inputRef.current?.focus(), 10);
-    }
+    if (open) setTimeout(() => inputRef.current?.focus(), 10);
   }, [open]);
 
   const items = useMemo(() => {
@@ -129,8 +139,6 @@ export default function CommandPalette({ open, setOpen, companies, onOpenCompany
       .map(r => ({ type: "co", co: r.co }));
     return [...modelRow, ...cmds, ...cos];
   }, [companies, q, onOpenModel]);
-
-  useEffect(() => { setActive(0); }, [q]);
 
   /* Keep the active row visible while arrowing through the list. */
   useEffect(() => {
@@ -162,13 +170,13 @@ export default function CommandPalette({ open, setOpen, companies, onOpenCompany
     <div
       onMouseDown={e => { if (e.target === e.currentTarget) setOpen(false); }}
       style={{
-        position: "fixed", inset: 0, zIndex: 200,
+        position: "fixed", inset: 0, zIndex: zIndex.modal,
         background: "rgba(10,9,7,0.82)", backdropFilter: "blur(6px)",
         display: "flex", justifyContent: "center", alignItems: "flex-start",
         paddingTop: "12vh",
       }}>
       <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Command palette — search and commands"
-        className="fadein" style={{
+        className="evc-anim-drop" style={{
         width: "min(640px, 92vw)", background: C.bg900,
         border: `1px solid ${C.line2}`, borderRadius: 12,
         boxShadow: "0 24px 80px rgba(0,0,0,0.6)", overflow: "hidden",

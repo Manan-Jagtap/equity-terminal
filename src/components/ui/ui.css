@@ -168,6 +168,12 @@
 }
 .evc-modal-x:hover { color: var(--ev-text); }
 
+/* ── Overlay entrances (palette, flyouts): drop-in from above ───────────── */
+.evc-anim-drop { animation: evc-drop var(--ev-t-base) var(--ev-ease); }
+@keyframes evc-drop {
+  from { opacity: 0; transform: translateY(-8px) scale(0.985); }
+}
+
 /* ── Toast ──────────────────────────────────────────────────────────────── */
 .evc-toasts {
   position: fixed; bottom: 20px; right: 20px; z-index: var(--ev-z-toast);

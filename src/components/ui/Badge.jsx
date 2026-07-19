@@ -12,12 +12,12 @@ const TONES = {
   up: color.up, down: color.down,
 };
 
-export function Badge({ tone = "neutral", fill = false, children, className = "", ...rest }) {
+export function Badge({ tone = "neutral", fill = false, children, className = "", style, ...rest }) {
   return (
     <span
       className={`evc-badge${className ? " " + className : ""}`}
       data-fill={fill}
-      style={{ "--evc-badge-c": TONES[tone] || TONES.neutral }}
+      style={{ "--evc-badge-c": TONES[tone] || TONES.neutral, ...style }}
       {...rest}
     >
       {children}
@@ -27,14 +27,16 @@ export function Badge({ tone = "neutral", fill = false, children, className = ""
 
 /* Verdict → glyph: shape + direction, legible without color. */
 const VERDICT_GLYPH = {
-  BUY: "▲", ACCUMULATE: "△", HOLD: "◆", REDUCE: "▽", AVOID: "▼",
+  BUY: "▲", ACCUMULATE: "△", HOLD: "◆", TRIM: "▽", REDUCE: "▽", AVOID: "▼",
 };
 
-export function VerdictBadge({ verdict, fill = true, ...rest }) {
+export function VerdictBadge({ verdict, fill = true, style, ...rest }) {
   const v = (verdict || "").toUpperCase();
-  const label = VERDICT_GLYPH[v] ? v : "NO CALL";
+  // LOW CONF (or nothing) reads as the honest "NO CALL"; other unknowns
+  // (e.g. NO DATA) keep their own words — never relabel a data problem.
+  const label = VERDICT_GLYPH[v] ? v : (!v || v === "LOW CONF") ? "NO CALL" : v;
   return (
-    <Badge fill={fill} style={{ "--evc-badge-c": verdictColor(v) }} {...rest}>
+    <Badge fill={fill} style={{ "--evc-badge-c": verdictColor(v), ...style }} {...rest}>
       <span aria-hidden="true">{VERDICT_GLYPH[v] || "○"}</span>
       {label}
     </Badge>
