@@ -3,7 +3,7 @@
    Pulls /api/market/snapshot (one round-trip, server-side cached). */
 
 import { useEffect, useState, useMemo, lazy, Suspense } from "react";
-import { TrendingUp, TrendingDown, Activity, ArrowUpRight, ArrowDownRight, Loader2, RefreshCw, ShieldCheck, ShieldAlert, ChevronDown } from "lucide-react";
+import { TrendingUp, TrendingDown, Activity, ArrowUpRight, ArrowDownRight, RefreshCw, ShieldCheck, ShieldAlert, ChevronDown } from "lucide-react";
 import { C, mono, sans, serif } from "../lib/theme.js";
 import PageSkeleton from "./Skeleton.jsx";
 import { useIsMobile } from "../lib/useResponsive.js";

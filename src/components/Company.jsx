@@ -7,20 +7,20 @@ import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import Logo from "./Logo.jsx";
 import {
   ArrowLeft, Building2, FileText, Activity, Calculator,
-  Users, Brain, Shield, Sparkles, Check, AlertTriangle,
+  Users, Brain, Shield, Sparkles, Check,
   Info, Loader2, TrendingUp, TrendingDown, Newspaper, Download, PieChart,
   ShieldAlert, Star, FolderOpen, FileSpreadsheet, ExternalLink, Layers, Table,
 } from "lucide-react";
 import {
-  ComposedChart, BarChart, Bar, LineChart, Line,
+  ComposedChart, BarChart, Bar, Line,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  ReferenceLine, Cell,
+  Cell,
 } from "recharts";
 
 import { C, mono, sans, serif, gridBg, sectorAccent } from "../lib/theme.js";
 import FvRange from "./FvRange.jsx";
 import { useLive, liveDotStyle } from "../lib/live.js";
-import { fmt, inr, pct, cr, multiple, inrOrDash, signedPct } from "../lib/formatters.js";
+import { multiple, inrOrDash, signedPct } from "../lib/formatters.js";
 import { recommend } from "../lib/recommend.js";
 import { fundamentals, isFinancial } from "../lib/valuation.js";
 import { technicals } from "../lib/technicals.js";
@@ -3056,10 +3056,13 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
       </div>
 
       {/* ── Tab navigation ─────────────────────────────────────── */}
-      <nav style={{ borderBottom:`1px solid ${C.line}`, background:C.bg+"dd", backdropFilter:"blur(8px)", position:"sticky", top:0, zIndex:30, padding:`0 ${PAD}px`, overflowX:"auto" }}>
-        <div style={{ display:"flex", gap: isMobile ? 18 : 28, whiteSpace:"nowrap" }}>
+      {/* UX-09: the 15-tab bar overflows horizontally; a thin always-visible
+          scrollbar is the affordance, and the tablist/tab ARIA (UX-08) makes a
+          screen reader announce "tab N of 15" so the hidden tabs are discoverable. */}
+      <nav style={{ borderBottom:`1px solid ${C.line}`, background:C.bg+"dd", backdropFilter:"blur(8px)", position:"sticky", top:0, zIndex:30, padding:`0 ${PAD}px`, overflowX:"auto", scrollbarWidth:"thin" }}>
+        <div role="tablist" aria-label="Company sections" style={{ display:"flex", gap: isMobile ? 18 : 28, whiteSpace:"nowrap" }}>
           {visibleTabs.map(({ id, icon:Icon, label }) => (
-            <button key={id} onClick={() => setTab(id)} style={{
+            <button key={id} role="tab" aria-selected={tab===id} onClick={() => setTab(id)} style={{
               ...sans, position:"relative", display:"flex", alignItems:"center", gap:8,
               padding:"14px 0", border:"none", background:"transparent",
               fontSize:12, letterSpacing:"0.12em", textTransform:"uppercase", fontWeight:500, cursor:"pointer",

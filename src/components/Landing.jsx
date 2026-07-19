@@ -6,7 +6,7 @@
    instantly even before the API wakes. */
 
 import { useState } from "react";
-import { TrendingUp, ShieldCheck, LineChart, Sparkles, History, LogIn } from "lucide-react";
+import { ShieldCheck, LineChart, Sparkles, History, LogIn } from "lucide-react";
 import { C, mono, sans, serif } from "../lib/theme.js";
 import BrandMark from "./BrandMark.jsx";
 import { useIsMobile } from "../lib/useResponsive.js";

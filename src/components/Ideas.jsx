@@ -6,7 +6,7 @@
    into a short idea list, with a factor breakdown per name. A research/
    ranking aid — NOT investment advice. */
 import { useEffect, useMemo, useState } from "react";
-import { Sparkles, Loader2, Info } from "lucide-react";
+import { Sparkles, Info } from "lucide-react";
 import { C, sans, serif, mono } from "../lib/theme.js";
 import PageSkeleton from "./Skeleton.jsx";
 import { selStyle } from "../lib/listControls.jsx";

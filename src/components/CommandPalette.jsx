@@ -7,6 +7,7 @@ import { Search, CornerDownLeft, ArrowRight, Calculator } from "lucide-react";
 import { C, mono, sans, serif } from "../lib/theme.js";
 import { inr, signedPct } from "../lib/formatters.js";
 import { VerdictBadge } from "./primitives.jsx";
+import useModalA11y from "../lib/useModalA11y.js";
 
 /* Command language: type a destination ("SECTORS", "IDEAS", "TRACK") to jump
    straight there — the Bloomberg-style keyboard-first navigation. */
@@ -88,6 +89,7 @@ export default function CommandPalette({ open, setOpen, companies, onOpenCompany
   const [q, setQ]       = useState("");
   const [active, setActive] = useState(0);
   const inputRef = useRef(null);
+  const dialogRef = useModalA11y(open);   // UX-06: focus trap + restore
   const listRef  = useRef(null);
 
   /* Global shortcuts: Cmd/Ctrl+K toggles, "/" opens (when not typing). */
@@ -165,7 +167,8 @@ export default function CommandPalette({ open, setOpen, companies, onOpenCompany
         display: "flex", justifyContent: "center", alignItems: "flex-start",
         paddingTop: "12vh",
       }}>
-      <div className="fadein" style={{
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Command palette — search and commands"
+        className="fadein" style={{
         width: "min(640px, 92vw)", background: C.bg900,
         border: `1px solid ${C.line2}`, borderRadius: 12,
         boxShadow: "0 24px 80px rgba(0,0,0,0.6)", overflow: "hidden",

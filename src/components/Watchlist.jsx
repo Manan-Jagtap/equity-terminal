@@ -2,14 +2,13 @@
    Reads /api/watchlist (verdict / MoS / price / 1-day move + triggered alerts),
    lets you tune per-name alert thresholds, and opens a name on click. */
 import { useEffect, useState, useCallback } from "react";
-import { Star, Bell, Trash2, Settings2, Loader2, Check, X, Lock } from "lucide-react";
+import { Star, Bell, Trash2, Settings2, Loader2, Check, Lock } from "lucide-react";
 import { C, sans, serif, mono, gridBg } from "../lib/theme.js";
 import { VerdictBadge } from "./primitives.jsx";
 import Logo from "./Logo.jsx";
 import { fetchWatchlist, saveWatch, removeWatch } from "../lib/watchlist.js";
 
 const inr = v => v == null ? "—" : "₹" + Number(v).toLocaleString("en-IN", { maximumFractionDigits: 0 });
-const pct = (v, d = 0) => v == null ? "—" : (v * 100).toFixed(d) + "%";
 const signed = v => v == null ? "—" : (v >= 0 ? "+" : "") + (v * 100).toFixed(1) + "%";
 const ALERT_C = { good: C.green, info: C.gold, warn: C.red };
 

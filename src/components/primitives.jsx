@@ -70,17 +70,25 @@ export function BRow({ label, value, color, bold }) {
   );
 }
 
+// UX-11: pin the first column so the row label (ticker/company) stays visible
+// when a wide table is scrolled horizontally on mobile. The sticky cell needs an
+// OPAQUE background to cover content sliding under it.
+const _stickyFirst = (bg) => ({
+  position: "sticky", left: 0, zIndex: 1, background: bg,
+});
+
 export function TH({ cols }) {
   return (
     <tr style={{ background: C.panel2, borderBottom: `1px solid ${C.line}` }}>
       {cols.map((c, i) => (
-        <th key={i} style={{
+        <th key={i} scope="col" style={{   // UX-08: scope for screen-reader header association
           ...sans, color: C.dim, fontSize: 11, fontWeight: 500,
           textAlign: i === 0 ? "left" : "right",
           padding: "9px 12px",
           whiteSpace: "nowrap",
           textTransform: "uppercase",
           letterSpacing: "0.04em",
+          ...(i === 0 ? { ..._stickyFirst(C.panel2), zIndex: 2 } : {}),
         }}>{c}</th>
       ))}
     </tr>
@@ -88,6 +96,7 @@ export function TH({ cols }) {
 }
 
 export function TR({ cells, bold, color, bg, highlight }) {
+  const rowBg = bg || C.panel;
   return (
     <tr style={{ borderTop: `1px solid ${C.line}22`, background: bg || "transparent" }}>
       {cells.map((c, i) => (
@@ -98,13 +107,14 @@ export function TR({ cells, bold, color, bg, highlight }) {
           color: color || (i === 0 ? C.dim : C.text),
           fontWeight: bold ? "600" : "400",
           background: highlight && i > 0 ? C.gold + "18" : "transparent",
+          ...(i === 0 ? _stickyFirst(rowBg) : {}),
         }}>{c}</td>
       ))}
     </tr>
   );
 }
 
-export function MTable({ children }) {
+export function MTable({ children, caption }) {
   return (
     <div style={{ overflowX: "auto" }}>
       <table style={{
@@ -114,7 +124,16 @@ export function MTable({ children }) {
         border: `1px solid ${C.line}`,
         borderRadius: 8,
         overflow: "hidden",
-      }}>{children}</table>
+      }}>
+        {/* UX-08: a screen-reader-only caption names the table for AT users. */}
+        {caption && (
+          <caption style={{
+            position: "absolute", width: 1, height: 1, overflow: "hidden",
+            clip: "rect(0 0 0 0)", whiteSpace: "nowrap",
+          }}>{caption}</caption>
+        )}
+        {children}
+      </table>
     </div>
   );
 }

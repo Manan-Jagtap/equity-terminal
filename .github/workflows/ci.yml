@@ -25,6 +25,13 @@ jobs:
           cache: npm
       - name: Install
         run: npm ci
+      # ARC-08: lint ratchet. eslint still reports a pre-existing baseline of
+      # react-hooks warnings, so this does not fail the build yet — but it runs
+      # on every push so NEW no-unused-vars / errors are visible in the CI log,
+      # and the count only goes down. Tighten to a hard gate once the baseline
+      # (react-hooks/set-state-in-effect + static-components) is cleared.
+      - name: Lint (report)
+        run: npm run lint || true
       - name: Engine parity (must be 60/60)
         run: node tests/engineParity.mjs
       - name: Derive parity (must be 48/48)

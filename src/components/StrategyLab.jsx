@@ -6,10 +6,9 @@
    historical fundamentals we don't store; that side lives in the verdict
    track record + factor snapshot ledger. A research tool, not advice. */
 import { useEffect, useMemo, useState } from "react";
-import { FlaskConical, Loader2, Info, ChevronRight, Play } from "lucide-react";
+import { Loader2, Info, ChevronRight, Play } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
-import { C, sans, serif, mono } from "../lib/theme.js";
-import { VerdictBadge } from "./primitives.jsx";
+import { C, sans, mono } from "../lib/theme.js";
 
 const pct = (x, d = 1) => x == null ? "—" : `${x >= 0 ? "+" : ""}${(x * 100).toFixed(d)}%`;
 const pctAbs = (x, d = 1) => x == null ? "—" : `${(x * 100).toFixed(d)}%`;

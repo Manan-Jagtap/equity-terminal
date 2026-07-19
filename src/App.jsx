@@ -4,7 +4,7 @@
    first paint ships a much smaller bundle. */
 
 import { useEffect, useMemo, useState, useCallback, useRef, lazy, Suspense } from "react";
-import { TrendingUp, LayoutDashboard, List, Star, GitCompare, CalendarClock, Landmark, Gauge, History, Layers, Briefcase, Search, Loader2, LogIn, LogOut, ChevronDown, Sparkles , Rocket , PiggyBank , Globe2 , Boxes } from "lucide-react";
+import { LayoutDashboard, List, Star, GitCompare, CalendarClock, Landmark, Gauge, History, Layers, Briefcase, Search, LogOut, ChevronDown, Sparkles , Rocket , PiggyBank , Globe2 , Boxes } from "lucide-react";
 import { C, mono, sans, serif, auroraBg } from "./lib/theme.js";
 import BrandMark from "./components/BrandMark.jsx";
 import { useIsMobile } from "./lib/useResponsive.js";
@@ -79,6 +79,7 @@ export default function App() {
   const API = import.meta.env.VITE_API_URL;
   const isMobile = useIsMobile();
   const [moreOpen, setMoreOpen] = useState(false);
+  const [deepLinkMiss, setDeepLinkMiss] = useState(null);   // UX-15: bad deep-linked ticker
 
   const [companies,   setCompanies]   = useState(SEED);
   const [loading,     setLoading]     = useState(false);
@@ -310,6 +311,15 @@ export default function App() {
         navFromHash.current = true;
         openRef.current(t);
         setTimeout(() => { navFromHash.current = false; }, 0);
+      } else if (companies.length > 1) {
+        // UX-15: the deep-linked ticker doesn't exist (companies have loaded past
+        // the seed). Don't silently strand the visitor on a stale view — tell
+        // them, and normalise the URL back to the dashboard.
+        setDeepLinkMiss(t);
+        navFromHash.current = true;
+        history.replaceState(null, "", "#/dashboard");
+        setTimeout(() => { navFromHash.current = false; }, 0);
+        setTimeout(() => setDeepLinkMiss(null), 6000);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -537,6 +547,22 @@ export default function App() {
         </header>
       )}
 
+      {/* UX-15: bogus deep-linked ticker → a brief, dismissible notice instead
+          of silently stranding the visitor on the dashboard. */}
+      {deepLinkMiss && (
+        <div role="status" style={{
+          position: "fixed", top: 12, left: "50%", transform: "translateX(-50%)",
+          zIndex: 240, ...sans, fontSize: 12.5, color: C.text,
+          background: C.bg900, border: `1px solid ${C.line2}`, borderRadius: 8,
+          padding: "9px 14px", boxShadow: "0 12px 40px rgba(0,0,0,0.5)",
+        }}>
+          "{deepLinkMiss}" isn't a covered ticker — showing the dashboard instead.
+          <button onClick={() => setDeepLinkMiss(null)} style={{
+            ...sans, marginLeft: 12, background: "transparent", border: "none",
+            color: C.gold, cursor: "pointer", fontSize: 12.5 }}>Dismiss</button>
+        </div>
+      )}
+
       <main style={{ marginLeft: railVisible ? 216 : 0 }}>
         <div style={{ maxWidth: 1360, margin: "0 auto" }}>
         <ErrorBoundary resetKey={view}>
@@ -626,7 +652,7 @@ export default function App() {
         </div>
       </main>
 
-      {isMobile && moreOpen && view !== "company" && (
+      {isMobile && moreOpen && (
         <div onClick={() => setMoreOpen(false)}
           style={{ position: "fixed", inset: 0, zIndex: 118, background: "rgba(4,8,16,0.55)" }}>
           <div onClick={e => e.stopPropagation()} style={{
@@ -661,7 +687,10 @@ export default function App() {
           </div>
         </div>
       )}
-      {isMobile && view !== "company" && (
+      {/* UX-10: the bottom tab bar stays on mobile COMPANY pages too — otherwise
+          arriving from a share/deep link dead-ended with only "Back to screener".
+          The root reserves paddingBottom:62 on mobile so content isn't hidden. */}
+      {isMobile && (
         <div style={{
           position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 120,
           display: "flex", justifyContent: "space-around", alignItems: "center",

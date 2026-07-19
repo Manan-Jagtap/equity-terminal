@@ -4,11 +4,12 @@
    Esc closes, inline {detail} errors from the backend. */
 
 import { useEffect, useRef, useState } from "react";
-import { TrendingUp, Loader2, Lock } from "lucide-react";
+import { Loader2, Lock } from "lucide-react";
 import { C, mono, sans, serif } from "../lib/theme.js";
 import BrandMark from "./BrandMark.jsx";
 import { login, signup, verifySignup, resendCode } from "../lib/auth.js";
 import PrivacyPolicy from "./PrivacyPolicy.jsx";
+import useModalA11y from "../lib/useModalA11y.js";
 
 export default function AuthModal({ open, onClose, API, onAuthed }) {
   const [mode, setMode]   = useState("signin"); // "signin" | "signup"
@@ -23,6 +24,7 @@ export default function AuthModal({ open, onClose, API, onAuthed }) {
   const [code, setCode]   = useState("");
   const [resent, setResent] = useState(false);
   const emailRef = useRef(null);
+  const dialogRef = useModalA11y(open);   // UX-06: focus trap + restore
 
   /* Reset on every open. */
   useEffect(() => {
@@ -86,7 +88,9 @@ export default function AuthModal({ open, onClose, API, onAuthed }) {
         display: "flex", justifyContent: "center", alignItems: "flex-start",
         paddingTop: "14vh",
       }}>
-      <div className="fadein" style={{
+      <div ref={dialogRef} role="dialog" aria-modal="true"
+        aria-label={mode === "signin" ? "Sign in to EquityVerdict" : "Create your EquityVerdict account"}
+        className="fadein" style={{
         width: "min(420px, 92vw)", background: C.bg900,
         border: `1px solid ${C.line2}`, borderRadius: 12,
         boxShadow: "0 24px 80px rgba(0,0,0,0.6)", overflow: "hidden",

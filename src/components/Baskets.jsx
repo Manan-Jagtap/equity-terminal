@@ -12,7 +12,7 @@
    and its constituents (click a name to open it). A research aid — NOT
    investment advice and NOT a backtest. */
 import { useEffect, useMemo, useState } from "react";
-import { Boxes, Loader2, Info, ChevronRight } from "lucide-react";
+import { Boxes, Info, ChevronRight } from "lucide-react";
 import { C, sans, serif, mono } from "../lib/theme.js";
 import PageSkeleton from "./Skeleton.jsx";
 import { VerdictBadge } from "./primitives.jsx";
