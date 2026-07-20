@@ -214,8 +214,8 @@ export default function PriceChart({ data, intrinsic, ticker, API, livePrice, li
 
       <div style={{ display: "flex", gap: 7, marginBottom: 8, flexWrap: "wrap", alignItems: "center" }}>
         <Toggle on={showSMA50} set={setShowSMA50} color={C.gold} label="50-DMA" />
-        <Toggle on={showSMA200} set={setShowSMA200} color="#8FB4D8" label="200-DMA" />
-        <Toggle on={showRSI} set={setShowRSI} color="#C792EA" label="RSI 14" />
+        <Toggle on={showSMA200} set={setShowSMA200} color="#85a8c8" label="200-DMA" />
+        <Toggle on={showRSI} set={setShowRSI} color="#a78bda" label="RSI 14" />
         <Toggle on={logScale} set={setLogScale} color={C.green} label="Log" />
         {hi52 != null && (
           <span style={{ ...mono, fontSize: 10.5, color: C.dim, marginLeft: 4 }}>
@@ -247,7 +247,7 @@ export default function PriceChart({ data, intrinsic, ticker, API, livePrice, li
             <Bar yAxisId="V" dataKey="volume" fill={C.line2} opacity={0.5} />
             <Area yAxisId="P" type="monotone" dataKey="close" stroke={C.gold} strokeWidth={1.7} fill="url(#pcArea)" dot={false} name="close" />
             {showSMA50 && <Line yAxisId="P" type="monotone" dataKey="sma50" stroke={C.gold} strokeWidth={1} dot={false} strokeDasharray="5 3" name="50-DMA" />}
-            {showSMA200 && <Line yAxisId="P" type="monotone" dataKey="sma200" stroke="#8FB4D8" strokeWidth={1} dot={false} strokeDasharray="5 3" name="200-DMA" />}
+            {showSMA200 && <Line yAxisId="P" type="monotone" dataKey="sma200" stroke="#85a8c8" strokeWidth={1} dot={false} strokeDasharray="5 3" name="200-DMA" />}
             {showFV && <ReferenceLine yAxisId="P" y={intrinsic} stroke={C.green} strokeDasharray="6 4"
                         label={{ value: "Fair value", fill: C.green, fontSize: 10, position: "insideTopLeft" }} />}
           </ComposedChart>
@@ -266,7 +266,7 @@ export default function PriceChart({ data, intrinsic, ticker, API, livePrice, li
                 formatter={v => [v == null ? "—" : Number(v).toFixed(1), "RSI 14"]} />
               <ReferenceLine y={70} stroke={C.red} strokeDasharray="3 4" strokeOpacity={0.5} />
               <ReferenceLine y={30} stroke={C.green} strokeDasharray="3 4" strokeOpacity={0.5} />
-              <Line type="monotone" dataKey="rsi" stroke="#C792EA" strokeWidth={1.2} dot={false} name="RSI 14" />
+              <Line type="monotone" dataKey="rsi" stroke="#a78bda" strokeWidth={1.2} dot={false} name="RSI 14" />
             </ComposedChart>
           </ResponsiveContainer>
         </div>

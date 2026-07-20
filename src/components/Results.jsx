@@ -88,7 +88,7 @@ function UpcomingCalendar({ API, onOpen }) {
   );
 }
 
-const ACT_TONE = { dividend: C.green, split: "#818CF8", bonus: C.gold };
+const ACT_TONE = { dividend: C.green, split: "#9d8fd4", bonus: C.gold };
 function actLabel(a) {
   if (a.type === "dividend") return `₹${Number(a.value).toFixed(2)}/sh` + (a.yield_pct != null ? ` · ${a.yield_pct}%` : "");
   if (a.type === "split") return a.ratio ? `Split (×${(1 / a.ratio).toFixed(0)})` : "Split";

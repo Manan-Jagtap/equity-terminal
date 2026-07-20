@@ -38,6 +38,8 @@ jobs:
         run: node tests/deriveParity.mjs
       - name: Build
         run: npm run build
+      - name: Bundle budget (entry ≤ 175 kB gzip)
+        run: node scripts/check-bundle-budget.mjs
       - name: Install Playwright chromium
         run: npx playwright install --with-deps chromium
       - name: Runtime smoke (seed mode)

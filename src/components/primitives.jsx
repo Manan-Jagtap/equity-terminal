@@ -2,27 +2,20 @@
    All read from the central theme tokens — no hard-coded colors. */
 
 import { C, mono, sans } from "../lib/theme.js";
-import { verdictLabel, verdictTitle } from "../lib/formatters.js";
+import { verdictTitle } from "../lib/formatters.js";
+import { VerdictBadge as UiVerdictBadge } from "./ui/Badge.jsx";
 
+/* Redesign Phase 2c: thin wrapper over the design-system badge — every legacy
+   call site flips to the muted 6-step verdict ladder + direction glyphs at
+   once. Keeps the honesty tooltips (LOW CONF / NO DATA) and the `big` hero
+   sizing the company page uses. */
 export function VerdictBadge({ verdict, big }) {
-  const col =
-    verdict === "BUY" || verdict === "ACCUMULATE" ? C.green :
-    verdict === "HOLD" ? C.gold :
-    verdict === "TRIM" || verdict === "REDUCE" || verdict === "AVOID" ? C.red :
-    C.dim; // NO DATA / NO CALL → neutral grey, never green
   return (
-    <span title={verdictTitle(verdict)} style={{
-      ...mono,
-      color: col,
-      border: `1px solid ${col}55`,
-      background: col + "14",
-      padding: big ? "6px 16px" : "2px 9px",
-      borderRadius: 6,
-      fontSize: big ? 15 : 11,
-      letterSpacing: "0.08em",
-      fontWeight: 600,
-      whiteSpace: "nowrap",
-    }}>{verdictLabel(verdict)}</span>
+    <UiVerdictBadge
+      verdict={verdict}
+      title={verdictTitle(verdict)}
+      style={big ? { fontSize: 14, padding: "6px 16px" } : undefined}
+    />
   );
 }
 

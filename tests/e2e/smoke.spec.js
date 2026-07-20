@@ -52,8 +52,9 @@ test("company page opens and the DCF tab computes a fair value", async ({ page }
   await page.getByRole("button", { name: "Screener" }).click();
   await page.getByText("Titan Company").first().click();
   // Header renders (this exact surface crashed in the 16 Jul incident).
-  await expect(page.getByRole("button", { name: "Valuation" })).toBeVisible({ timeout: 15000 });
-  await page.getByRole("button", { name: "Valuation" }).click();
+  // Company sections are a semantic tablist — locate by tab role, not button.
+  await expect(page.getByRole("tab", { name: "Valuation" })).toBeVisible({ timeout: 15000 });
+  await page.getByRole("tab", { name: "Valuation" }).click();
   // The parity core must produce a rupee fair value + a MoS readout. The tight
   // "Valuation · Blended Fair Value" header disambiguates from the Monte Carlo
   // copy that also mentions the phrase.
@@ -83,11 +84,12 @@ test("navigation writes URLs and browser back restores the previous view", async
   const errors = collectPageErrors(page);
   await page.goto("/");
   await page.getByRole("button", { name: "Screener" }).click();
-  await expect(page).toHaveURL(/#\/screener$/);
+  // Phase 0b: real path routing (the permanent #/ shim only rewrites legacy links)
+  await expect(page).toHaveURL(/\/screener$/);
   await page.getByRole("button", { name: "Economy" }).click();
-  await expect(page).toHaveURL(/#\/economy$/);
+  await expect(page).toHaveURL(/\/economy$/);
   await page.goBack();
-  await expect(page).toHaveURL(/#\/screener$/);
+  await expect(page).toHaveURL(/\/screener$/);
   // The view actually changed back, not just the URL.
   await expect(page.locator("tr", { hasText: "Bajaj Finance" })).toBeVisible({ timeout: 15000 });
   expect(errors, `page errors: ${errors.join(" | ")}`).toHaveLength(0);

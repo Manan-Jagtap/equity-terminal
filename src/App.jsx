@@ -6,6 +6,8 @@
 import { useEffect, useMemo, useState, useCallback, useRef, lazy, Suspense } from "react";
 import { LayoutDashboard, List, Star, GitCompare, CalendarClock, Landmark, Gauge, History, Layers, Briefcase, Search, LogOut, ChevronDown, Sparkles , Rocket , PiggyBank , Globe2 , Boxes, Shield } from "lucide-react";
 import { C, mono, sans, serif, auroraBg } from "./lib/theme.js";
+import { m, useReducedMotion } from "motion/react";
+import { pick } from "./design/motion.js";
 import BrandMark from "./components/BrandMark.jsx";
 import { useIsMobile } from "./lib/useResponsive.js";
 import { SEED, buildFromApi } from "./lib/seedData.js";
@@ -19,6 +21,7 @@ import Landing from "./components/Landing.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import { fetchWatchlist, saveWatch, removeWatch } from "./lib/watchlist.js";
 import { getUser, me, clearSession, authFetch, logoutAll } from "./lib/auth.js";
+import { VIEW_IDS, parsePath, pathForRoute, hashToPath, pageTitle } from "./lib/route.js";
 
 /* Heavy views are code-split: each loads on first visit. Dashboard and
    Screener stay eager — they are the landing experience.
@@ -45,6 +48,7 @@ const Results     = lazyReload(() => import("./components/Results.jsx"));
 const Ownership   = lazyReload(() => import("./components/Ownership.jsx"));
 const Operations  = lazyReload(() => import("./components/Operations.jsx"));
 const TrackRecord = lazyReload(() => import("./components/TrackRecord.jsx"));
+const Styleguide  = lazyReload(() => import("./components/Styleguide.jsx"));  // internal, redesign Phase 0
 const Sectors     = lazyReload(() => import("./components/Sectors.jsx"));
 const FundManager = lazyReload(() => import("./components/FundManager.jsx"));
 const IPOBoard    = lazyReload(() => import("./components/IPOBoard.jsx"));
@@ -80,15 +84,27 @@ export default function App() {
   const isMobile = useIsMobile();
   const [moreOpen, setMoreOpen] = useState(false);
   const [deepLinkMiss, setDeepLinkMiss] = useState(null);   // UX-15: bad deep-linked ticker
+  const [companiesLoaded, setCompaniesLoaded] = useState(false);  // real universe fetched (not seed)
 
   const [companies,   setCompanies]   = useState(SEED);
   const [loading,     setLoading]     = useState(false);
-  const [view,        setView]        = useState("dashboard");
+  // Initialise the view straight from the URL (a hard load of /screener starts
+  // ON the screener, so the writer never has to "correct" it). Company deep
+  // links start on dashboard and are opened by the retry effect once data loads.
+  const [view,        setView]        = useState(() => {
+    const r = parsePath(window.location.pathname);
+    return r && r.view && r.view !== "company" ? r.view : "dashboard";
+  });
   const [selectedId,  setSelectedId]  = useState(null);
   const [assumptions, setAssumptions] = useState(null);
   const [price,       setPrice]       = useState(0);
   const [histPrices,  setHistPrices]  = useState(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
+
+  // Phase 3 motion: every view change gets one calm entrance (slideUp spring,
+  // transforms/opacity only). pick() collapses it under prefers-reduced-motion.
+  const reducedMotion = useReducedMotion();
+  const viewMotion = pick(reducedMotion);
 
   // Auth session — seeded from localStorage, validated against /auth/me on boot.
   const [user,        setUser]        = useState(() => getUser());
@@ -224,7 +240,7 @@ export default function App() {
         setCompanies(built.length > 0 ? built : SEED);
       })
       .catch(() => setCompanies(SEED))
-      .finally(() => setLoading(false));
+      .finally(() => { setLoading(false); setCompaniesLoaded(true); });
   }, [API]);
 
   const selected = useMemo(
@@ -274,37 +290,48 @@ export default function App() {
     setView("company");
   };
 
-  // ── URL ↔ state routing: every navigation writes a #/route and browser
-  // back/forward restore it exactly — the SPA behaves like real pages.
-  // Hash-based so the static host needs no rewrite config. `navFromHash`
-  // distinguishes "user pressed back" (replaceState — the browser already
-  // moved in history) from "user clicked something" (pushState — a new entry).
-  const VIEW_IDS = ["dashboard", "screener", "ideas", "baskets", "watchlist",
-    "compare", "results", "ownership", "operations", "sectors", "economy",
-    "ipo", "funds", "portfolio", "manager", "track"];
-  const navFromHash = useRef(false);
+  // ── URL ↔ state routing (Phase 0b: real paths, not hash) ──────────────────
+  // Every navigation writes a real /route; browser back/forward restore it
+  // exactly. `navFromRoute` distinguishes "user pressed back" (replaceState —
+  // history already moved) from "user clicked" (pushState — a new entry). A
+  // one-time shim rewrites any legacy #/… deep link to its real path so old
+  // links never 404. Query strings (?scenario=) are preserved throughout.
+  const navFromRoute = useRef(false);
+  // One-shot: the company ticker the initial URL deep-links to (or null). The
+  // writer won't clobber that URL until the company opens OR the user navigates
+  // away — both clear it. Set once during render, before any effect runs.
+  const pendingDeep = useRef(undefined);
+  if (pendingDeep.current === undefined) {
+    const r0 = parsePath(window.location.pathname);
+    pendingDeep.current = r0 && r0.view === "company" ? r0.ticker : null;
+  }
   const routeRef = useRef({});
   routeRef.current = { view, selectedId, companies };
   const openRef = useRef(open);
   openRef.current = open;
 
   useEffect(() => {
+    // Legacy-hash shim, once: #/company/TCS → /company/TCS (keep the search).
+    if (window.location.hash) {
+      const p = hashToPath(window.location.hash);
+      if (p) history.replaceState(null, "", p + window.location.search);
+    }
     const apply = () => {
       const { view: cv, selectedId: cs, companies: cos } = routeRef.current;
-      const h = decodeURIComponent(window.location.hash.replace(/^#\/?/, ""));
-      const [v, id] = h.split("/");
-      if (v === "company" && id) {
-        const t = id.toUpperCase();
+      const r = parsePath(window.location.pathname);
+      if (!r) return;
+      if (r.view === "company" && r.ticker) {
+        const t = r.ticker;
         if (cv === "company" && (cs || "").toUpperCase() === t) return;
         if (cos.some(c => ((c.ticker || c.id) || "").toUpperCase() === t)) {
-          navFromHash.current = true;
+          navFromRoute.current = true;
           openRef.current(t);
-          setTimeout(() => { navFromHash.current = false; }, 0);
+          setTimeout(() => { navFromRoute.current = false; }, 0);
         }
-      } else if (VIEW_IDS.includes(v) && cv !== v) {
-        navFromHash.current = true;
-        setView(v);
-        setTimeout(() => { navFromHash.current = false; }, 0);
+      } else if (r.view && r.view !== "company" && cv !== r.view) {
+        navFromRoute.current = true;
+        setView(r.view);
+        setTimeout(() => { navFromRoute.current = false; }, 0);
       }
     };
     apply();                                   // deep link on first paint
@@ -315,40 +342,57 @@ export default function App() {
 
   // Deep link straight to a company: retry once real data replaces the seed.
   useEffect(() => {
-    const h = decodeURIComponent(window.location.hash.replace(/^#\/?/, ""));
-    const [v, id] = h.split("/");
-    if (v === "company" && id && view !== "company") {
-      const t = id.toUpperCase();
+    const r = parsePath(window.location.pathname);
+    if (r && r.view === "company" && r.ticker && view !== "company") {
+      const t = r.ticker;
       if (companies.some(c => ((c.ticker || c.id) || "").toUpperCase() === t)) {
-        navFromHash.current = true;
+        navFromRoute.current = true;
         openRef.current(t);
-        setTimeout(() => { navFromHash.current = false; }, 0);
-      } else if (companies.length > 1) {
-        // UX-15: the deep-linked ticker doesn't exist (companies have loaded past
-        // the seed). Don't silently strand the visitor on a stale view — tell
-        // them, and normalise the URL back to the dashboard.
+        setTimeout(() => { navFromRoute.current = false; }, 0);
+      } else if (companiesLoaded) {
+        // UX-15: only once the REAL universe has loaded (not the ~5-name seed —
+        // firing against seed wrongly redirected valid deep links). The ticker
+        // genuinely isn't covered: tell the visitor, normalise the URL to home.
         setDeepLinkMiss(t);
-        navFromHash.current = true;
-        history.replaceState(null, "", "#/dashboard");
-        setTimeout(() => { navFromHash.current = false; }, 0);
+        navFromRoute.current = true;
+        history.replaceState(null, "", "/" + window.location.search);
+        setTimeout(() => { navFromRoute.current = false; }, 0);
         setTimeout(() => setDeepLinkMiss(null), 6000);
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [companies]);
+  }, [companies, companiesLoaded]);
 
-  // State → URL (the writer). Empty initial hash is replaced, not pushed, so
-  // the first Back never lands on a blank route.
+  // State → URL (the writer). The path is rebuilt from state and the query
+  // string preserved (?scenario=). A navigation the URL triggered is a
+  // replaceState (history already moved); a click is a pushState (new entry).
   useEffect(() => {
-    const want = view === "company" && selectedId
-      ? `#/company/${encodeURIComponent(String(selectedId))}`
-      : `#/${view}`;
-    if (window.location.hash === want) return;
-    if (navFromHash.current || !window.location.hash) {
+    const path = pathForRoute(view, selectedId);
+    const want = path + window.location.search;
+    const cur = window.location.pathname + window.location.search;
+    // Keep the browser tab title in sync per page.
+    const co = view === "company" && selectedId
+      ? companies.find(c => (c.ticker || c.id) === selectedId) : null;
+    document.title = pageTitle(view, selectedId, co && co.name);
+    // Don't overwrite the initial /company/TCS deep-link URL until it resolves.
+    // Clears the moment the company opens (so future nav writes normally) OR the
+    // user navigates elsewhere (deep link superseded). StrictMode-safe.
+    if (pendingDeep.current) {
+      if (view === "company" && (selectedId || "").toString().toUpperCase() === pendingDeep.current) {
+        pendingDeep.current = null;                 // resolved — company opened
+      } else if (view !== "dashboard") {
+        pendingDeep.current = null;                 // user navigated away
+      } else {
+        return;                                     // still opening — leave the URL
+      }
+    }
+    if (cur === want) return;
+    if (navFromRoute.current) {
       history.replaceState(null, "", want);
     } else {
       history.pushState(null, "", want);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view, selectedId]);
 
   // Apply a resolved shared scenario as soon as its company is available:
@@ -560,7 +604,7 @@ export default function App() {
           }}>
             <Search size={16} color={C.dim} strokeWidth={1.6} />
           </button>
-          <button onClick={signOut} title="Sign out" style={{
+          <button onClick={signOut} title="Sign out" aria-label="Sign out" style={{
             display: "flex", padding: 8, borderRadius: 9, cursor: "pointer",
             border: `1px solid ${C.line2}`, background: "transparent",
           }}>
@@ -588,6 +632,9 @@ export default function App() {
       <main style={{ marginLeft: railVisible ? 216 : 0 }}>
         <div style={{ maxWidth: 1360, margin: "0 auto" }}>
         <ErrorBoundary resetKey={view}>
+        {/* Keyed by view only: switching companies keeps <Company> mounted
+            (tab/scroll state survives); switching views plays the entrance. */}
+        <m.div key={view} variants={viewMotion.slideUp} initial="hidden" animate="show">
 
         {view === "dashboard" && (
           <MarketDashboard API={API} companies={companies} onOpen={open} />
@@ -640,6 +687,9 @@ export default function App() {
           {view === "track" && (
             <TrackRecord API={API} onOpen={open} />
           )}
+          {view === "styleguide" && (
+            <Styleguide />
+          )}
           {view === "company" && selected && assumptions && (
             <Company
               co={selected}
@@ -658,6 +708,7 @@ export default function App() {
             />
           )}
         </Suspense>
+        </m.div>
         </ErrorBoundary>
         {/* UX-01: an unavoidable disclaimer on EVERY logged-in view (verdicts,
             scores and targets appear on most of them, including the company

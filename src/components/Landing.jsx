@@ -60,7 +60,7 @@ export default function Landing({ onSignIn }) {
         <h1 style={{ ...serif, fontSize: isMobile ? 34 : 52, lineHeight: 1.15, color: C.text, margin: 0, fontWeight: 400 }}>
           Independent equity research<br />
           <span style={{
-            backgroundImage: `linear-gradient(92deg, ${C.gold}, ${C.blue} 70%, #A78BFA)`,
+            backgroundImage: `linear-gradient(92deg, ${C.gold}, ${C.gold500} 55%, ${C.text200})`,
             WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent",
           }}>with every number traceable.</span>
         </h1>

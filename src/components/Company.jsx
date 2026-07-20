@@ -19,6 +19,7 @@ import {
 
 import { C, mono, sans, serif, gridBg, sectorAccent } from "../lib/theme.js";
 import FvRange from "./FvRange.jsx";
+import NumberTicker from "./ui/NumberTicker.jsx";
 import { useLive, liveDotStyle } from "../lib/live.js";
 import { multiple, inrOrDash, signedPct } from "../lib/formatters.js";
 import { recommend } from "../lib/recommend.js";
@@ -3001,7 +3002,9 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
                 {liveFeed.live && livePx != null ? "Live Price" : "Last Price"}
               </div>
               <div style={{ display:"flex", alignItems:"baseline", gap:16, marginTop:4, justifyContent: isMobile ? "flex-start" : "flex-start" }}>
-                <div style={{ ...mono, fontSize: isMobile ? 40 : 56, color:C.text, lineHeight:1, letterSpacing:"-0.02em" }}>{fmtPx(displayPrice)}</div>
+                <div style={{ ...mono, fontSize: isMobile ? 40 : 56, color:C.text, lineHeight:1, letterSpacing:"-0.02em" }}>
+                  <NumberTicker value={displayPrice} format={fmtPx} />
+                </div>
                 <div style={{ ...mono, fontSize:14, fontWeight:500, color:chgPct>=0?C.green:C.red }}>
                   {chgPct>=0?"+":""}{fmtN(chgAmt,2)}  /  {chgPct>=0?"+":""}{fmtN(chgPct,2)}%
                 </div>

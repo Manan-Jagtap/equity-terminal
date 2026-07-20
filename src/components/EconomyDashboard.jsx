@@ -400,7 +400,7 @@ export default function EconomyDashboard() {
                 style={{ display: "flex", alignItems: "baseline", gap: 10, padding: "9px 16px",
                          borderTop: i ? `1px solid ${C.line}` : "none", textDecoration: "none" }}>
                 <span style={{ ...mono, fontSize: 9.5, fontWeight: 700, flexShrink: 0, width: 38,
-                               color: it.source === "RBI" ? "#818CF8" : "#22D3EE" }}>{it.source}</span>
+                               color: it.source === "RBI" ? "#9d8fd4" : "#5fb3b3" }}>{it.source}</span>
                 <span style={{ ...mono, fontSize: 10, color: C.faint, flexShrink: 0, width: 74 }}>
                   {it.date || it.first_seen || ""}
                 </span>

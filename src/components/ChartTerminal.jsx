@@ -127,13 +127,13 @@ export default function ChartTerminal({ data, livePrice, live, intrinsic, height
       if (key === "macd") {
         const h = chart.addSeries(HistogramSeries, {}, pane);
         h.setData(out.hist.map(p => ({ time: p.time, value: p.value, color: p.value >= 0 ? UP + "88" : DOWN + "88" })));
-        const ml = chart.addSeries(LineSeries, { color: "#22D3EE", lineWidth: 1, priceLineVisible: false, lastValueVisible: false }, pane);
+        const ml = chart.addSeries(LineSeries, { color: "#5fb3b3", lineWidth: 1, priceLineVisible: false, lastValueVisible: false }, pane);
         ml.setData(out.macd);
         const sl = chart.addSeries(LineSeries, { color: C.gold, lineWidth: 1, priceLineVisible: false, lastValueVisible: false }, pane);
         sl.setData(out.signal);
         paneSeries[key] = ml;
       } else if (key === "stoch") {
-        const k = chart.addSeries(LineSeries, { color: "#818CF8", lineWidth: 1, priceLineVisible: false, lastValueVisible: false }, pane);
+        const k = chart.addSeries(LineSeries, { color: "#9d8fd4", lineWidth: 1, priceLineVisible: false, lastValueVisible: false }, pane);
         k.setData(out.k);
         const d = chart.addSeries(LineSeries, { color: C.gold, lineWidth: 1, priceLineVisible: false, lastValueVisible: false }, pane);
         d.setData(out.d);
