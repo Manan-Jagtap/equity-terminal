@@ -1468,7 +1468,7 @@
    "risk_free": 0.069,
    "erp": 0.05,
    "forecast_roe": 0.1458,
-   "terminal_roe": 0.1458,
+   "terminal_roe": 0.1551,
    "payout": 0.1367,
    "fade_years": 10,
    "terminal_growth": 0.055,
