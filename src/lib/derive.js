@@ -295,8 +295,38 @@ function _deriveFinancial(statements, vs) {
   drivers.forecast_roe = "median(PAT/NetWorth, 3y), capped near latest realized";
 
   // Terminal ROE: fade DOWN toward sector mature, never up.
-  const terminalRoe = _clamp(Math.min(forecastRoe, 0.70 * forecastRoe + 0.30 * p.mature_roe), 0.08, 0.26);
+  let terminalRoe = _clamp(Math.min(forecastRoe, 0.70 * forecastRoe + 0.30 * p.mature_roe), 0.08, 0.26);
   drivers.terminal_roe = "min(forecast, 0.70×realized + 0.30×sector mature)";
+
+  // FIX-17: evidence-earned compounder terminal ROE (mirror of derive.py). A
+  // STABLE franchise (median ROE ≥ 1.2×Ke, latest ≥ 0.80× its proven upper-half
+  // median → a durable level in a mild dip, not a boom-bust peak) whose forecast
+  // is temporarily depressed reverts a BOUNDED step (≤ +3 pts, cap 18%) toward
+  // that proven level. Earned & one-sided: never lowers the terminal.
+  const roeHist = [];
+  {
+    const nwMap = new Map(networth);
+    for (const [yr, pv] of pat) {
+      const nv = nwMap.get(yr);
+      if (nv && nv > 0 && pv != null) roeHist.push(pv / nv);
+    }
+  }
+  if (roeHist.length >= 4) {
+    const keF = RISK_FREE + p.beta * ERP;
+    const sortedRoe = [...roeHist].sort((a, b) => a - b);
+    const franchise0 = median(sortedRoe.slice(Math.floor(sortedRoe.length / 2)));
+    const stable = latestRoe !== null && franchise0 > 0 && latestRoe >= 0.80 * franchise0;
+    if (median(roeHist) >= 1.2 * keF && stable) {
+      const earned = _clamp(Math.min(franchise0, forecastRoe + 0.03, 0.18), 0.08, 0.26);
+      if (earned > terminalRoe) {
+        terminalRoe = earned;
+        drivers.terminal_roe =
+          `evidence-earned franchise ROE ${_pct(terminalRoe)} — proven ≥1.2×Ke ` +
+          `persistence; terminal reverts to the demonstrated franchise, not the ` +
+          `depressed forecast (FIX-17)`;
+      }
+    }
+  }
 
   // Payout from |dividends| / PAT (CF dividends stored negative).
   let payout = 0.20;
