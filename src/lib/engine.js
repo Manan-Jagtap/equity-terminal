@@ -24,8 +24,8 @@ export const ERP = 0.050;
 export const SECTOR_PARAMS = {
   // Non-financials
   IT_SERVICES:   { beta: 0.85, terminal_growth: 0.055, mature_roic: 0.30, mature_roe: 0.30, exit_pe: 25, exit_ev_ebitda: 16, exit_pb: null },
-  CONSUMER:      { beta: 0.58, terminal_growth: 0.055, mature_roic: 0.22, mature_roe: 0.30, exit_pe: 42, exit_ev_ebitda: 28, exit_pb: null },
-  CONSUMER_DISC: { beta: 0.80, terminal_growth: 0.055, mature_roic: 0.18, mature_roe: 0.22, exit_pe: 38, exit_ev_ebitda: 22, exit_pb: null },
+  CONSUMER:      { beta: 0.58, terminal_growth: 0.055, mature_roic: 0.22, mature_roe: 0.30, exit_pe: 34, exit_ev_ebitda: 28, exit_pb: null },
+  CONSUMER_DISC: { beta: 0.80, terminal_growth: 0.055, mature_roic: 0.18, mature_roe: 0.22, exit_pe: 30, exit_ev_ebitda: 22, exit_pb: null },
   PHARMA:        { beta: 0.64, terminal_growth: 0.050, mature_roic: 0.18, mature_roe: 0.20, exit_pe: 30, exit_ev_ebitda: 18, exit_pb: null },
   AUTO:          { beta: 1.10, terminal_growth: 0.050, mature_roic: 0.16, mature_roe: 0.18, exit_pe: 24, exit_ev_ebitda: 13, exit_pb: null },
   METAL:         { beta: 1.30, terminal_growth: 0.040, mature_roic: 0.12, mature_roe: 0.13, exit_pe: 11, exit_ev_ebitda: 6,  exit_pb: null },
@@ -42,9 +42,9 @@ export const SECTOR_PARAMS = {
   // Thin-margin pass-through distribution/trading (DAT-02) — mirrors sector_params.py.
   DISTRIBUTION:  { beta: 1.00, terminal_growth: 0.045, mature_roic: 0.12, mature_roe: 0.14, exit_pe: 14, exit_ev_ebitda: 8,  exit_pb: null },
   CABLES:        { beta: 1.00, terminal_growth: 0.055, mature_roic: 0.18, mature_roe: 0.18, exit_pe: 27, exit_ev_ebitda: 15, exit_pb: null },
-  CAPITAL_GOODS: { beta: 1.10, terminal_growth: 0.055, mature_roic: 0.17, mature_roe: 0.18, exit_pe: 32, exit_ev_ebitda: 22, exit_pb: null },
+  CAPITAL_GOODS: { beta: 1.10, terminal_growth: 0.055, mature_roic: 0.17, mature_roe: 0.18, exit_pe: 27, exit_ev_ebitda: 22, exit_pb: null },
   CONSTRUCTION:  { beta: 1.20, terminal_growth: 0.050, mature_roic: 0.13, mature_roe: 0.14, exit_pe: 15, exit_ev_ebitda: 9,  exit_pb: null },
-  DEFENCE:       { beta: 0.95, terminal_growth: 0.060, mature_roic: 0.20, mature_roe: 0.22, exit_pe: 34, exit_ev_ebitda: 24, exit_pb: null },
+  DEFENCE:       { beta: 0.95, terminal_growth: 0.060, mature_roic: 0.20, mature_roe: 0.22, exit_pe: 28, exit_ev_ebitda: 24, exit_pb: null },
   TEXTILES:      { beta: 1.10, terminal_growth: 0.040, mature_roic: 0.11, mature_roe: 0.12, exit_pe: 13, exit_ev_ebitda: 7,  exit_pb: null },
   LOGISTICS:     { beta: 1.00, terminal_growth: 0.055, mature_roic: 0.14, mature_roe: 0.15, exit_pe: 26, exit_ev_ebitda: 13, exit_pb: null },
   // Financials
@@ -245,7 +245,7 @@ function isHighPayout(co, a) {
 
 const BLEND_WEIGHTS = {
   fin:    [["Residual Income", 0.65], ["Gordon Growth P/B", 0.20], ["P/E (sector)", 0.15]],
-  nonfin: [["FCFF DCF", 0.55], ["Exit Multiple", 0.30], ["P/E (sector)", 0.15]],
+  nonfin: [["FCFF DCF", 0.65], ["Exit Multiple", 0.20], ["P/E (sector)", 0.15]],
   // Asset-light: earnings-based P/E is the meaningful multiple; EV/EBITDA less so.
   nonfin_light: [["FCFF DCF", 0.55], ["Exit Multiple", 0.15], ["P/E (sector)", 0.30]],
 };
@@ -284,10 +284,10 @@ export function blended(co, a) {
     return { blended: null, components, primary, primary_method: primaryMethod, valuation: v };
   }
 
-  // Cross-checks are a SANITY BAND — clamp each to [0.5, 2.2]×primary before
+  // Cross-checks are a SANITY BAND — clamp each to [0.6, 1.6]×primary before
   // weighting so a rich sector multiple can't drag the blend far off the
   // intrinsic. The raw (uncapped) value is still shown in the breakdown.
-  const LO = 0.5 * primary, HI = 2.2 * primary;
+  const LO = 0.6 * primary, HI = 1.6 * primary;
   const components = spec.map(([name, w]) => {
     const raw = vals[name] ?? null;
     let capped = raw;

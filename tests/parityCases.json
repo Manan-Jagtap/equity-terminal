@@ -26,7 +26,7 @@
    "reinvest_rate": 0.7016,
    "_valuation_sector": "CABLES"
   },
-  "exp_blended": 5248.365264727216,
+  "exp_blended": 4737.1987029080265,
   "exp_primary": 4374.401897004846,
   "exp_components": [
    4374.401897004846,
@@ -62,7 +62,7 @@
    "reinvest_rate": 0.6005,
    "_valuation_sector": "UTILITIES"
   },
-  "exp_blended": 100.16721500032585,
+  "exp_blended": 82.62820848275906,
   "exp_primary": 77.95114007807459,
   "exp_components": [
    77.95114007807459,
@@ -98,7 +98,7 @@
    "reinvest_rate": 0.35,
    "_valuation_sector": "BANK"
   },
-  "exp_blended": 3936.866626846531,
+  "exp_blended": 4000.139895868741,
   "exp_primary": 4218.217934814,
   "exp_components": [
    4218.217934814,
@@ -134,7 +134,7 @@
    "reinvest_rate": 0.6619,
    "_valuation_sector": "REALTY"
   },
-  "exp_blended": 628.9729444871217,
+  "exp_blended": 535.8758660612301,
   "exp_primary": 544.958507858878,
   "exp_components": [
    544.958507858878,
@@ -170,7 +170,7 @@
    "reinvest_rate": 0.2535,
    "_valuation_sector": "DISTRIBUTION"
   },
-  "exp_blended": 5523.825429974871,
+  "exp_blended": 5552.28007004613,
   "exp_primary": 5885.681935359494,
   "exp_components": [
    5885.681935359494,
@@ -206,7 +206,7 @@
    "reinvest_rate": 0.35,
    "_valuation_sector": "NBFC"
   },
-  "exp_blended": 479.53730405993554,
+  "exp_blended": 452.4542373490117,
   "exp_primary": 394.6816791147016,
   "exp_components": [
    394.6816791147016,
@@ -242,12 +242,12 @@
    "reinvest_rate": 0.2367,
    "_valuation_sector": "CONSUMER_DISC"
   },
-  "exp_blended": 6466.944894421685,
+  "exp_blended": 5333.129880464636,
   "exp_primary": 4199.314866507587,
   "exp_components": [
    4199.314866507587,
    14064.643527722474,
-   35233.65425740697,
+   27816.042834794975,
    2780.845285480551
   ]
  },
@@ -278,7 +278,7 @@
    "reinvest_rate": 0.1602,
    "_valuation_sector": "CABLES"
   },
-  "exp_blended": 973.6392256818737,
+  "exp_blended": 904.4366390916124,
   "exp_primary": 841.7928196825162,
   "exp_components": [
    841.7928196825162,
@@ -314,7 +314,7 @@
    "reinvest_rate": 0.35,
    "_valuation_sector": "INSURANCE"
   },
-  "exp_blended": 194.0541426868905,
+  "exp_blended": 172.06652127763758,
   "exp_primary": 145.4483708606295,
   "exp_components": [
    145.4483708606295,
@@ -350,7 +350,7 @@
    "reinvest_rate": 0.7032,
    "_valuation_sector": "PAPER"
   },
-  "exp_blended": 936.7710346726752,
+  "exp_blended": 780.4337667562339,
   "exp_primary": 612.1049151029284,
   "exp_components": [
    612.1049151029284,
@@ -422,7 +422,7 @@
    "reinvest_rate": 0.35,
    "_valuation_sector": "NBFC"
   },
-  "exp_blended": 388.85912137337954,
+  "exp_blended": 363.65528943251235,
   "exp_primary": 360.0547420123885,
   "exp_components": [
    360.0547420123885,
@@ -494,12 +494,12 @@
    "reinvest_rate": 0.1405,
    "_valuation_sector": "CAPITAL_GOODS"
   },
-  "exp_blended": 1379.944922726167,
+  "exp_blended": 1176.2255987467543,
   "exp_primary": 1011.3339694367693,
   "exp_components": [
    1011.3339694367693,
    1927.3446622980975,
-   2492.9143817366516,
+   2103.3965095902995,
    938.783077388071
   ]
  },
@@ -530,7 +530,7 @@
    "reinvest_rate": 0.35,
    "_valuation_sector": "BANK"
   },
-  "exp_blended": 3109.805235277769,
+  "exp_blended": 3241.736366471371,
   "exp_primary": 3769.46089124578,
   "exp_components": [
    3769.46089124578,
@@ -566,7 +566,7 @@
    "reinvest_rate": 0.4535,
    "_valuation_sector": "AUTO"
   },
-  "exp_blended": 14052.96080970064,
+  "exp_blended": 14342.823548049684,
   "exp_primary": 15846.954716546308,
   "exp_components": [
    15846.954716546308,
@@ -602,12 +602,12 @@
    "reinvest_rate": 0.6143,
    "_valuation_sector": "DEFENCE"
   },
-  "exp_blended": 125531.54952532052,
+  "exp_blended": 112886.1634379952,
   "exp_primary": 114799.48824202901,
   "exp_components": [
    114799.48824202901,
    224694.1015163786,
-   39522.67862535211,
+   32548.08827970174,
    9309.372951830479
   ]
  },
@@ -638,7 +638,7 @@
    "reinvest_rate": 0.35,
    "_valuation_sector": "BANK"
   },
-  "exp_blended": 471.508684747593,
+  "exp_blended": 487.90081615224324,
   "exp_primary": 562.0159338737208,
   "exp_components": [
    562.0159338737208,
@@ -674,7 +674,7 @@
    "reinvest_rate": 0.3942,
    "_valuation_sector": "DISTRIBUTION"
   },
-  "exp_blended": 1807.3303964972397,
+  "exp_blended": 1814.157122539936,
   "exp_primary": 1775.5028504812074,
   "exp_components": [
    1775.5028504812074,
@@ -710,7 +710,7 @@
    "reinvest_rate": 0.3582,
    "_valuation_sector": "LOGISTICS"
   },
-  "exp_blended": 2282.7543989013443,
+  "exp_blended": 2033.9106622098789,
   "exp_primary": 1777.9489647577775,
   "exp_components": [
    1777.9489647577775,
@@ -782,7 +782,7 @@
    "reinvest_rate": 0.2255,
    "_valuation_sector": "TEXTILES"
   },
-  "exp_blended": 625.961612135572,
+  "exp_blended": 631.9054117022547,
   "exp_primary": 600.4177214889331,
   "exp_components": [
    600.4177214889331,
@@ -818,7 +818,7 @@
    "reinvest_rate": 0.71,
    "_valuation_sector": "CEMENT"
   },
-  "exp_blended": 957.7094192570216,
+  "exp_blended": 957.9326537786376,
   "exp_primary": 989.0606735835881,
   "exp_components": [
    989.0606735835881,
@@ -854,7 +854,7 @@
    "reinvest_rate": 0.35,
    "_valuation_sector": "NBFC"
   },
-  "exp_blended": 1093.6794535177203,
+  "exp_blended": 1132.2594024788234,
   "exp_primary": 1322.741107237823,
   "exp_components": [
    1322.741107237823,
@@ -890,12 +890,12 @@
    "reinvest_rate": 0.575,
    "_valuation_sector": "CONSUMER_DISC"
   },
-  "exp_blended": 1826.7746974647398,
+  "exp_blended": 1615.024737263746,
   "exp_primary": 1521.4746931459804,
   "exp_components": [
    1521.4746931459804,
    4290.3602701740665,
-   2336.9481255820897,
+   1844.9590465121762,
    363.90074705845353
   ]
  },
@@ -926,7 +926,7 @@
    "reinvest_rate": 0.7764,
    "_valuation_sector": "SUGAR"
   },
-  "exp_blended": 1015.6280982511835,
+  "exp_blended": 1038.3731206915343,
   "exp_primary": 1151.0051315811352,
   "exp_components": [
    1151.0051315811352,
@@ -962,7 +962,7 @@
    "reinvest_rate": 0.35,
    "_valuation_sector": "BANK"
   },
-  "exp_blended": 159.00816849173358,
+  "exp_blended": 146.05932286943212,
   "exp_primary": 143.8760624700164,
   "exp_components": [
    143.8760624700164,
@@ -998,7 +998,7 @@
    "reinvest_rate": 0.2464,
    "_valuation_sector": "PHARMA"
   },
-  "exp_blended": 1080.7542169211715,
+  "exp_blended": 1026.7363266471446,
   "exp_primary": 926.020976126175,
   "exp_components": [
    926.020976126175,
@@ -1106,7 +1106,7 @@
    "reinvest_rate": 0.7927,
    "_valuation_sector": "CONSTRUCTION"
   },
-  "exp_blended": 3287.5620170658076,
+  "exp_blended": 3437.7278103006524,
   "exp_primary": 4142.980071712633,
   "exp_components": [
    4142.980071712633,
@@ -1142,7 +1142,7 @@
    "reinvest_rate": 0.5459,
    "_valuation_sector": "ENERGY"
   },
-  "exp_blended": 653.1846711469681,
+  "exp_blended": 648.7653142000435,
   "exp_primary": 586.2726058061232,
   "exp_components": [
    586.2726058061232,
@@ -1178,7 +1178,7 @@
    "reinvest_rate": 0.35,
    "_valuation_sector": "INSURANCE"
   },
-  "exp_blended": 6220.706120069756,
+  "exp_blended": 6325.191741097627,
   "exp_primary": 6965.708068524694,
   "exp_components": [
    6965.708068524694,
@@ -1214,7 +1214,7 @@
    "reinvest_rate": 0.3589,
    "_valuation_sector": "CONSTRUCTION"
   },
-  "exp_blended": 4245.934060225355,
+  "exp_blended": 4482.439897624762,
   "exp_primary": 5108.712961261421,
   "exp_components": [
    5108.712961261421,
@@ -1250,7 +1250,7 @@
    "reinvest_rate": 0.6274,
    "_valuation_sector": "PAPER"
   },
-  "exp_blended": 5918.037858425443,
+  "exp_blended": 6567.112978381781,
   "exp_primary": 7636.17788183928,
   "exp_components": [
    7636.17788183928,
@@ -1322,7 +1322,7 @@
    "reinvest_rate": 0.6678,
    "_valuation_sector": "AVIATION"
   },
-  "exp_blended": 685.088342465554,
+  "exp_blended": 591.7287336532986,
   "exp_primary": 490.9206254894395,
   "exp_components": [
    490.9206254894395,
@@ -1358,12 +1358,12 @@
    "reinvest_rate": 0.5902,
    "_valuation_sector": "DEFENCE"
   },
-  "exp_blended": 611.7073824979228,
+  "exp_blended": 477.5241791168265,
   "exp_primary": 374.5287679347658,
   "exp_components": [
    374.5287679347658,
    1034.249442643552,
-   2775.6962478549995,
+   2285.8674982335287,
    786.3727818898401
   ]
  },
@@ -1394,7 +1394,7 @@
    "reinvest_rate": 0.35,
    "_valuation_sector": "INSURANCE"
   },
-  "exp_blended": 561.9735763331802,
+  "exp_blended": 525.5493630523259,
   "exp_primary": 520.3459040122038,
   "exp_components": [
    520.3459040122038,
@@ -1430,7 +1430,7 @@
    "reinvest_rate": 0.7577,
    "_valuation_sector": "DISTRIBUTION"
   },
-  "exp_blended": 1038.22182146715,
+  "exp_blended": 924.4397235926878,
   "exp_primary": 763.9997715642047,
   "exp_components": [
    763.9997715642047,
@@ -1466,7 +1466,7 @@
    "reinvest_rate": 0.2878,
    "_valuation_sector": "SUGAR"
   },
-  "exp_blended": 570.0750921748421,
+  "exp_blended": 624.4044442344067,
   "exp_primary": 764.5768704911102,
   "exp_components": [
    764.5768704911102,
@@ -1502,7 +1502,7 @@
    "reinvest_rate": 0.35,
    "_valuation_sector": "INSURANCE"
   },
-  "exp_blended": 125.4538562583455,
+  "exp_blended": 115.84673926582573,
   "exp_primary": 106.74574436133082,
   "exp_components": [
    106.74574436133082,
@@ -1538,12 +1538,12 @@
    "reinvest_rate": 0.5954,
    "_valuation_sector": "CAPITAL_GOODS"
   },
-  "exp_blended": 10325.937449380104,
+  "exp_blended": 8331.44811181926,
   "exp_primary": 7480.964144200284,
   "exp_components": [
    7480.964144200284,
    16576.584959857784,
-   8493.138899318403,
+   7166.0859462999015,
    1029.2204842760664
   ]
  },
@@ -1574,7 +1574,7 @@
    "reinvest_rate": 0.4155,
    "_valuation_sector": "CHEMICALS"
   },
-  "exp_blended": 12857.385666486594,
+  "exp_blended": 11471.4217814062,
   "exp_primary": 10251.095417747782,
   "exp_components": [
    10251.095417747782,
@@ -1610,7 +1610,7 @@
    "reinvest_rate": 0.35,
    "_valuation_sector": "NBFC"
   },
-  "exp_blended": 2271.5212326463575,
+  "exp_blended": 2174.3981520021666,
   "exp_primary": 2152.8694574278875,
   "exp_components": [
    2152.8694574278875,
@@ -1646,7 +1646,7 @@
    "reinvest_rate": 0.2465,
    "_valuation_sector": "LOGISTICS"
   },
-  "exp_blended": 6769.7518319838955,
+  "exp_blended": 6945.112438773473,
   "exp_primary": 7521.477992116111,
   "exp_components": [
    7521.477992116111,
@@ -1682,12 +1682,12 @@
    "reinvest_rate": 0.1052,
    "_valuation_sector": "CAPITAL_GOODS"
   },
-  "exp_blended": 972.6186187208252,
+  "exp_blended": 764.2003432806484,
   "exp_primary": 631.5705316368995,
   "exp_components": [
    631.5705316368995,
    1575.3000338046768,
-   3066.259655591799,
+   2587.1565844055804,
    390.79742921401254
   ]
  },
@@ -1718,7 +1718,7 @@
    "reinvest_rate": 0.35,
    "_valuation_sector": "NBFC"
   },
-  "exp_blended": 330.83001443571953,
+  "exp_blended": 316.7310585540238,
   "exp_primary": 292.549299174415,
   "exp_components": [
    292.549299174415,
@@ -1754,7 +1754,7 @@
    "reinvest_rate": 0.4893,
    "_valuation_sector": "IT_SERVICES"
   },
-  "exp_blended": 4219.864176015897,
+  "exp_blended": 4358.099235153369,
   "exp_primary": 4797.907414847745,
   "exp_components": [
    4797.907414847745,
@@ -1790,7 +1790,7 @@
    "reinvest_rate": 0.6253,
    "_valuation_sector": "CONSTRUCTION"
   },
-  "exp_blended": 857.4739336171457,
+  "exp_blended": 857.1812007321918,
   "exp_primary": 883.0883865590557,
   "exp_components": [
    883.0883865590557,
@@ -1826,7 +1826,7 @@
    "reinvest_rate": 0.35,
    "_valuation_sector": "INSURANCE"
   },
-  "exp_blended": 163.8620419310302,
+  "exp_blended": 166.52287377545957,
   "exp_primary": 177.3887896286248,
   "exp_components": [
    177.3887896286248,
@@ -1862,7 +1862,7 @@
    "reinvest_rate": 0.5345,
    "_valuation_sector": "IT_SERVICES"
   },
-  "exp_blended": 2925.1594678755073,
+  "exp_blended": 2549.1695144637165,
   "exp_primary": 2088.8330745099493,
   "exp_components": [
    2088.8330745099493,
@@ -1898,7 +1898,7 @@
    "reinvest_rate": 0.574,
    "_valuation_sector": "AUTO"
   },
-  "exp_blended": 6700.146854589122,
+  "exp_blended": 6531.384394422765,
   "exp_primary": 6700.1090915266905,
   "exp_components": [
    6700.1090915266905,
@@ -1934,7 +1934,7 @@
    "reinvest_rate": 0.35,
    "_valuation_sector": "BANK"
   },
-  "exp_blended": 304.43845291997525,
+  "exp_blended": 280.568975816317,
   "exp_primary": 265.2164122628694,
   "exp_components": [
    265.2164122628694,
@@ -1970,7 +1970,7 @@
    "reinvest_rate": 0.1118,
    "_valuation_sector": "CONSTRUCTION"
   },
-  "exp_blended": 32031.670182721857,
+  "exp_blended": 34124.19650139264,
   "exp_primary": 40682.388465912416,
   "exp_components": [
    40682.388465912416,
@@ -2006,7 +2006,7 @@
    "reinvest_rate": 0.6454,
    "_valuation_sector": "CONSTRUCTION"
   },
-  "exp_blended": 37.91667604279151,
+  "exp_blended": 29.791674033621895,
   "exp_primary": 24.621218209604873,
   "exp_components": [
    24.621218209604873,
@@ -2042,7 +2042,7 @@
    "reinvest_rate": 0.35,
    "_valuation_sector": "NBFC"
   },
-  "exp_blended": 3267.605927557073,
+  "exp_blended": 3334.3148703867173,
   "exp_primary": 3335.447141482203,
   "exp_components": [
    3335.447141482203,
@@ -2114,12 +2114,12 @@
    "reinvest_rate": 0.2006,
    "_valuation_sector": "DEFENCE"
   },
-  "exp_blended": 652.258397580961,
+  "exp_blended": 512.4887409564693,
   "exp_primary": 423.544414013611,
   "exp_components": [
    423.544414013611,
    1507.68640999146,
-   1114.1517873171567,
+   917.5367660258936,
    147.76766829184015
   ]
  },
@@ -2150,7 +2150,7 @@
    "reinvest_rate": 0.35,
    "_valuation_sector": "NBFC"
   },
-  "exp_blended": 1079.6350554542296,
+  "exp_blended": 992.9635034261506,
   "exp_primary": 963.0172447564315,
   "exp_components": [
    963.0172447564315,
