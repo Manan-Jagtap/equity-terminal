@@ -226,7 +226,20 @@ export default function Ideas({ API, onOpen }) {
                     </span>
                   </td>
                   {FACTORS.map(([k]) => <Cell key={k} v={r.factors?.[k]} />)}
-                  <td style={{ padding: "8px 10px", textAlign: "right" }}><VerdictBadge verdict={r.verdict || "—"} /></td>
+                  <td style={{ padding: "8px 10px", textAlign: "right" }}>
+                    <VerdictBadge verdict={r.verdict || "—"} />
+                    {r.engines_disagree && (
+                      /* FIX-15: the two engines tell opposite stories — say so
+                         where both numbers sit, with the one-line why on hover. */
+                      <div
+                        title={r.disagree_note || ""}
+                        style={{ ...sans, fontSize: 9.5, marginTop: 3, color: C.gold,
+                                 border: `1px solid ${C.gold}44`, borderRadius: 4,
+                                 padding: "1px 5px", display: "inline-block", cursor: "help" }}>
+                        ⚖ engines disagree
+                      </div>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
