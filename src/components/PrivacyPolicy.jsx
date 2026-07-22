@@ -10,6 +10,8 @@ const SECTIONS = [
     "Account details: your name, email address, and a one-way hash of your password (we can never read the password itself).",
     "Your research data: watchlists, portfolio holdings you enter or import, saved screens and valuation scenarios.",
     "Security telemetry: sign-in events with IP address and browser user-agent, kept to protect your account and detect abuse.",
+    "Usage analytics: which app screens are viewed (an event name and the page path only — never your IP address, browser fingerprint, or query parameters). Collected on our own India-hosted infrastructure; no third-party analytics service is involved.",
+    "Feedback you choose to send us through the in-app feedback form.",
   ]],
   ["What we use it for", [
     "Operating your account and keeping your watchlist, portfolio and scenarios private to you.",
@@ -24,6 +26,7 @@ const SECTIONS = [
   ["Storage & retention", [
     "Data is stored on managed cloud infrastructure with encryption in transit. Passwords are salted and hashed (PBKDF2, 260,000 iterations).",
     "Sign-in telemetry is retained for security purposes and periodically pruned.",
+    "Usage analytics are automatically deleted after 180 days. If you delete your account, your feedback is deleted and any usage events are anonymised immediately (the link to your account is removed).",
     "Your research data is retained while your account exists.",
   ]],
   ["Your rights", [
@@ -52,7 +55,7 @@ export default function PrivacyPolicy({ open, onClose }) {
       }}>
         <div style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
           <h2 style={{ ...serif, fontSize: 26, color: C.text, margin: 0, fontWeight: 400 }}>Privacy Policy</h2>
-          <span style={{ ...sans, fontSize: 11, color: C.faint }}>Effective 4 July 2026</span>
+          <span style={{ ...sans, fontSize: 11, color: C.faint }}>Effective 4 July 2026 · updated 22 July 2026</span>
           <button onClick={onClose} aria-label="Close" style={{
             marginLeft: "auto", background: "transparent", border: "none",
             cursor: "pointer", padding: 4, lineHeight: 0,
