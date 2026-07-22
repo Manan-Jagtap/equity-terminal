@@ -22,6 +22,8 @@ import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import { fetchWatchlist, saveWatch, removeWatch } from "./lib/watchlist.js";
 import { getUser, me, clearSession, authFetch, logoutAll } from "./lib/auth.js";
 import { VIEW_IDS, parsePath, pathForRoute, hashToPath, pageTitle } from "./lib/route.js";
+import { track } from "./lib/telemetry.js";
+import FeedbackModal from "./components/FeedbackModal.jsx";
 
 /* Heavy views are code-split: each loads on first visit. Dashboard and
    Screener stay eager — they are the landing experience.
@@ -110,6 +112,7 @@ export default function App() {
   const [user,        setUser]        = useState(() => getUser());
   const [authOpen,    setAuthOpen]    = useState(false);
   const [userMenu,    setUserMenu]    = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);   // INST-02
   const requestAuth = useCallback(() => setAuthOpen(true), []);
 
   useEffect(() => {
@@ -395,6 +398,13 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [view, selectedId]);
 
+  // INST-01 usage beacon: one event per view change (event names only, path
+  // query-stripped; fire-and-forget — telemetry can never break the app).
+  useEffect(() => {
+    track(API, `view:${view}`, pathForRoute(view, selectedId));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view, selectedId]);
+
   // Apply a resolved shared scenario as soon as its company is available:
   // open the name, then overlay the shared assumptions on the company's own
   // (so any field the share omits falls back to the model's derived value).
@@ -572,6 +582,16 @@ export default function App() {
                     onMouseEnter={e => { e.currentTarget.style.background = C.bg800; e.currentTarget.style.color = C.text; }}
                     onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.dim; }}>
                     <Shield size={13} strokeWidth={1.6} />Sign out everywhere
+                  </button>
+                  <button onClick={() => { setUserMenu(false); setFeedbackOpen(true); }} style={{
+                    ...sans, display: "flex", alignItems: "center", gap: 8, width: "100%",
+                    padding: "10px 14px", fontSize: 12, textAlign: "left",
+                    background: "transparent", border: "none", cursor: "pointer", color: C.dim,
+                    borderTop: `1px solid ${C.line}`,
+                  }}
+                    onMouseEnter={e => { e.currentTarget.style.background = C.bg800; e.currentTarget.style.color = C.text; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = C.dim; }}>
+                    Send feedback…
                   </button>
                   <button onClick={deleteAccount} style={{
                     ...sans, display: "flex", alignItems: "center", gap: 8, width: "100%",
@@ -808,6 +828,12 @@ export default function App() {
         onClose={() => setAuthOpen(false)}
         API={API}
         onAuthed={u => setUser(u)}
+      />
+
+      <FeedbackModal
+        open={feedbackOpen}
+        onClose={() => setFeedbackOpen(false)}
+        API={API}
       />
     </div>
   );
