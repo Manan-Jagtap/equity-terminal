@@ -25,6 +25,9 @@ export const SECTOR_PARAMS = {
   // Non-financials
   IT_SERVICES:   { beta: 0.85, terminal_growth: 0.055, mature_roic: 0.30, mature_roe: 0.30, exit_pe: 25, exit_ev_ebitda: 16, exit_pb: null },
   CONSUMER:      { beta: 0.58, terminal_growth: 0.055, mature_roic: 0.22, mature_roe: 0.30, exit_pe: 34, exit_ev_ebitda: 28, exit_pb: null },
+  // Tobacco (ITC/Godfrey Phillips/VST): ultra-high ROIC but regulated, taxed,
+  // volume-declining — global tobacco trades 8-13x EV/EBITDA, not staples' 28x.
+  TOBACCO:       { beta: 0.65, terminal_growth: 0.045, mature_roic: 0.30, mature_roe: 0.30, exit_pe: 20, exit_ev_ebitda: 11, exit_pb: null },
   CONSUMER_DISC: { beta: 0.80, terminal_growth: 0.055, mature_roic: 0.18, mature_roe: 0.22, exit_pe: 30, exit_ev_ebitda: 22, exit_pb: null },
   PHARMA:        { beta: 0.64, terminal_growth: 0.050, mature_roic: 0.18, mature_roe: 0.20, exit_pe: 30, exit_ev_ebitda: 18, exit_pb: null },
   AUTO:          { beta: 1.10, terminal_growth: 0.050, mature_roic: 0.16, mature_roe: 0.18, exit_pe: 24, exit_ev_ebitda: 13, exit_pb: null },
@@ -137,7 +140,10 @@ export function fcffDcf(co, a) {
     pv += fcff / disc;
     rows.push({ t, rev, fcff, pv: fcff / disc });
   }
-  const matureRoic = params(a._valuation_sector).mature_roic || 0.12;
+  // VAL-02: an evidence-earned compounder terminal ROIC (derive.js, strictly
+  // gated + one-sided) overrides the sector default — a proven franchise fades
+  // halfway to sector instead of surrendering its entire return advantage.
+  const matureRoic = a.terminal_roic || params(a._valuation_sector).mature_roic || 0.12;
   const termRr = matureRoic ? clamp(gT / matureRoic, 0.0, 0.75) : a.reinvest_rate;
   const fcffTerminal = nopat * (1 + gT) * (1 - termRr);
   const tv = gT < wacc ? fcffTerminal / (wacc - gT) : 0.0;

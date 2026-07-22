@@ -24,14 +24,14 @@
    "rev_growth": 0.185,
    "ebit_margin": 0.3312,
    "reinvest_rate": 0.7016,
-   "_valuation_sector": "CABLES"
+   "_valuation_sector": "DISTRIBUTION"
   },
-  "exp_blended": 4737.1987029080265,
-  "exp_primary": 4374.401897004846,
+  "exp_blended": 3373.0020000691416,
+  "exp_primary": 3486.492877516283,
   "exp_components": [
-   4374.401897004846,
-   7828.051195204084,
-   3293.5257520888326,
+   3486.492877516283,
+   3964.9863535354607,
+   1707.754093675691,
    242.32153790377237
   ]
  },
@@ -60,14 +60,14 @@
    "rev_growth": 0.0252,
    "ebit_margin": 0.1206,
    "reinvest_rate": 0.6005,
-   "_valuation_sector": "UTILITIES"
+   "_valuation_sector": "AVIATION"
   },
   "exp_blended": 82.62820848275906,
   "exp_primary": 77.95114007807459,
   "exp_components": [
    77.95114007807459,
-   241.89548535170948,
-   18.77470004126577,
+   189.70445217717088,
+   15.019760033012618,
    3.1991264653909086
   ]
  },
@@ -110,94 +110,94 @@
  {
   "co": {
    "type": "nonfinancial",
-   "equity": 864896.06,
-   "shares": 1027.92,
-   "net_profit": 5571.96,
-   "revenue": 795025.33,
-   "net_debt": 93818.39,
-   "price": 5568.25
+   "equity": 372019.94,
+   "shares": 26.6,
+   "net_profit": 93613.12,
+   "revenue": 417317.42,
+   "net_debt": 32905.38,
+   "price": 12917.59
   },
   "a": {
-   "risk_free": 0.0629,
-   "beta": 1.349,
-   "erp": 0.0485,
-   "payout": 0.496,
-   "fade_years": 7,
-   "forecast_roe": 0.2037,
-   "terminal_roe": 0.1156,
-   "terminal_growth": 0.0412,
-   "debt_weight": 0.522,
-   "cost_debt": 0.1038,
-   "tax_rate": 0.2161,
-   "rev_growth": 0.0442,
-   "ebit_margin": 0.1134,
-   "reinvest_rate": 0.6619,
-   "_valuation_sector": "REALTY"
+   "risk_free": 0.0705,
+   "beta": 0.939,
+   "erp": 0.0577,
+   "payout": 0.453,
+   "fade_years": 8,
+   "forecast_roe": 0.0944,
+   "terminal_roe": 0.2228,
+   "terminal_growth": 0.0476,
+   "debt_weight": 0.254,
+   "cost_debt": 0.0939,
+   "tax_rate": 0.3028,
+   "rev_growth": 0.0232,
+   "ebit_margin": 0.211,
+   "reinvest_rate": 0.3052,
+   "_valuation_sector": "LOGISTICS"
   },
-  "exp_blended": 535.8758660612301,
-  "exp_primary": 544.958507858878,
+  "exp_blended": 25614.236377973462,
+  "exp_primary": 22193.37110267702,
   "exp_components": [
-   544.958507858878,
-   1530.1013372527564,
-   113.20415269670791,
-   32.49243296636854
+   22193.37110267702,
+   49055.75428282527,
+   93624.3817287218,
+   19415.523096644767
   ]
  },
  {
   "co": {
    "type": "nonfinancial",
-   "equity": 219506.43,
-   "shares": 187.47,
-   "net_profit": 40463.83,
-   "revenue": 753405.95,
-   "net_debt": 87577.96,
-   "price": 5484.26
+   "equity": 801838.25,
+   "shares": 1570.93,
+   "net_profit": 21494.57,
+   "revenue": 122371.17,
+   "net_debt": 75709.14,
+   "price": 9602.02
   },
   "a": {
-   "risk_free": 0.0752,
-   "beta": 1.108,
-   "erp": 0.0618,
-   "payout": 0.257,
-   "fade_years": 11,
-   "forecast_roe": 0.1193,
-   "terminal_roe": 0.2116,
-   "terminal_growth": 0.0404,
-   "debt_weight": 0.377,
-   "cost_debt": 0.0786,
-   "tax_rate": 0.2197,
-   "rev_growth": 0.0841,
-   "ebit_margin": 0.1551,
-   "reinvest_rate": 0.2535,
-   "_valuation_sector": "DISTRIBUTION"
+   "risk_free": 0.0695,
+   "beta": 0.911,
+   "erp": 0.0628,
+   "payout": 0.417,
+   "fade_years": 12,
+   "forecast_roe": 0.1335,
+   "terminal_roe": 0.2462,
+   "terminal_growth": 0.0435,
+   "debt_weight": 0.446,
+   "cost_debt": 0.0618,
+   "tax_rate": 0.2569,
+   "rev_growth": 0.0758,
+   "ebit_margin": 0.1875,
+   "reinvest_rate": 0.3492,
+   "_valuation_sector": "REALTY"
   },
-  "exp_blended": 5552.28007004613,
-  "exp_primary": 5885.681935359494,
+  "exp_blended": 156.18662358038628,
+  "exp_primary": 144.44978775055802,
   "exp_components": [
-   5885.681935359494,
-   5984.377189400523,
-   3275.9147247132873,
-   705.88996782497
+   144.44978775055802,
+   206.98292398061662,
+   294.39705659704765,
+   87.33526201171773
   ]
  },
  {
   "co": {
    "type": "financial",
-   "equity": 516449.89,
-   "shares": 1489.79,
-   "net_profit": 77022.56,
+   "equity": 117680.11,
+   "shares": 403.24,
+   "net_profit": 74451.5,
    "revenue": null,
    "net_debt": null,
-   "price": 2976.19
+   "price": 10334.59
   },
   "a": {
-   "risk_free": 0.0679,
-   "beta": 0.773,
-   "erp": 0.0654,
-   "payout": 0.458,
-   "fade_years": 11,
-   "forecast_roe": 0.1039,
-   "terminal_roe": 0.1421,
-   "terminal_growth": 0.051,
+   "risk_free": 0.0786,
+   "beta": 1.213,
+   "erp": 0.0473,
+   "payout": 0.236,
+   "fade_years": 7,
+   "forecast_roe": 0.0647,
+   "terminal_roe": 0.1014,
+   "terminal_growth": 0.0514,
    "debt_weight": 0.2,
    "cost_debt": 0.085,
    "tax_rate": 0.25,
@@ -206,106 +206,106 @@
    "reinvest_rate": 0.35,
    "_valuation_sector": "NBFC"
   },
-  "exp_blended": 452.4542373490117,
-  "exp_primary": 394.6816791147016,
+  "exp_blended": 149.70294940510672,
+  "exp_primary": 129.434475666145,
   "exp_components": [
-   394.6816791147016,
-   468.1796314863188,
-   848.1552202709138,
-   490.2123205473289
+   129.434475666145,
+   172.5313303111883,
+   3655.7377740303546,
+   647.5409220249132
   ]
  },
  {
   "co": {
    "type": "nonfinancial",
-   "equity": 523645.77,
-   "shares": 84.38,
-   "net_profit": 76047.1,
-   "revenue": 361891.48,
-   "net_debt": 89368.69,
-   "price": 1462.52
+   "equity": 670205.02,
+   "shares": 405.08,
+   "net_profit": 10614.29,
+   "revenue": 640244.33,
+   "net_debt": -46431.12,
+   "price": 11280.16
   },
   "a": {
-   "risk_free": 0.0723,
-   "beta": 1.272,
-   "erp": 0.0449,
-   "payout": 0.269,
-   "fade_years": 11,
-   "forecast_roe": 0.2434,
-   "terminal_roe": 0.1293,
-   "terminal_growth": 0.047,
-   "debt_weight": 0.347,
-   "cost_debt": 0.0654,
-   "tax_rate": 0.241,
-   "rev_growth": 0.0288,
-   "ebit_margin": 0.1258,
-   "reinvest_rate": 0.2367,
-   "_valuation_sector": "CONSUMER_DISC"
-  },
-  "exp_blended": 5333.129880464636,
-  "exp_primary": 4199.314866507587,
-  "exp_components": [
-   4199.314866507587,
-   14064.643527722474,
-   27816.042834794975,
-   2780.845285480551
-  ]
- },
- {
-  "co": {
-   "type": "nonfinancial",
-   "equity": 148866.64,
-   "shares": 1367.48,
-   "net_profit": 86299.51,
-   "revenue": 209688.1,
-   "net_debt": -35452.78,
-   "price": 13962.21
-  },
-  "a": {
-   "risk_free": 0.0628,
-   "beta": 0.61,
-   "erp": 0.0454,
-   "payout": 0.216,
+   "risk_free": 0.0665,
+   "beta": 0.985,
+   "erp": 0.043,
+   "payout": 0.408,
    "fade_years": 8,
-   "forecast_roe": 0.2351,
-   "terminal_roe": 0.1767,
-   "terminal_growth": 0.0482,
-   "debt_weight": 0.308,
-   "cost_debt": 0.1028,
-   "tax_rate": 0.1688,
-   "rev_growth": 0.0895,
-   "ebit_margin": 0.2694,
-   "reinvest_rate": 0.1602,
-   "_valuation_sector": "CABLES"
+   "forecast_roe": 0.2171,
+   "terminal_roe": 0.1358,
+   "terminal_growth": 0.0447,
+   "debt_weight": 0.077,
+   "cost_debt": 0.081,
+   "tax_rate": 0.2303,
+   "rev_growth": 0.0956,
+   "ebit_margin": 0.0901,
+   "reinvest_rate": 0.3524,
+   "_valuation_sector": "METAL"
   },
-  "exp_blended": 904.4366390916124,
-  "exp_primary": 841.7928196825162,
+  "exp_blended": 1393.7500757313421,
+  "exp_primary": 1627.921029511359,
   "exp_components": [
-   841.7928196825162,
-   776.2051478708646,
-   1856.4290051152484,
-   410.73340101208987
+   1627.921029511359,
+   1362.440027489209,
+   315.787442885356,
+   219.32797210728916
+  ]
+ },
+ {
+  "co": {
+   "type": "nonfinancial",
+   "equity": 216113.73,
+   "shares": 324.58,
+   "net_profit": 49613.03,
+   "revenue": 664360.81,
+   "net_debt": 216994.78,
+   "price": 7212.41
+  },
+  "a": {
+   "risk_free": 0.0726,
+   "beta": 0.903,
+   "erp": 0.0492,
+   "payout": 0.18,
+   "fade_years": 6,
+   "forecast_roe": 0.1103,
+   "terminal_roe": 0.1349,
+   "terminal_growth": 0.0426,
+   "debt_weight": 0.004,
+   "cost_debt": 0.0972,
+   "tax_rate": 0.2472,
+   "rev_growth": 0.0556,
+   "ebit_margin": 0.1278,
+   "reinvest_rate": 0.4712,
+   "_valuation_sector": "MANUFACTURING"
+  },
+  "exp_blended": 1476.7267939424116,
+  "exp_primary": 1220.435366894555,
+  "exp_components": [
+   1220.435366894555,
+   4445.685484448248,
+   4517.845847261076,
+   403.0312751416151
   ]
  },
  {
   "co": {
    "type": "financial",
-   "equity": 264153.27,
-   "shares": 1390.54,
-   "net_profit": 37852.77,
+   "equity": 383039.92,
+   "shares": 155.88,
+   "net_profit": 64486.7,
    "revenue": null,
    "net_debt": null,
-   "price": 10428.67
+   "price": 5482.7
   },
   "a": {
-   "risk_free": 0.0613,
-   "beta": 1.089,
-   "erp": 0.0529,
-   "payout": 0.504,
-   "fade_years": 15,
-   "forecast_roe": 0.1005,
-   "terminal_roe": 0.1049,
-   "terminal_growth": 0.048,
+   "risk_free": 0.0757,
+   "beta": 0.804,
+   "erp": 0.0592,
+   "payout": 0.447,
+   "fade_years": 12,
+   "forecast_roe": 0.1227,
+   "terminal_roe": 0.1449,
+   "terminal_growth": 0.0428,
    "debt_weight": 0.2,
    "cost_debt": 0.085,
    "tax_rate": 0.25,
@@ -314,105 +314,1293 @@
    "reinvest_rate": 0.35,
    "_valuation_sector": "INSURANCE"
   },
-  "exp_blended": 172.06652127763758,
-  "exp_primary": 145.4483708606295,
+  "exp_blended": 3246.0423599933265,
+  "exp_primary": 2907.6236779326996,
   "exp_components": [
-   145.4483708606295,
-   152.43648395901684,
-   643.6352166060417,
-   299.1913549452415
+   2907.6236779326996,
+   3116.7413787375517,
+   10921.535026943802,
+   3420.5874144218897
   ]
  },
  {
   "co": {
    "type": "nonfinancial",
-   "equity": 364257.8,
-   "shares": 192.64,
-   "net_profit": 73663.28,
-   "revenue": 311276.41,
-   "net_debt": -26197.74,
-   "price": 13074.06
+   "equity": 440182.36,
+   "shares": 67.11,
+   "net_profit": 41134.42,
+   "revenue": 128877.13,
+   "net_debt": 66263.89,
+   "price": 7017.83
   },
   "a": {
-   "risk_free": 0.0662,
-   "beta": 1.095,
-   "erp": 0.0586,
-   "payout": 0.443,
-   "fade_years": 10,
-   "forecast_roe": 0.1168,
-   "terminal_roe": 0.2222,
-   "terminal_growth": 0.0436,
-   "debt_weight": 0.054,
-   "cost_debt": 0.0872,
-   "tax_rate": 0.1975,
-   "rev_growth": 0.0661,
-   "ebit_margin": 0.0588,
-   "reinvest_rate": 0.7032,
-   "_valuation_sector": "PAPER"
-  },
-  "exp_blended": 780.4337667562339,
-  "exp_primary": 612.1049151029284,
-  "exp_components": [
-   612.1049151029284,
-   1053.8225122378155,
-   4891.969859302326,
-   2295.0727280651545
-  ]
- },
- {
-  "co": {
-   "type": "nonfinancial",
-   "equity": 303047.71,
-   "shares": 822.23,
-   "net_profit": 2610.63,
-   "revenue": 137880.61,
-   "net_debt": 186354.73,
-   "price": 6710.95
-  },
-  "a": {
-   "risk_free": 0.0768,
-   "beta": 1.242,
-   "erp": 0.0537,
-   "payout": 0.126,
+   "risk_free": 0.067,
+   "beta": 0.74,
+   "erp": 0.0602,
+   "payout": 0.577,
    "fade_years": 15,
-   "forecast_roe": 0.082,
-   "terminal_roe": 0.1371,
-   "terminal_growth": 0.0451,
-   "debt_weight": 0.261,
-   "cost_debt": 0.112,
-   "tax_rate": 0.2423,
-   "rev_growth": 0.0927,
-   "ebit_margin": 0.0641,
-   "reinvest_rate": 0.7291,
-   "_valuation_sector": "ENERGY"
+   "forecast_roe": 0.1486,
+   "terminal_roe": 0.129,
+   "terminal_growth": 0.0432,
+   "debt_weight": 0.489,
+   "cost_debt": 0.0742,
+   "tax_rate": 0.1653,
+   "rev_growth": 0.1017,
+   "ebit_margin": 0.1407,
+   "reinvest_rate": 0.2792,
+   "_valuation_sector": "CONSUMER"
   },
-  "exp_blended": null,
-  "exp_primary": -169.23271981485277,
+  "exp_blended": 7410.766664575592,
+  "exp_primary": 5677.639545274499,
   "exp_components": [
-   -169.23271981485277,
-   null,
-   41.63266338129234,
-   5.877667759258759
+   5677.639545274499,
+   9124.75818096754,
+   22959.393197377438,
+   8411.588874960475
+  ]
+ },
+ {
+  "co": {
+   "type": "nonfinancial",
+   "equity": 814990.36,
+   "shares": 68.36,
+   "net_profit": 30518.52,
+   "revenue": 561693.69,
+   "net_debt": -45265.0,
+   "price": 1791.52
+  },
+  "a": {
+   "risk_free": 0.0759,
+   "beta": 0.981,
+   "erp": 0.0652,
+   "payout": 0.501,
+   "fade_years": 13,
+   "forecast_roe": 0.2259,
+   "terminal_roe": 0.1813,
+   "terminal_growth": 0.0402,
+   "debt_weight": 0.148,
+   "cost_debt": 0.0806,
+   "tax_rate": 0.224,
+   "rev_growth": 0.1761,
+   "ebit_margin": 0.2355,
+   "reinvest_rate": 0.3826,
+   "_valuation_sector": "CONSUMER"
+  },
+  "exp_blended": 27635.655223123682,
+  "exp_primary": 30424.574557567354,
+  "exp_components": [
+   30424.574557567354,
+   72501.82111536138,
+   17851.905597542423,
+   4602.368297569291
   ]
  },
  {
   "co": {
    "type": "financial",
-   "equity": 175127.22,
-   "shares": 1408.3,
-   "net_profit": 59975.13,
+   "equity": 321367.06,
+   "shares": 193.71,
+   "net_profit": 26269.08,
    "revenue": null,
    "net_debt": null,
-   "price": 1333.89
+   "price": 10553.74
   },
   "a": {
-   "risk_free": 0.0676,
-   "beta": 1.16,
-   "erp": 0.0657,
-   "payout": 0.29,
+   "risk_free": 0.0733,
+   "beta": 0.763,
+   "erp": 0.0514,
+   "payout": 0.46,
    "fade_years": 15,
-   "forecast_roe": 0.2623,
-   "terminal_roe": 0.1667,
+   "forecast_roe": 0.1663,
+   "terminal_roe": 0.1709,
+   "terminal_growth": 0.0421,
+   "debt_weight": 0.2,
+   "cost_debt": 0.085,
+   "tax_rate": 0.25,
+   "rev_growth": 0.1,
+   "ebit_margin": 0.12,
+   "reinvest_rate": 0.35,
+   "_valuation_sector": "BANK"
+  },
+  "exp_blended": 3187.0347785447584,
+  "exp_primary": 3741.3387771688076,
+  "exp_components": [
+   3741.3387771688076,
+   3034.4519294426764,
+   1182.4017097067278,
+   1427.8950578175104
+  ]
+ },
+ {
+  "co": {
+   "type": "nonfinancial",
+   "equity": 578960.65,
+   "shares": 961.4,
+   "net_profit": -507.94,
+   "revenue": 212625.15,
+   "net_debt": 202475.26,
+   "price": 616.63
+  },
+  "a": {
+   "risk_free": 0.0781,
+   "beta": 1.294,
+   "erp": 0.0677,
+   "payout": 0.391,
+   "fade_years": 14,
+   "forecast_roe": 0.1077,
+   "terminal_roe": 0.1405,
+   "terminal_growth": 0.0536,
+   "debt_weight": 0.542,
+   "cost_debt": 0.1103,
+   "tax_rate": 0.2721,
+   "rev_growth": 0.0848,
+   "ebit_margin": 0.2405,
+   "reinvest_rate": 0.1594,
+   "_valuation_sector": "METAL"
+  },
+  "exp_blended": 309.5016036044948,
+  "exp_primary": 341.65761436859816,
+  "exp_components": [
+   341.65761436859816,
+   178.77994892298722,
+   null,
+   null
+  ]
+ },
+ {
+  "co": {
+   "type": "nonfinancial",
+   "equity": 596537.45,
+   "shares": 910.62,
+   "net_profit": 38190.4,
+   "revenue": 845438.56,
+   "net_debt": -52573.23,
+   "price": 2553.32
+  },
+  "a": {
+   "risk_free": 0.0636,
+   "beta": 0.649,
+   "erp": 0.0402,
+   "payout": 0.298,
+   "fade_years": 14,
+   "forecast_roe": 0.2316,
+   "terminal_roe": 0.1691,
+   "terminal_growth": 0.0532,
+   "debt_weight": 0.374,
+   "cost_debt": 0.1034,
+   "tax_rate": 0.2898,
+   "rev_growth": 0.1754,
+   "ebit_margin": 0.2686,
+   "reinvest_rate": 0.5195,
+   "_valuation_sector": "CONSTRUCTION"
+  },
+  "exp_blended": 8125.584367107862,
+  "exp_primary": 9448.3539152417,
+  "exp_components": [
+   9448.3539152417,
+   2990.4012171417908,
+   739.4247242538052,
+   787.4980586731177
+  ]
+ },
+ {
+  "co": {
+   "type": "financial",
+   "equity": 584435.58,
+   "shares": 386.28,
+   "net_profit": 46632.6,
+   "revenue": null,
+   "net_debt": null,
+   "price": 3007.12
+  },
+  "a": {
+   "risk_free": 0.0766,
+   "beta": 1.197,
+   "erp": 0.0598,
+   "payout": 0.272,
+   "fade_years": 7,
+   "forecast_roe": 0.2636,
+   "terminal_roe": 0.2003,
+   "terminal_growth": 0.0518,
+   "debt_weight": 0.2,
+   "cost_debt": 0.085,
+   "tax_rate": 0.25,
+   "rev_growth": 0.1,
+   "ebit_margin": 0.12,
+   "reinvest_rate": 0.35,
+   "_valuation_sector": "BANK"
+  },
+  "exp_blended": 3042.4052622501313,
+  "exp_primary": 3481.316422760127,
+  "exp_components": [
+   3481.316422760127,
+   2331.155547038187,
+   1027.469913577446,
+   426.44627400536723
+  ]
+ },
+ {
+  "co": {
+   "type": "nonfinancial",
+   "equity": 886937.54,
+   "shares": 1514.79,
+   "net_profit": 75768.81,
+   "revenue": 173579.52,
+   "net_debt": -34269.58,
+   "price": 3865.74
+  },
+  "a": {
+   "risk_free": 0.0691,
+   "beta": 0.754,
+   "erp": 0.0467,
+   "payout": 0.199,
+   "fade_years": 10,
+   "forecast_roe": 0.1253,
+   "terminal_roe": 0.1658,
+   "terminal_growth": 0.0516,
+   "debt_weight": 0.4,
+   "cost_debt": 0.08,
+   "tax_rate": 0.2204,
+   "rev_growth": 0.0541,
+   "ebit_margin": 0.119,
+   "reinvest_rate": 0.1954,
+   "_valuation_sector": "AVIATION"
+  },
+  "exp_blended": 220.94241222950797,
+  "exp_primary": 214.85520760452584,
+  "exp_components": [
+   214.85520760452584,
+   148.60638730739973,
+   632.704752112174,
+   201.4490116671684
+  ]
+ },
+ {
+  "co": {
+   "type": "nonfinancial",
+   "equity": 183419.89,
+   "shares": 947.58,
+   "net_profit": 59532.14,
+   "revenue": 722418.15,
+   "net_debt": 240292.76,
+   "price": 4563.42
+  },
+  "a": {
+   "risk_free": 0.0792,
+   "beta": 1.185,
+   "erp": 0.0438,
+   "payout": 0.533,
+   "fade_years": 10,
+   "forecast_roe": 0.2175,
+   "terminal_roe": 0.1038,
+   "terminal_growth": 0.0494,
+   "debt_weight": 0.444,
+   "cost_debt": 0.0894,
+   "tax_rate": 0.2694,
+   "rev_growth": 0.086,
+   "ebit_margin": 0.3121,
+   "reinvest_rate": 0.6261,
+   "_valuation_sector": "CEMENT"
+  },
+  "exp_blended": 2102.622078716457,
+  "exp_primary": 2089.4716649289403,
+  "exp_components": [
+   2089.4716649289403,
+   3428.5434042567067,
+   1637.4825312480214,
+   522.6475435344282
+  ]
+ },
+ {
+  "co": {
+   "type": "financial",
+   "equity": 345425.67,
+   "shares": 1391.56,
+   "net_profit": 40607.28,
+   "revenue": null,
+   "net_debt": null,
+   "price": 10588.1
+  },
+  "a": {
+   "risk_free": 0.0672,
+   "beta": 1.072,
+   "erp": 0.0455,
+   "payout": 0.372,
+   "fade_years": 15,
+   "forecast_roe": 0.1574,
+   "terminal_roe": 0.1292,
+   "terminal_growth": 0.0469,
+   "debt_weight": 0.2,
+   "cost_debt": 0.085,
+   "tax_rate": 0.25,
+   "rev_growth": 0.1,
+   "ebit_margin": 0.12,
+   "reinvest_rate": 0.35,
+   "_valuation_sector": "BANK"
+  },
+  "exp_blended": 367.33263340242246,
+  "exp_primary": 389.68513071413525,
+  "exp_components": [
+   389.68513071413525,
+   295.7503902991422,
+   365.9148025227071,
+   245.48395407449578
+  ]
+ },
+ {
+  "co": {
+   "type": "nonfinancial",
+   "equity": 474144.96,
+   "shares": 1417.99,
+   "net_profit": 46754.0,
+   "revenue": 579408.97,
+   "net_debt": 12191.92,
+   "price": 466.73
+  },
+  "a": {
+   "risk_free": 0.071,
+   "beta": 0.843,
+   "erp": 0.0618,
+   "payout": 0.228,
+   "fade_years": 6,
+   "forecast_roe": 0.2308,
+   "terminal_roe": 0.2034,
+   "terminal_growth": 0.0464,
+   "debt_weight": 0.004,
+   "cost_debt": 0.0994,
+   "tax_rate": 0.2969,
+   "rev_growth": 0.1843,
+   "ebit_margin": 0.226,
+   "reinvest_rate": 0.1649,
+   "_valuation_sector": "TELECOM"
+  },
+  "exp_blended": 1041.8989366293401,
+  "exp_primary": 974.1446408137207,
+  "exp_components": [
+   974.1446408137207,
+   1106.354174194447,
+   1249.5605684102145,
+   144.64090743711205
+  ]
+ },
+ {
+  "co": {
+   "type": "nonfinancial",
+   "equity": 634498.08,
+   "shares": 681.17,
+   "net_profit": 66359.16,
+   "revenue": 515987.87,
+   "net_debt": 200622.77,
+   "price": 6944.29
+  },
+  "a": {
+   "risk_free": 0.06,
+   "beta": 1.19,
+   "erp": 0.0463,
+   "payout": 0.264,
+   "fade_years": 11,
+   "forecast_roe": 0.1808,
+   "terminal_roe": 0.1289,
+   "terminal_growth": 0.0502,
+   "debt_weight": 0.151,
+   "cost_debt": 0.0792,
+   "tax_rate": 0.2423,
+   "rev_growth": 0.0791,
+   "ebit_margin": 0.1997,
+   "reinvest_rate": 0.4326,
+   "_valuation_sector": "DEFENCE"
+  },
+  "exp_blended": 1702.121862652361,
+  "exp_primary": 1406.7122831837692,
+  "exp_components": [
+   1406.7122831837692,
+   4211.750532140461,
+   2943.507123872161,
+   492.9304501997709
+  ]
+ },
+ {
+  "co": {
+   "type": "financial",
+   "equity": 166510.73,
+   "shares": 1114.91,
+   "net_profit": 33381.53,
+   "revenue": null,
+   "net_debt": null,
+   "price": 4154.62
+  },
+  "a": {
+   "risk_free": 0.0709,
+   "beta": 1.192,
+   "erp": 0.0444,
+   "payout": 0.542,
+   "fade_years": 14,
+   "forecast_roe": 0.1279,
+   "terminal_roe": 0.1262,
+   "terminal_growth": 0.0462,
+   "debt_weight": 0.2,
+   "cost_debt": 0.085,
+   "tax_rate": 0.25,
+   "rev_growth": 0.1,
+   "ebit_margin": 0.12,
+   "reinvest_rate": 0.35,
+   "_valuation_sector": "INSURANCE"
+  },
+  "exp_blended": 183.16349043029308,
+  "exp_primary": 156.20860466918367,
+  "exp_components": [
+   156.20860466918367,
+   153.91888433319716,
+   790.4426294499108,
+   320.0329034857759
+  ]
+ },
+ {
+  "co": {
+   "type": "nonfinancial",
+   "equity": 139644.1,
+   "shares": 79.01,
+   "net_profit": 15187.39,
+   "revenue": 725650.0,
+   "net_debt": 74410.72,
+   "price": 6583.23
+  },
+  "a": {
+   "risk_free": 0.0612,
+   "beta": 0.911,
+   "erp": 0.0626,
+   "payout": 0.17,
+   "fade_years": 13,
+   "forecast_roe": 0.1887,
+   "terminal_roe": 0.2354,
+   "terminal_growth": 0.051,
+   "debt_weight": 0.562,
+   "cost_debt": 0.1099,
+   "tax_rate": 0.2625,
+   "rev_growth": 0.1386,
+   "ebit_margin": 0.3263,
+   "reinvest_rate": 0.7582,
+   "_valuation_sector": "CABLES"
+  },
+  "exp_blended": 47802.91788070227,
+  "exp_primary": 49748.042277462075,
+  "exp_components": [
+   49748.042277462075,
+   54946.83297690165,
+   5909.29984632325,
+   919.6320476639874
+  ]
+ },
+ {
+  "co": {
+   "type": "nonfinancial",
+   "equity": 750218.27,
+   "shares": 299.16,
+   "net_profit": 17475.54,
+   "revenue": 25773.0,
+   "net_debt": 81728.74,
+   "price": 6878.83
+  },
+  "a": {
+   "risk_free": 0.0642,
+   "beta": 1.365,
+   "erp": 0.0559,
+   "payout": 0.407,
+   "fade_years": 15,
+   "forecast_roe": 0.1786,
+   "terminal_roe": 0.2006,
+   "terminal_growth": 0.045,
+   "debt_weight": 0.461,
+   "cost_debt": 0.1045,
+   "tax_rate": 0.1515,
+   "rev_growth": 0.0819,
+   "ebit_margin": 0.2075,
+   "reinvest_rate": 0.2817,
+   "_valuation_sector": "CEMENT"
+  },
+  "exp_blended": null,
+  "exp_primary": -68.51364954819974,
+  "exp_components": [
+   -68.51364954819974,
+   14.582562378827385,
+   1516.7899499398316,
+   335.0839950942212
+  ]
+ },
+ {
+  "co": {
+   "type": "financial",
+   "equity": 468683.57,
+   "shares": 1396.89,
+   "net_profit": 78676.6,
+   "revenue": null,
+   "net_debt": null,
+   "price": 8809.77
+  },
+  "a": {
+   "risk_free": 0.067,
+   "beta": 0.816,
+   "erp": 0.0593,
+   "payout": 0.462,
+   "fade_years": 15,
+   "forecast_roe": 0.175,
+   "terminal_roe": 0.2089,
+   "terminal_growth": 0.0544,
+   "debt_weight": 0.2,
+   "cost_debt": 0.085,
+   "tax_rate": 0.25,
+   "rev_growth": 0.1,
+   "ebit_margin": 0.12,
+   "reinvest_rate": 0.35,
+   "_valuation_sector": "INSURANCE"
+  },
+  "exp_blended": 981.2711015173095,
+  "exp_primary": 1010.2055370688643,
+  "exp_components": [
+   1010.2055370688643,
+   849.9549673314847,
+   1486.9189699976378,
+   639.3144188003347
+  ]
+ },
+ {
+  "co": {
+   "type": "nonfinancial",
+   "equity": 699575.36,
+   "shares": 599.9,
+   "net_profit": 72549.36,
+   "revenue": 824005.04,
+   "net_debt": 186507.93,
+   "price": 6044.02
+  },
+  "a": {
+   "risk_free": 0.0759,
+   "beta": 1.201,
+   "erp": 0.0639,
+   "payout": 0.365,
+   "fade_years": 7,
+   "forecast_roe": 0.1602,
+   "terminal_roe": 0.2022,
+   "terminal_growth": 0.0538,
+   "debt_weight": 0.426,
+   "cost_debt": 0.1072,
+   "tax_rate": 0.1815,
+   "rev_growth": 0.071,
+   "ebit_margin": 0.283,
+   "reinvest_rate": 0.7644,
+   "_valuation_sector": "DEFENCE"
+  },
+  "exp_blended": 2931.127054349573,
+  "exp_primary": 2460.962718446732,
+  "exp_components": [
+   2460.962718446732,
+   10739.96110447421,
+   3626.6214497082847,
+   500.84063121157084
+  ]
+ },
+ {
+  "co": {
+   "type": "nonfinancial",
+   "equity": 594784.01,
+   "shares": 756.98,
+   "net_profit": 49470.63,
+   "revenue": 747334.61,
+   "net_debt": 90720.49,
+   "price": 4299.84
+  },
+  "a": {
+   "risk_free": 0.0786,
+   "beta": 1.328,
+   "erp": 0.0452,
+   "payout": 0.169,
+   "fade_years": 6,
+   "forecast_roe": 0.126,
+   "terminal_roe": 0.1358,
+   "terminal_growth": 0.0518,
+   "debt_weight": 0.519,
+   "cost_debt": 0.0604,
+   "tax_rate": 0.2308,
+   "rev_growth": 0.0865,
+   "ebit_margin": 0.315,
+   "reinvest_rate": 0.6583,
+   "_valuation_sector": "PHARMA"
+  },
+  "exp_blended": 4311.975931471421,
+  "exp_primary": 4562.703789288037,
+  "exp_components": [
+   4562.703789288037,
+   6541.347768607689,
+   2130.1688087532034,
+   150.20214421831326
+  ]
+ },
+ {
+  "co": {
+   "type": "financial",
+   "equity": 298909.27,
+   "shares": 554.74,
+   "net_profit": 39012.12,
+   "revenue": null,
+   "net_debt": null,
+   "price": 11597.77
+  },
+  "a": {
+   "risk_free": 0.0752,
+   "beta": 0.792,
+   "erp": 0.0621,
+   "payout": 0.335,
+   "fade_years": 15,
+   "forecast_roe": 0.2023,
+   "terminal_roe": 0.2001,
+   "terminal_growth": 0.0403,
+   "debt_weight": 0.2,
+   "cost_debt": 0.085,
+   "tax_rate": 0.25,
+   "rev_growth": 0.1,
+   "ebit_margin": 0.12,
+   "reinvest_rate": 0.35,
+   "_valuation_sector": "INSURANCE"
+  },
+  "exp_blended": 1526.5710018239624,
+  "exp_primary": 1683.9933098246584,
+  "exp_components": [
+   1683.9933098246584,
+   1024.0412361762428,
+   1514.447354684572,
+   447.9455373973258
+  ]
+ },
+ {
+  "co": {
+   "type": "nonfinancial",
+   "equity": 242505.97,
+   "shares": 1285.83,
+   "net_profit": 65795.43,
+   "revenue": 720255.79,
+   "net_debt": 26758.8,
+   "price": 12998.21
+  },
+  "a": {
+   "risk_free": 0.0779,
+   "beta": 0.678,
+   "erp": 0.0536,
+   "payout": 0.593,
+   "fade_years": 14,
+   "forecast_roe": 0.209,
+   "terminal_roe": 0.1261,
+   "terminal_growth": 0.0456,
+   "debt_weight": 0.585,
+   "cost_debt": 0.0908,
+   "tax_rate": 0.1891,
+   "rev_growth": 0.0957,
+   "ebit_margin": 0.1606,
+   "reinvest_rate": 0.5309,
+   "_valuation_sector": "DISTRIBUTION"
+  },
+  "exp_blended": 1150.1978099507203,
+  "exp_primary": 1392.1265454067136,
+  "exp_components": [
+   1392.1265454067136,
+   915.0427144554524,
+   784.9317072350154,
+   665.9988625645401
+  ]
+ },
+ {
+  "co": {
+   "type": "nonfinancial",
+   "equity": 521687.06,
+   "shares": 275.52,
+   "net_profit": 71342.01,
+   "revenue": 292843.39,
+   "net_debt": 82027.73,
+   "price": 2991.16
+  },
+  "a": {
+   "risk_free": 0.0646,
+   "beta": 1.33,
+   "erp": 0.0471,
+   "payout": 0.391,
+   "fade_years": 6,
+   "forecast_roe": 0.2272,
+   "terminal_roe": 0.1568,
+   "terminal_growth": 0.0407,
+   "debt_weight": 0.328,
+   "cost_debt": 0.0939,
+   "tax_rate": 0.212,
+   "rev_growth": 0.1596,
+   "ebit_margin": 0.2901,
+   "reinvest_rate": 0.3216,
+   "_valuation_sector": "CONSUMER"
+  },
+  "exp_blended": 4985.6959830571295,
+  "exp_primary": 3925.7448685489207,
+  "exp_components": [
+   3925.7448685489207,
+   10749.022230474608,
+   10208.909055836237,
+   1744.0973706502205
+  ]
+ },
+ {
+  "co": {
+   "type": "financial",
+   "equity": 371968.52,
+   "shares": 1330.33,
+   "net_profit": 32199.08,
+   "revenue": null,
+   "net_debt": null,
+   "price": 7640.47
+  },
+  "a": {
+   "risk_free": 0.0607,
+   "beta": 1.246,
+   "erp": 0.0546,
+   "payout": 0.406,
+   "fade_years": 15,
+   "forecast_roe": 0.1434,
+   "terminal_roe": 0.1051,
+   "terminal_growth": 0.0506,
+   "debt_weight": 0.2,
+   "cost_debt": 0.085,
+   "tax_rate": 0.25,
+   "rev_growth": 0.1,
+   "ebit_margin": 0.12,
+   "reinvest_rate": 0.35,
+   "_valuation_sector": "INSURANCE"
+  },
+  "exp_blended": 246.958951851586,
+  "exp_primary": 257.88924338762155,
+  "exp_components": [
+   257.88924338762155,
+   195.03681048365354,
+   345.70471178694896,
+   189.2983257758806
+  ]
+ },
+ {
+  "co": {
+   "type": "nonfinancial",
+   "equity": 117522.2,
+   "shares": 519.43,
+   "net_profit": 26160.96,
+   "revenue": 648936.52,
+   "net_debt": 96245.06,
+   "price": 8448.61
+  },
+  "a": {
+   "risk_free": 0.0773,
+   "beta": 0.826,
+   "erp": 0.0625,
+   "payout": 0.437,
+   "fade_years": 13,
+   "forecast_roe": 0.1294,
+   "terminal_roe": 0.1582,
+   "terminal_growth": 0.0478,
+   "debt_weight": 0.17,
+   "cost_debt": 0.1124,
+   "tax_rate": 0.2149,
+   "rev_growth": 0.196,
+   "ebit_margin": 0.0536,
+   "reinvest_rate": 0.3978,
+   "_valuation_sector": "SUGAR"
+  },
+  "exp_blended": 766.9625738447373,
+  "exp_primary": 919.6440564786722,
+  "exp_components": [
+   919.6440564786722,
+   564.196877124294,
+   662.5985980016558,
+   550.4419265563054
+  ]
+ },
+ {
+  "co": {
+   "type": "nonfinancial",
+   "equity": 388654.44,
+   "shares": 1326.31,
+   "net_profit": 59294.59,
+   "revenue": 331619.51,
+   "net_debt": 246789.01,
+   "price": 11057.8
+  },
+  "a": {
+   "risk_free": 0.065,
+   "beta": 0.97,
+   "erp": 0.0481,
+   "payout": 0.491,
+   "fade_years": 8,
+   "forecast_roe": 0.0881,
+   "terminal_roe": 0.1965,
+   "terminal_growth": 0.0419,
+   "debt_weight": 0.53,
+   "cost_debt": 0.0663,
+   "tax_rate": 0.2687,
+   "rev_growth": 0.0493,
+   "ebit_margin": 0.3792,
+   "reinvest_rate": 0.5317,
+   "_valuation_sector": "UTILITIES"
+  },
+  "exp_blended": 871.2895418965861,
+  "exp_primary": 1018.1437785021592,
+  "exp_components": [
+   1018.1437785021592,
+   780.1410199481271,
+   703.6569122641012,
+   339.0873391926825
+  ]
+ },
+ {
+  "co": {
+   "type": "financial",
+   "equity": 282151.93,
+   "shares": 1293.11,
+   "net_profit": 77753.6,
+   "revenue": null,
+   "net_debt": null,
+   "price": 8650.46
+  },
+  "a": {
+   "risk_free": 0.0713,
+   "beta": 1.251,
+   "erp": 0.0635,
+   "payout": 0.057,
+   "fade_years": 7,
+   "forecast_roe": 0.1766,
+   "terminal_roe": 0.1325,
+   "terminal_growth": 0.0441,
+   "debt_weight": 0.2,
+   "cost_debt": 0.085,
+   "tax_rate": 0.25,
+   "rev_growth": 0.1,
+   "ebit_margin": 0.12,
+   "reinvest_rate": 0.35,
+   "_valuation_sector": "BANK"
+  },
+  "exp_blended": 212.3354565845853,
+  "exp_primary": 197.93241889678822,
+  "exp_components": [
+   197.93241889678822,
+   180.87801883221886,
+   1058.272969816953,
+   40.97553422622188
+  ]
+ },
+ {
+  "co": {
+   "type": "nonfinancial",
+   "equity": 418903.5,
+   "shares": 332.33,
+   "net_profit": 2594.6,
+   "revenue": 317684.3,
+   "net_debt": 224664.15,
+   "price": 13386.74
+  },
+  "a": {
+   "risk_free": 0.0721,
+   "beta": 0.603,
+   "erp": 0.0603,
+   "payout": 0.579,
+   "fade_years": 7,
+   "forecast_roe": 0.0984,
+   "terminal_roe": 0.1654,
+   "terminal_growth": 0.0509,
+   "debt_weight": 0.483,
+   "cost_debt": 0.0633,
+   "tax_rate": 0.2295,
+   "rev_growth": 0.0553,
+   "ebit_margin": 0.0752,
+   "reinvest_rate": 0.445,
+   "_valuation_sector": "METAL"
+  },
+  "exp_blended": 390.46587327718834,
+  "exp_primary": 454.03008520603294,
+  "exp_components": [
+   454.03008520603294,
+   null,
+   90.62948027562963,
+   83.95075427779678
+  ]
+ },
+ {
+  "co": {
+   "type": "nonfinancial",
+   "equity": 456733.71,
+   "shares": 23.67,
+   "net_profit": 26665.38,
+   "revenue": 762916.61,
+   "net_debt": 227981.65,
+   "price": 5228.77
+  },
+  "a": {
+   "risk_free": 0.0744,
+   "beta": 0.912,
+   "erp": 0.0439,
+   "payout": 0.415,
+   "fade_years": 15,
+   "forecast_roe": 0.158,
+   "terminal_roe": 0.1851,
+   "terminal_growth": 0.0477,
+   "debt_weight": 0.439,
+   "cost_debt": 0.1084,
+   "tax_rate": 0.2907,
+   "rev_growth": 0.0776,
+   "ebit_margin": 0.3771,
+   "reinvest_rate": 0.656,
+   "_valuation_sector": "CONSUMER"
+  },
+  "exp_blended": 110439.33393853327,
+  "exp_primary": 121584.58782223845,
+  "exp_components": [
+   121584.58782223845,
+   386277.4698413044,
+   41274.89896882129,
+   9202.968123603545
+  ]
+ },
+ {
+  "co": {
+   "type": "financial",
+   "equity": 254566.59,
+   "shares": 842.95,
+   "net_profit": 73092.87,
+   "revenue": null,
+   "net_debt": null,
+   "price": 10595.4
+  },
+  "a": {
+   "risk_free": 0.06,
+   "beta": 1.212,
+   "erp": 0.0642,
+   "payout": 0.138,
+   "fade_years": 15,
+   "forecast_roe": 0.1407,
+   "terminal_roe": 0.1353,
+   "terminal_growth": 0.0426,
+   "debt_weight": 0.2,
+   "cost_debt": 0.085,
+   "tax_rate": 0.25,
+   "rev_growth": 0.1,
+   "ebit_margin": 0.12,
+   "reinvest_rate": 0.35,
+   "_valuation_sector": "NBFC"
+  },
+  "exp_blended": 327.5135583735334,
+  "exp_primary": 301.9181042765154,
+  "exp_components": [
+   301.9181042765154,
+   294.03222783717325,
+   1716.873866777389,
+   194.92844981250954
+  ]
+ },
+ {
+  "co": {
+   "type": "nonfinancial",
+   "equity": 696605.66,
+   "shares": 413.06,
+   "net_profit": 92898.92,
+   "revenue": 444699.25,
+   "net_debt": 164031.89,
+   "price": 6034.0
+  },
+  "a": {
+   "risk_free": 0.0641,
+   "beta": 1.331,
+   "erp": 0.0488,
+   "payout": 0.262,
+   "fade_years": 11,
+   "forecast_roe": 0.1776,
+   "terminal_roe": 0.1893,
+   "terminal_growth": 0.0437,
+   "debt_weight": 0.13,
+   "cost_debt": 0.1166,
+   "tax_rate": 0.2999,
+   "rev_growth": 0.0276,
+   "ebit_margin": 0.2127,
+   "reinvest_rate": 0.7427,
+   "_valuation_sector": "TEXTILES"
+  },
+  "exp_blended": 471.5030526896869,
+  "exp_primary": 389.6719443716421,
+  "exp_components": [
+   389.6719443716421,
+   1482.398328489251,
+   3004.449940676899,
+   658.6008886611604
+  ]
+ },
+ {
+  "co": {
+   "type": "nonfinancial",
+   "equity": 49201.62,
+   "shares": 202.03,
+   "net_profit": 83657.64,
+   "revenue": 998535.78,
+   "net_debt": -59672.26,
+   "price": 6479.56
+  },
+  "a": {
+   "risk_free": 0.0615,
+   "beta": 1.249,
+   "erp": 0.0596,
+   "payout": 0.532,
+   "fade_years": 15,
+   "forecast_roe": 0.1571,
+   "terminal_roe": 0.1236,
+   "terminal_growth": 0.0534,
+   "debt_weight": 0.014,
+   "cost_debt": 0.1138,
+   "tax_rate": 0.263,
+   "rev_growth": 0.0303,
+   "ebit_margin": 0.3011,
+   "reinvest_rate": 0.6959,
+   "_valuation_sector": "METAL"
+  },
+  "exp_blended": 5002.241066431333,
+  "exp_primary": 4861.235276028796,
+  "exp_components": [
+   4861.235276028796,
+   10411.667986529745,
+   4692.952192308073,
+   2391.4231404388984
+  ]
+ },
+ {
+  "co": {
+   "type": "financial",
+   "equity": 84551.11,
+   "shares": 1487.29,
+   "net_profit": 23696.85,
+   "revenue": null,
+   "net_debt": null,
+   "price": 7065.38
+  },
+  "a": {
+   "risk_free": 0.0675,
+   "beta": 0.945,
+   "erp": 0.0444,
+   "payout": 0.436,
+   "fade_years": 10,
+   "forecast_roe": 0.2768,
+   "terminal_roe": 0.1647,
+   "terminal_growth": 0.0499,
+   "debt_weight": 0.2,
+   "cost_debt": 0.085,
+   "tax_rate": 0.25,
+   "rev_growth": 0.1,
+   "ebit_margin": 0.12,
+   "reinvest_rate": 0.35,
+   "_valuation_sector": "BANK"
+  },
+  "exp_blended": 196.41620019251314,
+  "exp_primary": 209.36277913059996,
+  "exp_components": [
+   209.36277913059996,
+   109.5785219610605,
+   280.41912471676676,
+   162.13615796469378
+  ]
+ },
+ {
+  "co": {
+   "type": "nonfinancial",
+   "equity": 502304.17,
+   "shares": 1373.41,
+   "net_profit": 49365.13,
+   "revenue": 449091.42,
+   "net_debt": 561.29,
+   "price": 1457.27
+  },
+  "a": {
+   "risk_free": 0.0716,
+   "beta": 0.821,
+   "erp": 0.0557,
+   "payout": 0.553,
+   "fade_years": 15,
+   "forecast_roe": 0.2432,
+   "terminal_roe": 0.2018,
+   "terminal_growth": 0.053,
+   "debt_weight": 0.551,
+   "cost_debt": 0.0862,
+   "tax_rate": 0.2427,
+   "rev_growth": 0.1344,
+   "ebit_margin": 0.3879,
+   "reinvest_rate": 0.3545,
+   "_valuation_sector": "CAPITAL_GOODS"
+  },
+  "exp_blended": 3296.4628115567034,
+  "exp_primary": 3806.711658423687,
+  "exp_components": [
+   3806.711658423687,
+   3409.9167381183643,
+   1100.905551688134,
+   606.5793442373301
+  ]
+ },
+ {
+  "co": {
+   "type": "nonfinancial",
+   "equity": 231762.32,
+   "shares": 809.52,
+   "net_profit": 77643.89,
+   "revenue": 1007591.84,
+   "net_debt": -17400.26,
+   "price": 11146.78
+  },
+  "a": {
+   "risk_free": 0.0742,
+   "beta": 0.996,
+   "erp": 0.0525,
+   "payout": 0.392,
+   "fade_years": 8,
+   "forecast_roe": 0.1215,
+   "terminal_roe": 0.1991,
+   "terminal_growth": 0.0401,
+   "debt_weight": 0.047,
+   "cost_debt": 0.0822,
+   "tax_rate": 0.2375,
+   "rev_growth": 0.1394,
+   "ebit_margin": 0.2294,
+   "reinvest_rate": 0.6009,
+   "_valuation_sector": "PAPER"
+  },
+  "exp_blended": 2121.120714331865,
+  "exp_primary": 2264.011874086507,
+  "exp_components": [
+   2264.011874086507,
+   2228.759637539251,
+   1311.4059926771417,
+   695.6511912454587
+  ]
+ },
+ {
+  "co": {
+   "type": "financial",
+   "equity": 290412.92,
+   "shares": 519.88,
+   "net_profit": 47856.65,
+   "revenue": null,
+   "net_debt": null,
+   "price": 5394.42
+  },
+  "a": {
+   "risk_free": 0.0664,
+   "beta": 0.924,
+   "erp": 0.0436,
+   "payout": 0.055,
+   "fade_years": 12,
+   "forecast_roe": 0.1423,
+   "terminal_roe": 0.1576,
+   "terminal_growth": 0.0418,
+   "debt_weight": 0.2,
+   "cost_debt": 0.085,
+   "tax_rate": 0.25,
+   "rev_growth": 0.1,
+   "ebit_margin": 0.12,
+   "reinvest_rate": 0.35,
+   "_valuation_sector": "BANK"
+  },
+  "exp_blended": 1385.236363451368,
+  "exp_primary": 1450.9848708799416,
+  "exp_components": [
+   1450.9848708799416,
+   996.9369738185906,
+   1618.0586841045856,
+   118.76995350032102
+  ]
+ },
+ {
+  "co": {
+   "type": "nonfinancial",
+   "equity": 813425.67,
+   "shares": 1205.43,
+   "net_profit": 83645.87,
+   "revenue": 301255.83,
+   "net_debt": 89717.64,
+   "price": 10586.22
+  },
+  "a": {
+   "risk_free": 0.0714,
+   "beta": 1.038,
+   "erp": 0.0642,
+   "payout": 0.289,
+   "fade_years": 10,
+   "forecast_roe": 0.183,
+   "terminal_roe": 0.1325,
+   "terminal_growth": 0.0455,
+   "debt_weight": 0.596,
+   "cost_debt": 0.1054,
+   "tax_rate": 0.1941,
+   "rev_growth": 0.1509,
+   "ebit_margin": 0.223,
+   "reinvest_rate": 0.6231,
+   "_valuation_sector": "DEFENCE"
+  },
+  "exp_blended": 953.1226054938973,
+  "exp_primary": 787.7046326395844,
+  "exp_components": [
+   787.7046326395844,
+   1672.048872670984,
+   2236.135561520785,
+   389.1209338994405
+  ]
+ },
+ {
+  "co": {
+   "type": "nonfinancial",
+   "equity": 744220.03,
+   "shares": 370.75,
+   "net_profit": 39959.9,
+   "revenue": 759148.01,
+   "net_debt": -34246.14,
+   "price": 9931.25
+  },
+  "a": {
+   "risk_free": 0.068,
+   "beta": 1.191,
+   "erp": 0.0664,
+   "payout": 0.266,
+   "fade_years": 9,
+   "forecast_roe": 0.1036,
+   "terminal_roe": 0.135,
+   "terminal_growth": 0.0511,
+   "debt_weight": 0.028,
+   "cost_debt": 0.0868,
+   "tax_rate": 0.1689,
+   "rev_growth": 0.1278,
+   "ebit_margin": 0.1124,
+   "reinvest_rate": 0.5009,
+   "_valuation_sector": "IT_SERVICES"
+  },
+  "exp_blended": 2577.8921966372736,
+  "exp_primary": 2109.144883372805,
+  "exp_components": [
+   2109.144883372805,
+   5353.843072541483,
+   3038.8924625758596,
+   444.59013730969457
+  ]
+ },
+ {
+  "co": {
+   "type": "financial",
+   "equity": 34105.92,
+   "shares": 1531.33,
+   "net_profit": 67596.26,
+   "revenue": null,
+   "net_debt": null,
+   "price": 3989.26
+  },
+  "a": {
+   "risk_free": 0.0719,
+   "beta": 0.97,
+   "erp": 0.0487,
+   "payout": 0.591,
+   "fade_years": 11,
+   "forecast_roe": 0.192,
+   "terminal_roe": 0.149,
    "terminal_growth": 0.0496,
    "debt_weight": 0.2,
    "cost_debt": 0.085,
@@ -420,540 +1608,108 @@
    "rev_growth": 0.1,
    "ebit_margin": 0.12,
    "reinvest_rate": 0.35,
-   "_valuation_sector": "NBFC"
+   "_valuation_sector": "INSURANCE"
   },
-  "exp_blended": 363.65528943251235,
-  "exp_primary": 360.0547420123885,
+  "exp_blended": 45.82011660497102,
+  "exp_primary": 40.179284038783464,
   "exp_components": [
-   360.0547420123885,
-   154.56428386748348,
-   843.2206021444294,
-   194.7796079807277
+   40.179284038783464,
+   31.836031195186138,
+   1165.3538192290362,
+   526.7866291682432
   ]
  },
  {
   "co": {
    "type": "nonfinancial",
-   "equity": 438525.59,
-   "shares": 273.98,
-   "net_profit": 34439.63,
-   "revenue": 6218.11,
-   "net_debt": 53372.56,
-   "price": 12925.3
+   "equity": 161081.73,
+   "shares": 1252.4,
+   "net_profit": 22439.45,
+   "revenue": 241037.65,
+   "net_debt": -805.23,
+   "price": 174.27
   },
   "a": {
-   "risk_free": 0.0616,
-   "beta": 0.815,
-   "erp": 0.0592,
-   "payout": 0.181,
-   "fade_years": 10,
-   "forecast_roe": 0.1164,
-   "terminal_roe": 0.1586,
-   "terminal_growth": 0.0475,
-   "debt_weight": 0.172,
-   "cost_debt": 0.0628,
-   "tax_rate": 0.1863,
-   "rev_growth": 0.053,
-   "ebit_margin": 0.2007,
-   "reinvest_rate": 0.5634,
+   "risk_free": 0.0781,
+   "beta": 0.804,
+   "erp": 0.0435,
+   "payout": 0.318,
+   "fade_years": 8,
+   "forecast_roe": 0.1196,
+   "terminal_roe": 0.2416,
+   "terminal_growth": 0.049,
+   "debt_weight": 0.072,
+   "cost_debt": 0.1042,
+   "tax_rate": 0.1599,
+   "rev_growth": 0.1292,
+   "ebit_margin": 0.1459,
+   "reinvest_rate": 0.7765,
    "_valuation_sector": "CONSTRUCTION"
   },
-  "exp_blended": null,
-  "exp_primary": -151.93141976734202,
+  "exp_blended": 295.5979237846118,
+  "exp_primary": 278.67275380911997,
   "exp_components": [
-   -151.93141976734202,
-   null,
-   1985.4513316665445,
-   394.2382182250209
+   278.67275380911997,
+   344.69253899311553,
+   303.48084006707126,
+   133.7032288190527
   ]
  },
  {
   "co": {
    "type": "nonfinancial",
-   "equity": 225273.76,
-   "shares": 1077.13,
-   "net_profit": 72244.75,
-   "revenue": 494287.75,
-   "net_debt": 48455.21,
-   "price": 459.8
+   "equity": 653354.96,
+   "shares": 468.23,
+   "net_profit": 4756.26,
+   "revenue": 1002211.58,
+   "net_debt": 212066.91,
+   "price": 6270.51
   },
   "a": {
-   "risk_free": 0.0601,
-   "beta": 1.284,
-   "erp": 0.0505,
-   "payout": 0.546,
-   "fade_years": 13,
-   "forecast_roe": 0.193,
-   "terminal_roe": 0.2293,
-   "terminal_growth": 0.0439,
-   "debt_weight": 0.044,
-   "cost_debt": 0.1014,
-   "tax_rate": 0.2741,
-   "rev_growth": 0.1615,
-   "ebit_margin": 0.1382,
-   "reinvest_rate": 0.1405,
-   "_valuation_sector": "CAPITAL_GOODS"
-  },
-  "exp_blended": 1176.2255987467543,
-  "exp_primary": 1011.3339694367693,
-  "exp_components": [
-   1011.3339694367693,
-   1927.3446622980975,
-   2103.3965095902995,
-   938.783077388071
-  ]
- },
- {
-  "co": {
-   "type": "financial",
-   "equity": 393758.79,
-   "shares": 609.43,
-   "net_profit": 35124.34,
-   "revenue": null,
-   "net_debt": null,
-   "price": 160.02
-  },
-  "a": {
-   "risk_free": 0.068,
-   "beta": 0.867,
-   "erp": 0.0401,
-   "payout": 0.061,
-   "fade_years": 8,
-   "forecast_roe": 0.2438,
-   "terminal_roe": 0.1946,
-   "terminal_growth": 0.0446,
-   "debt_weight": 0.2,
-   "cost_debt": 0.085,
-   "tax_rate": 0.25,
-   "rev_growth": 0.1,
-   "ebit_margin": 0.12,
-   "reinvest_rate": 0.35,
-   "_valuation_sector": "BANK"
-  },
-  "exp_blended": 3241.736366471371,
-  "exp_primary": 3769.46089124578,
-  "exp_components": [
-   3769.46089124578,
-   1666.1851760647667,
-   548.3918319244432,
-   81.3940120027716
-  ]
- },
- {
-  "co": {
-   "type": "nonfinancial",
-   "equity": 141635.75,
-   "shares": 146.56,
-   "net_profit": 24380.5,
-   "revenue": 499668.56,
-   "net_debt": -328.31,
-   "price": 3187.7
-  },
-  "a": {
-   "risk_free": 0.064,
-   "beta": 0.811,
-   "erp": 0.0409,
-   "payout": 0.462,
-   "fade_years": 7,
-   "forecast_roe": 0.1933,
-   "terminal_roe": 0.1501,
-   "terminal_growth": 0.0462,
-   "debt_weight": 0.114,
-   "cost_debt": 0.0732,
-   "tax_rate": 0.1732,
-   "rev_growth": 0.0647,
-   "ebit_margin": 0.3496,
-   "reinvest_rate": 0.4535,
-   "_valuation_sector": "AUTO"
-  },
-  "exp_blended": 14342.823548049684,
-  "exp_primary": 15846.954716546308,
-  "exp_components": [
-   15846.954716546308,
-   17915.036007148978,
-   4250.750821506551,
-   1696.0915038112098
-  ]
- },
- {
-  "co": {
-   "type": "nonfinancial",
-   "equity": 72091.4,
-   "shares": 36.21,
-   "net_profit": 36436.68,
-   "revenue": 854231.88,
-   "net_debt": -34079.53,
-   "price": 8698.35
-  },
-  "a": {
-   "risk_free": 0.0611,
-   "beta": 1.247,
-   "erp": 0.0408,
-   "payout": 0.414,
-   "fade_years": 6,
-   "forecast_roe": 0.1634,
-   "terminal_roe": 0.2053,
-   "terminal_growth": 0.0455,
-   "debt_weight": 0.453,
-   "cost_debt": 0.1051,
-   "tax_rate": 0.1677,
-   "rev_growth": 0.1552,
-   "ebit_margin": 0.3121,
-   "reinvest_rate": 0.6143,
-   "_valuation_sector": "DEFENCE"
-  },
-  "exp_blended": 112886.1634379952,
-  "exp_primary": 114799.48824202901,
-  "exp_components": [
-   114799.48824202901,
-   224694.1015163786,
-   32548.08827970174,
-   9309.372951830479
-  ]
- },
- {
-  "co": {
-   "type": "financial",
-   "equity": 217014.75,
-   "shares": 998.66,
-   "net_profit": 16637.17,
-   "revenue": null,
-   "net_debt": null,
-   "price": 7473.82
-  },
-  "a": {
-   "risk_free": 0.0716,
-   "beta": 0.865,
-   "erp": 0.0502,
-   "payout": 0.528,
-   "fade_years": 11,
-   "forecast_roe": 0.1757,
-   "terminal_roe": 0.2062,
-   "terminal_growth": 0.0475,
-   "debt_weight": 0.2,
-   "cost_debt": 0.085,
-   "tax_rate": 0.25,
-   "rev_growth": 0.1,
-   "ebit_margin": 0.12,
-   "reinvest_rate": 0.35,
-   "_valuation_sector": "BANK"
-  },
-  "exp_blended": 487.90081615224324,
-  "exp_primary": 562.0159338737208,
-  "exp_components": [
-   562.0159338737208,
-   510.7363812564596,
-   136.23249929815339,
-   185.1555081758047
-  ]
- },
- {
-  "co": {
-   "type": "nonfinancial",
-   "equity": 256566.34,
-   "shares": 599.37,
-   "net_profit": 84464.06,
-   "revenue": 393172.93,
-   "net_debt": 72649.08,
-   "price": 5337.72
-  },
-  "a": {
-   "risk_free": 0.0769,
-   "beta": 1.275,
-   "erp": 0.0682,
-   "payout": 0.119,
-   "fade_years": 12,
-   "forecast_roe": 0.0913,
-   "terminal_roe": 0.213,
-   "terminal_growth": 0.0432,
-   "debt_weight": 0.504,
-   "cost_debt": 0.0639,
-   "tax_rate": 0.24,
-   "rev_growth": 0.0767,
-   "ebit_margin": 0.2936,
-   "reinvest_rate": 0.3942,
-   "_valuation_sector": "DISTRIBUTION"
-  },
-  "exp_blended": 1814.157122539936,
-  "exp_primary": 1775.5028504812074,
-  "exp_components": [
-   1775.5028504812074,
-   1707.235590054245,
-   2124.221011442014,
-   174.7305048609564
-  ]
- },
- {
-  "co": {
-   "type": "nonfinancial",
-   "equity": 711836.89,
-   "shares": 1071.74,
-   "net_profit": 79473.84,
-   "revenue": 838546.95,
-   "net_debt": 168282.05,
-   "price": 7343.45
-  },
-  "a": {
-   "risk_free": 0.0638,
-   "beta": 0.999,
-   "erp": 0.0578,
+   "risk_free": 0.0792,
+   "beta": 0.939,
+   "erp": 0.0603,
    "payout": 0.196,
-   "fade_years": 10,
-   "forecast_roe": 0.2321,
-   "terminal_roe": 0.2149,
-   "terminal_growth": 0.0471,
-   "debt_weight": 0.157,
-   "cost_debt": 0.0728,
-   "tax_rate": 0.3032,
-   "rev_growth": 0.0695,
-   "ebit_margin": 0.2895,
-   "reinvest_rate": 0.3582,
+   "fade_years": 8,
+   "forecast_roe": 0.0987,
+   "terminal_roe": 0.1642,
+   "terminal_growth": 0.0448,
+   "debt_weight": 0.575,
+   "cost_debt": 0.1112,
+   "tax_rate": 0.2117,
+   "rev_growth": 0.0548,
+   "ebit_margin": 0.0526,
+   "reinvest_rate": 0.3488,
    "_valuation_sector": "LOGISTICS"
   },
-  "exp_blended": 2033.9106622098789,
-  "exp_primary": 1777.9489647577775,
+  "exp_blended": 607.5642604874173,
+  "exp_primary": 573.1738306485069,
   "exp_components": [
-   1777.9489647577775,
-   3318.6076729657734,
-   2062.001109298897,
-   230.91244795780773
+   573.1738306485069,
+   1971.4291338622027,
+   278.5799270614869,
+   23.87129042392285
   ]
  },
  {
   "co": {
    "type": "financial",
-   "equity": 575155.57,
-   "shares": 143.67,
-   "net_profit": 41506.52,
+   "equity": 208898.81,
+   "shares": 1130.24,
+   "net_profit": 77202.87,
    "revenue": null,
    "net_debt": null,
-   "price": 10026.21
+   "price": 1129.83
   },
   "a": {
-   "risk_free": 0.0713,
-   "beta": 0.885,
-   "erp": 0.0466,
-   "payout": 0.249,
-   "fade_years": 15,
-   "forecast_roe": 0.0937,
-   "terminal_roe": 0.1048,
-   "terminal_growth": 0.0427,
-   "debt_weight": 0.2,
-   "cost_debt": 0.085,
-   "tax_rate": 0.25,
-   "rev_growth": 0.1,
-   "ebit_margin": 0.12,
-   "reinvest_rate": 0.35,
-   "_valuation_sector": "NBFC"
-  },
-  "exp_blended": 3036.5618818427165,
-  "exp_primary": 3047.1352008792783,
-  "exp_components": [
-   3047.1352008792783,
-   3559.593371214105,
-   2293.368846855765,
-   1654.7677706412176
-  ]
- },
- {
-  "co": {
-   "type": "nonfinancial",
-   "equity": 877808.15,
-   "shares": 1236.82,
-   "net_profit": 91569.41,
-   "revenue": 161067.91,
-   "net_debt": 73993.66,
-   "price": 7402.88
-  },
-  "a": {
-   "risk_free": 0.0778,
-   "beta": 0.954,
-   "erp": 0.0615,
-   "payout": 0.487,
-   "fade_years": 11,
-   "forecast_roe": 0.2393,
-   "terminal_roe": 0.2249,
-   "terminal_growth": 0.0499,
-   "debt_weight": 0.395,
-   "cost_debt": 0.1077,
-   "tax_rate": 0.3098,
-   "rev_growth": 0.1688,
-   "ebit_margin": 0.34,
-   "reinvest_rate": 0.2255,
-   "_valuation_sector": "TEXTILES"
-  },
-  "exp_blended": 631.9054117022547,
-  "exp_primary": 600.4177214889331,
-  "exp_components": [
-   600.4177214889331,
-   334.3977527924193,
-   1124.9351104477612,
-   759.3229766944153
-  ]
- },
- {
-  "co": {
-   "type": "nonfinancial",
-   "equity": 352043.03,
-   "shares": 1496.43,
-   "net_profit": 58476.88,
-   "revenue": 387985.1,
-   "net_debt": 128955.7,
-   "price": 12291.06
-  },
-  "a": {
-   "risk_free": 0.0654,
-   "beta": 1.205,
-   "erp": 0.0574,
-   "payout": 0.435,
-   "fade_years": 11,
-   "forecast_roe": 0.0893,
-   "terminal_roe": 0.1918,
-   "terminal_growth": 0.0505,
-   "debt_weight": 0.562,
-   "cost_debt": 0.0693,
-   "tax_rate": 0.2383,
-   "rev_growth": 0.0741,
-   "ebit_margin": 0.3209,
-   "reinvest_rate": 0.71,
-   "_valuation_sector": "CEMENT"
-  },
-  "exp_blended": 957.9326537786376,
-  "exp_primary": 989.0606735835881,
-  "exp_components": [
-   989.0606735835881,
-   1184.1939940409154,
-   1007.3577804454602,
-   242.25168209631187
-  ]
- },
- {
-  "co": {
-   "type": "financial",
-   "equity": 439953.4,
-   "shares": 569.15,
-   "net_profit": 17677.34,
-   "revenue": null,
-   "net_debt": null,
-   "price": 7745.07
-  },
-  "a": {
-   "risk_free": 0.0754,
-   "beta": 1.045,
-   "erp": 0.0588,
-   "payout": 0.59,
-   "fade_years": 10,
-   "forecast_roe": 0.2058,
-   "terminal_roe": 0.1766,
-   "terminal_growth": 0.0445,
-   "debt_weight": 0.2,
-   "cost_debt": 0.085,
-   "tax_rate": 0.25,
-   "rev_growth": 0.1,
-   "ebit_margin": 0.12,
-   "reinvest_rate": 0.35,
-   "_valuation_sector": "NBFC"
-  },
-  "exp_blended": 1132.2594024788234,
-  "exp_primary": 1322.741107237823,
-  "exp_components": [
-   1322.741107237823,
-   1105.7696537503016,
-   245.98881279100416,
-   276.70382618343666
-  ]
- },
- {
-  "co": {
-   "type": "nonfinancial",
-   "equity": 386748.08,
-   "shares": 1272.14,
-   "net_profit": 70845.67,
-   "revenue": 877224.23,
-   "net_debt": 104443.96,
-   "price": 10993.89
-  },
-  "a": {
-   "risk_free": 0.0694,
-   "beta": 1.145,
-   "erp": 0.0675,
-   "payout": 0.455,
-   "fade_years": 10,
-   "forecast_roe": 0.1115,
-   "terminal_roe": 0.1425,
-   "terminal_growth": 0.0501,
-   "debt_weight": 0.569,
-   "cost_debt": 0.1175,
-   "tax_rate": 0.2622,
-   "rev_growth": 0.1043,
-   "ebit_margin": 0.231,
-   "reinvest_rate": 0.575,
-   "_valuation_sector": "CONSUMER_DISC"
-  },
-  "exp_blended": 1615.024737263746,
-  "exp_primary": 1521.4746931459804,
-  "exp_components": [
-   1521.4746931459804,
-   4290.3602701740665,
-   1844.9590465121762,
-   363.90074705845353
-  ]
- },
- {
-  "co": {
-   "type": "nonfinancial",
-   "equity": 290234.68,
-   "shares": 487.26,
-   "net_profit": 7512.09,
-   "revenue": 438774.43,
-   "net_debt": 17265.03,
-   "price": 1053.3
-  },
-  "a": {
-   "risk_free": 0.0654,
-   "beta": 0.791,
-   "erp": 0.0637,
-   "payout": 0.532,
-   "fade_years": 6,
-   "forecast_roe": 0.1886,
-   "terminal_roe": 0.1856,
-   "terminal_growth": 0.0426,
-   "debt_weight": 0.387,
-   "cost_debt": 0.1195,
-   "tax_rate": 0.2344,
-   "rev_growth": 0.0809,
-   "ebit_margin": 0.1954,
-   "reinvest_rate": 0.7764,
-   "_valuation_sector": "SUGAR"
-  },
-  "exp_blended": 1038.3731206915343,
-  "exp_primary": 1151.0051315811352,
-  "exp_components": [
-   1151.0051315811352,
-   1280.9166583503238,
-   183.306651256003,
-   133.16615104446947
-  ]
- },
- {
-  "co": {
-   "type": "financial",
-   "equity": 94188.96,
-   "shares": 1181.55,
-   "net_profit": 50443.72,
-   "revenue": null,
-   "net_debt": null,
-   "price": 7098.74
-  },
-  "a": {
-   "risk_free": 0.0603,
-   "beta": 1.004,
-   "erp": 0.0639,
-   "payout": 0.161,
-   "fade_years": 10,
-   "forecast_roe": 0.2038,
-   "terminal_roe": 0.1336,
-   "terminal_growth": 0.0539,
+   "risk_free": 0.0685,
+   "beta": 0.704,
+   "erp": 0.0649,
+   "payout": 0.162,
+   "fade_years": 14,
+   "forecast_roe": 0.2691,
+   "terminal_roe": 0.1875,
+   "terminal_growth": 0.0485,
    "debt_weight": 0.2,
    "cost_debt": 0.085,
    "tax_rate": 0.25,
@@ -962,430 +1718,214 @@
    "reinvest_rate": 0.35,
    "_valuation_sector": "BANK"
   },
-  "exp_blended": 146.05932286943212,
-  "exp_primary": 143.8760624700164,
+  "exp_blended": 1250.1549368910166,
+  "exp_primary": 1389.3837271105995,
   "exp_components": [
-   143.8760624700164,
-   90.04813635558763,
-   751.3939080022005,
-   131.94910595022182
+   1389.3837271105995,
+   391.0960914356305,
+   1202.196446772367,
+   257.8756040476599
   ]
  },
  {
   "co": {
    "type": "nonfinancial",
-   "equity": 513999.78,
-   "shares": 987.91,
-   "net_profit": 40037.53,
-   "revenue": 586660.48,
-   "net_debt": 191036.71,
-   "price": 2661.39
+   "equity": 329133.85,
+   "shares": 305.89,
+   "net_profit": -207.54,
+   "revenue": 222220.8,
+   "net_debt": -33755.16,
+   "price": 13616.86
   },
   "a": {
-   "risk_free": 0.0774,
-   "beta": 1.378,
-   "erp": 0.0543,
-   "payout": 0.427,
-   "fade_years": 9,
-   "forecast_roe": 0.137,
-   "terminal_roe": 0.1923,
-   "terminal_growth": 0.0521,
-   "debt_weight": 0.347,
-   "cost_debt": 0.0699,
-   "tax_rate": 0.2785,
-   "rev_growth": 0.0676,
-   "ebit_margin": 0.2049,
-   "reinvest_rate": 0.2464,
-   "_valuation_sector": "PHARMA"
-  },
-  "exp_blended": 1026.7363266471446,
-  "exp_primary": 926.020976126175,
-  "exp_components": [
-   926.020976126175,
-   2487.2348064336165,
-   1298.0150123391809,
-   195.0873521016242
-  ]
- },
- {
-  "co": {
-   "type": "nonfinancial",
-   "equity": 609313.44,
-   "shares": 502.47,
-   "net_profit": 1801.71,
-   "revenue": 120816.99,
-   "net_debt": 208464.24,
-   "price": 5348.64
-  },
-  "a": {
-   "risk_free": 0.061,
-   "beta": 1.037,
-   "erp": 0.0569,
-   "payout": 0.282,
-   "fade_years": 11,
-   "forecast_roe": 0.1981,
-   "terminal_roe": 0.1475,
-   "terminal_growth": 0.0537,
-   "debt_weight": 0.371,
-   "cost_debt": 0.1098,
-   "tax_rate": 0.2105,
-   "rev_growth": 0.1342,
-   "ebit_margin": 0.0522,
-   "reinvest_rate": 0.7374,
-   "_valuation_sector": "ENERGY"
-  },
-  "exp_blended": null,
-  "exp_primary": -276.28562039377636,
-  "exp_components": [
-   -276.28562039377636,
-   null,
-   48.80290123589468,
-   25.597781517918555
-  ]
- },
- {
-  "co": {
-   "type": "financial",
-   "equity": 506465.6,
-   "shares": 536.75,
-   "net_profit": 52944.87,
-   "revenue": null,
-   "net_debt": null,
-   "price": 2725.79
-  },
-  "a": {
-   "risk_free": 0.0655,
-   "beta": 1.18,
-   "erp": 0.0439,
-   "payout": 0.191,
-   "fade_years": 10,
-   "forecast_roe": 0.1223,
-   "terminal_roe": 0.1626,
-   "terminal_growth": 0.0494,
-   "debt_weight": 0.2,
-   "cost_debt": 0.085,
-   "tax_rate": 0.25,
-   "rev_growth": 0.1,
-   "ebit_margin": 0.12,
-   "reinvest_rate": 0.35,
-   "_valuation_sector": "NBFC"
-  },
-  "exp_blended": 1546.515235155047,
-  "exp_primary": 1633.4838534497198,
-  "exp_components": [
-   1633.4838534497198,
-   1573.0472222104468,
-   1134.2752398042655,
-   384.45413113103905
-  ]
- },
- {
-  "co": {
-   "type": "nonfinancial",
-   "equity": 780855.77,
-   "shares": 463.42,
-   "net_profit": 70651.54,
-   "revenue": 741834.86,
-   "net_debt": 79993.26,
-   "price": 5117.26
-  },
-  "a": {
-   "risk_free": 0.0762,
-   "beta": 0.75,
-   "erp": 0.0409,
-   "payout": 0.534,
-   "fade_years": 10,
-   "forecast_roe": 0.2462,
-   "terminal_roe": 0.1057,
-   "terminal_growth": 0.0464,
-   "debt_weight": 0.526,
-   "cost_debt": 0.0858,
-   "tax_rate": 0.2906,
-   "rev_growth": 0.1337,
-   "ebit_margin": 0.1478,
-   "reinvest_rate": 0.7927,
-   "_valuation_sector": "CONSTRUCTION"
-  },
-  "exp_blended": 3437.7278103006524,
-  "exp_primary": 4142.980071712633,
-  "exp_components": [
-   4142.980071712633,
-   2731.4402332384366,
-   2592.6044699624526,
-   2290.5632028556097
-  ]
- },
- {
-  "co": {
-   "type": "nonfinancial",
-   "equity": 556896.66,
-   "shares": 1118.16,
-   "net_profit": 75621.76,
-   "revenue": 741079.89,
-   "net_debt": -45299.52,
-   "price": 9035.3
-  },
-  "a": {
-   "risk_free": 0.0625,
-   "beta": 1.306,
-   "erp": 0.0432,
-   "payout": 0.449,
-   "fade_years": 8,
-   "forecast_roe": 0.2048,
-   "terminal_roe": 0.1117,
-   "terminal_growth": 0.0444,
-   "debt_weight": 0.089,
-   "cost_debt": 0.0767,
-   "tax_rate": 0.2909,
-   "rev_growth": 0.1826,
-   "ebit_margin": 0.0732,
-   "reinvest_rate": 0.5459,
-   "_valuation_sector": "ENERGY"
-  },
-  "exp_blended": 648.7653142000435,
-  "exp_primary": 586.2726058061232,
-  "exp_components": [
-   586.2726058061232,
-   606.7214519255506,
-   959.7584607855762,
-   676.9573374374613
-  ]
- },
- {
-  "co": {
-   "type": "financial",
-   "equity": 470918.34,
-   "shares": 169.36,
-   "net_profit": 7136.04,
-   "revenue": null,
-   "net_debt": null,
-   "price": 11573.02
-  },
-  "a": {
-   "risk_free": 0.0639,
-   "beta": 1.177,
-   "erp": 0.0539,
-   "payout": 0.12,
-   "fade_years": 6,
-   "forecast_roe": 0.1599,
-   "terminal_roe": 0.2097,
-   "terminal_growth": 0.0528,
-   "debt_weight": 0.2,
-   "cost_debt": 0.085,
-   "tax_rate": 0.25,
-   "rev_growth": 0.1,
-   "ebit_margin": 0.12,
-   "reinvest_rate": 0.35,
-   "_valuation_sector": "INSURANCE"
-  },
-  "exp_blended": 6325.191741097627,
-  "exp_primary": 6965.708068524694,
-  "exp_components": [
-   6965.708068524694,
-   5852.838851946764,
-   444.9491166745395,
-   83.72430423308913
-  ]
- },
- {
-  "co": {
-   "type": "nonfinancial",
-   "equity": 432773.86,
-   "shares": 1210.16,
-   "net_profit": 72561.3,
-   "revenue": 1013187.22,
-   "net_debt": -26423.67,
-   "price": 6147.53
-  },
-  "a": {
-   "risk_free": 0.0746,
-   "beta": 1.245,
-   "erp": 0.0416,
-   "payout": 0.334,
-   "fade_years": 9,
-   "forecast_roe": 0.2339,
-   "terminal_roe": 0.223,
-   "terminal_growth": 0.0531,
-   "debt_weight": 0.304,
-   "cost_debt": 0.0603,
-   "tax_rate": 0.2002,
-   "rev_growth": 0.1447,
-   "ebit_margin": 0.3744,
-   "reinvest_rate": 0.3589,
-   "_valuation_sector": "CONSTRUCTION"
-  },
-  "exp_blended": 4482.439897624762,
-  "exp_primary": 5108.712961261421,
-  "exp_components": [
-   5108.712961261421,
-   3509.961531456556,
-   1029.5446896691346,
-   443.2999566901657
-  ]
- },
- {
-  "co": {
-   "type": "nonfinancial",
-   "equity": 352097.61,
-   "shares": 221.19,
-   "net_profit": 59187.22,
-   "revenue": 633549.86,
-   "net_debt": 239482.91,
-   "price": 276.17
-  },
-  "a": {
-   "risk_free": 0.0715,
-   "beta": 1.079,
-   "erp": 0.0453,
-   "payout": 0.133,
-   "fade_years": 11,
-   "forecast_roe": 0.1518,
-   "terminal_roe": 0.1781,
-   "terminal_growth": 0.0522,
-   "debt_weight": 0.529,
-   "cost_debt": 0.06,
-   "tax_rate": 0.295,
-   "rev_growth": 0.1654,
-   "ebit_margin": 0.1227,
-   "reinvest_rate": 0.6274,
-   "_valuation_sector": "PAPER"
-  },
-  "exp_blended": 6567.112978381781,
-  "exp_primary": 7636.17788183928,
-  "exp_components": [
-   7636.17788183928,
-   1975.6014651226221,
-   3742.1286416926623,
-   963.9564875508223
-  ]
- },
- {
-  "co": {
-   "type": "financial",
-   "equity": 221434.45,
-   "shares": 484.25,
-   "net_profit": 16070.27,
-   "revenue": null,
-   "net_debt": null,
-   "price": 8588.72
-  },
-  "a": {
-   "risk_free": 0.0783,
-   "beta": 1.053,
-   "erp": 0.0577,
-   "payout": 0.559,
-   "fade_years": 12,
-   "forecast_roe": 0.144,
-   "terminal_roe": 0.1214,
-   "terminal_growth": 0.042,
-   "debt_weight": 0.2,
-   "cost_debt": 0.085,
-   "tax_rate": 0.25,
-   "rev_growth": 0.1,
-   "ebit_margin": 0.12,
-   "reinvest_rate": 0.35,
-   "_valuation_sector": "INSURANCE"
-  },
-  "exp_blended": 388.89118381200376,
-  "exp_primary": 424.59516395625235,
-  "exp_components": [
-   424.59516395625235,
-   374.0798156878074,
-   397.38866384532287,
-   281.29150644240235
-  ]
- },
- {
-  "co": {
-   "type": "nonfinancial",
-   "equity": 292132.55,
-   "shares": 540.71,
-   "net_profit": 90397.27,
-   "revenue": 495754.83,
-   "net_debt": 54384.76,
-   "price": 12822.22
-  },
-  "a": {
-   "risk_free": 0.0793,
-   "beta": 0.905,
-   "erp": 0.0465,
-   "payout": 0.571,
+   "risk_free": 0.0642,
+   "beta": 1.161,
+   "erp": 0.049,
+   "payout": 0.266,
    "fade_years": 15,
-   "forecast_roe": 0.2225,
-   "terminal_roe": 0.1079,
-   "terminal_growth": 0.0418,
-   "debt_weight": 0.53,
-   "cost_debt": 0.1145,
-   "tax_rate": 0.1502,
-   "rev_growth": 0.1028,
-   "ebit_margin": 0.0662,
-   "reinvest_rate": 0.6678,
+   "forecast_roe": 0.1994,
+   "terminal_roe": 0.1693,
+   "terminal_growth": 0.0498,
+   "debt_weight": 0.563,
+   "cost_debt": 0.1048,
+   "tax_rate": 0.2602,
+   "rev_growth": 0.0315,
+   "ebit_margin": 0.1007,
+   "reinvest_rate": 0.4573,
+   "_valuation_sector": "TELECOM"
+  },
+  "exp_blended": 782.1814108326745,
+  "exp_primary": 717.6775166905841,
+  "exp_components": [
+   717.6775166905841,
+   991.8190667944685,
+   null,
+   null
+  ]
+ },
+ {
+  "co": {
+   "type": "nonfinancial",
+   "equity": 674638.42,
+   "shares": 29.14,
+   "net_profit": 77200.18,
+   "revenue": 443035.04,
+   "net_debt": 164316.38,
+   "price": 7822.08
+  },
+  "a": {
+   "risk_free": 0.0788,
+   "beta": 1.106,
+   "erp": 0.0659,
+   "payout": 0.278,
+   "fade_years": 7,
+   "forecast_roe": 0.1828,
+   "terminal_roe": 0.2135,
+   "terminal_growth": 0.0412,
+   "debt_weight": 0.226,
+   "cost_debt": 0.1085,
+   "tax_rate": 0.1986,
+   "rev_growth": 0.0582,
+   "ebit_margin": 0.2398,
+   "reinvest_rate": 0.6147,
+   "_valuation_sector": "TEXTILES"
+  },
+  "exp_blended": 14282.114791192751,
+  "exp_primary": 11803.400653878307,
+  "exp_components": [
+   11803.400653878307,
+   24745.93227106592,
+   36445.16115950583,
+   7378.295350333728
+  ]
+ },
+ {
+  "co": {
+   "type": "financial",
+   "equity": 437702.27,
+   "shares": 692.32,
+   "net_profit": 51310.68,
+   "revenue": null,
+   "net_debt": null,
+   "price": 6909.91
+  },
+  "a": {
+   "risk_free": 0.0725,
+   "beta": 1.02,
+   "erp": 0.0457,
+   "payout": 0.416,
+   "fade_years": 7,
+   "forecast_roe": 0.1317,
+   "terminal_roe": 0.1855,
+   "terminal_growth": 0.0442,
+   "debt_weight": 0.2,
+   "cost_debt": 0.085,
+   "tax_rate": 0.25,
+   "rev_growth": 0.1,
+   "ebit_margin": 0.12,
+   "reinvest_rate": 0.35,
+   "_valuation_sector": "INSURANCE"
+  },
+  "exp_blended": 1135.654176385801,
+  "exp_primary": 1180.8519988622304,
+  "exp_components": [
+   1180.8519988622304,
+   1192.4799791342589,
+   1433.5531780812798,
+   529.4807304312412
+  ]
+ },
+ {
+  "co": {
+   "type": "nonfinancial",
+   "equity": 75710.78,
+   "shares": 515.78,
+   "net_profit": 38165.4,
+   "revenue": 774407.72,
+   "net_debt": 92741.6,
+   "price": 11954.55
+  },
+  "a": {
+   "risk_free": 0.0745,
+   "beta": 0.66,
+   "erp": 0.0547,
+   "payout": 0.154,
+   "fade_years": 11,
+   "forecast_roe": 0.2223,
+   "terminal_roe": 0.2275,
+   "terminal_growth": 0.0404,
+   "debt_weight": 0.283,
+   "cost_debt": 0.0912,
+   "tax_rate": 0.1925,
+   "rev_growth": 0.1528,
+   "ebit_margin": 0.1862,
+   "reinvest_rate": 0.1657,
    "_valuation_sector": "AVIATION"
   },
-  "exp_blended": 591.7287336532986,
-  "exp_primary": 490.9206254894395,
+  "exp_blended": 4528.516088887975,
+  "exp_primary": 5265.716382427877,
   "exp_components": [
-   490.9206254894395,
-   580.3026177086822,
-   2212.4268318914023,
-   1951.0689913901483
+   5265.716382427877,
+   2439.658203433352,
+   1023.6241758889448,
+   317.78502912376075
   ]
  },
  {
   "co": {
    "type": "nonfinancial",
-   "equity": 408253.2,
-   "shares": 586.48,
-   "net_profit": 42010.29,
-   "revenue": 175572.62,
-   "net_debt": 216565.22,
-   "price": 400.37
+   "equity": 108299.62,
+   "shares": 416.76,
+   "net_profit": 668.59,
+   "revenue": 550064.05,
+   "net_debt": 132423.25,
+   "price": 12091.3
   },
   "a": {
    "risk_free": 0.0779,
-   "beta": 1.132,
-   "erp": 0.0417,
-   "payout": 0.463,
-   "fade_years": 13,
-   "forecast_roe": 0.0937,
-   "terminal_roe": 0.1205,
-   "terminal_growth": 0.0428,
-   "debt_weight": 0.439,
-   "cost_debt": 0.0836,
-   "tax_rate": 0.2592,
-   "rev_growth": 0.1397,
-   "ebit_margin": 0.1414,
-   "reinvest_rate": 0.5902,
-   "_valuation_sector": "DEFENCE"
+   "beta": 0.744,
+   "erp": 0.0546,
+   "payout": 0.353,
+   "fade_years": 9,
+   "forecast_roe": 0.1186,
+   "terminal_roe": 0.2191,
+   "terminal_growth": 0.0492,
+   "debt_weight": 0.112,
+   "cost_debt": 0.0958,
+   "tax_rate": 0.3196,
+   "rev_growth": 0.0803,
+   "ebit_margin": 0.1716,
+   "reinvest_rate": 0.5966,
+   "_valuation_sector": "CONSUMER"
   },
-  "exp_blended": 477.5241791168265,
-  "exp_primary": 374.5287679347658,
+  "exp_blended": 1503.9359632645833,
+  "exp_primary": 1550.4494466645187,
   "exp_components": [
-   374.5287679347658,
-   1034.249442643552,
-   2285.8674982335287,
-   786.3727818898401
+   1550.4494466645187,
+   7730.852106392246,
+   58.924667477685,
+   9.960131315900632
   ]
  },
  {
   "co": {
    "type": "financial",
-   "equity": 160298.47,
-   "shares": 784.28,
-   "net_profit": 58337.9,
+   "equity": 23903.43,
+   "shares": 324.64,
+   "net_profit": 84841.66,
    "revenue": null,
    "net_debt": null,
-   "price": 10349.64
+   "price": 8151.48
   },
   "a": {
-   "risk_free": 0.0773,
-   "beta": 1.034,
-   "erp": 0.0657,
-   "payout": 0.318,
-   "fade_years": 12,
-   "forecast_roe": 0.2705,
-   "terminal_roe": 0.1719,
-   "terminal_growth": 0.0418,
+   "risk_free": 0.0782,
+   "beta": 0.768,
+   "erp": 0.0523,
+   "payout": 0.509,
+   "fade_years": 11,
+   "forecast_roe": 0.2008,
+   "terminal_roe": 0.1908,
+   "terminal_growth": 0.045,
    "debt_weight": 0.2,
    "cost_debt": 0.085,
    "tax_rate": 0.25,
@@ -1394,321 +1934,213 @@
    "reinvest_rate": 0.35,
    "_valuation_sector": "INSURANCE"
   },
-  "exp_blended": 525.5493630523259,
-  "exp_primary": 520.3459040122038,
+  "exp_blended": 211.88922290343777,
+  "exp_primary": 185.95212320728564,
   "exp_components": [
-   520.3459040122038,
-   257.082818891876,
-   1963.7381547406542,
-   334.9418263832677
+   185.95212320728564,
+   146.32499201654838,
+   6899.395712173487,
+   2597.5478864826673
   ]
  },
  {
   "co": {
    "type": "nonfinancial",
-   "equity": 249660.14,
-   "shares": 842.66,
-   "net_profit": 85792.44,
-   "revenue": 661793.47,
-   "net_debt": 144305.87,
-   "price": 6287.26
+   "equity": 251680.09,
+   "shares": 785.83,
+   "net_profit": 52645.32,
+   "revenue": 634535.97,
+   "net_debt": 119789.69,
+   "price": 5495.73
   },
   "a": {
-   "risk_free": 0.0618,
-   "beta": 0.992,
-   "erp": 0.0483,
-   "payout": 0.264,
-   "fade_years": 10,
-   "forecast_roe": 0.2443,
-   "terminal_roe": 0.1545,
-   "terminal_growth": 0.0471,
-   "debt_weight": 0.181,
-   "cost_debt": 0.1034,
-   "tax_rate": 0.2301,
-   "rev_growth": 0.0344,
-   "ebit_margin": 0.1999,
-   "reinvest_rate": 0.7577,
+   "risk_free": 0.0608,
+   "beta": 0.913,
+   "erp": 0.0573,
+   "payout": 0.541,
+   "fade_years": 14,
+   "forecast_roe": 0.2339,
+   "terminal_roe": 0.2111,
+   "terminal_growth": 0.0497,
+   "debt_weight": 0.379,
+   "cost_debt": 0.0879,
+   "tax_rate": 0.1993,
+   "rev_growth": 0.1663,
+   "ebit_margin": 0.0742,
+   "reinvest_rate": 0.7007,
    "_valuation_sector": "DISTRIBUTION"
   },
-  "exp_blended": 924.4397235926878,
-  "exp_primary": 763.9997715642047,
+  "exp_blended": 1063.2400262351598,
+  "exp_primary": 1116.0913609627758,
   "exp_components": [
-   763.9997715642047,
-   1322.876779418538,
-   1474.3927552085065,
-   418.4947600164754
+   1116.0913609627758,
+   632.6097807282105,
+   1093.879482870341,
+   1262.0788055515156
   ]
  },
  {
   "co": {
    "type": "nonfinancial",
-   "equity": 215106.25,
-   "shares": 524.41,
-   "net_profit": 6447.53,
-   "revenue": 270616.56,
-   "net_debt": 144753.55,
-   "price": 134.64
+   "equity": 52258.41,
+   "shares": 461.13,
+   "net_profit": 39993.36,
+   "revenue": 309018.05,
+   "net_debt": 153374.93,
+   "price": 3815.02
   },
   "a": {
    "risk_free": 0.0616,
-   "beta": 0.896,
-   "erp": 0.0554,
-   "payout": 0.432,
-   "fade_years": 14,
-   "forecast_roe": 0.2136,
-   "terminal_roe": 0.1833,
-   "terminal_growth": 0.0432,
-   "debt_weight": 0.341,
-   "cost_debt": 0.0842,
-   "tax_rate": 0.2384,
-   "rev_growth": 0.0566,
-   "ebit_margin": 0.1866,
-   "reinvest_rate": 0.2878,
-   "_valuation_sector": "SUGAR"
-  },
-  "exp_blended": 624.4044442344067,
-  "exp_primary": 764.5768704911102,
-  "exp_components": [
-   764.5768704911102,
-   432.57293167918533,
-   142.89785125760378,
-   89.78491966145245
-  ]
- },
- {
-  "co": {
-   "type": "financial",
-   "equity": 56790.03,
-   "shares": 1020.09,
-   "net_profit": 33846.06,
-   "revenue": null,
-   "net_debt": null,
-   "price": 5805.26
-  },
-  "a": {
-   "risk_free": 0.0624,
-   "beta": 1.106,
-   "erp": 0.0415,
-   "payout": 0.298,
-   "fade_years": 12,
-   "forecast_roe": 0.1198,
-   "terminal_roe": 0.158,
-   "terminal_growth": 0.0513,
-   "debt_weight": 0.2,
-   "cost_debt": 0.085,
-   "tax_rate": 0.25,
-   "rev_growth": 0.1,
-   "ebit_margin": 0.12,
-   "reinvest_rate": 0.35,
-   "_valuation_sector": "INSURANCE"
-  },
-  "exp_blended": 115.84673926582573,
-  "exp_primary": 106.74574436133082,
-  "exp_components": [
-   106.74574436133082,
-   104.21513392120647,
-   875.9383819074786,
-   251.76650606929422
-  ]
- },
- {
-  "co": {
-   "type": "nonfinancial",
-   "equity": 24689.59,
-   "shares": 82.16,
-   "net_profit": 19059.64,
-   "revenue": 592487.22,
-   "net_debt": 127878.66,
-   "price": 3093.09
-  },
-  "a": {
-   "risk_free": 0.0673,
-   "beta": 1.394,
-   "erp": 0.0627,
-   "payout": 0.23,
-   "fade_years": 15,
-   "forecast_roe": 0.1664,
-   "terminal_roe": 0.2121,
-   "terminal_growth": 0.0537,
-   "debt_weight": 0.496,
-   "cost_debt": 0.0735,
-   "tax_rate": 0.2235,
-   "rev_growth": 0.1441,
-   "ebit_margin": 0.0699,
-   "reinvest_rate": 0.5954,
-   "_valuation_sector": "CAPITAL_GOODS"
-  },
-  "exp_blended": 8331.44811181926,
-  "exp_primary": 7480.964144200284,
-  "exp_components": [
-   7480.964144200284,
-   16576.584959857784,
-   7166.0859462999015,
-   1029.2204842760664
-  ]
- },
- {
-  "co": {
-   "type": "nonfinancial",
-   "equity": 575472.91,
-   "shares": 126.8,
-   "net_profit": 46038.01,
-   "revenue": 520386.15,
-   "net_debt": -16968.42,
-   "price": 3325.59
-  },
-  "a": {
-   "risk_free": 0.0749,
-   "beta": 0.638,
-   "erp": 0.0534,
-   "payout": 0.156,
-   "fade_years": 15,
-   "forecast_roe": 0.1235,
-   "terminal_roe": 0.1396,
-   "terminal_growth": 0.0405,
-   "debt_weight": 0.032,
-   "cost_debt": 0.1174,
-   "tax_rate": 0.2775,
-   "rev_growth": 0.079,
-   "ebit_margin": 0.2536,
-   "reinvest_rate": 0.4155,
-   "_valuation_sector": "CHEMICALS"
-  },
-  "exp_blended": 11471.4217814062,
-  "exp_primary": 10251.095417747782,
-  "exp_components": [
-   10251.095417747782,
-   18971.413201781543,
-   10185.72817460568,
-   1151.9705965276094
-  ]
- },
- {
-  "co": {
-   "type": "financial",
-   "equity": 272899.88,
-   "shares": 282.08,
-   "net_profit": 61546.14,
-   "revenue": null,
-   "net_debt": null,
-   "price": 3812.73
-  },
-  "a": {
-   "risk_free": 0.072,
-   "beta": 1.001,
-   "erp": 0.0476,
-   "payout": 0.106,
+   "beta": 0.656,
+   "erp": 0.0485,
+   "payout": 0.546,
    "fade_years": 10,
-   "forecast_roe": 0.2265,
-   "terminal_roe": 0.1303,
-   "terminal_growth": 0.0524,
+   "forecast_roe": 0.1319,
+   "terminal_roe": 0.1394,
+   "terminal_growth": 0.044,
+   "debt_weight": 0.407,
+   "cost_debt": 0.0605,
+   "tax_rate": 0.1861,
+   "rev_growth": 0.0669,
+   "ebit_margin": 0.1685,
+   "reinvest_rate": 0.3952,
+   "_valuation_sector": "REALTY"
+  },
+  "exp_blended": 1707.476430918021,
+  "exp_primary": 1864.6132171277998,
+  "exp_components": [
+   1864.6132171277998,
+   1654.2783003004686,
+   1850.6241530154186,
+   1142.619214780742
+  ]
+ },
+ {
+  "co": {
+   "type": "financial",
+   "equity": 484988.3,
+   "shares": 1017.34,
+   "net_profit": 1956.43,
+   "revenue": null,
+   "net_debt": null,
+   "price": 2927.46
+  },
+  "a": {
+   "risk_free": 0.0687,
+   "beta": 0.821,
+   "erp": 0.0692,
+   "payout": 0.202,
+   "fade_years": 7,
+   "forecast_roe": 0.1995,
+   "terminal_roe": 0.1066,
+   "terminal_growth": 0.0515,
    "debt_weight": 0.2,
    "cost_debt": 0.085,
    "tax_rate": 0.25,
    "rev_growth": 0.1,
    "ebit_margin": 0.12,
    "reinvest_rate": 0.35,
-   "_valuation_sector": "NBFC"
+   "_valuation_sector": "BANK"
   },
-  "exp_blended": 2174.3981520021666,
-  "exp_primary": 2152.8694574278875,
+  "exp_blended": 436.39931351394233,
+  "exp_primary": 493.8095387818257,
   "exp_components": [
-   2152.8694574278875,
-   1120.7060540727175,
-   4320.099163357912,
-   470.04706073342913
+   493.8095387818257,
+   354.90127407695644,
+   13.538509446202845,
+   6.613301397736722
   ]
  },
  {
   "co": {
    "type": "nonfinancial",
-   "equity": 816466.89,
-   "shares": 419.89,
-   "net_profit": 9262.99,
-   "revenue": 481380.89,
-   "net_debt": -10624.0,
-   "price": 12031.21
+   "equity": 492905.75,
+   "shares": 345.6,
+   "net_profit": 50576.15,
+   "revenue": 765565.7,
+   "net_debt": 235201.31,
+   "price": 3906.23
   },
   "a": {
-   "risk_free": 0.0602,
-   "beta": 0.816,
-   "erp": 0.0583,
-   "payout": 0.186,
+   "risk_free": 0.0782,
+   "beta": 1.127,
+   "erp": 0.0679,
+   "payout": 0.292,
    "fade_years": 6,
-   "forecast_roe": 0.1831,
-   "terminal_roe": 0.1441,
-   "terminal_growth": 0.0545,
-   "debt_weight": 0.44,
-   "cost_debt": 0.0873,
-   "tax_rate": 0.1972,
-   "rev_growth": 0.0896,
-   "ebit_margin": 0.3931,
-   "reinvest_rate": 0.2465,
-   "_valuation_sector": "LOGISTICS"
+   "forecast_roe": 0.1156,
+   "terminal_roe": 0.2406,
+   "terminal_growth": 0.0535,
+   "debt_weight": 0.059,
+   "cost_debt": 0.0785,
+   "tax_rate": 0.2373,
+   "rev_growth": 0.0337,
+   "ebit_margin": 0.3067,
+   "reinvest_rate": 0.2778,
+   "_valuation_sector": "CABLES"
   },
-  "exp_blended": 6945.112438773473,
-  "exp_primary": 7521.477992116111,
+  "exp_blended": 3635.824192418103,
+  "exp_primary": 3116.6611408425993,
   "exp_components": [
-   7521.477992116111,
-   6896.093623037756,
-   624.9655898068542,
-   91.74901360485232
+   3116.6611408425993,
+   10884.227304069862,
+   4084.419238671875,
+   416.4046825894068
   ]
  },
  {
   "co": {
    "type": "nonfinancial",
-   "equity": 865972.58,
-   "shares": 686.72,
-   "net_profit": 63521.51,
-   "revenue": 212726.91,
-   "net_debt": -5048.41,
-   "price": 8837.8
+   "equity": 825774.05,
+   "shares": 79.87,
+   "net_profit": 89308.35,
+   "revenue": 998873.49,
+   "net_debt": 81920.19,
+   "price": 8710.18
   },
   "a": {
-   "risk_free": 0.0712,
-   "beta": 0.815,
-   "erp": 0.043,
-   "payout": 0.253,
-   "fade_years": 9,
-   "forecast_roe": 0.1505,
-   "terminal_roe": 0.1331,
-   "terminal_growth": 0.0469,
-   "debt_weight": 0.208,
-   "cost_debt": 0.1022,
-   "tax_rate": 0.2957,
-   "rev_growth": 0.0359,
-   "ebit_margin": 0.1921,
-   "reinvest_rate": 0.1052,
-   "_valuation_sector": "CAPITAL_GOODS"
+   "risk_free": 0.0745,
+   "beta": 0.92,
+   "erp": 0.0573,
+   "payout": 0.305,
+   "fade_years": 12,
+   "forecast_roe": 0.0976,
+   "terminal_roe": 0.1731,
+   "terminal_growth": 0.0519,
+   "debt_weight": 0.366,
+   "cost_debt": 0.1043,
+   "tax_rate": 0.1672,
+   "rev_growth": 0.0429,
+   "ebit_margin": 0.1482,
+   "reinvest_rate": 0.5014,
+   "_valuation_sector": "DEFENCE"
   },
-  "exp_blended": 764.2003432806484,
-  "exp_primary": 631.5705316368995,
+  "exp_blended": 17737.52984964998,
+  "exp_primary": 14659.115578223125,
   "exp_components": [
-   631.5705316368995,
-   1575.3000338046768,
-   2587.1565844055804,
-   390.79742921401254
+   14659.115578223125,
+   54755.60267841708,
+   32651.946788781774,
+   4502.006448509123
   ]
  },
  {
   "co": {
    "type": "financial",
-   "equity": 163123.08,
-   "shares": 847.68,
-   "net_profit": 26581.12,
+   "equity": 541990.79,
+   "shares": 92.09,
+   "net_profit": 67115.05,
    "revenue": null,
    "net_debt": null,
-   "price": 8640.23
+   "price": 11977.92
   },
   "a": {
-   "risk_free": 0.0678,
-   "beta": 0.919,
-   "erp": 0.0455,
-   "payout": 0.011,
-   "fade_years": 9,
-   "forecast_roe": 0.1048,
-   "terminal_roe": 0.1406,
+   "risk_free": 0.0761,
+   "beta": 0.841,
+   "erp": 0.0427,
+   "payout": 0.381,
+   "fade_years": 14,
+   "forecast_roe": 0.0806,
+   "terminal_roe": 0.1953,
    "terminal_growth": 0.0429,
    "debt_weight": 0.2,
    "cost_debt": 0.085,
@@ -1718,445 +2150,13 @@
    "reinvest_rate": 0.35,
    "_valuation_sector": "NBFC"
   },
-  "exp_blended": 316.7310585540238,
-  "exp_primary": 292.549299174415,
+  "exp_blended": 10206.33261891499,
+  "exp_primary": 9417.815617511133,
   "exp_components": [
-   292.549299174415,
-   281.81091144397215,
-   562.0719178903688,
-   7.1144169351057585
-  ]
- },
- {
-  "co": {
-   "type": "nonfinancial",
-   "equity": 631349.91,
-   "shares": 490.31,
-   "net_profit": 30181.4,
-   "revenue": 720892.18,
-   "net_debt": 157682.51,
-   "price": 6510.57
-  },
-  "a": {
-   "risk_free": 0.0731,
-   "beta": 1.351,
-   "erp": 0.0624,
-   "payout": 0.424,
-   "fade_years": 7,
-   "forecast_roe": 0.1847,
-   "terminal_roe": 0.1258,
-   "terminal_growth": 0.0501,
-   "debt_weight": 0.449,
-   "cost_debt": 0.0605,
-   "tax_rate": 0.2888,
-   "rev_growth": 0.0922,
-   "ebit_margin": 0.3005,
-   "reinvest_rate": 0.4893,
-   "_valuation_sector": "IT_SERVICES"
-  },
-  "exp_blended": 4358.099235153369,
-  "exp_primary": 4797.907414847745,
-  "exp_components": [
-   4797.907414847745,
-   8170.0738622725385,
-   1680.7797658624138,
-   296.7785259468303
-  ]
- },
- {
-  "co": {
-   "type": "nonfinancial",
-   "equity": 569544.86,
-   "shares": 1381.56,
-   "net_profit": 32616.1,
-   "revenue": 962681.66,
-   "net_debt": 127490.68,
-   "price": 10608.97
-  },
-  "a": {
-   "risk_free": 0.0616,
-   "beta": 0.901,
-   "erp": 0.0642,
-   "payout": 0.243,
-   "fade_years": 9,
-   "forecast_roe": 0.1803,
-   "terminal_roe": 0.1514,
-   "terminal_growth": 0.0499,
-   "debt_weight": 0.445,
-   "cost_debt": 0.1049,
-   "tax_rate": 0.2181,
-   "rev_growth": 0.1008,
-   "ebit_margin": 0.1309,
-   "reinvest_rate": 0.6253,
-   "_valuation_sector": "CONSTRUCTION"
-  },
-  "exp_blended": 857.1812007321918,
-  "exp_primary": 883.0883865590557,
-  "exp_components": [
-   883.0883865590557,
-   1018.4789733924528,
-   389.8180630591505,
-   110.60605368038742
-  ]
- },
- {
-  "co": {
-   "type": "financial",
-   "equity": 114855.84,
-   "shares": 1114.85,
-   "net_profit": 7890.6,
-   "revenue": null,
-   "net_debt": null,
-   "price": 8483.8
-  },
-  "a": {
-   "risk_free": 0.0753,
-   "beta": 1.174,
-   "erp": 0.0425,
-   "payout": 0.19,
-   "fade_years": 12,
-   "forecast_roe": 0.1226,
-   "terminal_roe": 0.1825,
-   "terminal_growth": 0.0446,
-   "debt_weight": 0.2,
-   "cost_debt": 0.085,
-   "tax_rate": 0.25,
-   "rev_growth": 0.1,
-   "ebit_margin": 0.12,
-   "reinvest_rate": 0.35,
-   "_valuation_sector": "INSURANCE"
-  },
-  "exp_blended": 166.52287377545957,
-  "exp_primary": 177.3887896286248,
-  "exp_components": [
-   177.3887896286248,
-   176.275847251386,
-   80.22957284319567,
-   24.596130855772387
-  ]
- },
- {
-  "co": {
-   "type": "nonfinancial",
-   "equity": 652359.25,
-   "shares": 133.2,
-   "net_profit": 45668.87,
-   "revenue": 120739.93,
-   "net_debt": 140911.4,
-   "price": 11730.55
-  },
-  "a": {
-   "risk_free": 0.077,
-   "beta": 0.619,
-   "erp": 0.0541,
-   "payout": 0.36,
-   "fade_years": 10,
-   "forecast_roe": 0.1403,
-   "terminal_roe": 0.1734,
-   "terminal_growth": 0.0477,
-   "debt_weight": 0.508,
-   "cost_debt": 0.0671,
-   "tax_rate": 0.1931,
-   "rev_growth": 0.025,
-   "ebit_margin": 0.2195,
-   "reinvest_rate": 0.5345,
-   "_valuation_sector": "IT_SERVICES"
-  },
-  "exp_blended": 2549.1695144637165,
-  "exp_primary": 2088.8330745099493,
-  "exp_components": [
-   2088.8330745099493,
-   2651.14298478979,
-   8785.77172484985,
-   1812.5730602701171
-  ]
- },
- {
-  "co": {
-   "type": "nonfinancial",
-   "equity": 806177.16,
-   "shares": 300.36,
-   "net_profit": 45229.31,
-   "revenue": 557913.41,
-   "net_debt": 13896.76,
-   "price": 10475.53
-  },
-  "a": {
-   "risk_free": 0.0641,
-   "beta": 0.917,
-   "erp": 0.0605,
-   "payout": 0.435,
-   "fade_years": 7,
-   "forecast_roe": 0.1369,
-   "terminal_roe": 0.1548,
-   "terminal_growth": 0.0506,
-   "debt_weight": 0.469,
-   "cost_debt": 0.1111,
-   "tax_rate": 0.1562,
-   "rev_growth": 0.0547,
-   "ebit_margin": 0.3793,
-   "reinvest_rate": 0.574,
-   "_valuation_sector": "AUTO"
-  },
-  "exp_blended": 6531.384394422765,
-  "exp_primary": 6700.1090915266905,
-  "exp_components": [
-   6700.1090915266905,
-   10377.837272971814,
-   3811.6942274870153,
-   1013.3886120986399
-  ]
- },
- {
-  "co": {
-   "type": "financial",
-   "equity": 70079.36,
-   "shares": 667.05,
-   "net_profit": 76389.55,
-   "revenue": null,
-   "net_debt": null,
-   "price": 4233.72
-  },
-  "a": {
-   "risk_free": 0.0741,
-   "beta": 0.712,
-   "erp": 0.0495,
-   "payout": 0.167,
-   "fade_years": 13,
-   "forecast_roe": 0.1261,
-   "terminal_roe": 0.1771,
-   "terminal_growth": 0.0488,
-   "debt_weight": 0.2,
-   "cost_debt": 0.085,
-   "tax_rate": 0.25,
-   "rev_growth": 0.1,
-   "ebit_margin": 0.12,
-   "reinvest_rate": 0.35,
-   "_valuation_sector": "BANK"
-  },
-  "exp_blended": 280.568975816317,
-  "exp_primary": 265.2164122628694,
-  "exp_components": [
-   265.2164122628694,
-   222.6318445118159,
-   2015.525193014017,
-   470.8124626594631
-  ]
- },
- {
-  "co": {
-   "type": "nonfinancial",
-   "equity": 351376.96,
-   "shares": 81.68,
-   "net_profit": 35969.13,
-   "revenue": 635035.41,
-   "net_debt": 213118.45,
-   "price": 13104.25
-  },
-  "a": {
-   "risk_free": 0.0728,
-   "beta": 1.01,
-   "erp": 0.0556,
-   "payout": 0.595,
-   "fade_years": 12,
-   "forecast_roe": 0.159,
-   "terminal_roe": 0.1435,
-   "terminal_growth": 0.0522,
-   "debt_weight": 0.057,
-   "cost_debt": 0.1115,
-   "tax_rate": 0.2287,
-   "rev_growth": 0.1497,
-   "ebit_margin": 0.373,
-   "reinvest_rate": 0.1118,
-   "_valuation_sector": "CONSTRUCTION"
-  },
-  "exp_blended": 34124.19650139264,
-  "exp_primary": 40682.388465912416,
-  "exp_components": [
-   40682.388465912416,
-   29810.908604932407,
-   7594.339268058275,
-   6602.624495998527
-  ]
- },
- {
-  "co": {
-   "type": "nonfinancial",
-   "equity": 620098.98,
-   "shares": 440.29,
-   "net_profit": 5699.64,
-   "revenue": 80402.92,
-   "net_debt": 27749.82,
-   "price": 12501.27
-  },
-  "a": {
-   "risk_free": 0.0651,
-   "beta": 1.138,
-   "erp": 0.0446,
-   "payout": 0.383,
-   "fade_years": 9,
-   "forecast_roe": 0.0815,
-   "terminal_roe": 0.1318,
-   "terminal_growth": 0.0439,
-   "debt_weight": 0.214,
-   "cost_debt": 0.0853,
-   "tax_rate": 0.1501,
-   "rev_growth": 0.115,
-   "ebit_margin": 0.0439,
-   "reinvest_rate": 0.6454,
-   "_valuation_sector": "CONSTRUCTION"
-  },
-  "exp_blended": 29.791674033621895,
-  "exp_primary": 24.621218209604873,
-  "exp_components": [
-   24.621218209604873,
-   72.39751080555996,
-   216.50838992482227,
-   101.0799109121171
-  ]
- },
- {
-  "co": {
-   "type": "financial",
-   "equity": 262882.39,
-   "shares": 339.14,
-   "net_profit": 87470.78,
-   "revenue": null,
-   "net_debt": null,
-   "price": 4085.99
-  },
-  "a": {
-   "risk_free": 0.0613,
-   "beta": 1.18,
-   "erp": 0.044,
-   "payout": 0.349,
-   "fade_years": 14,
-   "forecast_roe": 0.2538,
-   "terminal_roe": 0.1699,
-   "terminal_growth": 0.0462,
-   "debt_weight": 0.2,
-   "cost_debt": 0.085,
-   "tax_rate": 0.25,
-   "rev_growth": 0.1,
-   "ebit_margin": 0.12,
-   "reinvest_rate": 0.35,
-   "_valuation_sector": "NBFC"
-  },
-  "exp_blended": 3334.3148703867173,
-  "exp_primary": 3335.447141482203,
-  "exp_components": [
-   3335.447141482203,
-   1430.6972909270555,
-   5106.803809636139,
-   2084.3905845979616
-  ]
- },
- {
-  "co": {
-   "type": "nonfinancial",
-   "equity": 179451.63,
-   "shares": 951.78,
-   "net_profit": 90735.39,
-   "revenue": 239975.78,
-   "net_debt": 216489.54,
-   "price": 636.6
-  },
-  "a": {
-   "risk_free": 0.073,
-   "beta": 1.13,
-   "erp": 0.0516,
-   "payout": 0.433,
-   "fade_years": 15,
-   "forecast_roe": 0.1673,
-   "terminal_roe": 0.1114,
-   "terminal_growth": 0.0511,
-   "debt_weight": 0.152,
-   "cost_debt": 0.101,
-   "tax_rate": 0.3166,
-   "rev_growth": 0.0529,
-   "ebit_margin": 0.127,
-   "reinvest_rate": 0.5771,
-   "_valuation_sector": "AVIATION"
-  },
-  "exp_blended": null,
-  "exp_primary": -74.08344026763183,
-  "exp_components": [
-   -74.08344026763183,
-   64.29567561772467,
-   1204.504723331022,
-   547.9383612410709
-  ]
- },
- {
-  "co": {
-   "type": "nonfinancial",
-   "equity": 558745.68,
-   "shares": 1166.3,
-   "net_profit": 36798.27,
-   "revenue": 634158.7,
-   "net_debt": 67327.73,
-   "price": 5541.73
-  },
-  "a": {
-   "risk_free": 0.0666,
-   "beta": 0.921,
-   "erp": 0.0636,
-   "payout": 0.374,
-   "fade_years": 11,
-   "forecast_roe": 0.0972,
-   "terminal_roe": 0.1191,
-   "terminal_growth": 0.0445,
-   "debt_weight": 0.344,
-   "cost_debt": 0.0798,
-   "tax_rate": 0.236,
-   "rev_growth": 0.0386,
-   "ebit_margin": 0.0855,
-   "reinvest_rate": 0.2006,
-   "_valuation_sector": "DEFENCE"
-  },
-  "exp_blended": 512.4887409564693,
-  "exp_primary": 423.544414013611,
-  "exp_components": [
-   423.544414013611,
-   1507.68640999146,
-   917.5367660258936,
-   147.76766829184015
-  ]
- },
- {
-  "co": {
-   "type": "financial",
-   "equity": 142310.41,
-   "shares": 159.92,
-   "net_profit": 57202.95,
-   "revenue": null,
-   "net_debt": null,
-   "price": 11398.55
-  },
-  "a": {
-   "risk_free": 0.071,
-   "beta": 1.291,
-   "erp": 0.0583,
-   "payout": 0.391,
-   "fade_years": 9,
-   "forecast_roe": 0.2025,
-   "terminal_roe": 0.1234,
-   "terminal_growth": 0.0496,
-   "debt_weight": 0.2,
-   "cost_debt": 0.085,
-   "tax_rate": 0.25,
-   "rev_growth": 0.1,
-   "ebit_margin": 0.12,
-   "reinvest_rate": 0.35,
-   "_valuation_sector": "NBFC"
-  },
-  "exp_blended": 992.9635034261506,
-  "exp_primary": 963.0172447564315,
-  "exp_components": [
-   963.0172447564315,
-   679.3907779646328,
-   7082.406265632818,
-   1910.3545624154594
+   9417.815617511133,
+   12978.338849146441,
+   9927.231318023109,
+   6356.573506719947
   ]
  }
 ]
