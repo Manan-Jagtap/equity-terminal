@@ -13,7 +13,7 @@
 export const VIEW_IDS = [
   "dashboard", "screener", "ideas", "baskets", "watchlist", "compare",
   "results", "ownership", "operations", "sectors", "economy", "ipo",
-  "funds", "portfolio", "manager", "track", "styleguide",
+  "funds", "portfolio", "manager", "track", "styleguide", "admin",
 ];
 
 /** pathname → { view, ticker? } | null (unknown → caller falls back, never crashes) */
@@ -48,7 +48,7 @@ const VIEW_TITLE = {
   watchlist: "Watchlist", compare: "Compare", results: "Results", ownership: "Ownership",
   operations: "Operating KPIs", sectors: "Sectors", economy: "Economy", ipo: "IPOs",
   funds: "Mutual Funds", portfolio: "Portfolio", manager: "Fund Manager",
-  track: "Track Record", styleguide: "Style Guide",
+  track: "Track Record", styleguide: "Style Guide", admin: "Ops",
 };
 
 /** Per-page browser title. Company pages get the name + ticker. */

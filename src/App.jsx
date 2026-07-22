@@ -51,6 +51,7 @@ const Ownership   = lazyReload(() => import("./components/Ownership.jsx"));
 const Operations  = lazyReload(() => import("./components/Operations.jsx"));
 const TrackRecord = lazyReload(() => import("./components/TrackRecord.jsx"));
 const Styleguide  = lazyReload(() => import("./components/Styleguide.jsx"));  // internal, redesign Phase 0
+const AdminPanel  = lazyReload(() => import("./components/AdminPanel.jsx"));  // owner ops, /admin (not in nav)
 const Sectors     = lazyReload(() => import("./components/Sectors.jsx"));
 const FundManager = lazyReload(() => import("./components/FundManager.jsx"));
 const IPOBoard    = lazyReload(() => import("./components/IPOBoard.jsx"));
@@ -709,6 +710,9 @@ export default function App() {
           )}
           {view === "styleguide" && (
             <Styleguide />
+          )}
+          {view === "admin" && (
+            <AdminPanel API={API} />
           )}
           {view === "company" && selected && assumptions && (
             <Company
