@@ -3020,6 +3020,27 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
         </div>
       </header>
 
+      {/* ── Corporate-action notice ──────────────────────────────
+           Shown when the backend flags this ticker with a demerger / merger /
+           rename (apiVal.corporate_event). Makes a legitimately-empty or
+           transitioning listing read as "corporate action in progress" rather
+           than a broken page — see backend app/corporate_events.py. */}
+      {apiVal?.corporate_event && (
+        <div style={{ borderBottom:`1px solid ${C.line}`, background:C.gold+"12" }}>
+          <div style={{ padding:`12px ${PAD}px`, display:"flex", gap:12, alignItems:"flex-start",
+                        ...sans, fontSize:13, color:C.text200, lineHeight:1.55 }}>
+            <span aria-hidden style={{ color:C.gold, fontSize:15, lineHeight:1.4 }}>⚑</span>
+            <div>
+              <span style={{ color:C.gold, fontWeight:600, textTransform:"uppercase",
+                             letterSpacing:"0.08em", fontSize:11, marginRight:8 }}>
+                Corporate action{apiVal.corporate_event.effective ? ` · ${apiVal.corporate_event.effective}` : ""}
+              </span>
+              {apiVal.corporate_event.note}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Snapshot strip ─────────────────────────────────────── */}
       <div style={{ borderBottom:`1px solid ${C.line}`, background:C.bg900+"55" }}>
         <div style={{ padding:`14px ${PAD}px`, display:"grid", gridTemplateColumns: isMobile ? "repeat(3,1fr)" : "repeat(11,1fr)", gap: isMobile ? 14 : 8, rowGap: isMobile ? 16 : 8 }}>
