@@ -366,14 +366,21 @@ export default function EconomyDashboard() {
         </div>
       )}
 
-      {/* Sections */}
-      {(data.sections || []).map(sec => (
+      {/* Sections — indicators without a live feed ("awaiting source") are
+          HIDDEN, not shown as blank cards: an empty tile tells a reader
+          nothing. The API still lists them (admin/status visibility), and a
+          card reappears automatically the moment its feed produces data. A
+          section whose every indicator is awaiting collapses entirely. */}
+      {(data.sections || [])
+        .map(sec => ({ ...sec, series: (sec.series || []).filter(r => !r.awaiting) }))
+        .filter(sec => sec.series.length > 0)
+        .map(sec => (
         <div key={sec.title} style={{ marginBottom: 24 }}>
           <div style={{ ...sans, fontSize: 10.5, textTransform: "uppercase", letterSpacing: "0.12em",
                         color: C.dim, marginBottom: 10 }}>{sec.title}</div>
           <div style={{ display: "grid", gap: 12,
                         gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? 150 : 210}px, 1fr))` }}>
-            {(sec.series || []).map(r => <IndicatorCard key={r.slug} r={r} onOpen={x => setOpen(x)} />)}
+            {sec.series.map(r => <IndicatorCard key={r.slug} r={r} onOpen={x => setOpen(x)} />)}
           </div>
         </div>
       ))}
