@@ -257,6 +257,26 @@ function _deriveNonfinancial(statements, vs) {
   }
   drivers.fade_years = `CAP ${fadeYears}y (ROIC ${_pct(roicUsed)} vs sector ${_pct(p.mature_roic)}${cyclical ? ", cyclical-capped" : ""})`;
 
+  // VAL-02 (nonfin analog of FIX-17): evidence-earned compounder terminal ROIC.
+  // A proven durable franchise fades only HALFWAY to the sector mature ROIC in
+  // the terminal, instead of surrendering its whole return advantage. Strictly
+  // gated (non-cyclical, ≥6y history, roic ≥1.4× sector, margins not in
+  // structural decline), one-sided, capped 1.5×sector / 40%. Mirrors derive.py.
+  let terminalRoic = null;
+  if (!cyclical && ebit.length >= 6
+      && p.mature_roic && roicUsed >= 1.4 * p.mature_roic
+      && terminalEbitMargin >= 0.9 * ebitMargin) {
+    const cand = Math.min(0.5 * roicUsed + 0.5 * p.mature_roic,
+                          1.5 * p.mature_roic, 0.40);
+    if (cand > p.mature_roic) {
+      terminalRoic = roundPy(cand, 4);
+      drivers.terminal_roic =
+        `earned compounder terminal ${_pct(terminalRoic)} — fades halfway ` +
+        `to sector ${_pct(p.mature_roic)} (own ${_pct(roicUsed)} ≥1.4×, ` +
+        `${ebit.length}y history, stable margins); capped 1.5×sector / 40%`;
+    }
+  }
+
   return {
     beta: p.beta, risk_free: RISK_FREE, erp: ERP,
     rev_growth: roundPy(revGrowth, 4),
@@ -268,6 +288,7 @@ function _deriveNonfinancial(statements, vs) {
     cost_debt: roundPy(costDebt, 4),
     fade_years: fadeYears,
     terminal_growth: p.terminal_growth,
+    terminal_roic: terminalRoic,   // VAL-02: earned compounder terminal (null = sector default)
     forecast_roe: 0.15, terminal_roe: p.mature_roe, payout: 0.25,
     _drivers: drivers, _valuation_sector: vs,
   };
