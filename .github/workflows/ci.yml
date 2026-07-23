@@ -32,6 +32,15 @@ jobs:
       # (react-hooks/set-state-in-effect + static-components) is cleared.
       - name: Lint (report)
         run: npm run lint || true
+      # SEC-13: dependency-CVE gate. Audit PRODUCTION deps only (--omit=dev):
+      # a high in a shipped dependency reaches users and must block the merge,
+      # while build-tool/dev advisories (vite, eslint, etc. — which never enter
+      # the bundle) surface in the non-blocking report below without ever
+      # blocking a deploy.
+      - name: Dependency audit — production deps (block on high)
+        run: npm audit --omit=dev --audit-level=high
+      - name: Dependency audit — full tree (report only)
+        run: npm audit || true
       - name: Engine parity (must be 60/60)
         run: node tests/engineParity.mjs
       - name: Derive parity (must be 48/48)
