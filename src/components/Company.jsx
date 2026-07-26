@@ -2629,14 +2629,35 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
       .catch(() => {});
     return () => { dead = true; };
   }, [API, co.ticker]);
+  // Docs is gated the same way as News, and for the same reason: the vendor
+  // revoked its /documents endpoint (DATA-12), so some names legitimately have
+  // nothing to show and an empty Docs tab reads like a bug. Fetched at page
+  // level so the TAB can be hidden; DocsTab still fetches its own copy for the
+  // full render. null = not loaded yet → fail OPEN and keep the tab.
+  const [docsData, setDocsData] = useState(null);
+  useEffect(() => {
+    setDocsData(null);
+    if (!API || !co.ticker) return;
+    let dead = false;
+    fetch(`${API}/api/companies/${co.ticker}/documents`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (!dead && d) setDocsData(d); })
+      .catch(() => {});
+    return () => { dead = true; };
+  }, [API, co.ticker]);
   const visibleTabs = useMemo(() => {
     const tk = (co.ticker || "").toUpperCase().replace(/-/g, "").replace(/&/g, "");
     const hasFO = !fnoSet || fnoSet.has((co.ticker || "").toUpperCase()) || fnoSet.has(tk);
     let tabs = hasFO ? TABS : TABS.filter(t => t.id !== "options");
     if (newsData && (newsData.count || 0) === 0 && !(newsData.items || []).length)
       tabs = tabs.filter(t => t.id !== "news");
+    // Empty = every document bucket absent/empty (concalls, annual reports,
+    // credit ratings, announcements). Any one populated keeps the tab.
+    if (docsData && !["concalls", "annual_reports", "credit_ratings", "announcements"]
+        .some(k => (docsData[k] || []).length))
+      tabs = tabs.filter(t => t.id !== "docs");
     return tabs;
-  }, [co.ticker, fnoSet, newsData]);
+  }, [co.ticker, fnoSet, newsData, docsData]);
   // Landing on a hidden tab (e.g. Options open, then switching to a cash-only
   // name) would render nothing — snap back to the overview.
   if (!visibleTabs.some(t => t.id === tab)) setTab("overview");
