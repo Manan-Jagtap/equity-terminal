@@ -109,6 +109,10 @@ export function residualIncome(co, a) {
            tv_pv: tvPv, rows, method: "Residual Income" };
 }
 
+// CORR-6: ceiling on the explicit-stage reinvestment consistency floor.
+// Mirrors _REINVEST_CAP in app/engines.py.
+const REINVEST_CAP = 0.90;
+
 export function fcffDcf(co, a) {
   // Two-stage growth, mirroring app/engines.py exactly: hold the derived
   // stage-1 rate for the franchise phase (N1 = N//2), then fade linearly to
@@ -129,13 +133,24 @@ export function fcffDcf(co, a) {
   const mTerm = (a.terminal_ebit_margin ?? m0);   // margins mean-revert; glide
   let rev = co.revenue, pv = 0, nopat = 0;
   const rows = [];
+  // CORR-6 (mirrors engines.py): growth must be PAID FOR. The explicit stage
+  // applied one historical reinvest_rate while revenue compounded at the full
+  // derived growth — 79% of the calibration set reinvested LESS than g/ROIC
+  // (median shortfall 25pp), i.e. free growth capitalised into every forecast
+  // year. The terminal value already enforced this link; the explicit stage did
+  // not. One-sided: only RAISES reinvestment to the consistency floor.
+  const roicEx = a.roic_used || a.terminal_roic
+                 || params(a._valuation_sector).mature_roic || 0.12;
   for (let t = 1; t <= N; t++) {
     const g = t <= N1 ? g1 : g1 + (gT - g1) * ((t - N1) / (N - N1));
     rev = rev * (1 + g);
     const margin = N <= 1 ? m0 : m0 + (mTerm - m0) * ((t - 1) / (N - 1));
     const ebit = rev * margin;
     nopat = ebit * (1 - a.tax_rate);
-    const fcff = nopat * (1 - a.reinvest_rate);
+    // Reinvestment consistency: funding year-t growth needs g_t / ROIC.
+    let rrT = a.reinvest_rate;
+    if (roicEx > 0 && g > 0) rrT = Math.max(rrT, Math.min(g / roicEx, REINVEST_CAP));
+    const fcff = nopat * (1 - rrT);
     const disc = Math.pow(1 + wacc, t);
     pv += fcff / disc;
     rows.push({ t, rev, fcff, pv: fcff / disc });
