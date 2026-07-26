@@ -19,7 +19,16 @@
 
 // ── sector_params.py ────────────────────────────────────────────────────────
 export const RISK_FREE = 0.069;
-export const ERP = 0.050;
+// CORR-8: India equity risk premium (mirrors sector_params.py). 5.0% was a
+// mature-market number; India carries a country-risk premium on top, so the
+// old value under-discounted every non-financial. 6.5% took ground-truth
+// within-band from 17.8% to 31.5%.
+export const ERP = 0.065;
+// CORR-8b: financials keep the 5.0% premium (mirrors sector_params.ERP_FIN).
+// Regulated, deposit-funded lenders are over-discounted by the industrial
+// country-risk premium — ground truth put BANK at 4/8 in band on 5.0% vs 0/8
+// on 6.5%. Also keeps the FIX-17 durability gate economically stable.
+export const ERP_FIN = 0.050;
 
 export const SECTOR_PARAMS = {
   // Non-financials
