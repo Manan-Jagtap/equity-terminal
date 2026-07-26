@@ -218,6 +218,16 @@ function _deriveNonfinancial(statements, vs) {
     revGrowth = 0.08;
     drivers.rev_growth += " → floored 8% (durable high-ROIC franchise)";
   }
+  // CORR-1: near-term growth is earned from return-on-capital quality — mirrors
+  // derive.py `_growth_ceiling`. A business that does not out-earn its sector's
+  // mature ROIC has shown no return advantage to defend growth with, so it is
+  // not assumed to outgrow the economy it operates in. One-directional: this
+  // only ever LOWERS an unearned rate, never raises anyone's growth.
+  const qHi = _growthCeiling(roicUsed, p.mature_roic);
+  if (revGrowth > qHi) {
+    revGrowth = qHi;
+    drivers.rev_growth += ` → capped ${_pct(qHi)} (ROIC-earned growth)`;
+  }
   const identity = roicUsed ? revGrowth / roicUsed : 0.40;
   const actualReinv = _actualReinvestment(capex, dep, receivables, inventory, payables, ebit, taxRate);
   let reinvestRate;
@@ -386,6 +396,18 @@ function _deriveFinancial(statements, vs) {
 
 /** Derive the full assumption block from statement history + sector params —
  *  the exact backend derive_assumptions. */
+// CORR-1 growth ceiling — mirrors derive.py. 1.1 is the same roic_q threshold at
+// which fadeYears grants its first horizon step-up, so the growth RATE and the
+// growth RUNWAY key off one consistent piece of evidence about the business.
+const _GROWTH_ROIC_Q = 1.1;
+const _GROWTH_HI_EARNED = 0.18;  // out-earns its sector's mature ROIC → unchanged
+const _GROWTH_HI_BASE = 0.10;    // ≈ India's long-run NOMINAL GDP growth
+
+function _growthCeiling(roicUsed, matureRoic) {
+  if (!matureRoic) return _GROWTH_HI_EARNED;
+  return roicUsed / matureRoic >= _GROWTH_ROIC_Q ? _GROWTH_HI_EARNED : _GROWTH_HI_BASE;
+}
+
 export function deriveAssumptions(statements, valuationSector, isFinancial) {
   statements = statements || {};
   if (isFinancial) return _deriveFinancial(statements, valuationSector);
