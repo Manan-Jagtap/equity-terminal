@@ -15,7 +15,7 @@
  * shape the backend's build_financials_response produces and the /financials
  * endpoint serves, so live statements can be fed straight in.
  */
-import { SECTOR_PARAMS, DEFAULT_SECTOR, RISK_FREE, ERP, params } from "./engine.js";
+import { SECTOR_PARAMS, DEFAULT_SECTOR, RISK_FREE, ERP, ERP_FIN, params } from "./engine.js";
 
 // ── small numeric helpers (match Python semantics) ──────────────────────────
 const _clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
@@ -333,7 +333,8 @@ function _deriveFinancial(statements, vs) {
     }
   }
   if (roeHist.length >= 4) {
-    const keF = RISK_FREE + p.beta * ERP;
+    // CORR-8b: financial gate uses the financial ERP (mirrors derive.py).
+    const keF = RISK_FREE + p.beta * ERP_FIN;
     const sortedRoe = [...roeHist].sort((a, b) => a - b);
     const franchise0 = median(sortedRoe.slice(Math.floor(sortedRoe.length / 2)));
     const stable = latestRoe !== null && franchise0 > 0 && latestRoe >= 0.80 * franchise0;
@@ -370,7 +371,8 @@ function _deriveFinancial(statements, vs) {
   drivers.fade_years = `CAP ${fadeYears}y (ROE ${_pct(forecastRoe)}, payout ${_pct(payout)})`;
 
   return {
-    beta: p.beta, risk_free: RISK_FREE, erp: ERP,
+    // CORR-8b: financials use the financial ERP (mirrors derive.py).
+    beta: p.beta, risk_free: RISK_FREE, erp: ERP_FIN,
     forecast_roe: roundPy(forecastRoe, 4),
     terminal_roe: roundPy(terminalRoe, 4),
     payout: roundPy(payout, 4),
