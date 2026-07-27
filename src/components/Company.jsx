@@ -2784,6 +2784,8 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
   const fairValue    = apiRecHead?.blended ?? apiRecHead?.intrinsic ?? null;
   const fairUpside   = apiRecHead?.mos ?? null;
   const modelVerdict = apiRecHead?.verdict || null;
+  // Present when the backend withheld the point estimate (DAT-13b).
+  const fairValueNote = apiRecHead?.fair_value_note || null;
   const modelVerdictColor = !modelVerdict ? C.dim
     : /buy|accumulate/i.test(modelVerdict) ? C.green
     : /hold/i.test(modelVerdict) ? C.gold : C.red;
@@ -3088,13 +3090,22 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
             { l:"Promoter Hold",    v:promoterLive!=null?fmtPa(promoterLive)
                                       :liveInsights?.ownership?.promoter?.pct!=null?fmtPa(liveInsights.ownership.promoter.pct)
                                       :(mktData.promoterPct!=null?fmtPa(mktData.promoterPct):"—"), accent:C.gold },
-            { l:"Fair Value",       v:fairValue!=null?inrOrDash(fairValue,0):"—", accent:C.gold },
+            // DAT-13b: a suppressed fair value is NOT missing data. The engine
+            // has a number and is deliberately withholding it (equity is a thin
+            // residual behind heavy debt, so the point estimate is meaningless
+            // while the AVOID still stands). "—" would read as "we have nothing";
+            // "n/m" plus the reason says "we looked, and this figure would mislead".
+            { l:"Fair Value",
+              v: fairValue != null ? inrOrDash(fairValue,0)
+                 : fairValueNote ? "n/m" : "—",
+              title: fairValueNote || undefined,
+              accent: fairValueNote ? C.dim : C.gold },
             { l:"Upside",           v:fairUpside!=null?signedPct(fairUpside):"—", accent:fairUpside==null?C.dim:fairUpside>=0?C.green:C.red },
             { l:"Verdict",          v:modelVerdict||"—", accent:modelVerdictColor, large:true },
           ].filter(Boolean).map(s => (
             <div key={s.l} style={{ minWidth: 0 }}>
               <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.12em", color:C.dim, fontWeight:500, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }} title={s.l}>{s.l}</div>
-              <div style={{ ...mono, fontSize:s.large?18:16, color:s.accent||C.text, marginTop:4, fontWeight:s.large?600:400, letterSpacing:s.large?"0.06em":"0", whiteSpace:"nowrap" }}>{s.v}</div>
+              <div title={s.title} style={{ ...mono, fontSize:s.large?18:16, color:s.accent||C.text, marginTop:4, fontWeight:s.large?600:400, letterSpacing:s.large?"0.06em":"0", whiteSpace:"nowrap" }}>{s.v}</div>
             </div>
           ))}
         </div>

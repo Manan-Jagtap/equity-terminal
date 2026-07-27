@@ -140,6 +140,11 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
           confidence: { level: a.confidence || "medium", flags: [] },
           pb: a.pb ?? f.pb, pe: a.pe ?? f.pe, roe: a.roe ?? f.roe,
           sentiment: a.sentiment ?? null, sentimentLabel: a.sentimentLabel ?? null,
+          // DAT-13b: verdict stands, the number is withheld. mos/iv already
+          // arrive null from the API; carry the note so the cell can say why.
+          fairValueNote: a.fair_value_note || null,
+          // -Infinity keeps these out of the "most undervalued" end of a sort —
+          // a withheld figure must never rank as if it were a real one.
           sortMos: noCall ? -Infinity : (a.mos ?? -Infinity),
         };
       }
@@ -361,10 +366,14 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
                   {inr(liveFeed.prices?.[(r.co.ticker || "").toUpperCase()] ?? r.co.price)} <span style={{ color: C.faint }}>/</span>{" "}
                   {r.consensus != null
                     ? <span title="Analyst consensus target — our model has no call on this name" style={{ color: C.dim }}>{inrOrDash(r.consensus)}<span style={{ fontSize: 9, color: C.faint }}> ⌖</span></span>
+                    : r.iv == null && r.fairValueNote
+                      ? <span title={r.fairValueNote} style={{ color: C.faint }}>n/m</span>
                     : <span style={{ color: C.gold }}>{inrOrDash(r.iv)}</span>}
                 </td>
                 <td style={{ ...mono, textAlign: "right", padding: "11px 12px", fontSize: 12, color: r.mos == null ? C.faint : r.mos >= 0 ? C.green : C.red }}>
                   {r.mos != null ? signedPct(r.mos)
+                    : r.fairValueNote
+                      ? <span title={r.fairValueNote} style={{ color: C.faint }}>n/m</span>
                     : r.consensusUpside != null
                       ? <span title="Analyst consensus upside — not our model" style={{ color: C.dim }}>{signedPct(r.consensusUpside)}<span style={{ fontSize: 9, color: C.faint }}> ⌖</span></span>
                       : "—"}
