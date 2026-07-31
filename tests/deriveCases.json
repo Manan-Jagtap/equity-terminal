@@ -4603,7 +4603,7 @@
    "beta": 1.05,
    "risk_free": 0.069,
    "erp": 0.065,
-   "rev_growth": 0.1,
+   "rev_growth": 0.12,
    "ebit_margin": 0.1876,
    "terminal_ebit_margin": 0.1876,
    "tax_rate": 0.2083,

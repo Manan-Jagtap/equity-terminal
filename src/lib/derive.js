@@ -223,7 +223,7 @@ function _deriveNonfinancial(statements, vs) {
   // mature ROIC has shown no return advantage to defend growth with, so it is
   // not assumed to outgrow the economy it operates in. One-directional: this
   // only ever LOWERS an unearned rate, never raises anyone's growth.
-  const qHi = _growthCeiling(roicUsed, p.mature_roic);
+  const qHi = _growthCeiling(companyRoic, p.mature_roic);
   if (revGrowth > qHi) {
     revGrowth = qHi;
     drivers.rev_growth += ` → capped ${_pct(qHi)} (ROIC-earned growth)`;
@@ -403,9 +403,15 @@ const _GROWTH_ROIC_Q = 1.1;
 const _GROWTH_HI_EARNED = 0.18;  // out-earns its sector's mature ROIC → unchanged
 const _GROWTH_HI_BASE = 0.10;    // ≈ India's long-run NOMINAL GDP growth
 
-function _growthCeiling(roicUsed, matureRoic) {
-  if (!matureRoic) return _GROWTH_HI_EARNED;
-  return roicUsed / matureRoic >= _GROWTH_ROIC_Q ? _GROWTH_HI_EARNED : _GROWTH_HI_BASE;
+// Keys off the MEASURED company ROIC, never roicUsed. roicUsed is floored at
+// the sector value by _clamp, so roicUsed / matureRoic cannot read below 1.0;
+// feeding it here capped names that had shown no return shortfall at all —
+// unmeasured ROIC scored exactly 1.00 and was punished as a failure, and the
+// 0.6/0.4 blend demanded 1.167x sector to clear a 1.1x threshold. See the
+// derive.py docstring for the measured scope (62 of 264 capped names).
+function _growthCeiling(companyRoic, matureRoic) {
+  if (!matureRoic || !companyRoic) return _GROWTH_HI_EARNED;
+  return companyRoic / matureRoic >= _GROWTH_ROIC_Q ? _GROWTH_HI_EARNED : _GROWTH_HI_BASE;
 }
 
 export function deriveAssumptions(statements, valuationSector, isFinancial) {
