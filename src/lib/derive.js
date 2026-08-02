@@ -224,16 +224,29 @@ function _deriveNonfinancial(statements, vs) {
   // not assumed to outgrow the economy it operates in. One-directional: this
   // only ever LOWERS an unearned rate, never raises anyone's growth.
   const qHi = _growthCeiling(companyRoic, p.mature_roic);
-  if (revGrowth > qHi) {
+  const capped = revGrowth > qHi;
+  if (capped) {
     revGrowth = qHi;
     drivers.rev_growth += ` → capped ${_pct(qHi)} (ROIC-earned growth)`;
   }
-  const identity = roicUsed ? revGrowth / roicUsed : 0.40;
+  let identity = roicUsed ? revGrowth / roicUsed : 0.40;
   const actualReinv = _actualReinvestment(capex, dep, receivables, inventory, payables, ebit, taxRate);
   let reinvestRate;
   if (actualReinv !== null && actualReinv > identity + 0.05) {
     reinvestRate = _clamp(0.5 * identity + 0.5 * actualReinv, 0.10, 0.75);
     drivers.reinvest_rate = `g/ROIC ${_pct(identity)} raised toward measured net-capex intensity ${_pct(actualReinv)} (capital-heavy build-out)`;
+    // Mirrors derive.py: when the ceiling BOUND and we nevertheless charge the
+    // measured ramp capex, credit the growth that reinvestment implies
+    // (g = reinvest x ROIC). Charging the full cash cost of building for growth
+    // while valuing only the capped growth is the incoherence itself.
+    if (capped && roicUsed) {
+      const gImplied = reinvestRate * roicUsed;
+      if (gImplied > revGrowth) {
+        revGrowth = Math.min(gImplied, _GROWTH_HI_EARNED);
+        identity = revGrowth / roicUsed;
+        drivers.rev_growth += ` → lifted to ${_pct(revGrowth)} (growth implied by the ${_pct(reinvestRate)} reinvestment actually charged)`;
+      }
+    }
   } else {
     reinvestRate = _clamp(identity, 0.10, 0.65);
     drivers.reinvest_rate = `g/ROIC (g=${_pct(revGrowth)}, ROIC=${_pct(roicUsed)} — own ${_pct(companyRoic)} blended to sector ${_pct(p.mature_roic)})` +
