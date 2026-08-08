@@ -3,12 +3,14 @@
    other tabs use: groups by valuation_sector, shows per-sector medians,
    median MoS, verdict mix, and the cheapest / richest name. */
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Loader2, TrendingUp, TrendingDown } from "lucide-react";
 import { C, sans, serif, mono } from "../lib/theme.js";
 import { verdictColor } from "../design/tokens.js";
 import { multiple, signedPct } from "../lib/formatters.js";
 import PageHeader from "./ui/PageHeader.jsx";
+import ErrorState from "./ui/ErrorState.jsx";
+import useResource from "../lib/useResource.js";
 
 // UX-13: human-readable sector labels — the raw valuation_sector enum
 // ("CONSUMER_DISC", "IT_SERVICES") must never leak into the UI.
@@ -67,21 +69,14 @@ function VerdictBar({ counts, total }) {
 }
 
 export default function Sectors({ API, onOpen }) {
-  const [rows, setRows]       = useState(null);
-  const [loading, setLoading] = useState(true);
+  // useResource: the old fetch().then(r=>r.json()).catch() never fired its
+  // .catch on an API 4xx/5xx (FastAPI answers with a JSON body), so an
+  // outage rendered as an empty dataset rather than a failure.
+  const { data: rows, error, loading, retry } = useResource(
+    API ? `${API}/api/companies` : null,
+    { transform: d => (Array.isArray(d) ? d : (d.items || [])) });
   const [openSector, setOpenSector] = useState(null); // expanded card
 
-  useEffect(() => {
-    if (!API) { setLoading(false); return; }
-    let live = true;
-    setLoading(true);
-    // FULL visible universe — this tab aggregated only the Nifty-50 slice
-    // before, silently ignoring 450 covered names.
-    fetch(`${API}/api/companies`).then(r => r.json())
-      .then(d => { if (live) { setRows(Array.isArray(d) ? d : (d.items || [])); setLoading(false); } })
-      .catch(() => { if (live) { setRows(null); setLoading(false); } });
-    return () => { live = false; };
-  }, [API]);
 
   const sectors = useMemo(() => {
     const groups = new Map();
@@ -128,6 +123,17 @@ export default function Sectors({ API, onOpen }) {
   if (loading) return (
     <div style={{ padding: 48, display: "flex", alignItems: "center", gap: 10, color: C.dim, ...sans, fontSize: 13 }}>
       <Loader2 size={16} className="spin" /> Loading sectors…
+    </div>
+  );
+
+  // A failed request is not an empty dataset. useResource separates them;
+  // this is where that distinction reaches the user.
+  if (error) return (
+    <div className="fadein" style={{ padding: "24px 32px" }}>
+      <PageHeader title="Sectors">
+        Valuation by sector — median multiples and median margin of safety.
+      </PageHeader>
+      <ErrorState error={error} onRetry={retry} what="sectors" />
     </div>
   );
 

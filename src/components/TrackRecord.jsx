@@ -5,10 +5,13 @@
    changes, closes when it changes again). Forward returns are measured per
    cohort; the headline is the BUY−AVOID spread. No backfilled history, no
    survivorship editing — the ledger starts the day tracking began. */
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { History, Loader2, TrendingUp, TrendingDown, ShieldCheck } from "lucide-react";
 import { C, sans, serif, mono } from "../lib/theme.js";
 import { VerdictBadge } from "./primitives.jsx";
+import PageHeader from "./ui/PageHeader.jsx";
+import ErrorState from "./ui/ErrorState.jsx";
+import useResource from "../lib/useResource.js";
 
 const inr = v => v == null ? "—" : "₹" + Number(v).toLocaleString("en-IN", { maximumFractionDigits: v >= 100 ? 0 : 2 });
 const pct = v => v == null ? "—" : (v >= 0 ? "+" : "") + (v * 100).toFixed(1) + "%";
@@ -64,19 +67,12 @@ function CohortCard({ name, c }) {
 }
 
 export default function TrackRecord({ API, onOpen }) {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // useResource: the old fetch().then(r=>r.json()).catch() never fired its
+  // .catch on an API 4xx/5xx (FastAPI answers with a JSON body), so an
+  // outage rendered as an empty dataset rather than a failure.
+  const { data: data, error, loading, retry } = useResource(API ? `${API}/api/backtest` : null);
   const [sort, setSort] = useState("latest");
 
-  useEffect(() => {
-    if (!API) { setLoading(false); return; }
-    let live = true;
-    setLoading(true);
-    fetch(`${API}/api/backtest`).then(r => r.json())
-      .then(d => { if (live) { setData(d); setLoading(false); } })
-      .catch(() => { if (live) { setData(null); setLoading(false); } });
-    return () => { live = false; };
-  }, [API]);
 
   const calls = useMemo(() => {
     const items = (data?.calls || []).slice();
@@ -90,6 +86,17 @@ export default function TrackRecord({ API, onOpen }) {
   if (loading) return (
     <div style={{ padding: 48, display: "flex", alignItems: "center", gap: 10, color: C.dim, ...sans, fontSize: 13 }}>
       <Loader2 size={16} className="spin" /> Loading track record…
+    </div>
+  );
+
+  // A failed request is not an empty dataset. useResource separates them;
+  // this is where that distinction reaches the user.
+  if (error) return (
+    <div className="fadein" style={{ padding: "20px 24px 60px" }}>
+      <PageHeader title="Track Record">
+        Every verdict is snapshotted daily and graded in public — nothing backfilled.
+      </PageHeader>
+      <ErrorState error={error} onRetry={retry} what="the track record" />
     </div>
   );
 
