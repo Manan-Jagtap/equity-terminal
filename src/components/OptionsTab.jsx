@@ -7,6 +7,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Loader2, Layers, LineChart as LineIcon, Plus, X } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ReferenceLine, ResponsiveContainer, ReferenceDot } from "recharts";
 import { C, sans, serif, mono } from "../lib/theme.js";
+import { th, tdNum } from "../design/table.js";
 
 const num = v => v == null ? "—" : Number(v).toLocaleString("en-IN", { maximumFractionDigits: 0 });
 const f2 = v => v == null ? "—" : Number(v).toFixed(2);
@@ -120,7 +121,7 @@ function StrategyBuilder({ data, spot }) {
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 }}>
         {Object.keys(PRESETS).map(name => (
           <button key={name} onClick={() => applyPreset(name)} style={{
-            ...sans, fontSize: 11.5, padding: "5px 10px", borderRadius: 7, cursor: "pointer",
+            ...sans, fontSize: 11.5, padding: "5px 10px", borderRadius: 6, cursor: "pointer",
             border: `1px solid ${preset === name ? C.gold : C.line2}`,
             background: preset === name ? C.gold + "16" : "transparent",
             color: preset === name ? C.gold : C.dim,
@@ -202,7 +203,11 @@ export default function OptionsTab({ co, API }) {
     if (!API) { setLoading(false); return; }
     let live = true; setLoading(true);
     const url = `${API}/api/companies/${co.ticker}/options` + (expiry ? `?expiry=${encodeURIComponent(expiry)}` : "");
-    fetch(url).then(r => r.json())
+    // r.ok: the API answers 4xx/5xx with a JSON body, so `.then(r => r.json())`
+    // RESOLVES on failure and `strikes` becomes [] — an outage rendered as
+    // "this name has no option chain", which for an F&O name is simply false.
+    fetch(url)
+      .then(r => { if (!r.ok) throw new Error(`options ${r.status}`); return r.json(); })
       .then(d => { if (live) { setData(d); setLoading(false); if (!expiry && d.expiry) setExpiry(d.expiry); } })
       .catch(() => { if (live) { setData(null); setLoading(false); } });
     return () => { live = false; };
@@ -228,8 +233,6 @@ export default function OptionsTab({ co, API }) {
   if (!data || data.configured === false) return <Empty msg={data?.message || "Options require Dhan to be connected."} />;
   if (!data.available) return <Empty msg={data.message || "No option chain available for this name."} />;
 
-  const th = { ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", color: C.dim, padding: "7px 8px", textAlign: "right", whiteSpace: "nowrap" };
-  const td = { ...mono, fontSize: 11.5, padding: "5px 8px", textAlign: "right", whiteSpace: "nowrap" };
   const oiBar = (v, side) => (
     <div style={{ height: 3, background: C.bg600, borderRadius: 2, marginTop: 2 }}>
       <div style={{ height: "100%", marginLeft: side === "ce" ? "auto" : 0, width: `${Math.min(100, (v / maxOI) * 100)}%`, background: side === "ce" ? C.red : C.green, opacity: 0.6, borderRadius: 2 }} />
@@ -255,7 +258,7 @@ export default function OptionsTab({ co, API }) {
           <b style={{ ...mono, color: (data.pcr || 0) > 1 ? C.green : C.red }}>{data.pcr != null ? data.pcr.toFixed(2) : "—"}</b>
         </span>
         <select value={expiry || ""} onChange={e => setExpiry(e.target.value)}
-          style={{ ...mono, marginLeft: "auto", fontSize: 12, background: C.panel2, color: C.text, border: `1px solid ${C.line2}`, borderRadius: 7, padding: "5px 9px" }}>
+          style={{ ...mono, marginLeft: "auto", fontSize: 12, background: C.panel2, color: C.text, border: `1px solid ${C.line2}`, borderRadius: 6, padding: "5px 9px" }}>
           {(data.expiries || []).map(x => <option key={x} value={x}>{x}</option>)}
         </select>
       </div>
@@ -273,6 +276,9 @@ export default function OptionsTab({ co, API }) {
             <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 720 }}>
               <thead style={{ position: "sticky", top: 0, background: C.bg900, zIndex: 1 }}>
                 <tr>
+                  {/* The chain is mirrored around the strike: calls read
+                      right-to-left, puts left-to-right, so the alignment
+                      overrides here are the layout, not drift. */}
                   <th style={{ ...th, textAlign: "left", color: C.red }}>CALL OI</th>
                   <th style={th}>IV</th><th style={th}>LTP</th>
                   <th style={{ ...th, textAlign: "center", color: C.gold }}>STRIKE</th>
@@ -286,13 +292,13 @@ export default function OptionsTab({ co, API }) {
                   return (
                     <tr key={s.strike} ref={atm ? atmRef : null}
                         style={{ borderTop: `1px solid ${C.line}`, background: atm ? C.bg800 : "transparent" }}>
-                      <td style={{ ...td, textAlign: "left" }}>{num(s.ce?.oi)}{oiBar(s.ce?.oi || 0, "ce")}</td>
-                      <td style={{ ...td, color: C.dim }}>{f2(s.ce?.iv)}</td>
-                      <td style={{ ...td, color: C.text }}>{f2(s.ce?.ltp)}</td>
-                      <td style={{ ...td, textAlign: "center", color: atm ? C.gold : C.text200, fontWeight: atm ? 700 : 400 }}>{num(s.strike)}</td>
-                      <td style={{ ...td, textAlign: "left", color: C.text }}>{f2(s.pe?.ltp)}</td>
-                      <td style={{ ...td, textAlign: "left", color: C.dim }}>{f2(s.pe?.iv)}</td>
-                      <td style={{ ...td, textAlign: "left" }}>{num(s.pe?.oi)}{oiBar(s.pe?.oi || 0, "pe")}</td>
+                      <td style={{ ...tdNum, textAlign: "left" }}>{num(s.ce?.oi)}{oiBar(s.ce?.oi || 0, "ce")}</td>
+                      <td style={{ ...tdNum, color: C.dim }}>{f2(s.ce?.iv)}</td>
+                      <td style={tdNum}>{f2(s.ce?.ltp)}</td>
+                      <td style={{ ...tdNum, textAlign: "center", color: atm ? C.gold : C.text200, fontWeight: atm ? 700 : 400 }}>{num(s.strike)}</td>
+                      <td style={{ ...tdNum, textAlign: "left" }}>{f2(s.pe?.ltp)}</td>
+                      <td style={{ ...tdNum, textAlign: "left", color: C.dim }}>{f2(s.pe?.iv)}</td>
+                      <td style={{ ...tdNum, textAlign: "left" }}>{num(s.pe?.oi)}{oiBar(s.pe?.oi || 0, "pe")}</td>
                     </tr>
                   );
                 })}

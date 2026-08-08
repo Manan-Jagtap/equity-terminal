@@ -76,3 +76,21 @@ export const tdName = {
   textOverflow: "ellipsis",
   whiteSpace: "nowrap",
 };
+
+/* ── Compact variant ────────────────────────────────────────────────────────
+   One table in the app is legitimately denser than the rest: the option chain.
+   It renders a strike ladder inside a 560px scroll box, and how many strikes a
+   trader can see WITHOUT scrolling is the point of the view — an option chain
+   you have to scroll to read is a worse option chain.
+
+   Consolidating it onto the standard rhythm took its cells from 5px 8px /
+   11.5px to 11px 12px / 12px, which roughly doubled the row height and halved
+   the visible ladder. That is the consolidation being applied too literally:
+   the goal was to remove SEVEN accidental rhythms, not to deny that one table
+   has a real reason to be tighter.
+
+   So there are exactly two rhythms, both defined here, and a screen may only
+   use the compact one when density is the feature rather than an accident. */
+export const thCompact = { ...th, padding: "7px 8px" };
+export const tdCompact = { ...td, padding: "6px 8px", fontSize: 11.5 };
+export const tdCompactNum = { ...tdCompact, ...mono, whiteSpace: "nowrap" };

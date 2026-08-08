@@ -338,7 +338,7 @@ function FundPage({ fund, onBack, isMobile }) {
         {hasReturns && (
           <div style={{ display: "grid", gridTemplateColumns: `repeat(${isMobile ? 3 : 5}, 1fr)`, gap: 10, marginBottom: 20 }}>
             {returns.map(([label, v]) => (
-              <div key={label} style={{ border: `1px solid ${C.line}`, borderRadius: 11, background: C.panel, padding: "12px 14px" }}>
+              <div key={label} style={{ border: `1px solid ${C.line}`, borderRadius: 10, background: C.panel, padding: "12px 14px" }}>
                 <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: C.dim }}>{label} return</div>
                 <div style={{ ...mono, fontSize: 19, color: tone(v), marginTop: 5 }}>{pct1(v)}</div>
               </div>
@@ -366,7 +366,7 @@ function FundPage({ fund, onBack, isMobile }) {
                   <div style={{ display: "flex", gap: 4 }}>
                     {RANGES.map(r => (
                       <button key={r} onClick={() => pickRange(r)}
-                        style={{ ...mono, fontSize: 11, padding: "4px 9px", borderRadius: 7, cursor: "pointer",
+                        style={{ ...mono, fontSize: 11, padding: "4px 9px", borderRadius: 6, cursor: "pointer",
                           border: `1px solid ${range === r ? C.gold + "66" : C.line2}`,
                           background: range === r ? C.gold + "14" : "transparent",
                           color: range === r ? C.gold : C.dim }}>{r}</button>
@@ -410,8 +410,8 @@ function FundPage({ fund, onBack, isMobile }) {
                         <div style={{ ...sans, fontSize: 12.5, color: C.text200, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{h.name}</div>
                         {h.sector && <div style={{ ...sans, fontSize: 9.5, color: C.faint }}>{h.sector}</div>}
                       </div>
-                      <div style={{ width: isMobile ? 70 : 120, height: 5, background: C.bg700, borderRadius: 3, overflow: "hidden" }}>
-                        <div style={{ height: 5, width: `${Math.min(100, h.allocation || 0)}%`, background: DONUT[i % DONUT.length], borderRadius: 3 }} />
+                      <div style={{ width: isMobile ? 70 : 120, height: 5, background: C.bg700, borderRadius: 6, overflow: "hidden" }}>
+                        <div style={{ height: 5, width: `${Math.min(100, h.allocation || 0)}%`, background: DONUT[i % DONUT.length], borderRadius: 6 }} />
                       </div>
                       <span style={{ ...mono, fontSize: 12, color: C.text, minWidth: 50, textAlign: "right" }}>{h.allocation != null ? h.allocation.toFixed(1) + "%" : "—"}</span>
                     </div>

@@ -4,6 +4,7 @@
 import { useMemo, useState } from "react";
 import { Gauge, Loader2, TrendingUp, TrendingDown, ChevronRight } from "lucide-react";
 import { C, sans, serif, mono } from "../lib/theme.js";
+import { th, td, tdNum, thName } from "../design/table.js";
 import { ListToolbar, applyControls, SortableTh } from "../lib/listControls.jsx";
 import { VerdictBadge } from "./primitives.jsx";
 import PageHeader from "./ui/PageHeader.jsx";
@@ -70,10 +71,6 @@ export default function Operations({ API, onOpen }) {
     </div>
   );
 
-  const th = { ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em",
-    color: C.dim, padding: "10px 14px", borderBottom: `1px solid ${C.line}`, whiteSpace: "nowrap" };
-  const td = { padding: "11px 14px", borderTop: `1px solid ${C.line}`, ...mono, fontSize: 12, color: C.text };
-
   return (
     <div className="fadein" style={{ padding: "24px 32px" }}>
       <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 4 }}>
@@ -104,16 +101,16 @@ export default function Operations({ API, onOpen }) {
         <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 900 }}>
           <thead>
             <tr>
-              <th style={{ ...th, textAlign: "left" }}>Company</th>
-              <SortableTh label="ROCE" k="roce" controls={controls} setControls={setControls} style={{ ...th, textAlign: "right" }} />
-              <SortableTh label="ROE" k="roe" controls={controls} setControls={setControls} style={{ ...th, textAlign: "right" }} />
-              <SortableTh label="Debtor days" k="debtor_days" controls={controls} setControls={setControls} style={{ ...th, textAlign: "right" }} />
-              <SortableTh label="Inventory days" k="inventory_days" controls={controls} setControls={setControls} style={{ ...th, textAlign: "right" }} />
-              <SortableTh label="Payable days" k="payable_days" controls={controls} setControls={setControls} style={{ ...th, textAlign: "right" }} />
-              <SortableTh label="Cash cycle" k="ccc" controls={controls} setControls={setControls} style={{ ...th, textAlign: "right" }} />
-              <SortableTh label="Asset turns" k="asset_turnover" controls={controls} setControls={setControls} style={{ ...th, textAlign: "right" }} />
-              <th style={{ ...th, textAlign: "right" }}>Verdict</th>
-              <th style={{ ...th }}></th>
+              <th style={thName}>Company</th>
+              <SortableTh label="ROCE" k="roce" controls={controls} setControls={setControls} style={th} />
+              <SortableTh label="ROE" k="roe" controls={controls} setControls={setControls} style={th} />
+              <SortableTh label="Debtor days" k="debtor_days" controls={controls} setControls={setControls} style={th} />
+              <SortableTh label="Inventory days" k="inventory_days" controls={controls} setControls={setControls} style={th} />
+              <SortableTh label="Payable days" k="payable_days" controls={controls} setControls={setControls} style={th} />
+              <SortableTh label="Cash cycle" k="ccc" controls={controls} setControls={setControls} style={th} />
+              <SortableTh label="Asset turns" k="asset_turnover" controls={controls} setControls={setControls} style={th} />
+              <th style={th}>Verdict</th>
+              <th style={th}></th>
             </tr>
           </thead>
           <tbody>
@@ -121,18 +118,21 @@ export default function Operations({ API, onOpen }) {
               <tr key={r.ticker} onClick={() => onOpen && onOpen(r.ticker)} style={{ cursor: "pointer" }}
                 onMouseEnter={e => e.currentTarget.style.background = C.bg800}
                 onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                <td style={{ ...td }}>
+                {/* Identity column: tdName's left gutter without its single-line
+                    ellipsis clamp, because this cell stacks name over ticker·sector
+                    and the clamp would cut the second line. */}
+                <td style={{ ...td, textAlign: "left", padding: "11px 16px" }}>
                   <div style={{ ...sans, fontSize: 13, fontWeight: 500, color: C.text }}>{r.name}</div>
                   <div style={{ ...mono, fontSize: 10, color: C.faint }}>{r.ticker} · {r.sector}</div>
                 </td>
-                <td style={{ ...td, textAlign: "right", color: C.gold }}>{p1(r.roce)}<Trend v={r.roce_delta_3y} riseGood /></td>
-                <td style={{ ...td, textAlign: "right" }}>{p1(r.roe)}</td>
-                <td style={{ ...td, textAlign: "right" }}>{d0(r.debtor_days)}</td>
-                <td style={{ ...td, textAlign: "right" }}>{d0(r.inventory_days)}</td>
-                <td style={{ ...td, textAlign: "right" }}>{d0(r.payable_days)}</td>
-                <td style={{ ...td, textAlign: "right" }}>{d0(r.ccc)}<Trend v={r.ccc_delta_3y} riseGood={false} /></td>
-                <td style={{ ...td, textAlign: "right" }}>{x2(r.asset_turnover)}</td>
-                <td style={{ ...td, textAlign: "right" }}><VerdictBadge verdict={r.verdict} /></td>
+                <td style={{ ...tdNum, color: C.gold }}>{p1(r.roce)}<Trend v={r.roce_delta_3y} riseGood /></td>
+                <td style={tdNum}>{p1(r.roe)}</td>
+                <td style={tdNum}>{d0(r.debtor_days)}</td>
+                <td style={tdNum}>{d0(r.inventory_days)}</td>
+                <td style={tdNum}>{d0(r.payable_days)}</td>
+                <td style={tdNum}>{d0(r.ccc)}<Trend v={r.ccc_delta_3y} riseGood={false} /></td>
+                <td style={tdNum}>{x2(r.asset_turnover)}</td>
+                <td style={td}><VerdictBadge verdict={r.verdict} /></td>
                 <td style={{ ...td, textAlign: "center" }}><ChevronRight size={14} color={C.faint} /></td>
               </tr>
             ))}

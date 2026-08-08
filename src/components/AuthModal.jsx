@@ -146,7 +146,7 @@ export default function AuthModal({ open, onClose, API, onAuthed }) {
             {err && <div style={{ ...sans, fontSize: 12.5, color: C.red, marginBottom: 12 }}>{err}</div>}
             <button type="submit" disabled={busy || code.length < 6} style={{
               ...sans, width: "100%", padding: "13px 0", fontSize: 14.5, fontWeight: 600,
-              borderRadius: 9, border: "none", cursor: busy ? "default" : "pointer",
+              borderRadius: 10, border: "none", cursor: busy ? "default" : "pointer",
               background: C.green, color: "#06231A", opacity: busy || code.length < 6 ? 0.6 : 1,
             }}>{busy ? "Verifying…" : "Verify & create account"}</button>
             <button type="button" disabled={resent}
@@ -195,7 +195,7 @@ export default function AuthModal({ open, onClose, API, onAuthed }) {
 
           {err && (
             <div style={{ ...sans, fontSize: 12, color: C.red, border: `1px solid ${C.red}44`,
-              borderRadius: 7, padding: "8px 12px", marginBottom: 14, background: C.red + "10" }}>
+              borderRadius: 6, padding: "8px 12px", marginBottom: 14, background: C.red + "10" }}>
               {err}
             </div>
           )}

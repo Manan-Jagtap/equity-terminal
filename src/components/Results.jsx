@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Loader2, TrendingUp, TrendingDown, ChevronRight } from "lucide-react";
 import { C, sans, mono } from "../lib/theme.js";
+import { th, td, tdNum, thName } from "../design/table.js";
 import { ListToolbar, applyControls, selStyle } from "../lib/listControls.jsx";
 import { VerdictBadge } from "./primitives.jsx";
 import PageHeader from "./ui/PageHeader.jsx";
@@ -81,7 +82,7 @@ function UpcomingCalendar({ API, onOpen }) {
           <span style={{ ...mono, fontSize: 12, color: C.gold, flexShrink: 0, minWidth: 100 }}>{r.ticker}</span>
           <span style={{ ...sans, fontSize: 12.5, color: C.text, flexShrink: 0 }}>{r.name}</span>
           {r.results_meeting && <span style={{ ...sans, fontSize: 9, fontWeight: 700, color: C.green,
-            background: C.green + "1a", borderRadius: 4, padding: "2px 7px", flexShrink: 0 }}>RESULTS</span>}
+            background: C.green + "1a", borderRadius: 6, padding: "2px 7px", flexShrink: 0 }}>RESULTS</span>}
           <span style={{ ...sans, fontSize: 11, color: C.faint, whiteSpace: "nowrap", overflow: "hidden",
                          textOverflow: "ellipsis" }}>{r.agenda}</span>
         </div>
@@ -170,10 +171,6 @@ export default function Results({ API, onOpen }) {
     </div>
   );
 
-  const th = { ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em",
-    color: C.dim, padding: "10px 12px", borderBottom: `1px solid ${C.line}`, whiteSpace: "nowrap" };
-  const td = { ...mono, fontSize: 12, padding: "11px 12px", borderTop: `1px solid ${C.line}` };
-
   return (
     <div className="fadein" style={{ padding: "24px 32px" }}>
       <PageHeader title="Results" meta={`${rows.length} names · latest reported quarter`}>
@@ -200,16 +197,16 @@ export default function Results({ API, onOpen }) {
         <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 880 }}>
           <thead>
             <tr>
-              <th style={{ ...th, textAlign: "left" }}>Company</th>
+              <th style={thName}>Company</th>
               <th style={{ ...th, textAlign: "left" }}>Quarter</th>
-              <th style={{ ...th, textAlign: "right" }}>Sales (₹cr)</th>
-              <th style={{ ...th, textAlign: "right" }}>Sales YoY</th>
-              <th style={{ ...th, textAlign: "right" }}>PAT (₹cr)</th>
-              <th style={{ ...th, textAlign: "right" }}>PAT YoY</th>
-              <th style={{ ...th, textAlign: "right" }}>OPM</th>
-              <th style={{ ...th, textAlign: "right" }}>FY EPS vs est.</th>
-              <th style={{ ...th, textAlign: "right" }}>Verdict</th>
-              <th style={{ ...th }}></th>
+              <th style={th}>Sales (₹cr)</th>
+              <th style={th}>Sales YoY</th>
+              <th style={th}>PAT (₹cr)</th>
+              <th style={th}>PAT YoY</th>
+              <th style={th}>OPM</th>
+              <th style={th}>FY EPS vs est.</th>
+              <th style={th}>Verdict</th>
+              <th style={th}></th>
             </tr>
           </thead>
           <tbody>
@@ -219,17 +216,20 @@ export default function Results({ API, onOpen }) {
                 <tr key={r.ticker} onClick={() => onOpen && onOpen(r.ticker)} style={{ cursor: "pointer" }}
                   onMouseEnter={e => e.currentTarget.style.background = C.bg800}
                   onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                  <td style={{ ...td }}>
+                  {/* Identity column: tdName's left gutter without its single-line
+                      ellipsis clamp, because this cell stacks name over ticker·sector
+                      and the clamp would cut the second line. */}
+                  <td style={{ ...td, textAlign: "left", padding: "11px 16px" }}>
                     <div style={{ ...sans, fontSize: 13, fontWeight: 500, color: C.text }}>{r.name}</div>
                     <div style={{ ...mono, fontSize: 10, color: C.faint }}>{r.ticker} · {r.sector}</div>
                   </td>
-                  <td style={{ ...td, ...sans, color: C.text200, whiteSpace: "nowrap" }}>{r.quarter || "—"}</td>
-                  <td style={{ ...td, textAlign: "right", color: C.text }}>{cr(r.sales)}</td>
-                  <td style={{ ...td, textAlign: "right" }}><Delta v={r.sales_yoy} /></td>
-                  <td style={{ ...td, textAlign: "right", color: C.text }}>{cr(r.pat)}</td>
-                  <td style={{ ...td, textAlign: "right" }}><Delta v={r.pat_yoy} /></td>
-                  <td style={{ ...td, textAlign: "right", color: C.text }}>{pctRaw(r.opm)}</td>
-                  <td style={{ ...td, textAlign: "right" }}>
+                  <td style={{ ...td, textAlign: "left", color: C.text200, whiteSpace: "nowrap" }}>{r.quarter || "—"}</td>
+                  <td style={tdNum}>{cr(r.sales)}</td>
+                  <td style={tdNum}><Delta v={r.sales_yoy} /></td>
+                  <td style={tdNum}>{cr(r.pat)}</td>
+                  <td style={tdNum}><Delta v={r.pat_yoy} /></td>
+                  <td style={tdNum}>{pctRaw(r.opm)}</td>
+                  <td style={tdNum}>
                     {s && s.surprise_pct != null ? (
                       <span title={`FY${s.fy ?? ""}: reported ${s.reported ?? "—"} vs est. ${s.estimate ?? "—"}`}
                         style={{ ...mono, fontSize: 12, color: s.beat ? C.green : C.red }}>
@@ -245,7 +245,7 @@ export default function Results({ API, onOpen }) {
                       </div>
                     )}
                   </td>
-                  <td style={{ ...td, textAlign: "right" }}><VerdictBadge verdict={r.verdict} /></td>
+                  <td style={td}><VerdictBadge verdict={r.verdict} /></td>
                   <td style={{ ...td, textAlign: "center" }}><ChevronRight size={14} color={C.faint} /></td>
                 </tr>
               );

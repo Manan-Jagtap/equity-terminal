@@ -20,14 +20,41 @@ const confColor = lvl => lvl === "high" ? C.green : lvl === "medium" ? C.gold : 
    which is the inverse of what the 7px dot did. Same footprint (7px wide), so
    the row rhythm is unchanged. */
 const CONF_STEPS = { high: 3, medium: 2, low: 1 };
+
+/* Three states, not two. `flags` is UNDEFINED — never [] — for rows whose
+   confidence came from /api/companies: measured against the live payload on
+   9 Aug 2026, that endpoint serialises confidence as a bare level string
+   ("high" | "medium" | "low") in 1013/1013 rows and carries no reasons at all.
+   Only rows that fall through to the local recompute (50 of those 1013) have
+   real flags, from dataQuality().
+   So undefined has to read as "not carried on this endpoint", never as "none
+   found". The row builder below used to hardcode an empty array, which asserted
+   a clean bill of health for the other 963 rows — including the 128 the engine
+   itself rated LOW confidence, i.e. exactly the names a user hovers to ask why.
+   Those rows get a pointer to the company page instead of silence: that page
+   fetches the per-ticker endpoint, whose confidence IS {score, level, flags},
+   and it renders them under Principal risks. */
+function confDetail(flags) {
+  if (!flags) return null;
+  return flags.length ? flags.join("; ") : "no data-quality flags";
+}
+
 function ConfidenceMeter({ conf }) {
   const level = conf?.level || "low";
   const filled = CONF_STEPS[level] ?? 1;
   const tone = confColor(level);
-  const flags = conf?.flags?.length ? " — " + conf.flags.join("; ") : "";
+  const detail = confDetail(conf?.flags);
+  const base = `Data confidence: ${level}`;
+  // The company-page pointer is in the hover tooltip only. aria-label stays
+  // terse without flags because that sentence is identical on 963 of 1013 rows
+  // — it is navigation chrome, and a screen-reader user tabbing the table would
+  // hear it once per row. Real per-row flags, when the payload has them, DO go
+  // into aria-label: title is not announced once role/aria-label are set, so
+  // that was the only channel in which those 50 rows' reasons were reachable.
+  const label = detail ? `${base} — ${detail}` : base;
   return (
-    <span role="img" aria-label={`Data confidence: ${level}`}
-      title={`Data confidence: ${level}${flags}`}
+    <span role="img" aria-label={label}
+      title={detail ? label : `${base} — open the company page for the reasons`}
       style={{ display: "inline-flex", flexDirection: "column-reverse", gap: 1,
                width: 7, flexShrink: 0, lineHeight: 0 }}>
       {[0, 1, 2].map(i => (
@@ -166,7 +193,11 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
           verdict: a.verdict,
           composite: a.composite ?? 0,
           reliable: a.reliable !== false,
-          confidence: { level: a.confidence || "medium", flags: [] },
+          // No `flags` key: /api/companies sends a level string and nothing
+          // else, so the reasons are UNKNOWN here, not absent. See the note on
+          // confDetail above — an empty array here read as "we checked, it's
+          // clean" and silently emptied the confidence tooltip for 963 rows.
+          confidence: { level: a.confidence || "medium" },
           pb: a.pb ?? f.pb, pe: a.pe ?? f.pe, roe: a.roe ?? f.roe,
           sentiment: a.sentiment ?? null, sentimentLabel: a.sentimentLabel ?? null,
           // DAT-13b: verdict stands, the number is withheld. mos/iv already
@@ -328,11 +359,11 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
             value={screenName} onChange={e => setScreenName(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter") saveScreen(); }}
             placeholder="Name this screen…"
-            style={{ ...mono, fontSize: 12, background: C.panel2, border: `1px solid ${C.line}`, borderRadius: 7, color: C.text, padding: "5px 10px", width: 150, outline: "none" }}
+            style={{ ...mono, fontSize: 12, background: C.panel2, border: `1px solid ${C.line}`, borderRadius: 6, color: C.text, padding: "5px 10px", width: 150, outline: "none" }}
           />
           <button onClick={saveScreen} disabled={!screenName.trim()} style={{
             ...sans, display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 500,
-            padding: "5px 11px", borderRadius: 7, cursor: screenName.trim() ? "pointer" : "default",
+            padding: "5px 11px", borderRadius: 6, cursor: screenName.trim() ? "pointer" : "default",
             border: `1px solid ${C.gold}66`, color: C.gold, background: C.gold + "0d",
             opacity: screenName.trim() ? 1 : 0.5,
           }}>

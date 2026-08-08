@@ -77,11 +77,11 @@ export default function ScenarioBar({ API, ticker, assumptions, setAssumptions }
         value={name} onChange={e => setName(e.target.value)}
         onKeyDown={e => { if (e.key === "Enter") save(); }}
         placeholder="Name this scenario…"
-        style={{ ...mono, fontSize: 12, background: C.panel2, border: `1px solid ${C.line2}`, borderRadius: 7, color: C.text, padding: "6px 10px", width: 170, outline: "none" }}
+        style={{ ...mono, fontSize: 12, background: C.panel2, border: `1px solid ${C.line2}`, borderRadius: 6, color: C.text, padding: "6px 10px", width: 170, outline: "none" }}
       />
       <button onClick={save} disabled={busy || !name.trim()} style={{
         ...sans, display: "flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 500,
-        padding: "6px 12px", borderRadius: 7, cursor: (busy || !name.trim()) ? "default" : "pointer",
+        padding: "6px 12px", borderRadius: 6, cursor: (busy || !name.trim()) ? "default" : "pointer",
         border: `1px solid ${C.gold}66`, color: C.gold, background: C.gold + "0d",
         opacity: (busy || !name.trim()) ? 0.5 : 1,
       }}>

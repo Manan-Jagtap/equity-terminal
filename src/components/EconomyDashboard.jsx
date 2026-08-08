@@ -107,7 +107,7 @@ function SeriesModal({ slug, label, unit, kind, onClose }) {
               color: range === rg ? C.gold : C.dim }}>{rg}</button>
           ))}
           <button onClick={onClose} style={{ ...sans, fontSize: 12, color: C.dim, background: "transparent",
-            border: `1px solid ${C.line2}`, borderRadius: 7, padding: "4px 10px", cursor: "pointer" }}>Close</button>
+            border: `1px solid ${C.line2}`, borderRadius: 6, padding: "4px 10px", cursor: "pointer" }}>Close</button>
         </div>
         <div style={{ ...mono, fontSize: 10.5, color: C.faint, marginBottom: 12 }}>
           {data?.name || slug}{data?.freq ? ` · ${{ D: "daily", W: "weekly", F: "fortnightly", M: "monthly", Q: "quarterly" }[data.freq] || data.freq}` : ""}
@@ -303,7 +303,7 @@ export default function EconomyDashboard() {
                       <span style={{ ...serif, fontSize: 26, color: C.text }}>
                         {a.composite.yoy_pct > 0 ? "+" : ""}{a.composite.yoy_pct}%
                       </span>
-                      <span style={{ ...mono, fontSize: 11, padding: "2px 8px", borderRadius: 5,
+                      <span style={{ ...mono, fontSize: 11, padding: "2px 8px", borderRadius: 6,
                                      color: tone, border: `1px solid ${tone}55`, background: tone + "12" }}>
                         {String(a.label || "").toUpperCase()}
                       </span>
@@ -316,7 +316,7 @@ export default function EconomyDashboard() {
                 {(a.indicators || []).length > 0 && (
                   <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 10 }}>
                     {a.indicators.map(ind => (
-                      <span key={ind.slug} style={{ ...mono, fontSize: 9.5, padding: "2px 7px", borderRadius: 5,
+                      <span key={ind.slug} style={{ ...mono, fontSize: 9.5, padding: "2px 7px", borderRadius: 6,
                                                     border: `1px solid ${C.line2}`, color: C.text200 }}>
                         {ind.name}: {ind.yoy_pct != null ? (ind.yoy_pct > 0 ? "+" : "") + ind.yoy_pct + "%" : ind.read}
                       </span>
@@ -411,7 +411,7 @@ export default function EconomyDashboard() {
                   {it.title}
                 </span>
                 {(it.tags || []).slice(0, 2).map(t => (
-                  <span key={t} style={{ ...mono, fontSize: 8.5, padding: "2px 7px", borderRadius: 5,
+                  <span key={t} style={{ ...mono, fontSize: 8.5, padding: "2px 7px", borderRadius: 6,
                                          border: `1px solid ${C.line2}`, color: C.dim, whiteSpace: "nowrap",
                                          flexShrink: 0 }}>{t}</span>
                 ))}

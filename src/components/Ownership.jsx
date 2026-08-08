@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Loader2, TrendingUp, TrendingDown, ChevronRight } from "lucide-react";
 import { C, sans, mono } from "../lib/theme.js";
+import { th, td, thName } from "../design/table.js";
 import { ListToolbar, applyControls } from "../lib/listControls.jsx";
 import PageHeader from "./ui/PageHeader.jsx";
 import ErrorState from "./ui/ErrorState.jsx";
@@ -91,10 +92,6 @@ export default function Ownership({ API, onOpen }) {
     </div>
   );
 
-  const th = { ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em",
-    color: C.dim, padding: "10px 14px", borderBottom: `1px solid ${C.line}`, whiteSpace: "nowrap" };
-  const td = { padding: "11px 14px", borderTop: `1px solid ${C.line}` };
-
   return (
     <div className="fadein" style={{ padding: "24px 32px" }}>
       <PageHeader title="Ownership" meta={`${rows.length} names`}>
@@ -119,14 +116,14 @@ export default function Ownership({ API, onOpen }) {
         <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 820 }}>
           <thead>
             <tr>
-              <th style={{ ...th, textAlign: "left" }}>Company</th>
-              {sortableTh("Promoter", "promoter", { ...th, textAlign: "right" })}
-              {sortableTh("FII", "fii", { ...th, textAlign: "right" })}
-              {sortableTh("DII", "dii", { ...th, textAlign: "right" })}
-              {sortableTh("Mutual funds", "mf", { ...th, textAlign: "right" })}
-              {sortableTh("Public", "public", { ...th, textAlign: "right" })}
-              <th style={{ ...th, textAlign: "right" }}>Instit. Δ</th>
-              <th style={{ ...th }}></th>
+              <th style={thName}>Company</th>
+              {sortableTh("Promoter", "promoter", th)}
+              {sortableTh("FII", "fii", th)}
+              {sortableTh("DII", "dii", th)}
+              {sortableTh("Mutual funds", "mf", th)}
+              {sortableTh("Public", "public", th)}
+              <th style={th}>Instit. Δ</th>
+              <th style={th}></th>
             </tr>
           </thead>
           <tbody>
@@ -134,16 +131,19 @@ export default function Ownership({ API, onOpen }) {
               <tr key={r.ticker} onClick={() => onOpen && onOpen(r.ticker)} style={{ cursor: "pointer" }}
                 onMouseEnter={e => e.currentTarget.style.background = C.bg800}
                 onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                <td style={{ ...td }}>
+                {/* Identity column: tdName's left gutter without its single-line
+                    ellipsis clamp, because this cell stacks name over ticker·as-of
+                    and the clamp would cut the second line. */}
+                <td style={{ ...td, textAlign: "left", padding: "11px 16px" }}>
                   <div style={{ ...sans, fontSize: 13, fontWeight: 500, color: C.text }}>{r.name}</div>
                   <div style={{ ...mono, fontSize: 10, color: C.faint }}>{r.ticker} · {r.as_of || r.sector}</div>
                 </td>
-                <td style={{ ...td, textAlign: "right" }}><Cell pct={r.promoter?.pct} delta={r.promoter?.delta} /></td>
-                <td style={{ ...td, textAlign: "right" }}><Cell pct={r.fii?.pct} delta={r.fii?.delta} /></td>
-                <td style={{ ...td, textAlign: "right" }}><Cell pct={r.dii?.pct} delta={r.dii?.delta} /></td>
-                <td style={{ ...td, textAlign: "right" }}><Cell pct={r.mf?.pct} delta={r.mf?.delta} /></td>
-                <td style={{ ...td, textAlign: "right" }}><Cell pct={r.public?.pct} delta={r.public?.delta} /></td>
-                <td style={{ ...td, textAlign: "right" }}>
+                <td style={td}><Cell pct={r.promoter?.pct} delta={r.promoter?.delta} /></td>
+                <td style={td}><Cell pct={r.fii?.pct} delta={r.fii?.delta} /></td>
+                <td style={td}><Cell pct={r.dii?.pct} delta={r.dii?.delta} /></td>
+                <td style={td}><Cell pct={r.mf?.pct} delta={r.mf?.delta} /></td>
+                <td style={td}><Cell pct={r.public?.pct} delta={r.public?.delta} /></td>
+                <td style={td}>
                   <span style={{ ...mono, fontSize: 13, fontWeight: 600,
                     color: r.institutional?.delta == null ? C.dim : r.institutional.delta >= 0 ? C.green : C.red }}>
                     {r.institutional?.delta == null ? "—" : (r.institutional.delta >= 0 ? "+" : "") + r.institutional.delta.toFixed(1)}

@@ -5,6 +5,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Briefcase, Loader2, Plus, Trash2, ChevronRight, Sparkles, Upload, Receipt, FileText } from "lucide-react";
 import { C, sans, serif, mono } from "../lib/theme.js";
+import { th, td, tdNum, thName, tdName } from "../design/table.js";
 import { inr, signedPct } from "../lib/formatters.js";
 import { VerdictBadge } from "./primitives.jsx";
 import { SignInGate } from "./Watchlist.jsx";
@@ -273,9 +274,6 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
     </div>
   );
 
-  const th = { ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em",
-    color: C.dim, padding: "10px 12px", borderBottom: `1px solid ${C.line}`, whiteSpace: "nowrap" };
-  const td = { ...mono, fontSize: 12, padding: "11px 12px", borderTop: `1px solid ${C.line}` };
   const inputStyle = {
     ...mono, fontSize: 13, background: C.panel2, border: `1px solid ${C.line2}`,
     borderRadius: 8, color: C.text, padding: "8px 12px", outline: "none",
@@ -356,7 +354,7 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
                 : (digest.attention || []).map((a, i) => (
                   <div key={i} onClick={() => a.ticker && onOpen && onOpen(a.ticker)}
                     style={{ display: "flex", gap: 7, alignItems: "baseline", padding: "4px 0", cursor: a.ticker ? "pointer" : "default" }}>
-                    <span style={{ width: 6, height: 6, borderRadius: 3, flexShrink: 0, marginTop: 4,
+                    <span style={{ width: 6, height: 6, borderRadius: 6, flexShrink: 0, marginTop: 4,
                                    background: a.kind === "verdict" ? C.red : a.kind === "results" ? C.gold : "#E8B054" }} />
                     <span style={{ ...sans, fontSize: 11.5, color: C.text200 }}>
                       {a.ticker && <span style={{ ...mono, color: C.gold }}>{a.ticker}</span>} {a.text}
@@ -448,7 +446,7 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
               <thead>
                 <tr>
                   {["Holding", "Alpha", "Weight", "Suggested", "Notes"].map((h, i) => (
-                    <th key={h} style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.07em", color: C.dim, textAlign: i === 0 ? "left" : "right", padding: "6px 8px" }}>{h}</th>
+                    <th key={h} style={i === 0 ? thName : th}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -456,11 +454,11 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
                 {xray.items.map(it => (
                   <tr key={it.ticker} style={{ borderTop: `1px solid ${C.line}`, cursor: onOpen ? "pointer" : "default" }}
                       onClick={() => onOpen && onOpen(it.ticker)}>
-                    <td style={{ ...mono, fontSize: 12, color: C.gold, padding: "7px 8px" }}>{it.ticker}</td>
-                    <td style={{ ...mono, fontSize: 12, textAlign: "right", padding: "7px 8px", color: it.alpha_score == null ? C.dim : it.alpha_score >= 60 ? C.green : it.alpha_score >= 40 ? C.gold : C.red }}>{it.alpha_score != null ? Math.round(it.alpha_score) : "—"}</td>
-                    <td style={{ ...mono, fontSize: 12, textAlign: "right", padding: "7px 8px", color: C.text }}>{it.weight != null ? (it.weight * 100).toFixed(0) + "%" : "—"}</td>
-                    <td style={{ ...mono, fontSize: 12, textAlign: "right", padding: "7px 8px", color: C.text200 }}>{it.suggested_weight != null ? (it.suggested_weight * 100).toFixed(0) + "%" : "—"}</td>
-                    <td style={{ ...sans, fontSize: 10, textAlign: "right", padding: "7px 8px", color: C.red }}>{(it.flags || []).join(" · ")}</td>
+                    <td style={{ ...tdName, ...mono, color: C.gold }}>{it.ticker}</td>
+                    <td style={{ ...tdNum, color: it.alpha_score == null ? C.dim : it.alpha_score >= 60 ? C.green : it.alpha_score >= 40 ? C.gold : C.red }}>{it.alpha_score != null ? Math.round(it.alpha_score) : "—"}</td>
+                    <td style={tdNum}>{it.weight != null ? (it.weight * 100).toFixed(0) + "%" : "—"}</td>
+                    <td style={{ ...tdNum, color: C.text200 }}>{it.suggested_weight != null ? (it.suggested_weight * 100).toFixed(0) + "%" : "—"}</td>
+                    <td style={{ ...td, color: C.red }}>{(it.flags || []).join(" · ")}</td>
                   </tr>
                 ))}
               </tbody>
@@ -660,19 +658,19 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
           <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1000 }}>
             <thead>
               <tr>
-                <th style={{ ...th, textAlign: "left" }}>Company</th>
-                <th style={{ ...th, textAlign: "right" }}>Qty</th>
-                <th style={{ ...th, textAlign: "right" }}>Avg cost</th>
-                <th style={{ ...th, textAlign: "right" }}>Held</th>
-                <th style={{ ...th, textAlign: "right" }}>LTP</th>
-                <th style={{ ...th, textAlign: "right" }}>Value</th>
-                <th style={{ ...th, textAlign: "right" }}>P&amp;L</th>
-                <th style={{ ...th, textAlign: "right" }} title="Annualised money-weighted return over the actual holding period, dividends included">XIRR</th>
-                <th style={{ ...th, textAlign: "right" }}>Div</th>
-                <th style={{ ...th, textAlign: "right" }}>Weight</th>
-                <th style={{ ...th, textAlign: "right" }}>MoS</th>
-                <th style={{ ...th, textAlign: "right" }}>Verdict</th>
-                <th style={{ ...th }}></th>
+                <th style={thName}>Company</th>
+                <th style={th}>Qty</th>
+                <th style={th}>Avg cost</th>
+                <th style={th}>Held</th>
+                <th style={th}>LTP</th>
+                <th style={th}>Value</th>
+                <th style={th}>P&amp;L</th>
+                <th style={th} title="Annualised money-weighted return over the actual holding period, dividends included">XIRR</th>
+                <th style={th}>Div</th>
+                <th style={th}>Weight</th>
+                <th style={th}>MoS</th>
+                <th style={th}>Verdict</th>
+                <th style={th}></th>
               </tr>
             </thead>
             <tbody>
@@ -680,13 +678,16 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
                 <tr key={h.id} onClick={() => onOpen && onOpen(h.ticker)} style={{ cursor: "pointer" }}
                   onMouseEnter={e => e.currentTarget.style.background = C.bg800}
                   onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                  <td style={{ ...td }}>
+                  {/* Identity column: tdName's left gutter without its single-line
+                      ellipsis clamp, because this cell stacks name over ticker·sector
+                      and the clamp would cut the second line. */}
+                  <td style={{ ...td, textAlign: "left", padding: "11px 16px" }}>
                     <div style={{ ...sans, fontSize: 13, fontWeight: 500, color: C.text }}>{h.name || h.ticker}</div>
                     <div style={{ ...mono, fontSize: 10, color: C.faint }}>{h.ticker}{h.sector ? ` · ${h.sector}` : ""}</div>
                   </td>
-                  <td style={{ ...td, textAlign: "right", color: C.text }}>{h.qty != null ? Number(h.qty).toLocaleString("en-IN") : "—"}</td>
-                  <td style={{ ...td, textAlign: "right", color: C.text200 }}>{inr(h.avg_cost, 2)}</td>
-                  <td style={{ ...td, textAlign: "right", whiteSpace: "nowrap" }}
+                  <td style={tdNum}>{h.qty != null ? Number(h.qty).toLocaleString("en-IN") : "—"}</td>
+                  <td style={{ ...tdNum, color: C.text200 }}>{inr(h.avg_cost, 2)}</td>
+                  <td style={tdNum}
                       title={h.term ? (h.date_source === "added"
                           ? "No purchase date given — measured from when the row was added; edit the holding to set the real date"
                           : (h.term === "long" ? "Long-term (≥12 months) — LTCG applies"
@@ -696,7 +697,7 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
                         <span style={{ color: C.text200 }}>
                           {h.holding_days >= 365 ? (h.holding_days / 365).toFixed(1) + "y" : h.holding_days + "d"}
                         </span>
-                        <span style={{ ...sans, fontSize: 9, fontWeight: 600, marginLeft: 6, padding: "2px 6px", borderRadius: 4,
+                        <span style={{ ...sans, fontSize: 9, fontWeight: 600, marginLeft: 6, padding: "2px 6px", borderRadius: 6,
                                        color: h.term === "long" ? C.green : "#E8B054",
                                        background: (h.term === "long" ? C.green : "#E8B054") + "1a" }}>
                           {h.term === "long" ? "LT" : "ST"}
@@ -723,23 +724,23 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
                       </>
                     )}
                   </td>
-                  <td style={{ ...td, textAlign: "right", color: C.text }}>{inr(h.price, 2)}</td>
-                  <td style={{ ...td, textAlign: "right", color: C.text }}>{inr(h.value)}</td>
-                  <td style={{ ...td, textAlign: "right", color: pnlColor(h.pnl) }}>
+                  <td style={tdNum}>{inr(h.price, 2)}</td>
+                  <td style={tdNum}>{inr(h.value)}</td>
+                  <td style={{ ...tdNum, color: pnlColor(h.pnl) }}>
                     {h.pnl != null ? (h.pnl >= 0 ? "+" : "−") + inr(Math.abs(h.pnl)) : "—"}
                     <span style={{ color: pnlColor(h.pnl), opacity: 0.85 }}> ({pctNum(h.pnl_pct)})</span>
                   </td>
-                  <td style={{ ...td, textAlign: "right", color: pnlColor(h.xirr) }}
+                  <td style={{ ...tdNum, color: pnlColor(h.xirr) }}
                       title={h.xirr == null ? "Needs ≥7 days of holding and a purchase date" : "annualised, incl. dividends"}>
                     {h.xirr != null ? pctNum(h.xirr) : "—"}
                   </td>
-                  <td style={{ ...td, textAlign: "right", color: h.div_income ? C.green : C.faint }}
+                  <td style={{ ...tdNum, color: h.div_income ? C.green : C.faint }}
                       title={h.div_income ? "dividends received since added" : "no dividends recorded"}>
                     {h.div_income ? inr(h.div_income) : "—"}
                   </td>
-                  <td style={{ ...td, textAlign: "right", color: C.text200 }}>{pctPlain(h.weight)}</td>
-                  <td style={{ ...td, textAlign: "right", color: pnlColor(h.mos) }}>{signedPct(h.mos)}</td>
-                  <td style={{ ...td, textAlign: "right" }}><VerdictBadge verdict={h.verdict || "—"} /></td>
+                  <td style={{ ...tdNum, color: C.text200 }}>{pctPlain(h.weight)}</td>
+                  <td style={{ ...tdNum, color: pnlColor(h.mos) }}>{signedPct(h.mos)}</td>
+                  <td style={td}><VerdictBadge verdict={h.verdict || "—"} /></td>
                   <td style={{ ...td, textAlign: "center", whiteSpace: "nowrap" }}>
                     <button title="Remove holding"
                       onClick={e => { e.stopPropagation(); remove(h.id, h.name || h.ticker); }}
@@ -916,7 +917,7 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
                   style={{ display: "flex", alignItems: "baseline", gap: 12, padding: "10px 6px",
                            borderTop: `1px solid ${C.line}`, cursor: "pointer" }}>
                   <span style={{ ...sans, fontSize: 9.5, fontWeight: 700, letterSpacing: "0.06em", flexShrink: 0,
-                                 padding: "3px 8px", borderRadius: 5,
+                                 padding: "3px 8px", borderRadius: 6,
                                  color: r.action.includes("EXIT") ? C.red : r.action.includes("TRIM") ? "#E8B054" : C.green,
                                  background: (r.action.includes("EXIT") ? C.red : r.action.includes("TRIM") ? "#E8B054" : C.green) + "1a" }}>
                     {r.action}
