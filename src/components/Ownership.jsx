@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { Loader2, TrendingUp, TrendingDown, ChevronRight } from "lucide-react";
 import { C, sans, mono } from "../lib/theme.js";
-import { th, td, thName } from "../design/table.js";
+import { th, td, thName, tdStack, stackLine } from "../design/table.js";
 import { ListToolbar, applyControls } from "../lib/listControls.jsx";
 import PageHeader from "./ui/PageHeader.jsx";
 import ErrorState from "./ui/ErrorState.jsx";
@@ -134,9 +134,15 @@ export default function Ownership({ API, onOpen }) {
                 {/* Identity column: tdName's left gutter without its single-line
                     ellipsis clamp, because this cell stacks name over ticker·as-of
                     and the clamp would cut the second line. */}
-                <td style={{ ...td, textAlign: "left", padding: "11px 16px" }}>
-                  <div style={{ ...sans, fontSize: 13, fontWeight: 500, color: C.text }}>{r.name}</div>
-                  <div style={{ ...mono, fontSize: 10, color: C.faint }}>{r.ticker} · {r.as_of || r.sector}</div>
+                {/* Each LINE clamps independently: clamping the cell would drop the
+
+                    sub-line, and clamping neither let the row grow — Operations ran ten
+
+                    distinct heights (52-111px) before this. */}
+
+                <td style={tdStack}>
+                  <div title={r.name} style={{ ...sans, fontSize: 13, fontWeight: 500, color: C.text, ...stackLine }}>{r.name}</div>
+                  <div style={{ ...mono, fontSize: 10, color: C.faint, ...stackLine }}>{r.ticker} · {r.as_of || r.sector}</div>
                 </td>
                 <td style={td}><Cell pct={r.promoter?.pct} delta={r.promoter?.delta} /></td>
                 <td style={td}><Cell pct={r.fii?.pct} delta={r.fii?.delta} /></td>

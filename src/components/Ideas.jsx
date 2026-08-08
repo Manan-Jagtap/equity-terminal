@@ -6,12 +6,13 @@
    into a short idea list, with a factor breakdown per name. A research/
    ranking aid — NOT investment advice. */
 import { useEffect, useMemo, useState } from "react";
-import { Sparkles, Info } from "lucide-react";
-import { C, sans, serif, mono } from "../lib/theme.js";
-import { th, td, tdNum, thName } from "../design/table.js";
+import { Info } from "lucide-react";
+import { C, sans, mono } from "../lib/theme.js";
+import { th, td, tdNum, thName, tdStack, stackLine } from "../design/table.js";
 import PageSkeleton from "./Skeleton.jsx";
 import { selStyle } from "../lib/listControls.jsx";
 import { VerdictBadge } from "./primitives.jsx";
+import PageHeader from "./ui/PageHeader.jsx";
 
 const FACTORS = [
   ["value", "Value"], ["quality", "Quality"], ["momentum", "Momentum"],
@@ -91,12 +92,10 @@ export default function Ideas({ API, onOpen }) {
 
   return (
     <div className="fadein" style={{ padding: "22px 26px 60px" }}>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap", marginBottom: 4 }}>
-        <h2 style={{ ...serif, fontSize: 26, color: C.text, margin: 0, display: "flex", alignItems: "center", gap: 9 }}>
-          <Sparkles size={19} color={C.gold} /> Ideas · Alpha Score
-        </h2>
-        <span style={{ ...sans, fontSize: 12, color: C.dim }}>{ideas.length} names ranked</span>
-      </div>
+      <PageHeader title="Ideas" meta={`${ideas.length} names ranked`}>
+        A transparent 7-factor Alpha Score — quality, momentum, value, low-vol, growth,
+        estimate revisions and earnings surprise, each shown so you can disagree with it.
+      </PageHeader>
       <div style={{ ...sans, fontSize: 11.5, color: C.faint, lineHeight: 1.6, maxWidth: 780, marginBottom: 14, display: "flex", gap: 6 }}>
         <Info size={13} color={C.dim} style={{ flexShrink: 0, marginTop: 2 }} />
         <span>
@@ -208,15 +207,21 @@ export default function Ideas({ API, onOpen }) {
                     onMouseEnter={e => { e.currentTarget.style.background = C.panel2; }}
                     onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}>
                   <td style={{ ...tdNum, textAlign: "left", color: C.faint }}>{r.rank}</td>
-                  {/* The identity column takes tdName's left gutter but NOT its
-                      single-line ellipsis clamp: this cell stacks three lines
-                      (ticker, sector, the whyRanked sentence), and nowrap +
-                      ellipsis would truncate the explanation to one line. */}
-                  <td style={{ ...td, textAlign: "left", padding: "11px 16px", maxWidth: 260 }}>
-                    <div style={{ ...sans, fontSize: 12.5, fontWeight: 500, color: C.gold }}>{r.ticker}</div>
-                    <div style={{ ...sans, fontSize: 10, color: C.faint }}>{r.sector || ""}</div>
+                  {/* Ticker and sector clamp to one line each; the whyRanked
+                      sentence clamps to TWO. A single-line clamp would cut the
+                      explanation, and no clamp let the row track the sentence's
+                      length — measured at four distinct heights, 99-126px, a
+                      27px spread across 40 rows. Two lines fits the sentence in
+                      the common case and pins the row in every case; the full
+                      text stays on hover. */}
+                  <td style={tdStack}>
+                    <div style={{ ...sans, fontSize: 12.5, fontWeight: 500, color: C.gold, ...stackLine }}>{r.ticker}</div>
+                    <div style={{ ...sans, fontSize: 10, color: C.faint, ...stackLine }}>{r.sector || ""}</div>
                     {whyRanked(r) && (
-                      <div style={{ ...sans, fontSize: 10.5, color: C.dim, marginTop: 3, lineHeight: 1.45 }}>
+                      <div title={whyRanked(r)}
+                        style={{ ...sans, fontSize: 10.5, color: C.dim, marginTop: 3, lineHeight: 1.45,
+                                 overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box",
+                                 WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
                         {whyRanked(r)}
                       </div>
                     )}

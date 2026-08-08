@@ -77,6 +77,21 @@ export const tdName = {
   whiteSpace: "nowrap",
 };
 
+/* Stacked identity cell — a name over a "TICKER · Sector" sub-line.
+   The trap: clamping the CELL to one line truncates the sub-line away, so the
+   obvious fix is to drop the clamp — and then the row grows whenever either
+   line wraps. Measured after the metric consolidation, with the clamp dropped:
+   Operations ran TEN distinct row heights across 40 rows (52..111px, a 59px
+   spread) and Results ran five (52..96px).
+
+   Clamp each LINE independently instead. Both lines survive, each truncates on
+   its own, and the row height is pinned — which is how the screener got from a
+   28px spread to a single 52px row. Full text stays reachable via title=. */
+export const tdStack = { ...td, textAlign: "left", padding: "11px 16px", maxWidth: 260 };
+export const stackLine = {
+  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+};
+
 /* ── Compact variant ────────────────────────────────────────────────────────
    One table in the app is legitimately denser than the rest: the option chain.
    It renders a strike ladder inside a 560px scroll box, and how many strikes a

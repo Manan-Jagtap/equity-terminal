@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Briefcase, Loader2, Plus, Trash2, ChevronRight, Sparkles, Upload, Receipt, FileText } from "lucide-react";
 import { C, sans, serif, mono } from "../lib/theme.js";
-import { th, td, tdNum, thName, tdName } from "../design/table.js";
+import { th, td, tdNum, thName, tdName, tdStack, stackLine } from "../design/table.js";
 import { inr, signedPct } from "../lib/formatters.js";
 import { VerdictBadge } from "./primitives.jsx";
 import { SignInGate } from "./Watchlist.jsx";
@@ -678,12 +678,12 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
                 <tr key={h.id} onClick={() => onOpen && onOpen(h.ticker)} style={{ cursor: "pointer" }}
                   onMouseEnter={e => e.currentTarget.style.background = C.bg800}
                   onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                  {/* Identity column: tdName's left gutter without its single-line
-                      ellipsis clamp, because this cell stacks name over ticker·sector
-                      and the clamp would cut the second line. */}
-                  <td style={{ ...td, textAlign: "left", padding: "11px 16px" }}>
-                    <div style={{ ...sans, fontSize: 13, fontWeight: 500, color: C.text }}>{h.name || h.ticker}</div>
-                    <div style={{ ...mono, fontSize: 10, color: C.faint }}>{h.ticker}{h.sector ? ` · ${h.sector}` : ""}</div>
+                                    {/* Each LINE clamps independently: clamping the cell would drop the
+                      sub-line, and clamping neither let the row grow — Operations ran ten
+                      distinct heights (52-111px) before this. */}
+                  <td style={tdStack}>
+                    <div title={h.name || h.ticker} style={{ ...sans, fontSize: 13, fontWeight: 500, color: C.text, ...stackLine }}>{h.name || h.ticker}</div>
+                    <div style={{ ...mono, fontSize: 10, color: C.faint, ...stackLine }}>{h.ticker}{h.sector ? ` · ${h.sector}` : ""}</div>
                   </td>
                   <td style={tdNum}>{h.qty != null ? Number(h.qty).toLocaleString("en-IN") : "—"}</td>
                   <td style={{ ...tdNum, color: C.text200 }}>{inr(h.avg_cost, 2)}</td>

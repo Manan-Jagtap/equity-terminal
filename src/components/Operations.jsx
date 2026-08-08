@@ -2,9 +2,9 @@
    Reads /api/operations: ROCE (+3y trend), ROE, working-capital cycle,
    debtor/inventory/payable days, cash conversion (+3y trend), asset turnover. */
 import { useMemo, useState } from "react";
-import { Gauge, Loader2, TrendingUp, TrendingDown, ChevronRight } from "lucide-react";
-import { C, sans, serif, mono } from "../lib/theme.js";
-import { th, td, tdNum, thName } from "../design/table.js";
+import { Loader2, TrendingUp, TrendingDown, ChevronRight } from "lucide-react";
+import { C, sans, mono } from "../lib/theme.js";
+import { th, td, tdNum, thName, tdStack, stackLine } from "../design/table.js";
 import { ListToolbar, applyControls, SortableTh } from "../lib/listControls.jsx";
 import { VerdictBadge } from "./primitives.jsx";
 import PageHeader from "./ui/PageHeader.jsx";
@@ -73,14 +73,9 @@ export default function Operations({ API, onOpen }) {
 
   return (
     <div className="fadein" style={{ padding: "24px 32px" }}>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 4 }}>
-        <Gauge size={19} color={C.gold} />
-        <span style={{ ...serif, fontSize: 30, color: C.text }}>Operations</span>
-        <span style={{ ...sans, fontSize: 13, color: C.dim }}>{rows.length} names · capital efficiency &amp; working-capital cycle</span>
-      </div>
-      <div style={{ ...sans, fontSize: 12, color: C.faint, marginBottom: 16 }}>
+      <PageHeader title="Operations" meta={`${rows.length} names`}>
         How hard each business works its capital: returns on capital employed, and how quickly cash moves through receivables, inventory and payables. Small arrows show the 3-year trend.
-      </div>
+      </PageHeader>
 
       <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
         <ListToolbar rows={data?.items} controls={controls} setControls={setControls}
@@ -118,12 +113,12 @@ export default function Operations({ API, onOpen }) {
               <tr key={r.ticker} onClick={() => onOpen && onOpen(r.ticker)} style={{ cursor: "pointer" }}
                 onMouseEnter={e => e.currentTarget.style.background = C.bg800}
                 onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                {/* Identity column: tdName's left gutter without its single-line
-                    ellipsis clamp, because this cell stacks name over ticker·sector
-                    and the clamp would cut the second line. */}
-                <td style={{ ...td, textAlign: "left", padding: "11px 16px" }}>
-                  <div style={{ ...sans, fontSize: 13, fontWeight: 500, color: C.text }}>{r.name}</div>
-                  <div style={{ ...mono, fontSize: 10, color: C.faint }}>{r.ticker} · {r.sector}</div>
+                                {/* Each LINE clamps independently: clamping the cell would drop the
+                    sub-line, and clamping neither let the row grow — Operations ran ten
+                    distinct heights (52-111px) before this. */}
+                <td style={tdStack}>
+                  <div title={r.name} style={{ ...sans, fontSize: 13, fontWeight: 500, color: C.text, ...stackLine }}>{r.name}</div>
+                  <div style={{ ...mono, fontSize: 10, color: C.faint, ...stackLine }}>{r.ticker} · {r.sector}</div>
                 </td>
                 <td style={{ ...tdNum, color: C.gold }}>{p1(r.roce)}<Trend v={r.roce_delta_3y} riseGood /></td>
                 <td style={tdNum}>{p1(r.roe)}</td>
