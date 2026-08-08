@@ -6,6 +6,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Loader2, TrendingUp, TrendingDown } from "lucide-react";
 import { C, sans, serif, mono } from "../lib/theme.js";
+import { verdictColor } from "../design/tokens.js";
 import { multiple, signedPct } from "../lib/formatters.js";
 import PageHeader from "./ui/PageHeader.jsx";
 
@@ -39,12 +40,17 @@ const median = (arr, positiveOnly = true) => {
 };
 
 /* Verdict → colour, in BUY..AVOID display order for the distribution bar. */
+/* Straight off the documented ladder via verdictColor(), the same source
+   ui/Badge uses. This bar previously drew HOLD as C.gold — the brand ACCENT,
+   not the HOLD token — and ACCUMULATE/REDUCE from C.green500/C.red500, two
+   values that were never ladder steps at all. So the same verdict rendered one
+   colour here and a different one in the badge two columns away. */
 const VERDICT_ORDER = [
-  { id: "BUY",        col: C.green    },
-  { id: "ACCUMULATE", col: C.green500 },
-  { id: "HOLD",       col: C.gold     },
-  { id: "REDUCE",     col: C.red500   },
-  { id: "AVOID",      col: C.red      },
+  { id: "BUY",        col: verdictColor("BUY")        },
+  { id: "ACCUMULATE", col: verdictColor("ACCUMULATE") },
+  { id: "HOLD",       col: verdictColor("HOLD")       },
+  { id: "REDUCE",     col: verdictColor("REDUCE")     },
+  { id: "AVOID",      col: verdictColor("AVOID")      },
 ];
 
 function VerdictBar({ counts, total }) {

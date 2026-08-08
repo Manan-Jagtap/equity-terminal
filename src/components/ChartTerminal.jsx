@@ -11,7 +11,7 @@ import {
 import { C, mono, sans } from "../lib/theme.js";
 import * as IND from "../lib/indicators.js";
 
-const UP = "#57c48a", DOWN = "#d97b6c";   // --ev-buy / --ev-avoid
+const UP = "#7ce0bd", DOWN = "#dd7d84";   // --ev-buy / --ev-avoid
 const GRID = "rgba(242,237,228,0.06)", AXIS = "rgba(242,237,228,0.12)";
 
 function aggregate(rows, unit) {

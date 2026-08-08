@@ -35,10 +35,10 @@ export const C = {
   goldDim: "#b8863a",
 
   // Signal colors — muted verdict ladder, never neon
-  green:   "#57c48a",   // = --ev-buy
-  green500:"#3da46e",
-  red:     "#d97b6c",   // = --ev-avoid
-  red500:  "#c25f50",
+  green:   "#7ce0bd",   // = --ev-buy
+  green500:"#5fc9a4",   // = --ev-accumulate (was #3da46e — off-ladder)
+  red:     "#dd7d84",   // = --ev-avoid
+  red500:  "#ef9070",   // = --ev-reduce    (was #c25f50 — off-ladder)
   blue:    "#85a8c8",   // info (announcements, FCF lines) — desaturated steel
 
   // Panel surfaces
@@ -55,7 +55,7 @@ export const C = {
    accent first, then maximally-separated hues. */
 export const series = [
   "#e8b45a",  // amber (accent)
-  "#57c48a",  // green
+  "#7ce0bd",  // green
   "#85a8c8",  // steel blue
   "#9d8fd4",  // lavender
   "#d99a5b",  // amber-orange
@@ -71,7 +71,7 @@ export const series = [
 const SECTOR_ACCENTS = [
   [/financial|bank|nbfc|insurance/, "#9d8fd4"],   // muted lavender — institutions
   [/tech|information/,              "#5fb3b3"],   // muted teal — software
-  [/pharma|health/,                 "#57c48a"],   // buy green — life
+  [/pharma|health/,                 "#6fb89a"],   // muted jade — life (NOT --ev-buy: a sector tint must never equal a verdict colour)
   [/auto/,                          "#d99a5b"],   // amber-orange — motion
   [/fmcg|consumer/,                 "#c98a94"],   // muted rose — retail
   [/energy|oil|power|gas|utilit/,   "#c9a86a"],   // gold — energy

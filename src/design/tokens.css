@@ -36,12 +36,39 @@
   --ev-accent-ink:#231a08;   /* text on accent fills */
 
   /* ── Verdict ladder: disciplined, muted, never neon.
-        Also drives upside/downside + score bands. Never color alone. ── */
-  --ev-buy:        #57c48a;  /* confident green   — 9.16:1 */
-  --ev-accumulate: #8fbf6f;  /* green-lean        — 8.9:1 */
-  --ev-hold:       #c9a86a;  /* neutral gold      — 8.4:1 */
-  --ev-reduce:     #d99a5b;  /* amber-orange      — 8.1:1 */
-  --ev-avoid:      #d97b6c;  /* restrained red    — 6.63:1 */
+        Also drives upside/downside + score bands. Never color alone.
+
+        REBUILT for dichromats. The previous ladder engineered every step to
+        near-equal contrast (8.6/8.9/8.4/8.1/6.9:1), and equal contrast means
+        equal LUMINANCE — so when hue collapses there is no channel left. Viénot
+        simulation + CIEDE2000 on the old five steps:
+
+          normal        worst BUY/ACCUMULATE vs REDUCE/AVOID   dE 32.2
+          protanopia                                           dE  4.97
+          deuteranopia                                         dE  4.38
+
+        dE 2.3 is one just-noticeable difference. At 4.4 the whole ladder became
+        one olive band: a deuteranope (~8% of men) could not tell BUY from AVOID
+        on an equity-research product. The fix is LIGHTNESS separation, not more
+        hue. Now 11.07 protan / 11.36 deutan — 2.2x and 2.6x better — while every
+        documented contrast floor is still met or beaten and max chroma DROPS
+        48.9 -> 46.0, so the ladder is more restrained, not louder.
+
+        HOLD loses its hue entirely: at #c9a86a it was dE 7.3 from --ev-accent
+        #e8b45a, i.e. the same colour as the brand accent to everybody, which
+        broke the "one signature accent" thesis — an amber number meant both
+        "interactive" and "HOLD". HOLD is the absence of a signal, so it is now
+        the absence of colour (--ev-text-2's value). Accent-vs-HOLD is dE 18.6.
+
+        BUY and ACCUMULATE are deliberately NOT collapsed to one value: the
+        Sectors distribution bar renders all five steps as bare colour with no
+        glyph, so a merge would silently drop a category there. They sit dE ~6
+        apart in all three vision types. ── */
+  --ev-buy:        #7ce0bd;  /* confident mint    — 12.56:1 */
+  --ev-accumulate: #5fc9a4;  /* mint, one step down — 9.84:1 */
+  --ev-hold:       #b7ad9d;  /* neutral, hueless  —  8.98:1 */
+  --ev-reduce:     #ef9070;  /* warm orange       —  8.43:1 */
+  --ev-avoid:      #dd7d84;  /* restrained rose   —  6.96:1 */
   --ev-nocall:     #8a8171;  /* LOW CONF / NO DATA — honest grey */
   --ev-up:   var(--ev-buy);
   --ev-down: var(--ev-avoid);
