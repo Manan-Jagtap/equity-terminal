@@ -42,7 +42,17 @@ const Label = ({ children, accent }) => (
   </div>
 );
 
-function SliderRow({ label, value, setValue, min, max, step, display, hint }) {
+/* `driver` is the engine's own one-line derivation for this input — e.g.
+   "0.65·CAGR(10.1%)+0.35·YoY(9.6%) capped" for revenue growth, or
+   "shrink(raw 0.917 vs NIFTY 50, R² 0.243, n=107) → sector prior 0.85" for
+   beta. The backend has attached it to every assumption block as `_drivers`
+   all along, and derive.js recomputes it client-side too, and NOTHING rendered
+   it. The product's headline claim is "every number traceable"; this is the
+   trace, and it was one prop away.
+
+   Deliberately styled apart from `hint`: the hint says what the control does,
+   the driver says where the number came from. Mono, because it is arithmetic. */
+function SliderRow({ label, value, setValue, min, max, step, display, hint, driver }) {
   const shown = display ? display(value) : (value * 100).toFixed(2) + "%";
   return (
     <div style={{ marginBottom:14 }}>
@@ -54,6 +64,14 @@ function SliderRow({ label, value, setValue, min, max, step, display, hint }) {
         onChange={e => setValue(parseFloat(e.target.value))}
         style={{ width:"100%" }} />
       {hint && <div style={{ ...sans, fontSize:10, color:C.faint, marginTop:3 }}>{hint}</div>}
+      {driver && (
+        <div title={driver}
+          style={{ ...mono, fontSize:9.5, color:C.faint, marginTop:3, lineHeight:1.45,
+                   overflow:"hidden", textOverflow:"ellipsis", display:"-webkit-box",
+                   WebkitLineClamp:2, WebkitBoxOrient:"vertical" }}>
+          {driver}
+        </div>
+      )}
     </div>
   );
 }
@@ -95,6 +113,8 @@ export default function DCFModel({ co, price, apiVal, a, onWork }) {
       ? Object.fromEntries(ENGINE_KEYS.filter(k => a?.[k] !== undefined).map(k => [k, a[k]]))
       : {}),
   }), [co, apiVal, a]);
+  // The engine's per-input provenance, already present on the merged block.
+  const drivers = base._drivers || {};
   const vs = base._valuation_sector || co.valuation_sector || co.template_code || "MANUFACTURING";
   const sp = engine.params(vs);
 
@@ -305,15 +325,15 @@ export default function DCFModel({ co, price, apiVal, a, onWork }) {
               hint="Mature ERP added to the G-Sec (already embeds country risk)." />
             <SliderRow label="Beta (β)" value={beta} setValue={setBeta} min={0.4} max={2.0} step={0.05}
               display={x => x.toFixed(2) + "x"}
-              hint={`Sector β = ${sp.beta.toFixed(2)} (${vs})`} />
+              hint={`Sector β = ${sp.beta.toFixed(2)} (${vs})`} driver={drivers["beta"]} />
             {!isF && (
               <>
                 {debtW > 0.001 && (
                   <SliderRow label="Cost of Debt (pre-tax)" value={costDebt} setValue={setCostDebt} min={0.06} max={0.16} step={0.005} />
                 )}
                 <SliderRow label="Debt weight" value={debtW} setValue={setDebtW} min={0} max={0.6} step={0.01}
-                  hint="D / (D+E) used in the WACC" />
-                <SliderRow label="Tax rate" value={taxRate} setValue={setTaxRate} min={0.15} max={0.35} step={0.005} />
+                  hint="D / (D+E) used in the WACC" driver={drivers["debt_weight"]} />
+                <SliderRow label="Tax rate" value={taxRate} setValue={setTaxRate} min={0.15} max={0.35} step={0.005} driver={drivers["tax_rate"]} />
               </>
             )}
             <HL />
@@ -338,14 +358,14 @@ export default function DCFModel({ co, price, apiVal, a, onWork }) {
             ) : (
               <>
                 <SliderRow label="Revenue growth"   value={revGrowth} setValue={setRevGrowth} min={0.02} max={0.40} step={0.005}
-                  hint="Starting growth, fades linearly to terminal" />
+                  hint="Starting growth, fades linearly to terminal" driver={drivers["rev_growth"]} />
                 <SliderRow label="EBIT margin"      value={ebitMargin} setValue={setEbitMargin} min={0.02} max={0.45} step={0.005}
-                  hint="NOPAT = EBIT × (1 − tax)" />
+                  hint="NOPAT = EBIT × (1 − tax)" driver={drivers["ebit_margin"]} />
                 <SliderRow label="Reinvestment rate" value={reinvest}  setValue={setReinvest} min={0.05} max={0.80} step={0.01}
-                  hint="Share of NOPAT reinvested · FCFF = NOPAT × (1 − reinvestment)" />
+                  hint="Share of NOPAT reinvested · FCFF = NOPAT × (1 − reinvestment)" driver={drivers["reinvest_rate"]} />
               </>
             )}
-            <SliderRow label="Fade years" value={fadeYears} setValue={setFadeYears} min={5} max={12} step={1} display={x=>x+"  yrs"} />
+            <SliderRow label="Fade years" value={fadeYears} setValue={setFadeYears} min={5} max={12} step={1} display={x=>x+"  yrs"} driver={drivers["fade_years"]} />
             <SliderRow label="Terminal growth (g∞)" value={gT} setValue={setGT} min={0.02} max={0.07} step={0.005}
               hint="Capped below nominal GDP" />
           </Card>
