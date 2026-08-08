@@ -8,10 +8,20 @@ import { useEffect, useState } from "react";
 import { X, Loader2 } from "lucide-react";
 import { C, sans, serif } from "../lib/theme.js";
 import PriceChart from "./PriceChart.jsx";
+import ErrorState from "./ui/ErrorState.jsx";
+import useResource from "../lib/useResource.js";
 
 export default function IndexChart({ API, name, onClose }) {
-  const [resp, setResp] = useState(null);
-  const [loading, setLoading] = useState(true);
+  /* The chart is this overlay's whole reason to exist, so a failure earns the
+     full ErrorState. Previously /history was read with `.then(r => r.json())`
+     and no r.ok: a 5xx JSON envelope became `resp`, `resp.available` was
+     undefined, and the overlay rendered "Could not load this index's history
+     right now" — the SAME sentence a legitimate 200 `{available:false}` gets.
+     Two different facts, one message; now the outage takes the error branch and
+     the message below means only what it says. */
+  const { data: resp, error, loading, retry } = useResource(
+    API && name ? `${API}/api/indices/${encodeURIComponent(name)}/history` : null);
+
   // Recharts' ResponsiveContainer measures 0-width while the card's fadein
   // transform is animating — mount the chart only after the animation settles.
   const [settled, setSettled] = useState(false);
@@ -19,18 +29,6 @@ export default function IndexChart({ API, name, onClose }) {
     const t = setTimeout(() => setSettled(true), 360);
     return () => clearTimeout(t);
   }, []);
-
-  // The overlay mounts fresh on every open (conditional render in the
-  // dashboard), so initial state covers the reset — no sync setState here.
-  useEffect(() => {
-    if (!API || !name) return;
-    let live = true;
-    fetch(`${API}/api/indices/${encodeURIComponent(name)}/history`)
-      .then(r => r.json())
-      .then(d => { if (live) { setResp(d); setLoading(false); } })
-      .catch(() => { if (live) { setResp(null); setLoading(false); } });
-    return () => { live = false; };
-  }, [API, name]);
 
   useEffect(() => {
     const onKey = e => { if (e.key === "Escape") { e.preventDefault(); onClose(); } };
@@ -77,9 +75,15 @@ export default function IndexChart({ API, name, onClose }) {
         {!loading && settled && resp?.available && (
           <PriceChart data={resp.data} intrinsic={null} price={null} ticker={name} />
         )}
-        {!loading && !resp?.available && (
+        {!loading && error && (
+          <div style={{ padding: "14px 0 6px" }}>
+            <ErrorState error={error} onRetry={retry} what="this index" />
+          </div>
+        )}
+        {!loading && !error && !resp?.available && (
           <div style={{ ...sans, padding: "40px 20px 30px", color: C.dim, fontSize: 13, textAlign: "center" }}>
-            {resp?.message || "Could not load this index's history right now."}
+            {/* Reached only on a 200 that says so — a genuine gap, not an outage. */}
+            {resp?.message || "No stored history for this index yet."}
           </div>
         )}
       </div>

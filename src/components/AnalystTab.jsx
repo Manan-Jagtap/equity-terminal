@@ -3,11 +3,12 @@
    and forward-looking EPS / revenue. Peers live in the Peer Universe tab;
    growth & ratios live in the Ratios & KPIs tab — no duplication. */
 
-import { useEffect, useState } from "react";
 import { Loader2, TrendingUp, Info } from "lucide-react";
 import { C, mono, sans, serif } from "../lib/theme.js";
 import { inr, fmt, multiple } from "../lib/formatters.js";
 import { useIsMobile } from "../lib/useResponsive.js";
+import { useResource } from "../lib/useResource.js";
+import ErrorState from "./ui/ErrorState.jsx";
 import { verdictColor } from "../design/tokens.js";
 
 /* The sell-side 5-point scale maps 1:1 onto the verdict ladder, so it uses the
@@ -60,19 +61,17 @@ const Empty = ({ children }) => (
 
 export default function AnalystTab({ co, API, price }) {
   const isMobile = useIsMobile();
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Without this, a missing API/ticker left `loading` true forever (spinner never cleared).
-    if (!API || !co.ticker) { setData(null); setLoading(false); return; }
-    let live = true;
-    setLoading(true);
-    fetch(`${API}/api/companies/${co.ticker}/insights`)
-      .then(r => r.json()).then(d => { if (live) setData(d); }).catch(() => { if (live) setData(null); })
-      .finally(() => { if (live) setLoading(false); });
-    return () => { live = false; };
-  }, [co.ticker, API]);
+  // This IS the tab's entire content, so a failure gets the full ErrorState.
+  // The hook also supplies the r.ok check the hand-rolled fetch lacked: /insights
+  // answers 4xx/5xx as JSON, so `.then(r => r.json())` resolved on an outage,
+  // `.catch` never fired, and `{"detail":"Not Found"}` fell through to
+  // `!data.has_data` — the screen then told the user analyst coverage for this
+  // name "isn't in our data yet" and pointed at a weekly refresh that cannot fix
+  // a 503. The old effect needed an explicit no-API/no-ticker branch or the
+  // spinner ran forever; a null url gives that for free — nothing to fetch
+  // means loading is false.
+  const { data, error, loading, retry } = useResource(
+    API && co.ticker ? `${API}/api/companies/${co.ticker}/insights` : null);
 
   const cmp = data?.price ?? price ?? co.price;
 
@@ -81,6 +80,12 @@ export default function AnalystTab({ co, API, price }) {
       <Loader2 size={22} className="spin" />
       <div style={{ ...sans, marginTop: 10, fontSize: 13 }}>Loading analyst data…</div>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+    </div>
+  );
+
+  if (error) return (
+    <div style={{ padding: `40px ${isMobile ? 16 : 32}px` }}>
+      <ErrorState error={error} onRetry={retry} what="analyst data" />
     </div>
   );
 

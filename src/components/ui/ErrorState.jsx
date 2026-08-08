@@ -28,7 +28,18 @@ const COPY = {
              body: "The response came back in a shape this screen doesn't recognise. That's on us, not on your connection." },
 };
 
-export default function ErrorState({ error, onRetry, what = "data", className = "" }) {
+/* `autoRetries` guards the one sentence in here that is a CLAIM about code
+   rather than a description of state. It defaults true because useResource —
+   which drives every call site but one — really does re-fetch on `online` and
+   on tab-visible while in the error state.
+
+   Portfolio is the exception, and it is the reason this prop exists: it drives
+   ErrorState from a hand-rolled `reload` with no listeners, so the sentence was
+   promising an automatic retry that no code performed. On the one screen in the
+   app holding real money. That is exactly the defect class this component was
+   written to eliminate, reintroduced by the component itself — a hardcoded
+   sentence cannot stay true across call sites, so it has to be conditional. */
+export default function ErrorState({ error, onRetry, what = "data", autoRetries = true, className = "" }) {
   const kind = error?.kind || "network";
   const { head, body } = COPY[kind] || COPY.network;
   return (
@@ -36,7 +47,9 @@ export default function ErrorState({ error, onRetry, what = "data", className = 
       <AlertTriangle className="evc-errstate-icon" size={20} aria-hidden="true" />
       <div className="evc-errstate-head">{head}</div>
       <p className="evc-errstate-body">
-        {body} It retries by itself when the connection returns.
+        {body}{autoRetries
+          ? " It retries by itself when the connection returns."
+          : " Use the button below once your connection is back."}
       </p>
       {onRetry && (
         <button type="button" className="evc-errstate-btn" onClick={onRetry}>

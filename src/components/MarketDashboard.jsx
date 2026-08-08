@@ -8,6 +8,8 @@ import { C, mono, sans, serif } from "../lib/theme.js";
 import PageSkeleton from "./Skeleton.jsx";
 import { useIsMobile } from "../lib/useResponsive.js";
 import { useLive, liveDotStyle } from "../lib/live.js";
+import useResource from "../lib/useResource.js";
+import ErrorState from "./ui/ErrorState.jsx";
 
 // Lazy: keeps recharts out of the eager dashboard bundle — the chart only
 // loads the first time an index card is clicked.
@@ -25,38 +27,56 @@ const fmtActive = x => x?.value_cr != null
 
 export default function MarketDashboard({ API, companies, onOpen }) {
   const isMobile = useIsMobile();
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [tick, setTick] = useState(0);
   const [idxChart, setIdxChart] = useState(null);   // index name whose chart is open
   const [activeEx, setActiveEx] = useState("NSE"); // NSE / BSE most-active toggle
   const liveFeed = useLive(API);
 
+  /* useResource, not the old fetch(url).then(r => r.json()).catch(): there was
+     no r.ok check, and the API answers errors with JSON (verified on prod —
+     GET /api/definitely-not-a-route returns 404, content-type
+     application/json, a {"detail":"Not Found"} body), so the promise RESOLVED
+     on every 4xx/5xx and the .catch never ran. `data` became the error
+     envelope, every list below read undefined off it, and the screen landed in
+     the `empty` branch — which explains an empty market as "normal when the
+     market is closed (weekends/holidays)". A backend outage was therefore
+     reported to the user, on the home screen, as a quiet Sunday. */
+  const { data: snap, error, loading, retry } = useResource(API ? `${API}/api/market/snapshot` : null);
+
   // Tickers in our universe → clickable through to the company page.
   const known = useMemo(() => new Set((companies || []).map(c => (c.ticker || "").toUpperCase())), [companies]);
 
-  useEffect(() => {
-    if (!API) { setLoading(false); return; }
-    setLoading(true);
-    fetch(`${API}/api/market/snapshot`)
-      .then(r => r.json()).then(setData).catch(() => setData(null))
-      .finally(() => setLoading(false));
-  }, [API, tick]);
-
   const PAD = isMobile ? 16 : 32;
 
-  if (loading && !data) return (
+  /* Skeleton on EVERY load, including a manual Refresh — the old guard was
+     `loading && !data`, which kept the previous snapshot up while a refresh ran.
+     That is not portable to useResource, which clears `data` for the duration of
+     a re-fetch, and the naive port is worse than the flash it avoids: rendering
+     with `data` null puts empty lists on screen under the "normal when the
+     market is closed" copy, i.e. it reports a refresh in progress as a closed
+     market. A skeleton says "loading" and nothing else. */
+  if (loading) return (
     <PageSkeleton label="Loading market…" cards={6} rows={8} />
   );
 
-  const indices = data?.indices || [];
-  const commodities = data?.commodities || [];
-  const gainers = data?.movers?.gainers || [];
-  const losers  = data?.movers?.losers || [];
-  const active  = data?.active || [];
-  const bseActive = data?.bse_active || [];
-  const highs   = data?.high_low?.highs || [];
-  const lows    = data?.high_low?.lows || [];
+  /* A failed request is not a closed market. Routing failures here keeps the
+     "market may be closed" explanation below attached to the one case where it
+     is actually true, and ErrorState's promise that it retries on reconnect is
+     backed by useResource's online/visibility listeners. */
+  if (error) return (
+    <div style={{ padding: `22px ${PAD}px 60px` }}>
+      <h1 style={{ ...serif, fontSize: isMobile ? 26 : 32, color: C.text, margin: "0 0 18px", fontWeight: 400 }}>Market Overview</h1>
+      <ErrorState error={error} onRetry={retry} what="the market snapshot" />
+    </div>
+  );
+
+  const indices = snap?.indices || [];
+  const commodities = snap?.commodities || [];
+  const gainers = snap?.movers?.gainers || [];
+  const losers  = snap?.movers?.losers || [];
+  const active  = snap?.active || [];
+  const bseActive = snap?.bse_active || [];
+  const highs   = snap?.high_low?.highs || [];
+  const lows    = snap?.high_low?.lows || [];
   const empty = indices.length === 0 && gainers.length === 0 && active.length === 0;
 
   const openIf = ticker => { const t = (ticker || "").toUpperCase(); if (known.has(t)) onOpen(t); };
@@ -73,10 +93,13 @@ export default function MarketDashboard({ API, companies, onOpen }) {
             ? <span style={{ ...mono, fontSize: 11, color: C.green, display: "inline-flex", alignItems: "center", gap: 6 }}>
                 <span className="blink" style={liveDotStyle(C.green)} />LIVE · {liveFeed.as_of}
               </span>
-            : data?.as_of && <span style={{ ...mono, fontSize: 11, color: C.dim }}>as of {data.as_of}</span>}
-          <button onClick={() => setTick(t => t + 1)} title="Refresh"
+            : snap?.as_of && <span style={{ ...mono, fontSize: 11, color: C.dim }}>as of {snap.as_of}</span>}
+          {/* No spin-while-loading class any more: the skeleton above returns
+              before this button renders, so `loading` is provably false here and
+              a conditional class would be dead code claiming otherwise. */}
+          <button onClick={retry} title="Refresh"
             style={{ ...sans, display: "flex", alignItems: "center", gap: 6, background: C.bg800, border: `1px solid ${C.line}`, color: C.dim, borderRadius: 6, padding: "5px 10px", fontSize: 12, cursor: "pointer" }}>
-            <RefreshCw size={12} className={loading ? "spin" : undefined} /> Refresh
+            <RefreshCw size={12} /> Refresh
           </button>
         </div>
       </div>
@@ -186,13 +209,46 @@ export default function MarketDashboard({ API, companies, onOpen }) {
    or divergent price is never something the user finds out about the hard way. */
 function DataHealth({ API, onOpen }) {
   const [health, setHealth] = useState(null);
+  const [failed, setFailed] = useState(false);
+  const [nonce, setNonce] = useState(0);
   const [expand, setExpand] = useState(false);
 
   useEffect(() => {
     if (!API) return;
+    let live = true;
     fetch(`${API}/api/quality/cross-check`)
-      .then(r => r.json()).then(setHealth).catch(() => setHealth(null));
-  }, [API]);
+      .then(r => {
+        /* The r.ok check the old code did not have. A 404/5xx answers with a
+           JSON envelope, so r.json() resolved, `health` became {"detail": …},
+           health.count read undefined, and the strip returned null — the user
+           could not tell "both price sources agree" from "we never checked".
+           A status code is a failure, not a payload. */
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then(d => { if (live) { setHealth(d); setFailed(false); } })
+      .catch(() => { if (live) { setHealth(null); setFailed(true); } });
+    return () => { live = false; };
+  }, [API, nonce]);
+
+  /* A one-line strip above the dashboard, not the dashboard — ui/ErrorState is
+     a full-width dashed panel with a headline and would shout louder than the
+     health signal it stands in for. But rendering nothing (the old behaviour)
+     reads as "nothing to report", and this widget's whole job is to say
+     whether the two price feeds agree. So: same strip, one honest line. */
+  if (failed) return (
+    <div role="status" style={{ border: `1px solid ${C.line}`, borderRadius: 10, background: C.bg900, padding: "10px 14px", marginBottom: 18, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+      <ShieldAlert size={14} color={C.faint} strokeWidth={1.7} aria-hidden="true" />
+      <span style={{ ...sans, fontSize: 12, color: C.dim }}>
+        Price cross-check unavailable — the data-quality service didn't answer. Treat this as unknown, not as an all-clear.
+      </span>
+      <button type="button" onClick={() => setNonce(n => n + 1)}
+        style={{ ...sans, fontSize: 11.5, color: C.gold, background: "transparent", border: "none",
+                 padding: 0, cursor: "pointer", textDecoration: "underline", marginLeft: "auto" }}>
+        Check again
+      </button>
+    </div>
+  );
 
   if (!health || !health.count) return null;
   // An expired price-feed token outranks everything: it's the one cause that

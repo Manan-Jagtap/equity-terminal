@@ -82,15 +82,29 @@ export default function PriceChart({ data, intrinsic, ticker, API, livePrice, li
   // moving these under it changed the hook count between the empty and loaded
   // renders and crashed the whole view (Rules of Hooks). Keep them here.
   const [intraday, setIntraday] = useState(null);
+  const [ivErr, setIvErr] = useState(null);
+  const [ivNonce, setIvNonce] = useState(0);
   useEffect(() => {
     if (style !== "intraday" || !API || !ticker) return;
     let dead = false;
-    setIntraday(null);
+    setIntraday(null); setIvErr(null);
     fetch(`${API}/api/companies/${ticker}/intraday`)
-      .then(r => r.json()).then(d => { if (!dead) setIntraday(d); })
-      .catch(() => { if (!dead) setIntraday({ available: false, values: [] }); });
+      .then(r => {
+        /* /intraday answers 4xx/5xx with a JSON body, so r.json() RESOLVED on
+           an outage and the old .catch never ran — the error envelope became
+           `intraday`, `values` was undefined, and the pane announced "the
+           market is closed or this name has no live feed". A market-hours
+           outage was rendered as a market-hours FACT, which on a price screen
+           is the most misleading thing this file could say. */
+        if (!r.ok) throw Object.assign(new Error(`HTTP ${r.status}`), { kind: "status" });
+        return r.json().catch(() => {
+          throw Object.assign(new Error("unreadable"), { kind: "parse" });
+        });
+      })
+      .then(d => { if (!dead) setIntraday(d); })
+      .catch(e => { if (!dead) setIvErr({ kind: e.kind || "network" }); });
     return () => { dead = true; };
-  }, [style, API, ticker]);
+  }, [style, API, ticker, ivNonce]);
 
   // 52-week high/low from the trailing year (intraday extremes when the feed
   // carries them — the external-terminal convention), regardless of range.
@@ -146,8 +160,23 @@ export default function PriceChart({ data, intrinsic, ticker, API, livePrice, li
           <span style={{ ...sans, fontSize: 10.5, color: C.faint }}>today · 1-minute ticks</span>
         </div>
         {!iv.length ? (
-          <div style={{ ...sans, padding: 30, color: C.dim, fontSize: 12 }}>
-            {intraday == null ? "Loading intraday…"
+          <div role={ivErr ? "status" : undefined} style={{ ...sans, padding: 30, color: C.dim, fontSize: 12, lineHeight: 1.6 }}>
+            {ivErr ? (
+              /* Inline, not ui/ErrorState: the toggle row above stays usable, so
+                 the user can drop back to Candles/Line instead of being handed a
+                 full-width failure panel over a working chart. */
+              <>
+                Couldn't load today's ticks — {ivErr.kind === "status" ? "the data service refused the request"
+                  : ivErr.kind === "parse" ? "the response came back unreadable"
+                  : "the request didn't get through"}. This is not a statement about the market being open or closed.
+                {" "}
+                <button type="button" onClick={() => setIvNonce(n => n + 1)}
+                  style={{ ...sans, fontSize: 12, color: C.gold, background: "transparent",
+                           border: "none", padding: 0, cursor: "pointer", textDecoration: "underline" }}>
+                  Retry
+                </button>
+              </>
+            ) : intraday == null ? "Loading intraday…"
               : "No intraday ticks right now — the market is closed or this name has no live feed."}
           </div>
         ) : (

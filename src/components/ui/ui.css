@@ -6,18 +6,43 @@
    ──────────────────────────────────────────────────────────────────────────── */
 
 /* ── Button ─────────────────────────────────────────────────────────────── */
+/* The ramp gained its two ends the first time real screens were converted; md
+   and sm are untouched. Measured heights of the controls they replace:
+
+     TrackRecord sort segments   24px  -> xs, an exact match
+     Watchlist dialog actions    29/31 -> sm 28
+     Watchlist row icon actions  30    -> sm 28, square via data-icon
+     Watchlist sign-in CTA       36    -> lg 40
+
+   lg is 40 rather than 36 because the alternative was md: md's height is only
+   2px off, but its 16px side padding takes 20px off that button's width
+   (94.6 -> 74.6), where lg's 24px padding lands within 3px (91.6). A 34/40
+   neighbour pair is a thin step and the honest read is that the ramp wants a
+   proper design pass — but inventing a 36px step to preserve one button's
+   padding is how a scale rots, so it is left at four.
+
+   No box-sizing is declared: `button` is border-box in the UA stylesheet in
+   every engine, so these heights are already the rendered heights. (A DIV would
+   not be — the app ships no global reset — which is why that was checked rather
+   than assumed.) */
 .evc-btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   font-family: var(--ev-font-ui); font-weight: 600; letter-spacing: var(--ev-track-ui);
-  border-radius: var(--ev-r-md); border: 1px solid transparent; cursor: pointer;
+  border-radius: var(--ev-r-ctl); border: 1px solid transparent; cursor: pointer;
   transition: background var(--ev-t-fast) var(--ev-ease),
               border-color var(--ev-t-fast) var(--ev-ease),
               color var(--ev-t-fast) var(--ev-ease),
               transform var(--ev-t-fast) var(--ev-ease);
   user-select: none; white-space: nowrap;
 }
+.evc-btn[data-size="lg"] { height: 40px; padding: 0 var(--ev-s5); font-size: var(--ev-fs-md); }
 .evc-btn[data-size="md"] { height: 34px; padding: 0 16px; font-size: var(--ev-fs-md); }
 .evc-btn[data-size="sm"] { height: 28px; padding: 0 12px; font-size: var(--ev-fs-sm); }
+.evc-btn[data-size="xs"] { height: 24px; padding: 0 10px; font-size: var(--ev-fs-xs); }
+/* Icon-only: square at whatever the size step is, so a 15px glyph in a 28px
+   control does not have to be hand-measured. aspect-ratio, not a per-size
+   width, so the two stay in lockstep if a step ever moves. */
+.evc-btn[data-icon="true"] { padding: 0; aspect-ratio: 1; }
 .evc-btn:active:not(:disabled) { transform: translateY(0.5px) scale(0.99); }
 .evc-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 
@@ -41,6 +66,25 @@
 }
 .evc-btn[data-variant="danger"]:hover:not(:disabled) { background: rgba(217, 123, 108, 0.12); }
 
+/* Muted ink — declared AFTER the variants so it wins the resting state, and at
+   lower specificity than every :hover rule (which carry :hover + :not(), 0-4-0
+   against this 0-2-0) so hover still returns the variant's own colour.
+   Exists because secondary chrome — a dialog's Cancel, a row's icon actions, an
+   unselected segment — reads as loud as the primary action at --ev-text. The
+   seven controls that take it here (two row actions, a dialog Cancel, four sort
+   segments) each hand-rolled the legacy C.dim #9a9080, which has no --ev-*
+   token behind it at all; --ev-text-3 #8d8474 is the ramp's nearest tier and
+   clears AA on all three surfaces (5.39 / 5.14 / 4.83:1). */
+.evc-btn[data-tone="muted"] { color: var(--ev-text-3); }
+
+/* Selected segment. Keyed off aria-pressed rather than a class so the state is
+   announced, not just painted: TrackRecord's four sort controls previously
+   signalled the active sort with colour alone, which a screen reader could not
+   convey at all. Values are the ones that shipped there. */
+.evc-btn[aria-pressed="true"] {
+  background: var(--ev-bg-over); border-color: var(--ev-line-2); color: var(--ev-accent);
+}
+
 /* loading: content dims, spinner overlays (spinner is a border-trick circle) */
 .evc-btn.is-loading { position: relative; color: transparent !important; pointer-events: none; }
 .evc-btn.is-loading::after {
@@ -48,6 +92,16 @@
   border-radius: var(--ev-r-pill);
   border: 2px solid var(--ev-line-2); border-top-color: var(--ev-accent);
   animation: evc-spin 0.7s linear infinite;
+}
+/* On the one variant that fills with the accent, the default spinner is
+   invisible. Measured on the fill: the ring body (--ev-line-2 over amber)
+   composites to rgb(233,188,109) at 1.07:1, and the rotating HEAD is
+   --ev-accent — the fill exactly, 1.00:1. So the one part that shows motion,
+   and therefore the only part that says "busy", could not be seen at all.
+   Ink-on-fill instead: 1.70:1 body, 9.08:1 head. */
+.evc-btn[data-variant="primary"].is-loading::after {
+  border-color: color-mix(in srgb, var(--ev-accent-ink) 28%, transparent);
+  border-top-color: var(--ev-accent-ink);
 }
 @keyframes evc-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) {
@@ -94,15 +148,63 @@
 }
 
 /* ── Card ───────────────────────────────────────────────────────────────── */
+/* Two corrections found the first time this was asked to replace a real frame.
+
+   RADIUS was --ev-r-lg (14px). Every panel in the product draws 12px, and
+   tokens.css names --ev-r-card "panels and cards — the app's default surface"
+   over a 60-literal audit. The primitive was contradicting its own token doc,
+   so a converted screen would have visibly changed shape.
+
+   HAIRLINE was --ev-elev-1, whose ring (0 0 0 1px) paints OUTSIDE the border
+   box while the 118 hand-rolled frames use a real 1px border that participates
+   in layout. Sampling the pixel row between two cards of the Sectors grid: with
+   a border, 14 canvas pixels sit in the declared 14px gutter; with the ring,
+   12 — it paints 1px into the gutter on each side. The ring also composites
+   against whatever is BEHIND the card rather than the card itself, so the same
+   --ev-line renders rgb(28,27,24) as a ring over the canvas and rgb(35,33,29)
+   as a border over --ev-bg-raise: the hairline is measurably fainter. A border
+   keeps conversions geometry-neutral and matches what the 118 frames draw.
+   --ev-elev-1's other half (0 1px 0 black) goes with it: a drop line under a
+   panel sitting on a #0a0907 canvas is not visible, and it was the only thing
+   making a resting card differ from the frames it replaces. */
 .evc-card {
-  background: var(--ev-bg-raise); border-radius: var(--ev-r-lg);
-  box-shadow: var(--ev-elev-1); padding: var(--ev-s5);
-  transition: box-shadow var(--ev-t-base) var(--ev-ease), transform var(--ev-t-base) var(--ev-ease);
+  background: var(--ev-bg-raise);
+  border: 1px solid var(--ev-line);
+  border-radius: var(--ev-r-card);
+  padding: var(--ev-s5);
+  transition: box-shadow var(--ev-t-base) var(--ev-ease),
+              border-color var(--ev-t-base) var(--ev-ease),
+              transform var(--ev-t-base) var(--ev-ease);
 }
 .evc-card[data-pad="sm"] { padding: var(--ev-s4); }
 .evc-card[data-pad="none"] { padding: 0; }
+
+/* Which surface the card sits ON. The layer scale already existed in tokens;
+   the primitive only ever offered the middle one, so a screen wanting a panel
+   on --ev-bg-over (Watchlist rows) or a well cut into the page at --ev-bg
+   (Watchlist's alert-settings drawer) had to abandon the primitive. */
+.evc-card[data-surface="over"] { background: var(--ev-bg-over); }
+.evc-card[data-surface="base"] { background: var(--ev-bg); }
+
+/* Hairline weight and state. `strong` is --ev-line-2, used where a panel
+   carries the headline number rather than supporting detail. `active` is the
+   "this one is live / expanded" ring: Watchlist drew it at accent 40% and
+   Sectors at accent 33% for the identical meaning, which is exactly the drift
+   a shared primitive exists to end. Unified at 40% (#6c562f composited on
+   --ev-bg-over) — the louder of the two, because both sites use it to mean
+   "look here". */
+.evc-card[data-tone="strong"] { border-color: var(--ev-line-2); }
+.evc-card[data-tone="active"] {
+  border-color: color-mix(in srgb, var(--ev-accent) 40%, transparent);
+}
+
 .evc-card[data-interactive="true"] { cursor: pointer; }
-.evc-card[data-interactive="true"]:hover { box-shadow: var(--ev-elev-2); transform: translateY(-1px); }
+/* The border goes transparent as the ring arrives so the outline stays exactly
+   1px through the hover — border + elev-2's ring would otherwise stack into a
+   2px line and the card would appear to thicken rather than lift. */
+.evc-card[data-interactive="true"]:hover {
+  border-color: transparent; box-shadow: var(--ev-elev-2); transform: translateY(-1px);
+}
 
 /* ── Tabs (Radix) — underline style, terminal feel ──────────────────────── */
 .evc-tabs-list {
@@ -292,17 +394,70 @@
 .evc-crow-delta { font-family: var(--ev-font-mono); font-variant-numeric: tabular-nums; font-size: var(--ev-fs-xs); }
 @media (max-width: 560px) { .evc-crow-spark { display: none; } }
 
-/* ── StatTile ───────────────────────────────────────────────────────────── */
-.evc-stat { display: flex; flex-direction: column; gap: 4px; min-width: 120px; }
+/* ── StatTile ─────────────────────────────────────────────────────────────
+   Measured against the 19 hand-rolled tile sites on Watchlist / Sectors /
+   TrackRecord, the original had one hard value everywhere the product had a
+   range, and it was the wrong value in three places:
+
+     min-width: 120px  — the six tiles in a Watchlist row measure 51 / 60 / 61 /
+       66 / 99 / 114 px of content. A 120px floor would have widened that row
+       from 451px to 720px and re-wrapped it. Dropped: a stat tile is content-
+       width, and the frame around it (Card) is where a minimum belongs.
+     value 23px fixed — the real tiles run 15 / 17 / 18 / 20 / 26. Now a step on
+       the type scale via data-size, so the number is picked from the ramp
+       rather than typed in.
+     value colour --ev-text fixed — 11 of the 19 colour the VALUE (margin of
+       safety green/red, fair value amber, a null in the muted tier). Only the
+       delta could take a colour, which is why no screen could use this. */
+.evc-stat { display: flex; flex-direction: column; gap: var(--ev-s1); }
 .evc-stat-label {
   font-size: var(--ev-fs-xs); font-weight: 600; letter-spacing: var(--ev-track-label);
   text-transform: uppercase; color: var(--ev-text-3);
 }
+/* Scoped to .evc-stat on purpose: every micro-label in the product is 10px
+   (--ev-fs-2xs), but AlphaScore borrows the bare .evc-stat-label class and is
+   not part of this conversion, so it keeps the 11px it ships with today. */
+.evc-stat .evc-stat-label { font-size: var(--ev-fs-2xs); }
+
+/* Label row with a right-hand slot — a cohort tile puts a verdict badge on the
+   left and its sample size ("191 calls") hard right. Without this the screen
+   had to build the row itself and the tile stopped being a tile. */
+.evc-stat-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: var(--ev-s2);
+}
+.evc-stat-meta {
+  font-family: var(--ev-font-mono); font-variant-numeric: tabular-nums;
+  font-size: var(--ev-fs-2xs); color: var(--ev-text-3); white-space: nowrap;
+}
+
 .evc-stat-value {
   font-family: var(--ev-font-mono); font-variant-numeric: tabular-nums;
-  font-size: var(--ev-fs-2xl); font-weight: 500; color: var(--ev-text); line-height: var(--ev-lh-tight);
+  font-size: var(--ev-fs-xl); font-weight: 500; color: var(--ev-text); line-height: var(--ev-lh-tight);
 }
+.evc-stat[data-size="sm"] .evc-stat-value { font-size: var(--ev-fs-lg); }
+.evc-stat[data-size="md"] .evc-stat-value { font-size: var(--ev-fs-xl); }
+.evc-stat[data-size="lg"] .evc-stat-value { font-size: var(--ev-fs-2xl); }
+.evc-stat[data-size="xl"] .evc-stat-value { font-size: var(--ev-fs-3xl); }
+
+/* Value tone. Named for MEANING, not colour, so a screen never writes a hex:
+   up/down are the ladder's direction pair, muted is "no data", and the tile
+   cannot express a colour the palette gate has not already cleared. */
+.evc-stat[data-tone="up"]        .evc-stat-value { color: var(--ev-up); }
+.evc-stat[data-tone="down"]      .evc-stat-value { color: var(--ev-down); }
+.evc-stat[data-tone="accent"]    .evc-stat-value { color: var(--ev-accent); }
+.evc-stat[data-tone="secondary"] .evc-stat-value { color: var(--ev-text-2); }
+.evc-stat[data-tone="muted"]     .evc-stat-value { color: var(--ev-text-3); }
+
 .evc-stat-delta { font-family: var(--ev-font-mono); font-variant-numeric: tabular-nums; font-size: var(--ev-fs-sm); }
+.evc-stat-delta[data-dir="up"]   { color: var(--ev-up); }
+.evc-stat-delta[data-dir="down"] { color: var(--ev-down); }
+.evc-stat-delta[data-dir="none"] { color: var(--ev-text-3); }
+
+/* Caption under the number — "avg price return · med +2.1%". Every tile that
+   has one wrote its own; there are six on TrackRecord alone. */
+.evc-stat-note {
+  font-size: var(--ev-fs-2xs); color: var(--ev-text-3); line-height: var(--ev-lh-body);
+}
 
 /* ── PageHeader ─────────────────────────────────────────────────────────────
    One <h1> per screen. 11 of 15 screens previously had no heading element at

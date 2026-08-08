@@ -12,6 +12,9 @@ import { th, td, tdNum, thName, tdName } from "../design/table.js";
 import { VerdictBadge } from "./primitives.jsx";
 import PageHeader from "./ui/PageHeader.jsx";
 import ErrorState from "./ui/ErrorState.jsx";
+import Card from "./ui/Card.jsx";
+import Button from "./ui/Button.jsx";
+import StatTile from "./ui/StatTile.jsx";
 import useResource from "../lib/useResource.js";
 
 const inr = v => v == null ? "—" : "₹" + Number(v).toLocaleString("en-IN", { maximumFractionDigits: v >= 100 ? 0 : 2 });
@@ -49,30 +52,35 @@ function Ret({ v, size = 12 }) {
   );
 }
 
+/* Signed return -> StatTile tone. A cohort with no calls is "muted", not a
+   grey-painted zero — the distinction this whole page is about. */
+const retTone = v => v == null ? "muted" : v >= 0 ? "up" : "down";
+
 function CohortCard({ name, c }) {
   const hasData = c && c.n > 0;
   return (
-    <div style={{ background: "rgba(16,14,10,0.6)", border: `1px solid ${C.line}`, padding: "14px 16px", minWidth: 150, flex: 1 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 8 }}>
-        <VerdictBadge verdict={name} />
-        <span style={{ ...mono, fontSize: 10, color: C.dim }}>{hasData ? `${c.n} call${c.n > 1 ? "s" : ""}` : "no calls"}</span>
-      </div>
-      <div style={{ ...mono, fontSize: 20, color: hasData && c.avg_return != null ? (c.avg_return >= 0 ? C.green : C.red) : C.dim }}>
-        {hasData ? pct(c.avg_return) : "—"}
-      </div>
-      <div style={{ ...sans, fontSize: 10, color: C.dim, marginTop: 4 }}>
-        avg price return{hasData && c.median_return != null ? ` · med ${pct(c.median_return)}` : ""}
-      </div>
+    /* Card + StatTile, composed: the frame is the primitive's, and the
+       badge-plus-sample-size row is the tile's `meta` slot rather than a
+       hand-built flex header. */
+    <Card pad="sm" style={{ minWidth: 150, flex: 1 }}>
+      <StatTile
+        size="md"
+        label={<VerdictBadge verdict={name} />}
+        meta={hasData ? `${c.n} call${c.n > 1 ? "s" : ""}` : "no calls"}
+        value={hasData ? pct(c.avg_return) : "—"}
+        tone={hasData ? retTone(c.avg_return) : "muted"}
+        note={`avg price return${hasData && c.median_return != null ? ` · med ${pct(c.median_return)}` : ""}`}
+      />
       {hasData && c.avg_total_return != null && (
         <div style={{ ...mono, fontSize: 11, marginTop: 3, color: c.avg_total_return >= 0 ? C.green : C.red }}>
           {pct(c.avg_total_return)} <span style={{ ...sans, color: C.dim }}>incl. dividends</span>
         </div>
       )}
-      <div style={{ ...sans, fontSize: 10, color: C.dim, marginTop: 2 }}>
+      <div className="evc-stat-note" style={{ marginTop: 2 }}>
         {hasData && c.win_rate != null ? `${Math.round(c.win_rate * 100)}% correct` : name === "HOLD" ? "no direction" : ""}
         {hasData && c.avg_days != null ? ` · ~${Math.round(c.avg_days)}d held` : ""}
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -155,35 +163,33 @@ export default function TrackRecord({ API, onOpen }) {
         </div>
       )}
 
-      {/* Headline spread */}
+      {/* Headline spread. tone="strong" is the --ev-line-2 hairline these two
+          already carried — it is what separates the headline panels from the
+          five cohort panels beside them. */}
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
-        <div style={{ background: "rgba(16,14,10,0.6)", border: `1px solid ${C.line2}`, padding: "14px 20px", minWidth: 230 }}>
-          <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: C.dim, marginBottom: 6 }}>
-            BUY − AVOID spread
-          </div>
-          <div style={{ ...mono, fontSize: 26, color: spread == null ? C.dim : spread >= 0 ? C.green : C.red }}>
-            {spread == null ? "—" : pct(spread)}
-          </div>
-          <div style={{ ...sans, fontSize: 10, color: C.dim, marginTop: 4 }}>
-            {spread == null
+        <Card pad="sm" tone="strong" style={{ minWidth: 230 }}>
+          <StatTile
+            size="xl"
+            label="BUY − AVOID spread"
+            value={spread == null ? "—" : pct(spread)}
+            tone={retTone(spread)}
+            note={spread == null
               ? "Needs at least one BUY and one AVOID call with history"
               : "If the model has signal, its BUYs should beat its AVOIDs. This is that test."}
-          </div>
-        </div>
+          />
+        </Card>
         {data?.benchmark && (
-          <div style={{ background: "rgba(16,14,10,0.6)", border: `1px solid ${C.line2}`, padding: "14px 20px", minWidth: 230 }}>
-            <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: C.dim, marginBottom: 6 }}>
-              BUY vs universe · total return
-            </div>
-            <div style={{ ...mono, fontSize: 26, color: excess == null ? C.dim : excess >= 0 ? C.green : C.red }}>
-              {excess == null ? "—" : pct(excess)}
-            </div>
-            <div style={{ ...sans, fontSize: 10, color: C.dim, marginTop: 4 }}>
-              {excess == null
+          <Card pad="sm" tone="strong" style={{ minWidth: 230 }}>
+            <StatTile
+              size="xl"
+              label="BUY vs universe · total return"
+              value={excess == null ? "—" : pct(excess)}
+              tone={retTone(excess)}
+              note={excess == null
                 ? "Needs BUY calls with history"
                 : `BUY ${pct(buyTR)} vs owning everything tracked ${pct(bench)} — dividends included`}
-            </div>
-          </div>
+            />
+          </Card>
         )}
         {COHORT_ORDER.map(v => <CohortCard key={v} name={v} c={cohorts[v]} />)}
       </div>
@@ -202,14 +208,13 @@ export default function TrackRecord({ API, onOpen }) {
       {ledger.data?.summary && (() => {
         const s = ledger.data.summary;
         const alpha = s.alpha;
+        /* Was a locally-declared `Stat` duplicating the headline panels above
+           it, three sections apart in one file. Both are now the same two
+           primitives, so they cannot drift. */
         const Stat = ({ label, value, tone, note }) => (
-          <div style={{ background: "rgba(16,14,10,0.6)", border: `1px solid ${C.line2}`,
-                        padding: "14px 20px", minWidth: 210 }}>
-            <div style={{ ...sans, fontSize: 10, textTransform: "uppercase",
-                          letterSpacing: "0.12em", color: C.dim, marginBottom: 6 }}>{label}</div>
-            <div style={{ ...mono, fontSize: 26, color: tone || C.text }}>{value}</div>
-            {note && <div style={{ ...sans, fontSize: 10, color: C.dim, marginTop: 4 }}>{note}</div>}
-          </div>
+          <Card pad="sm" tone="strong" style={{ minWidth: 210 }}>
+            <StatTile size="xl" label={label} value={value} tone={tone} note={note} />
+          </Card>
         );
         return (
           <div style={{ marginTop: 34 }}>
@@ -222,7 +227,7 @@ export default function TrackRecord({ API, onOpen }) {
             <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 14 }}>
               <Stat label={`Alpha vs ${s.benchmark || "benchmark"}`}
                     value={alpha == null ? "—" : pct(alpha)}
-                    tone={alpha == null ? C.dim : alpha >= 0 ? C.green : C.red}
+                    tone={retTone(alpha)}
                     note={`engine ${pct(s.avg_return)} · benchmark ${pct(s.benchmark_return)}`} />
               <Stat label="Hit rate" value={rate(s.hit_rate)}
                     note={`${s.n_graded} calls graded, 7+ days old`} />
@@ -293,14 +298,15 @@ export default function TrackRecord({ API, onOpen }) {
           </span>
         )}
         <div style={{ flex: 1 }} />
+        {/* A segmented control, so it is built as one: `pressed` emits
+            aria-pressed, which the hand-rolled version never did — the active
+            sort was conveyed by amber text alone and a screen reader was told
+            nothing at all. */}
         {SORTS.map(s => (
-          <button key={s.id} onClick={() => setSort(s.id)} style={{
-            ...sans, fontSize: 11, padding: "4px 10px", cursor: "pointer",
-            border: `1px solid ${sort === s.id ? C.line2 : "transparent"}`,
-            background: sort === s.id ? C.bg800 : "transparent",
-            color: sort === s.id ? C.gold : C.dim }}>
+          <Button key={s.id} size="xs" variant="ghost" tone="muted"
+            pressed={sort === s.id} onClick={() => setSort(s.id)}>
             {s.label}
-          </button>
+          </Button>
         ))}
       </div>
 
@@ -310,8 +316,11 @@ export default function TrackRecord({ API, onOpen }) {
           daily price refresh — the first entries appear within a day of deploy.
         </div>
       ) : (
-        <div style={{ overflowX: "auto", border: `1px solid ${C.line}` }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", background: "rgba(16,14,10,0.6)" }}>
+        /* pad="none" — the table supplies its own cell rhythm from
+           design/table.js; the Card is only the frame. overflow-x:auto also
+           does the clipping the rounded corners need. */
+        <Card pad="none" style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ borderBottom: `1px solid ${C.line}` }}>
                 <th style={thName}>Company</th>
@@ -352,7 +361,7 @@ export default function TrackRecord({ API, onOpen }) {
               ))}
             </tbody>
           </table>
-        </div>
+        </Card>
       )}
 
     </div>

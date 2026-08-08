@@ -8,9 +8,18 @@ import { VerdictBadge } from "./primitives.jsx";
 import Logo from "./Logo.jsx";
 import { fetchWatchlist, saveWatch, removeWatch } from "../lib/watchlist.js";
 import PageHeader from "./ui/PageHeader.jsx";
+/* Modules, not the ui/ barrel — App.jsx imports this screen EAGERLY, so a
+   barrel import would drag Radix into the entry chunk (see ui/index.js). */
+import Card from "./ui/Card.jsx";
+import Button from "./ui/Button.jsx";
+import StatTile from "./ui/StatTile.jsx";
 
 const inr = v => v == null ? "—" : "₹" + Number(v).toLocaleString("en-IN", { maximumFractionDigits: 0 });
 const signed = v => v == null ? "—" : (v >= 0 ? "+" : "") + (v * 100).toFixed(1) + "%";
+/* Signed quantity -> StatTile tone. "no value" is its own tone, not a colour
+   that happens to be grey: an absent margin of safety must never read as a
+   flat one. */
+const sign = v => v == null ? "muted" : v >= 0 ? "up" : "down";
 const ALERT_C = { good: C.green, info: C.gold, warn: C.red };
 
 function AlertChip({ a }) {
@@ -73,7 +82,9 @@ function SettingsPanel({ item, onSave, onClose }) {
   };
 
   return (
-    <div style={{ marginTop: 12, padding: 16, background: C.bg, border: `1px solid ${C.line2}`, borderRadius: 10 }}>
+    /* A well cut INTO the row, not another panel on top of it — hence
+       surface="base" (--ev-bg, the canvas) with the stronger hairline. */
+    <Card pad="sm" surface="base" tone="strong" style={{ marginTop: 12 }}>
       <div style={{ ...sans, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.12em", color: C.gold, marginBottom: 8 }}>Alert settings</div>
       <Row label="Entry target price"><span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}><span style={{ ...sans, fontSize: 11, color: C.faint }}>₹</span>{num(tgt, setTgt, "")}</span></Row>
       <Row label="Margin-of-safety threshold">{num(mos, setMos, "%")}</Row>
@@ -83,16 +94,16 @@ function SettingsPanel({ item, onSave, onClose }) {
       <Row label="Alert on margin of safety"><Toggle k="alert_mos" /></Row>
       <Row label="Alert on price target"><Toggle k="alert_target" /></Row>
       <Row label="Alert on big daily move"><Toggle k="alert_move" /></Row>
+      {/* These two were 29px and 31px tall side by side — same padding, but only
+          one had a border — so the pair never sat on a common baseline. One
+          size step puts both at 28. */}
       <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-        <button onClick={save} disabled={busy} style={{ ...sans, fontSize: 12, fontWeight: 600, color: C.bg,
-          background: C.gold, border: "none", borderRadius: 6, padding: "7px 14px", cursor: "pointer",
-          display: "inline-flex", alignItems: "center", gap: 6 }}>
-          {busy ? <Loader2 size={13} className="spin" /> : <Check size={13} />} Save
-        </button>
-        <button onClick={onClose} style={{ ...sans, fontSize: 12, color: C.dim, background: "transparent",
-          border: `1px solid ${C.line2}`, borderRadius: 6, padding: "7px 14px", cursor: "pointer" }}>Cancel</button>
+        <Button variant="primary" size="sm" onClick={save} loading={busy}>
+          <Check size={13} /> Save
+        </Button>
+        <Button size="sm" tone="muted" onClick={onClose}>Cancel</Button>
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -114,10 +125,7 @@ export function SignInGate({ requestAuth, what }) {
       <div style={{ ...sans, fontSize: 13, color: C.dim, maxWidth: 380, lineHeight: 1.6, marginBottom: 22 }}>
         Sign in to use your {what} — your data is private to your account.
       </div>
-      <button onClick={requestAuth} style={{
-        ...sans, fontSize: 13, fontWeight: 600, color: C.bg, background: C.gold,
-        border: "none", borderRadius: 8, padding: "10px 26px", cursor: "pointer",
-      }}>Sign in</button>
+      <Button variant="primary" size="lg" onClick={requestAuth}>Sign in</Button>
     </div>
   );
 }
@@ -175,8 +183,9 @@ export default function Watchlist({ API, onOpen, onChanged, user, requestAuth })
           <div style={{ ...sans, fontSize: 12, color: C.faint, marginTop: 6 }}>Open a company or the screener and tap the ☆ to track it.</div>
         </div>
       ) : items.map(it => (
-        <div key={it.ticker} style={{ position: "relative", overflow: "hidden", marginBottom: 14,
-          border: `1px solid ${it.triggered ? C.gold + "66" : C.line}`, borderRadius: 12, background: C.bg800, padding: 18 }}>
+        <Card key={it.ticker} pad="sm" surface="over"
+          tone={it.triggered ? "active" : "default"}
+          style={{ position: "relative", overflow: "hidden", marginBottom: 14 }}>
           <div style={{ position: "absolute", inset: 0, ...gridBg, opacity: 0.25, pointerEvents: "none" }} />
           <div style={{ position: "relative" }}>
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
@@ -189,28 +198,31 @@ export default function Watchlist({ API, onOpen, onChanged, user, requestAuth })
                 <div style={{ ...mono, fontSize: 10, color: C.faint, marginTop: 2 }}>{it.ticker} · {it.sector}</div>
               </div>
               <div style={{ display: "flex", gap: 6 }}>
-                <button title="Alert settings" onClick={() => setEditing(editing === it.ticker ? null : it.ticker)} style={iconBtn}>
+                <Button size="sm" iconOnly tone="muted" title="Alert settings"
+                  pressed={editing === it.ticker}
+                  onClick={() => setEditing(editing === it.ticker ? null : it.ticker)}>
                   <Settings2 size={15} />
-                </button>
-                <button title="Remove" onClick={() => onRemove(it.ticker)} style={iconBtn}>
+                </Button>
+                <Button size="sm" iconOnly tone="muted" title="Remove" onClick={() => onRemove(it.ticker)}>
                   <Trash2 size={15} />
-                </button>
+                </Button>
               </div>
             </div>
 
+            {/* Six StatTiles. The tone names replace six hand-written colour
+                ternaries — the tile decides what "up" looks like, not the
+                screen, which is why this row can no longer drift away from the
+                identical row on Sectors. */}
             <div style={{ display: "flex", flexWrap: "wrap", gap: 26, marginTop: 14 }}>
               {[
-                ["CMP", inr(it.price), C.text],
-                ["1-day", signed(it.day_move), it.day_move == null ? C.dim : it.day_move >= 0 ? C.green : C.red],
-                ["Fair value", inr(it.intrinsic), C.gold],
-                ["Margin of safety", signed(it.mos), it.mos == null ? C.dim : it.mos >= 0 ? C.green : C.red],
-                ["Analyst upside", signed(it.analyst_upside), it.analyst_upside == null ? C.dim : it.analyst_upside >= 0 ? C.green : C.red],
-                ["Score", it.composite == null ? "—" : Math.round(it.composite) + "/100", C.text200],
-              ].map(([l, v, col]) => (
-                <div key={l}>
-                  <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: C.dim }}>{l}</div>
-                  <div style={{ ...mono, fontSize: 17, color: col, marginTop: 3 }}>{v}</div>
-                </div>
+                ["CMP", inr(it.price), undefined],
+                ["1-day", signed(it.day_move), sign(it.day_move)],
+                ["Fair value", inr(it.intrinsic), "accent"],
+                ["Margin of safety", signed(it.mos), sign(it.mos)],
+                ["Analyst upside", signed(it.analyst_upside), sign(it.analyst_upside)],
+                ["Score", it.composite == null ? "—" : Math.round(it.composite) + "/100", "secondary"],
+              ].map(([l, v, tone]) => (
+                <StatTile key={l} size="sm" label={l} value={v} tone={tone} />
               ))}
             </div>
 
@@ -224,13 +236,8 @@ export default function Watchlist({ API, onOpen, onChanged, user, requestAuth })
               <SettingsPanel item={it} onClose={() => setEditing(null)} onSave={cfg => onSave(it.ticker, cfg)} />
             )}
           </div>
-        </div>
+        </Card>
       ))}
     </div>
   );
 }
-
-const iconBtn = {
-  display: "inline-flex", alignItems: "center", justifyContent: "center", width: 30, height: 30,
-  borderRadius: 6, border: `1px solid ${C.line2}`, background: "transparent", color: C.dim, cursor: "pointer",
-};

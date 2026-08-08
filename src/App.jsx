@@ -221,10 +221,23 @@ export default function App() {
     // so backend and frontend can't drift. NIFTY_50 below is only a fallback for
     // when that call can't be reached.
     const universe = fetch(`${API}/api/universe`)
-      .then(r => r.json())
+      .then(r => { if (!r.ok) throw new Error(`universe ${r.status}`); return r.json(); })
       .then(d => (Array.isArray(d?.tickers) && d.tickers.length) ? new Set(d.tickers) : NIFTY_50)
       .catch(() => NIFTY_50);
-    Promise.all([universe, fetch(`${API}/api/companies`).then(r => r.json())])
+    // r.ok, and a shape gate. This is the request the entire terminal is built
+    // on, and it had neither: the API answers errors with JSON, so a 500's
+    // {"detail": …} envelope resolved into `rows`, where the very next line
+    // calls .filter() on it. That is a render-time TypeError on the whole app,
+    // not a degraded screen — and the SEED fallback below existed precisely to
+    // stop that, but could never fire because nothing threw.
+    const companies = fetch(`${API}/api/companies`)
+      .then(r => { if (!r.ok) throw new Error(`companies ${r.status}`); return r.json(); })
+      .then(d => {
+        const rows = Array.isArray(d) ? d : d?.items;
+        if (!Array.isArray(rows)) throw new Error("companies: unexpected shape");
+        return rows;
+      });
+    Promise.all([universe, companies])
       .then(([visibleSet, rows]) => {
         const visible = NIFTY50_ONLY ? rows.filter(r => visibleSet.has(r.ticker)) : rows;
         // Carry the backend's CONSENSUS-ANCHORED screener metrics onto each
@@ -308,7 +321,7 @@ export default function App() {
     if (API && co.ticker) {
       const ticker = co.ticker;
       fetch(`${API}/api/companies/${ticker}/history`)
-        .then(r => r.json())
+        .then(r => { if (!r.ok) throw new Error(`history ${r.status}`); return r.json(); })
         .then(d => { if (histReqRef.current === ticker) setHistPrices(d); })
         .catch(() => { if (histReqRef.current === ticker) setHistPrices(null); });
     }

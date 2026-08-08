@@ -5,7 +5,7 @@
    deterministic rule-based extractor from the company's own transcript. Shows
    an honest "processed within a day" state until the ingester has run. */
 import { useEffect, useState } from "react";
-import { Mic, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Mic, TrendingUp, TrendingDown, Minus, AlertTriangle } from "lucide-react";
 import { C, sans, mono } from "../lib/theme.js";
 
 const GROUPS = [
@@ -41,22 +41,38 @@ function ToneGauge({ tone, direction }) {
 export default function ConcallKeyPoints({ API, ticker }) {
   // Keep the loaded ticker with the payload so switching companies shows
   // nothing stale — without a synchronous setState reset inside the effect.
-  const [loaded, setLoaded] = useState({ ticker: null, data: null });
+  const [loaded, setLoaded] = useState({ ticker: null, data: null, error: null });
+  const [nonce, setNonce] = useState(0);
 
   useEffect(() => {
     if (!API || !ticker) return;
     let dead = false;
     fetch(`${API}/api/companies/${ticker}/transcript-insight`)
-      .then(r => r.json())
-      .then(d => { if (!dead) setLoaded({ ticker, data: d }); })
-      .catch(() => { if (!dead) setLoaded({ ticker, data: { available: false } }); });
+      .then(r => {
+        /* Without this r.ok check the failure was invisible: the endpoint
+           answers 4xx/5xx with a JSON body, so r.json() RESOLVED, the old
+           .catch never fired, and {"detail":"Not Found"} arrived with
+           `available` undefined — landing on exactly the same copy the old
+           .catch chose by hand, "No transcript processed yet — the ingester
+           runs daily and will populate this automatically". An outage was
+           reported as a transcript that does not exist, with a remedy (wait for
+           tomorrow's ingester) that cannot help. */
+        if (!r.ok) throw Object.assign(new Error(`HTTP ${r.status}`), { kind: "status" });
+        return r.json().catch(() => {
+          throw Object.assign(new Error("unreadable"), { kind: "parse" });
+        });
+      })
+      .then(d => { if (!dead) setLoaded({ ticker, data: d, error: null }); })
+      .catch(e => { if (!dead) setLoaded({ ticker, data: null, error: { kind: e.kind || "network" } }); });
     return () => { dead = true; };
-  }, [API, ticker]);
+  }, [API, ticker, nonce]);
 
-  const data = loaded.ticker === ticker ? loaded.data : null;
-  if (!data) return null;                       // silent while loading / stale
-  const p = data.points || {};
-  const hasAny = data.available && (GROUPS.some(([k]) => (p[k] || []).length) || (p.kpis || []).length);
+  const fresh = loaded.ticker === ticker;
+  const data = fresh ? loaded.data : null;
+  const err  = fresh ? loaded.error : null;
+  if (!data && !err) return null;               // silent while loading / stale
+  const p = data?.points || {};
+  const hasAny = data?.available && (GROUPS.some(([k]) => (p[k] || []).length) || (p.kpis || []).length);
 
   return (
     <div style={{ border: `1px solid ${C.line}`, borderRadius: 12, background: C.panel,
@@ -66,13 +82,13 @@ export default function ConcallKeyPoints({ API, ticker }) {
                        color: C.dim, display: "flex", alignItems: "center", gap: 6 }}>
           <Mic size={13} color={C.gold} /> Concall key points
         </span>
-        {data.quarter && <span style={{ ...mono, fontSize: 11, color: C.faint }}>{data.quarter}</span>}
+        {data?.quarter && <span style={{ ...mono, fontSize: 11, color: C.faint }}>{data.quarter}</span>}
         <div style={{ marginLeft: "auto" }}>
-          {data.available && <ToneGauge tone={data.tone_score} direction={p.guidance_direction} />}
+          {data?.available && <ToneGauge tone={data.tone_score} direction={p.guidance_direction} />}
         </div>
       </div>
 
-      {data.available && (p.kpis || []).length > 0 && (
+      {data?.available && (p.kpis || []).length > 0 && (
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
           {p.kpis.map((k, i) => (
             <div key={i} style={{ border: `1px solid ${C.line2}`, borderRadius: 8, background: C.bg900,
@@ -87,7 +103,27 @@ export default function ConcallKeyPoints({ API, ticker }) {
         </div>
       )}
 
-      {!hasAny ? (
+      {err ? (
+        /* One quiet line rather than ui/ErrorState: this is a secondary card on
+           a long company page, and a full-width dashed panel would make a
+           failed side-fetch look like the page itself had fallen over. */
+        <div role="status" style={{ ...sans, fontSize: 12.5, color: C.dim, lineHeight: 1.6,
+                                    display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
+          <AlertTriangle size={12} color={C.gold} aria-hidden="true" style={{ flexShrink: 0 }} />
+          <span>
+            Couldn't load the concall pointers — {err.kind === "status" ? "the data service refused the request"
+              : err.kind === "parse" ? "the response came back unreadable"
+              : "the request didn't get through"}. A transcript may well have been processed; this is not that answer.
+          </span>
+          {/* Clear before refetching so the click has feedback — this card
+              renders nothing while loading, so it collapses and returns. */}
+          <button type="button" onClick={() => { setLoaded({ ticker: null, data: null, error: null }); setNonce(n => n + 1); }}
+            style={{ ...sans, fontSize: 11.5, color: C.gold, background: "transparent",
+                     border: "none", padding: 0, cursor: "pointer", textDecoration: "underline" }}>
+            Retry
+          </button>
+        </div>
+      ) : !hasAny ? (
         <div style={{ ...sans, fontSize: 12.5, color: C.dim, lineHeight: 1.6 }}>
           {data.available
             ? "The latest transcript held no clearly extractable pointers."
@@ -114,7 +150,7 @@ export default function ConcallKeyPoints({ API, ticker }) {
           })}
         </div>
       )}
-      {data.available && (
+      {data?.available && (
         <div style={{ ...sans, fontSize: 9.5, color: C.faint, marginTop: 10 }}>
           Extracted from the company's own earnings-call transcript · verbatim sentences, not paraphrased ·
           {data.source_url ? <a href={data.source_url} target="_blank" rel="noreferrer"
