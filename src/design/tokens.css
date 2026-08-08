@@ -88,8 +88,27 @@
   --ev-s1: 4px; --ev-s2: 8px; --ev-s3: 12px; --ev-s4: 16px;
   --ev-s5: 24px; --ev-s6: 32px; --ev-s7: 48px; --ev-s8: 64px;
 
-  /* ── Radii ── */
-  --ev-r-sm: 6px; --ev-r-md: 10px; --ev-r-lg: 14px; --ev-r-pill: 999px;
+  /* ── Radii ──
+        SIX steps, not four, because the product genuinely uses six. An audit
+        of every borderRadius literal outside ui/ found FIFTEEN distinct values;
+        the one-offs (3/4/5/7/9/11, 73 literals) were snapped onto this scale,
+        but two of the survivors were not accidents:
+
+          --ev-r-ctl  8px   63 uses, skewing to buttons and controls
+          --ev-r-card 12px  60 uses, and almost never on a control
+
+        Those two carry a real control-vs-panel distinction. Collapsing both to
+        --ev-r-md would have bought a tidier histogram by destroying a
+        hierarchy the UI was already expressing, so the scale is corrected to
+        describe what the product does rather than the code being bent to a
+        table that was never true. Documented here so the next reader does not
+        re-derive the audit and "fix" them. */
+  --ev-r-sm:   6px;    /* chips, meters, small inline marks */
+  --ev-r-ctl:  8px;    /* buttons, inputs, segmented controls */
+  --ev-r-md:  10px;    /* mid-weight surfaces */
+  --ev-r-card:12px;    /* panels and cards — the app's default surface */
+  --ev-r-lg:  14px;    /* large / feature surfaces */
+  --ev-r-pill: 999px;
 
   /* ── Scrims behind overlays. Warm near-black, never the retired Aurora blue:
         five hand-rolled rgba(4,8,16,…) literals survived the Phase-2b re-skin

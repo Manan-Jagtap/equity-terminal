@@ -26,7 +26,10 @@ export const font = {
 };
 
 export const space = { s1: 4, s2: 8, s3: 12, s4: 16, s5: 24, s6: 32, s7: 48, s8: 64 };
-export const radius = { sm: 6, md: 10, lg: 14, pill: 999 };
+/* Mirrors tokens.css. Six steps, not four: `ctl` (8) and `card` (12) describe a
+   control-vs-panel distinction the product was already expressing across 123
+   literals — see the audit note in tokens.css before "tidying" them away. */
+export const radius = { sm: 6, ctl: 8, md: 10, card: 12, lg: 14, pill: 999 };
 
 /* Stacking order — mirror of --ev-z-* (overlays reference this, never a literal) */
 export const zIndex = {
