@@ -14,6 +14,29 @@ import { authFetch, getUser } from "../lib/auth.js";
 import { useLive } from "../lib/live.js";
 
 const confColor = lvl => lvl === "high" ? C.green : lvl === "medium" ? C.gold : C.red;
+
+/* Data confidence as a 3-segment meter: 3 filled = high, 2 = medium, 1 = low.
+   The FILL COUNT is the primary channel and colour is redundant reinforcement,
+   which is the inverse of what the 7px dot did. Same footprint (7px wide), so
+   the row rhythm is unchanged. */
+const CONF_STEPS = { high: 3, medium: 2, low: 1 };
+function ConfidenceMeter({ conf }) {
+  const level = conf?.level || "low";
+  const filled = CONF_STEPS[level] ?? 1;
+  const tone = confColor(level);
+  const flags = conf?.flags?.length ? " — " + conf.flags.join("; ") : "";
+  return (
+    <span role="img" aria-label={`Data confidence: ${level}`}
+      title={`Data confidence: ${level}${flags}`}
+      style={{ display: "inline-flex", flexDirection: "column-reverse", gap: 1,
+               width: 7, flexShrink: 0, lineHeight: 0 }}>
+      {[0, 1, 2].map(i => (
+        <span key={i} style={{ height: 2, borderRadius: 1,
+          background: i < filled ? tone : C.line2 }} />
+      ))}
+    </span>
+  );
+}
 const sentColor = lbl => lbl === "positive" ? C.green : lbl === "negative" ? C.red : C.gold;
 
 /* One sector→bucket mapping for BOTH the dropdown and the row filter (they
@@ -188,21 +211,29 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
       }
       if (sort === "composite") return b.composite - a.composite;
       if (sort === "mos")       return b.sortMos - a.sortMos;
+      if (sort === "price")     return (b.co.price || 0) - (a.co.price || 0);
       if (sort === "roe")       return (b.roe || 0) - (a.roe || 0);
       if (sort === "sentiment") return (b.sentiment ?? -1) - (a.sentiment ?? -1);
       return a.co.name.localeCompare(b.co.name);
     }), [companies, q, sort, sf, vf, cf, minMos, capf, tf, techMap, liveFeed]);
 
+  /* Sort state used to be colour alone (gold vs dim) with no direction glyph,
+     so "which column am I sorted by" was invisible to anyone who cannot see the
+     amber — WCAG 1.4.1, and the same "never color alone" rule tokens.css states
+     for the verdict ladder. The caret is the non-colour channel. aria-sort makes
+     it available to screen readers, which previously got a bare <th>. */
   const Th = ({ children, k }) => (
-    <th onClick={() => k && setSort(k)} style={{
+    <th onClick={() => k && setSort(k)}
+      aria-sort={k ? (sort === k ? "descending" : "none") : undefined}
+      style={{
       ...sans,
       color: sort === k ? C.gold : C.dim,
       fontSize: 11, fontWeight: 500,
       textAlign: "right", padding: "10px 12px",
       textTransform: "uppercase", letterSpacing: "0.04em",
       cursor: k ? "pointer" : "default",
-      whiteSpace: "nowrap",
-    }}>{children}</th>
+      whiteSpace: "nowrap", userSelect: "none",
+    }}>{children}{sort === k && <span aria-hidden="true" style={{ marginLeft: 4 }}>▼</span>}</th>
   );
 
   return (
@@ -326,14 +357,20 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
             <tr>
               <th
                 onClick={() => setSort("name")}
+                aria-sort={sort === "name" ? "ascending" : "none"}
                 style={{
                   ...sans, color: sort === "name" ? C.gold : C.dim,
                   fontSize: 11, fontWeight: 500, textAlign: "left",
                   padding: "10px 16px", textTransform: "uppercase",
                   letterSpacing: "0.04em", cursor: "pointer",
+                  userSelect: "none",
+                  // Cap the identity column. Unconstrained it took 448px of a
+                  // 1169px table and pushed VERDICT past the right edge, and the
+                  // ellipsis on the name never fired because the box just grew.
+                  width: "34%", maxWidth: 340,
                 }}
-              >Company</th>
-              <Th k="mos">CMP / Intrinsic</Th>
+              >Company{sort === "name" && <span aria-hidden="true" style={{ marginLeft: 4 }}>▲</span>}</th>
+              <Th k="price">CMP / Intrinsic</Th>
               <Th k="mos">MoS</Th>
               <Th k="roe">ROE</Th>
               <Th>P/B</Th>
@@ -355,7 +392,7 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
                 onMouseEnter={e => (e.currentTarget.style.background = C.panel2)}
                 onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
               >
-                <td style={{ padding: "11px 16px" }}>
+                <td style={{ padding: "11px 16px", maxWidth: 340 }}>
                   <div style={{ display:"flex", alignItems:"center", gap:7 }}>
                     {onToggleWatch && (
                       <button title={isWatched(r.co.ticker) ? "Remove from watchlist" : "Add to watchlist"}
@@ -365,8 +402,17 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
                           fill={isWatched(r.co.ticker) ? C.gold : "none"} />
                       </button>
                     )}
-                    <span title={`Data confidence: ${r.confidence.level}${r.confidence.flags.length ? " — " + r.confidence.flags.join("; ") : ""}`}
-                      style={{ width:7, height:7, borderRadius:"50%", background:confColor(r.confidence.level), flexShrink:0 }} />
+                    {/* Data confidence carried a SECOND channel as well as colour.
+                        It was a 7x7px dot whose only non-colour affordance was a
+                        title tooltip, while the legend below states outright that
+                        "green = high, amber = medium, red = low" — so to a
+                        deuteranope it was three identical olive dots and the
+                        legend described something they cannot see. WCAG 1.4.1,
+                        and tokens.css commits to "never color alone" by name.
+                        Three stacked bars, 3/2/1 filled: the count reads at a
+                        glance without colour, and colour still works for those
+                        who see it. */}
+                    <ConfidenceMeter conf={r.confidence} />
                     <Logo ticker={r.co.ticker} name={r.co.name} sector={r.co.sector} size={26} />
                     {/* min-width:0 + nowrap/ellipsis: without it a long name or a
                         sector like "Electronic Instr. & Controls" wraps to a third
@@ -374,7 +420,7 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
                         heights ran 52/65/67/80px across 40 rows — a 28px spread
                         that destroys the vertical rhythm a dense table depends on.
                         The full text stays available via title=. */}
-                    <div style={{ minWidth: 0 }}>
+                    <div style={{ minWidth: 0, maxWidth: 176 }}>
                       <div title={r.co.name}
                         style={{ ...sans, color: C.text, fontSize: 13, fontWeight: 500,
                                  whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.co.name}</div>
@@ -384,7 +430,7 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
                     </div>
                   </div>
                 </td>
-                <td style={{ ...mono, textAlign: "right", padding: "11px 12px", fontSize: 12 }}>
+                <td style={{ ...mono, textAlign: "right", padding: "11px 12px", fontSize: 12, whiteSpace: "nowrap" }}>
                   {inr(liveFeed.prices?.[(r.co.ticker || "").toUpperCase()] ?? r.co.price)} <span style={{ color: C.faint }}>/</span>{" "}
                   {r.consensus != null
                     ? <span title="Analyst consensus target — our model has no call on this name" style={{ color: C.dim }}>{inrOrDash(r.consensus)}<span style={{ fontSize: 9, color: C.faint }}> ⌖</span></span>
@@ -424,8 +470,9 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
       }}>
         <Database size={14} color={C.gold} />
         <span style={{ ...sans, color: C.dim, fontSize: 12 }}>
-          Intrinsic = blended fair value (DCF / Residual-Income + relative cross-checks) · the dot shows data confidence
-          (green = high, amber = medium, red = low) · score &amp; verdict are suppressed when data is insufficient · click a row for the full model
+          Intrinsic = blended fair value (DCF / Residual-Income + relative cross-checks) · the three-bar meter shows data
+          confidence (three bars = high, one = low) · &quot;n/m&quot; means the engine withheld its fair value for that name —
+          the verdict still stands · click a row for the full model
         </span>
       </div>
     </div>
