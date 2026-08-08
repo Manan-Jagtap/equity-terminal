@@ -1665,7 +1665,7 @@ function NewsTab({ co, API, profile, preloaded }) {
 
       {loading && (
         <div style={{ display:"flex", alignItems:"center", gap:12, padding:40, ...sans, color:C.dim, fontSize:13 }}>
-          <Loader2 size={20} color={C.gold} style={{ animation:"spin 1s linear infinite" }} />
+          <Loader2 size={20} color={C.gold} className="spin" />
           Fetching news from NSE and market feeds…
         </div>
       )}
@@ -1769,7 +1769,7 @@ function ResearchNoteCard({ co, API }) {
           background:C.gold+"0d", cursor:noteBusy?"wait":"pointer", opacity:noteBusy?0.7:1,
         }}>
           {noteBusy
-            ? <Loader2 size={13} style={{ animation:"spin 1s linear infinite" }} />
+            ? <Loader2 size={13} className="spin" />
             : <Brain size={13} />}
           {noteBusy ? "Writing…" : note?.status === "ok" ? "Regenerate note" : "Generate note"}
         </button>
@@ -1777,7 +1777,7 @@ function ResearchNoteCard({ co, API }) {
 
       {noteBusy && (
         <div style={{ ...sans, display:"flex", alignItems:"center", gap:10, marginTop:18, color:C.dim, fontSize:13 }}>
-          <Loader2 size={15} color={C.gold} style={{ animation:"spin 1s linear infinite" }} />
+          <Loader2 size={15} color={C.gold} className="spin" />
           Reading filings and writing the note — this can take a minute…
         </div>
       )}
@@ -1880,7 +1880,7 @@ function DocsTab({ co, API, profile }) {
 
       {loading && (
         <div style={{ display:"flex", alignItems:"center", gap:12, padding:40, ...sans, color:C.dim, fontSize:13 }}>
-          <Loader2 size={20} color={C.gold} style={{ animation:"spin 1s linear infinite" }} />
+          <Loader2 size={20} color={C.gold} className="spin" />
           Fetching documents…
         </div>
       )}
@@ -2248,7 +2248,7 @@ function ForensicsTab({ co, API }) {
 
   if (loading) return (
     <div className="fadein" style={{ padding:48, display:"flex", alignItems:"center", gap:10, color:C.dim, ...sans, fontSize:13 }}>
-      <Loader2 size={16} style={{ animation:"spin 1s linear infinite" }} /> Computing forensic checks…
+      <Loader2 size={16} className="spin" /> Computing forensic checks…
     </div>
   );
   if (!data || data.available === false) return (

@@ -70,7 +70,7 @@ export default function IndexChart({ API, name, onClose }) {
 
         {(loading || (!settled && resp?.available)) && (
           <div style={{ ...sans, display: "flex", alignItems: "center", gap: 10, padding: 60, color: C.dim, fontSize: 13, justifyContent: "center" }}>
-            <Loader2 size={16} color={C.gold} style={{ animation: "spin 1s linear infinite" }} />
+            <Loader2 size={16} color={C.gold} className="spin" />
             Loading index history…
           </div>
         )}

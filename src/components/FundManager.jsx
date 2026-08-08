@@ -205,7 +205,7 @@ function CashBar({ cash, onSave, onClear, busy }) {
       )}
       {busy && (
         <span style={{ ...sans, fontSize: 11, color: C.dim, display: "flex", alignItems: "center", gap: 6 }}>
-          <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} /> updating…
+          <Loader2 size={12} className="spin" /> updating…
         </span>
       )}
       {!busy && cash?.deployable != null && cash.deployable > 0 && (
@@ -368,7 +368,7 @@ function HiddenGems({ API, onOpen }) {
 
       {!loaded && (
         <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 0", ...sans, fontSize: 12.5, color: C.dim }}>
-          <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /> Screening the universe…
+          <Loader2 size={14} className="spin" /> Screening the universe…
         </div>
       )}
       {loaded && !data?.available && (

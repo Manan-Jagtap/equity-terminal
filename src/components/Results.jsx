@@ -157,7 +157,7 @@ export default function Results({ API, onOpen }) {
 
   if (loading) return (
     <div style={{ padding: 48, display: "flex", alignItems: "center", gap: 10, color: C.dim, ...sans, fontSize: 13 }}>
-      <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> Loading results…
+      <Loader2 size={16} className="spin" /> Loading results…
     </div>
   );
 

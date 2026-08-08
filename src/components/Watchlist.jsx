@@ -87,7 +87,7 @@ function SettingsPanel({ item, onSave, onClose }) {
         <button onClick={save} disabled={busy} style={{ ...sans, fontSize: 12, fontWeight: 600, color: C.bg,
           background: C.gold, border: "none", borderRadius: 7, padding: "7px 14px", cursor: "pointer",
           display: "inline-flex", alignItems: "center", gap: 6 }}>
-          {busy ? <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> : <Check size={13} />} Save
+          {busy ? <Loader2 size={13} className="spin" /> : <Check size={13} />} Save
         </button>
         <button onClick={onClose} style={{ ...sans, fontSize: 12, color: C.dim, background: "transparent",
           border: `1px solid ${C.line2}`, borderRadius: 7, padding: "7px 14px", cursor: "pointer" }}>Cancel</button>
@@ -149,7 +149,7 @@ export default function Watchlist({ API, onOpen, onChanged, user, requestAuth })
 
   if (loading) return (
     <div style={{ padding: 48, display: "flex", alignItems: "center", gap: 10, color: C.dim, ...sans, fontSize: 13 }}>
-      <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> Loading watchlist…
+      <Loader2 size={16} className="spin" /> Loading watchlist…
     </div>
   );
 

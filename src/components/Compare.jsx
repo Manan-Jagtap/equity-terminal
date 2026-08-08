@@ -159,7 +159,7 @@ export default function Compare({ API, companies = [], onOpen, seed = [] }) {
         </div>
       ) : loading && items.length === 0 ? (
         <div style={{ padding: 40, display: "flex", alignItems: "center", gap: 10, color: C.dim, ...sans, fontSize: 13 }}>
-          <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> Loading comparison…
+          <Loader2 size={16} className="spin" /> Loading comparison…
         </div>
       ) : (
         <div style={{ overflowX: "auto", border: `1px solid ${C.line}`, borderRadius: 12 }}>

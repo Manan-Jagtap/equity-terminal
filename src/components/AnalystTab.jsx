@@ -78,7 +78,7 @@ export default function AnalystTab({ co, API, price }) {
 
   if (loading) return (
     <div style={{ padding: 60, textAlign: "center", color: C.dim }}>
-      <Loader2 size={22} style={{ animation: "spin 1s linear infinite" }} />
+      <Loader2 size={22} className="spin" />
       <div style={{ ...sans, marginTop: 10, fontSize: 13 }}>Loading analyst data…</div>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>

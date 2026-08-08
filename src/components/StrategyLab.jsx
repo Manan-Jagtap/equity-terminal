@@ -105,7 +105,7 @@ export default function StrategyLab({ API, onOpen }) {
           border: `1px solid ${C.gold}`, background: C.gold + "18", color: C.gold,
           display: "flex", alignItems: "center", gap: 7,
         }}>
-          {loading ? <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /> : <Play size={13} />}
+          {loading ? <Loader2 size={14} className="spin" /> : <Play size={13} />}
           Run backtest
         </button>
       </div>
@@ -174,7 +174,7 @@ export default function StrategyLab({ API, onOpen }) {
         </>
       ) : (
         <div style={{ padding: 40, display: "flex", alignItems: "center", gap: 10, color: C.dim, ...sans, fontSize: 13 }}>
-          <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> Running backtest…
+          <Loader2 size={16} className="spin" /> Running backtest…
         </div>
       )}
     </div>

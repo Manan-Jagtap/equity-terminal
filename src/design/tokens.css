@@ -143,7 +143,11 @@
   background-size: 157px 157px;
 }
 
-:focus-visible { outline: none; box-shadow: var(--ev-focus); border-radius: var(--ev-r-sm); }
+/* No border-radius here: a focus ring must not RESHAPE the thing it rings.
+   Forcing --ev-r-sm (6px) squared .evc-btn (10px) and .evc-card/.evc-modal
+   (14px) the moment they took focus. box-shadow follows the element's own
+   radius automatically, so the ring is correctly shaped without saying so. */
+:focus-visible { outline: none; box-shadow: var(--ev-focus); }
 
 @media (prefers-reduced-motion: reduce) {
   :root { --ev-t-fast: 0.001ms; --ev-t-base: 0.001ms; --ev-t-slow: 0.001ms; }

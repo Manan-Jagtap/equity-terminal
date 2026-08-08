@@ -208,7 +208,7 @@ export default function AuthModal({ open, onClose, API, onAuthed }) {
             opacity: (!email.trim() || !pw || signupIncomplete) ? 0.55 : 1,
           }}>
             {busy
-              ? <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} />
+              ? <Loader2 size={14} className="spin" />
               : <Lock size={13} strokeWidth={2} />}
             {mode === "signin" ? "Sign in" : "Create account"}
           </button>

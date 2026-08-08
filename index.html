@@ -34,10 +34,20 @@
     /* Shared by components/Skeleton.jsx (inline styles can't declare keyframes). */
     @keyframes ev-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
     @keyframes spin { to { transform: rotate(360deg); } }
+    /* Referenced by FeedbackModal.jsx and AdminPanel.jsx, and never defined
+       until now — those two spinners simply did not spin. One class so the
+       reduced-motion exemption above needs one selector, not 23. */
+    .spin { animation: spin 1s linear infinite; }
     /* UX-02 (WCAG 2.4.7): a visible keyboard-focus ring. Components strip the
        browser outline on inputs/selects for aesthetics; restore it for keyboard
        users only (:focus-visible doesn't fire on mouse click). */
-    :focus-visible { outline: 2px solid #e8b45a; outline-offset: 2px; border-radius: 2px; }
+    /* Focus is owned by tokens.css (:focus-visible -> var(--ev-focus)). This
+       used to redeclare it with an outline AND `border-radius: 2px`; in the
+       BUILT html this block lands after the bundled CSS, so the radius won
+       and every focused button/card/modal snapped its corners to 2px while
+       painting a second ring. Kept only as a no-CSS fallback: no radius, so
+       it can never reshape a component. */
+    :focus-visible { outline: 2px solid #e8b45a; outline-offset: 2px; }
     /* UX-07 (WCAG 2.3.3 + vestibular safety): honour "reduce motion" — freeze the
        shimmer/spin/blink/fade animations and transitions for users who ask. */
     @media (prefers-reduced-motion: reduce) {
@@ -46,6 +56,22 @@
         animation-iteration-count: 1 !important;
         transition-duration: 0.001ms !important;
         scroll-behavior: auto !important;
+      }
+      /* ...EXCEPT status indicators. A spinner is not decoration: it is the
+         only signal that work is in flight, and ui.css:45 additionally sets
+         `color: transparent !important` on a loading button — so with the
+         blanket applied, a reduced-motion user pressing Save saw a BLANK,
+         FROZEN button and no way to tell whether anything was happening.
+         ui.css:53 already tried to exempt it ("still spins — it's status, not
+         decor") and lost, because !important beats specificity regardless of
+         which sheet is more specific. Re-asserted here, after the blanket, with
+         BOTH properties: restoring duration alone still leaves
+         animation-iteration-count: 1, which stops the spin after one turn.
+         Slowed rather than stopped — that is the vestibular-safe compromise
+         WCAG 2.3.3 is actually asking for. */
+      .spin, [data-motion="status"], .evc-btn.is-loading::after {
+        animation-duration: 1.6s !important;
+        animation-iteration-count: infinite !important;
       }
     }
     /* #118 mobile polish: iOS Safari ZOOMS the whole page in when a focused
