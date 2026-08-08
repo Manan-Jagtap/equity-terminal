@@ -11,6 +11,8 @@ import { SignInGate } from "./Watchlist.jsx";
 import { authFetch } from "../lib/auth.js";
 import { parseHoldings } from "../lib/brokerImport.js";
 import PageHeader from "./ui/PageHeader.jsx";
+import { useToast } from "./ui/toast-context.js";
+import ErrorState from "./ui/ErrorState.jsx";
 
 const pnlColor = v => v == null ? C.dim : v >= 0 ? C.green : C.red;
 // Backend sends pnl_pct, weight AND mos all as FRACTIONS (0.124 = 12.4%),
@@ -19,6 +21,7 @@ const pctNum = (v, d = 1) => v == null || !isFinite(v) ? "—" : (v >= 0 ? "+" :
 const pctPlain = (v, d = 1) => v == null || !isFinite(v) ? "—" : (Number(v) * 100).toFixed(d) + "%";
 
 export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse }) {
+  const toast = useToast();
   const [data, setData]       = useState(null);
   // Declared BEFORE the effects that list it as a dependency — a later
   // declaration is a temporal-dead-zone crash on first render.
@@ -98,9 +101,32 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
     setSaving(false);
   };
 
-  const remove = async id => {
+  /* Removing a holding is the only destructive action on this screen, and it
+     was a single unconfirmed click on a 14px icon sitting inside a row that is
+     itself clickable — so a mis-aimed "open this company" destroyed a position
+     and the cost basis the user typed in by hand. The bulk importer already
+     asks before replacing a book; a single delete asking nothing was the
+     inconsistency, not the confirmation.
+
+     The old body also swallowed the failure — an empty catch, then an
+     unconditional reload — so a DELETE that 500ed looked exactly like one
+     that worked: the row simply came back, unexplained. Failures now say so. */
+  const remove = async (id, label) => {
     if (!API) return;
-    try { await authFetch(`${API}/api/portfolio/${id}`, { method: "DELETE" }); } catch { /* noop */ }
+    const name = label || "this holding";
+    if (!window.confirm(
+      `Remove ${name} from your portfolio?\n\n`
+      + "The quantity and average price you entered are deleted with it. "
+      + "This cannot be undone."
+    )) return;
+    try {
+      const r = await authFetch(`${API}/api/portfolio/${id}`, { method: "DELETE" });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      toast(`Removed ${name}`, { tone: "success" });
+    } catch (e) {
+      toast(`Could not remove ${name} — ${e.message || "the request failed"}. Nothing was changed.`,
+            { tone: "error", duration: 7000 });
+    }
     reload();
   };
 
@@ -606,8 +632,21 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
         </div>
       )}
 
-      {/* Holdings table / empty state */}
-      {items.length === 0 ? (
+      {/* Holdings table / empty state / OUTAGE.
+          These are three states, not two. A failed load leaves `items` empty,
+          so the book rendered the full-width "No holdings yet" panel — telling
+          someone with a live portfolio that they own nothing — while the only
+          hint that anything had gone wrong was an 11px red line further up the
+          page. On the one screen in this app that holds real money, that is the
+          worst possible thing to get wrong. The outage now takes the same
+          prominent slot the empty state had, and the two are exclusive. */}
+      {err ? (
+        <ErrorState
+          error={{ kind: "status", detail: err }}
+          onRetry={reload}
+          what="your holdings"
+        />
+      ) : items.length === 0 ? (
         <div style={{ border: `1px solid ${C.line}`, borderRadius: 12, background: C.panel, padding: "48px 24px", textAlign: "center" }}>
           <Briefcase size={26} color={C.faint} style={{ marginBottom: 12 }} />
           <div style={{ ...serif, fontSize: 20, color: C.text200, marginBottom: 6 }}>No holdings yet</div>
@@ -703,7 +742,7 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
                   <td style={{ ...td, textAlign: "right" }}><VerdictBadge verdict={h.verdict || "—"} /></td>
                   <td style={{ ...td, textAlign: "center", whiteSpace: "nowrap" }}>
                     <button title="Remove holding"
-                      onClick={e => { e.stopPropagation(); remove(h.id); }}
+                      onClick={e => { e.stopPropagation(); remove(h.id, h.name || h.ticker); }}
                       style={{ background: "transparent", border: "none", cursor: "pointer", padding: 4, lineHeight: 0 }}
                       onMouseEnter={e => e.currentTarget.firstChild && (e.currentTarget.firstChild.style.color = C.red)}>
                       <Trash2 size={14} color={C.faint} />
