@@ -6,6 +6,7 @@ import { Search, X, Plus, Loader2, GitCompare } from "lucide-react";
 import { C, sans, serif, mono } from "../lib/theme.js";
 import { VerdictBadge } from "./primitives.jsx";
 import Logo from "./Logo.jsx";
+import PageHeader from "./ui/PageHeader.jsx";
 
 const MAX = 4;
 
@@ -107,14 +108,9 @@ export default function Compare({ API, companies = [], onOpen, seed = [] }) {
 
   return (
     <div className="fadein" style={{ padding: "24px 32px" }}>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 4 }}>
-        <GitCompare size={20} color={C.gold} />
-        <span style={{ ...serif, fontSize: 30, color: C.text }}>Compare</span>
-        <span style={{ ...sans, fontSize: 13, color: C.dim }}>up to {MAX} names, side by side</span>
-      </div>
-      <div style={{ ...sans, fontSize: 12, color: C.faint, marginBottom: 18 }}>
+      <PageHeader title="Compare" meta={`up to ${MAX} names`}>
         Model verdict, valuation, multiples, analyst consensus and forensic quality — best in each row highlighted.
-      </div>
+      </PageHeader>
 
       {/* Picker */}
       <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8, marginBottom: 20 }}>

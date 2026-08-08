@@ -303,3 +303,40 @@
   font-size: var(--ev-fs-2xl); font-weight: 500; color: var(--ev-text); line-height: var(--ev-lh-tight);
 }
 .evc-stat-delta { font-family: var(--ev-font-mono); font-variant-numeric: tabular-nums; font-size: var(--ev-fs-sm); }
+
+/* ── PageHeader ─────────────────────────────────────────────────────────────
+   One <h1> per screen. 11 of 15 screens previously had no heading element at
+   all — this is the shared entry point that fixes the craft gap and the WCAG
+   2.4.6 / 1.3.1 gap in the same component. */
+.evc-pagehead {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  flex-wrap: wrap; gap: var(--ev-s3);
+  margin: 0 0 var(--ev-s5);
+  padding-bottom: var(--ev-s3);
+  border-bottom: 1px solid var(--ev-line);
+}
+.evc-pagehead-main { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.evc-pagehead-eyebrow {
+  font-size: var(--ev-fs-2xs); font-weight: 600; letter-spacing: var(--ev-track-label);
+  text-transform: uppercase; color: var(--ev-accent);
+}
+.evc-pagehead-title {
+  margin: 0; font-family: var(--ev-font-ui); font-size: var(--ev-fs-3xl);
+  font-weight: 400; letter-spacing: var(--ev-track-ui);
+  line-height: var(--ev-lh-tight); color: var(--ev-text);
+}
+.evc-pagehead-sub {
+  margin: 2px 0 0; font-size: var(--ev-fs-md); line-height: var(--ev-lh-body);
+  color: var(--ev-text-2); max-width: 68ch;
+}
+.evc-pagehead-aside {
+  display: flex; align-items: center; gap: var(--ev-s3);
+  flex-wrap: wrap; padding-bottom: 2px;
+}
+.evc-pagehead-meta { font-size: var(--ev-fs-xs); color: var(--ev-text-3); white-space: nowrap; }
+
+@media (max-width: 720px) {
+  .evc-pagehead { align-items: flex-start; gap: var(--ev-s2); margin-bottom: var(--ev-s4); }
+  .evc-pagehead-title { font-size: var(--ev-fs-2xl); }
+  .evc-pagehead-aside { width: 100%; justify-content: space-between; }
+}

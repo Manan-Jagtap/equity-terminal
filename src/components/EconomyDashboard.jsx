@@ -5,10 +5,11 @@
    official source (RBI DBIE, MoSPI, GSTN, NPCI, Grid India), each carrying its
    own as-of date. A read-only reference, not investment advice. */
 import { useEffect, useMemo, useState } from "react";
-import { Globe2, Scale, ExternalLink } from "lucide-react";
+import { Scale, ExternalLink } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { C, mono, sans, serif } from "../lib/theme.js";
 import { useIsMobile } from "../lib/useResponsive.js";
+import PageHeader from "./ui/PageHeader.jsx";
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -92,7 +93,7 @@ function SeriesModal({ slug, label, unit, kind, onClose }) {
 
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 200,
-      background: "rgba(4,8,16,0.65)", display: "flex", alignItems: "flex-start",
+      background: "var(--ev-scrim)", display: "flex", alignItems: "flex-start",
       justifyContent: "center", padding: "8vh 16px", overflowY: "auto" }}>
       <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 720,
         background: C.bg900, border: `1px solid ${C.line2}`, borderRadius: 14, padding: "20px 22px" }}>
@@ -265,20 +266,15 @@ export default function EconomyDashboard() {
 
   return (
     <div className="fadein" style={{ padding: isMobile ? "20px 14px 40px" : "24px 32px 48px", maxWidth: 1180 }}>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 4 }}>
-        <Globe2 size={20} color={C.gold} />
-        <span style={{ ...serif, fontSize: 30, color: C.text }}>Economy</span>
-        {stance && (
+      <PageHeader title="Economy" actions={stance && (
           <span style={{ ...mono, fontSize: 11, padding: "3px 10px", borderRadius: 6,
                          color: stance.color, border: `1px solid ${stance.color}55`, background: stance.color + "12" }}>
             RATE STANCE · {stance.label}
           </span>
-        )}
-      </div>
-      <div style={{ ...sans, fontSize: 12, color: C.faint, marginBottom: 18, lineHeight: 1.6, maxWidth: 820 }}>
+        )}>
         India's high-frequency macro indicators — every figure sourced from a primary official publisher
         (RBI, MoSPI, GSTN, NPCI, Grid India), each with its own reporting date. A reference, not advice.
-      </div>
+      </PageHeader>
 
       {/* Hero band */}
       {heroStats.length > 0 && (

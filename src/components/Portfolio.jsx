@@ -10,6 +10,7 @@ import { VerdictBadge } from "./primitives.jsx";
 import { SignInGate } from "./Watchlist.jsx";
 import { authFetch } from "../lib/auth.js";
 import { parseHoldings } from "../lib/brokerImport.js";
+import PageHeader from "./ui/PageHeader.jsx";
 
 const pnlColor = v => v == null ? C.dim : v >= 0 ? C.green : C.red;
 // Backend sends pnl_pct, weight AND mos all as FRACTIONS (0.124 = 12.4%),
@@ -256,14 +257,9 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
 
   return (
     <div className="fadein" style={{ padding: "24px 32px" }}>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 4 }}>
-        <Briefcase size={20} color={C.gold} />
-        <span style={{ ...serif, fontSize: 30, color: C.text }}>Portfolio</span>
-        <span style={{ ...sans, fontSize: 13, color: C.dim }}>{items.length} {items.length === 1 ? "holding" : "holdings"}</span>
-      </div>
-      <div style={{ ...sans, fontSize: 12, color: C.faint, marginBottom: 18 }}>
+      <PageHeader title="Portfolio" meta={`${items.length} ${items.length === 1 ? "holding" : "holdings"}`}>
         Track your actual holdings against the model — live value, P&amp;L, and the value-weighted margin of safety of the book.
-      </div>
+      </PageHeader>
 
       {/* Summary cards */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginBottom: 18 }}>

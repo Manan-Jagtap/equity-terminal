@@ -8,6 +8,7 @@ import { fmt, inr, pct, multiple, inrOrDash, signedPct } from "../lib/formatters
 import { fundamentals } from "../lib/valuation.js";
 import { recommend } from "../lib/recommend.js";
 import { VerdictBadge } from "./primitives.jsx";
+import PageHeader from "./ui/PageHeader.jsx";
 import Logo from "./Logo.jsx";
 import { authFetch, getUser } from "../lib/auth.js";
 import { useLive } from "../lib/live.js";
@@ -122,7 +123,12 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
       // Prefer the backend's CONSENSUS-ANCHORED screener metrics (these include
       // the analyst overlay). Only fall back to a local recompute for seed/offline
       // rows that never came from the API.
-      if (a && a.iv != null) {
+      // Enter the API branch whenever the backend has a VIEW on this name —
+      // including when it deliberately withheld the number. Gating on
+      // `iv != null` alone excluded every suppressed row (all 110 arrive with
+      // intrinsic=null by design) and dropped them into the local recompute
+      // below, republishing a figure the engine had withdrawn.
+      if (a && (a.iv != null || a.fairValueNote)) {
         // NO CALL / NO DATA names: the model has disowned its own intrinsic, so
         // never display or sort on it — that's how a +717% "margin of safety"
         // ends up green next to a grey badge. Fall back to analyst consensus
@@ -142,7 +148,8 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
           sentiment: a.sentiment ?? null, sentimentLabel: a.sentimentLabel ?? null,
           // DAT-13b: verdict stands, the number is withheld. mos/iv already
           // arrive null from the API; carry the note so the cell can say why.
-          fairValueNote: a.fair_value_note || null,
+          fairValueNote: a.fairValueNote || null,
+          gateState: a.gateState || null,
           // -Infinity keeps these out of the "most undervalued" end of a sort —
           // a withheld figure must never rank as if it were a real one.
           sortMos: noCall ? -Infinity : (a.mos ?? -Infinity),
@@ -200,6 +207,24 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
 
   return (
     <div>
+      <PageHeader
+        title="Screener"
+        meta={loading ? "loading…" : `${rows.length} of ${companies.length} companies`}
+        actions={API && (
+          <a href={`${API}/api/export/screener.xlsx`} title="Download screener as Excel" style={{
+            ...sans, display: "flex", alignItems: "center", gap: 6,
+            fontSize: 12, fontWeight: 500, textDecoration: "none",
+            padding: "8px 14px", borderRadius: 8, cursor: "pointer",
+            border: `1px solid ${C.gold}66`, color: C.gold, background: C.gold + "0d",
+          }}>
+            <Download size={13} /> Excel
+          </a>
+        )}
+      >
+        Every listed name the engine covers, ranked by margin of safety. Filter,
+        sort, then open any row for the full working.
+      </PageHeader>
+
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
         <div style={{
           display: "flex", alignItems: "center", gap: 8,
@@ -261,19 +286,6 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
           style={{ ...mono, width: 74, background: C.panel2, fontSize: 12, color: minMos ? C.gold : C.text,
                    border: `1px solid ${minMos ? C.gold + "88" : C.line}`, borderRadius: 8,
                    padding: "8px 10px", outline: "none" }} />
-        <div style={{ ...sans, color: C.faint, fontSize: 12 }}>
-          {loading ? "Loading…" : `${rows.length} companies`}
-        </div>
-        {API && (
-          <a href={`${API}/api/export/screener.xlsx`} title="Download screener as Excel" style={{
-            ...sans, display: "flex", alignItems: "center", gap: 6, marginLeft: "auto",
-            fontSize: 12, fontWeight: 500, textDecoration: "none",
-            padding: "8px 14px", borderRadius: 8, cursor: "pointer",
-            border: `1px solid ${C.gold}66`, color: C.gold, background: C.gold + "0d",
-          }}>
-            <Download size={13} /> Excel
-          </a>
-        )}
       </div>
 
       {user && (
@@ -356,9 +368,19 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
                     <span title={`Data confidence: ${r.confidence.level}${r.confidence.flags.length ? " — " + r.confidence.flags.join("; ") : ""}`}
                       style={{ width:7, height:7, borderRadius:"50%", background:confColor(r.confidence.level), flexShrink:0 }} />
                     <Logo ticker={r.co.ticker} name={r.co.name} sector={r.co.sector} size={26} />
-                    <div>
-                      <div style={{ ...sans, color: C.text, fontSize: 13, fontWeight: 500 }}>{r.co.name}</div>
-                      <div style={{ ...mono, color: C.faint, fontSize: 10 }}>{r.co.ticker} · {r.co.sector}</div>
+                    {/* min-width:0 + nowrap/ellipsis: without it a long name or a
+                        sector like "Electronic Instr. & Controls" wraps to a third
+                        line and the row grows. Measured on the live table: row
+                        heights ran 52/65/67/80px across 40 rows — a 28px spread
+                        that destroys the vertical rhythm a dense table depends on.
+                        The full text stays available via title=. */}
+                    <div style={{ minWidth: 0 }}>
+                      <div title={r.co.name}
+                        style={{ ...sans, color: C.text, fontSize: 13, fontWeight: 500,
+                                 whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.co.name}</div>
+                      <div title={`${r.co.ticker} · ${r.co.sector}`}
+                        style={{ ...mono, color: C.faint, fontSize: 10,
+                                 whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{r.co.ticker} · {r.co.sector}</div>
                     </div>
                   </div>
                 </td>

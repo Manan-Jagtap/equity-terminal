@@ -43,7 +43,7 @@ export default function IndexChart({ API, name, onClose }) {
       onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}
       style={{
         position: "fixed", inset: 0, zIndex: 250,
-        background: "rgba(6,10,19,0.86)", backdropFilter: "blur(8px)",
+        background: "var(--ev-scrim-strong)", backdropFilter: "blur(8px)",
         display: "flex", justifyContent: "center", alignItems: "flex-start",
         padding: "6vh 14px", overflowY: "auto",
       }}>

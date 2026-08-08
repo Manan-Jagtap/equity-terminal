@@ -6,7 +6,7 @@
 
 export const color = {
   bg: "#0a0907", bgRaise: "#12100d", bgOver: "#1a1713", bgInput: "#0e0c0a",
-  text: "#f2ede4", text2: "#b7ad9d", text3: "#7d7566",
+  text: "#f2ede4", text2: "#b7ad9d", text3: "#8d8474",
   line: "rgba(242,237,228,0.08)", line2: "rgba(242,237,228,0.14)",
   accent: "#e8b45a", accentDim: "#e8b45a33", accentInk: "#231a08",
   buy: "#57c48a", accumulate: "#8fbf6f", hold: "#c9a86a",

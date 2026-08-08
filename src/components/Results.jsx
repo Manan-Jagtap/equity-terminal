@@ -1,10 +1,11 @@
 /* Results.jsx — cross-company earnings scoreboard.
    Reads /api/results: latest reported quarter + sales/PAT YoY + EPS beat/miss. */
 import { useEffect, useMemo, useState } from "react";
-import { CalendarClock, Loader2, TrendingUp, TrendingDown, ChevronRight } from "lucide-react";
-import { C, sans, serif, mono } from "../lib/theme.js";
+import { Loader2, TrendingUp, TrendingDown, ChevronRight } from "lucide-react";
+import { C, sans, mono } from "../lib/theme.js";
 import { ListToolbar, applyControls, selStyle } from "../lib/listControls.jsx";
 import { VerdictBadge } from "./primitives.jsx";
+import PageHeader from "./ui/PageHeader.jsx";
 
 const cr   = v => v == null ? "—" : "₹" + Number(v).toLocaleString("en-IN", { maximumFractionDigits: 0 });
 const signed = v => v == null ? "—" : (v >= 0 ? "+" : "") + (v * 100).toFixed(1) + "%";   // fraction → %
@@ -171,14 +172,9 @@ export default function Results({ API, onOpen }) {
 
   return (
     <div className="fadein" style={{ padding: "24px 32px" }}>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 4 }}>
-        <CalendarClock size={20} color={C.gold} />
-        <span style={{ ...serif, fontSize: 30, color: C.text }}>Results</span>
-        <span style={{ ...sans, fontSize: 13, color: C.dim }}>{rows.length} names · latest reported quarter</span>
-      </div>
-      <div style={{ ...sans, fontSize: 12, color: C.faint, marginBottom: 16 }}>
+      <PageHeader title="Results" meta={`${rows.length} names · latest reported quarter`}>
         Most recent quarter, sales &amp; profit growth (YoY), and the latest full-year EPS vs the Street's estimate.
-      </div>
+      </PageHeader>
 
       <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
         <ListToolbar rows={data?.items} controls={controls} setControls={setControls}

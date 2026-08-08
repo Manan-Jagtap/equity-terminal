@@ -216,31 +216,69 @@ export default function DCFModel({ co, price, apiVal, a, onWork }) {
             </div>
           </div>
 
-          {headComps.length > 0 && (
+          {headComps.length > 0 && (() => {
+            /* `components` arrives in TWO shapes and this grid only ever handled one.
+
+                 blended methods  {method, value, capped, weight}   INFY, TCS, HDFCBANK
+                 SOTP segments    {label,  value, basis}            ITC, RELIANCE, GRASIM
+
+               Rendering shape 2 through shape 1's code produced `(undefined*100)
+               .toFixed(0)` = the literal string "NaN%" under every segment, a bar
+               with `width: NaN%` (invalid, so it never painted), and `key={undefined}`
+               duplicated across every child. Live on ITC's Valuation tab.
+
+               The two are also in DIFFERENT UNITS: a blended method is a per-share
+               rupee value directly comparable to the headline, while a SOTP segment
+               is an enterprise value in ₹ crore. Printing "₹2,31,561" beside a
+               "Blended ₹249" with the same glyph and no unit invited exactly the
+               wrong reading. Segments are labelled "Cr EV" and their bar shows share
+               of total EV — which is the meaningful proportion for a sum-of-parts,
+               where "weight" has no meaning at all. */
+            const isSOTP = headComps.some(c => c.weight == null);
+            const evTotal = isSOTP
+              ? headComps.reduce((s, c) => s + (Number(c.value) > 0 ? Number(c.value) : 0), 0)
+              : 0;
+            return (
             <div style={{ display:"grid",
               gridTemplateColumns: isMobile ? "1fr 1fr" : `repeat(${headComps.length + 1}, 1fr)`,
               gap:12, marginTop:22 }}>
-              {headComps.map(c => (
-                <div key={c.method} style={{ background:"rgba(10,9,7,0.45)", border:"1px solid rgba(220,213,193,.08)", padding:"14px 16px" }}>
-                  <div style={{ ...sans, fontSize:11, color:"#857d65", textTransform:"uppercase", letterSpacing:"0.05em" }}>{c.method}</div>
+              {headComps.map((c, i) => {
+                const name  = c.method || c.label || "—";
+                const share = isSOTP
+                  ? (evTotal > 0 && c.value > 0 ? c.value / evTotal : null)
+                  : c.weight;
+                return (
+                <div key={c.method || c.label || i} title={c.basis || undefined}
+                  style={{ background:"rgba(10,9,7,0.45)", border:"1px solid rgba(220,213,193,.08)", padding:"14px 16px" }}>
+                  <div style={{ ...sans, fontSize:11, color:"#857d65", textTransform:"uppercase", letterSpacing:"0.05em",
+                                overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{name}</div>
                   <div style={{ ...serif, fontSize:32, color: c.value>0 ? C.text : "#4a4537", marginTop:6, lineHeight:1 }}>
                     {c.value>0 ? "₹"+fmtN(c.value) : "N/A"}
+                    {isSOTP && c.value>0 && <span style={{ ...sans, fontSize:12, color:"#857d65", marginLeft:5 }}>Cr EV</span>}
                   </div>
-                  <div style={{ display:"flex", alignItems:"center", gap:8, marginTop:10 }}>
-                    <div style={{ flex:1, height:4, background:"rgba(220,213,193,.08)", borderRadius:2, overflow:"hidden" }}>
-                      <div style={{ width:`${c.weight*100}%`, height:"100%", background: c.value>0 ? C.gold+"aa" : "#4a4537" }} />
+                  {share != null && (
+                    <div style={{ display:"flex", alignItems:"center", gap:8, marginTop:10 }}>
+                      <div style={{ flex:1, height:4, background:"rgba(220,213,193,.08)", borderRadius:2, overflow:"hidden" }}>
+                        <div style={{ width:`${share*100}%`, height:"100%", background: c.value>0 ? C.gold+"aa" : "#4a4537" }} />
+                      </div>
+                      <span style={{ ...mono, fontSize:11, color:"#857d65" }}>{(share*100).toFixed(0)}%</span>
                     </div>
-                    <span style={{ ...mono, fontSize:11, color:"#857d65" }}>{(c.weight*100).toFixed(0)}%</span>
-                  </div>
+                  )}
                 </div>
-              ))}
+                );
+              })}
               <div style={{ background:C.gold+"14", border:`1px solid ${C.gold}55`, padding:"14px 16px", display:"flex", flexDirection:"column", justifyContent:"space-between" }}>
-                <div style={{ ...sans, fontSize:11, color:C.gold, textTransform:"uppercase", letterSpacing:"0.05em" }}>Blended</div>
+                <div style={{ ...sans, fontSize:11, color:C.gold, textTransform:"uppercase", letterSpacing:"0.05em" }}>
+                  {isSOTP ? "Sum of the parts" : "Blended"}
+                </div>
                 <div style={{ ...serif, fontSize:32, color:C.gold, marginTop:6, lineHeight:1 }}>₹{fmtN(headIv)}</div>
-                <div style={{ ...sans, fontSize:10, color:"#857d65", marginTop:10 }}>weighted fair value</div>
+                <div style={{ ...sans, fontSize:10, color:"#857d65", marginTop:10 }}>
+                  {isSOTP ? "per share, after net debt" : "weighted fair value"}
+                </div>
               </div>
             </div>
-          )}
+            );
+          })()}
 
           <div style={{ display:"flex", gap:24, flexWrap:"wrap", ...mono, fontSize:11, color:"#857d65", marginTop:18, paddingTop:14, borderTop:"1px solid rgba(220,213,193,.07)" }}>
             <span>TV = {tvPct != null ? tvPct.toFixed(1) : "—"}% of total</span>

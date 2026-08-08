@@ -11,7 +11,7 @@
 import { C, sans } from "../lib/theme.js";
 
 const sheen = {
-  background: `linear-gradient(90deg, ${C.panel2} 25%, #16223A 50%, ${C.panel2} 75%)`,
+  background: `linear-gradient(90deg, ${C.panel2} 25%, var(--ev-bg-over) 50%, ${C.panel2} 75%)`,
   backgroundSize: "200% 100%",
   animation: "ev-shimmer 1.3s ease-in-out infinite",
   borderRadius: 8,

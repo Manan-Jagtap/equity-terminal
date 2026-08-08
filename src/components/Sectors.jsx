@@ -1,12 +1,13 @@
 /* Sectors.jsx — sector dashboard.
    Client-side aggregation of the same /api/companies?nifty50=true rows the
    other tabs use: groups by valuation_sector, shows per-sector medians,
-   average MoS, verdict mix, and the cheapest / richest name. */
+   median MoS, verdict mix, and the cheapest / richest name. */
 
 import { useEffect, useMemo, useState } from "react";
-import { Layers, Loader2, TrendingUp, TrendingDown } from "lucide-react";
+import { Loader2, TrendingUp, TrendingDown } from "lucide-react";
 import { C, sans, serif, mono } from "../lib/theme.js";
 import { multiple, signedPct } from "../lib/formatters.js";
+import PageHeader from "./ui/PageHeader.jsx";
 
 // UX-13: human-readable sector labels — the raw valuation_sector enum
 // ("CONSUMER_DISC", "IT_SERVICES") must never leak into the UI.
@@ -19,15 +20,22 @@ const prettySector = s => SECTOR_LABELS[s]
   || (s || "Other").replace(/_/g, " ").toLowerCase()
        .replace(/\b\w/g, c => c.toUpperCase());
 
-const median = arr => {
-  const a = arr.filter(v => v != null && isFinite(v) && v > 0).sort((x, y) => x - y);
+/* `positiveOnly` is the default because this helper was written for MULTIPLES:
+   a negative or zero P/E is not a cheap stock, it is a loss-making one, and
+   averaging it in is meaningless.
+   Margin of safety is the opposite case — negative MoS ("trades above fair
+   value") is both meaningful and, on this universe, the MAJORITY: 471 of 1013
+   names are AVOID. Running MoS through the positive-only filter silently drops
+   every overvalued name and can only ever return a positive median, which is
+   why the sector page reported +38.6% for a book whose true median is -50.5%.
+   Callers summarising a signed quantity must pass positiveOnly=false. */
+const median = (arr, positiveOnly = true) => {
+  const a = arr
+    .filter(v => v != null && isFinite(v) && (!positiveOnly || v > 0))
+    .sort((x, y) => x - y);
   if (!a.length) return null;
   const m = Math.floor(a.length / 2);
   return a.length % 2 ? a[m] : (a[m - 1] + a[m]) / 2;
-};
-const avg = arr => {
-  const a = arr.filter(v => v != null && isFinite(v));
-  return a.length ? a.reduce((s, v) => s + v, 0) / a.length : null;
 };
 
 /* Verdict → colour, in BUY..AVOID display order for the distribution bar. */
@@ -83,17 +91,24 @@ export default function Sectors({ API, onOpen }) {
         if (v) counts[v] = (counts[v] || 0) + 1;
       });
       const withMos = cos.filter(c => c.mos != null && isFinite(c.mos));
-      const cheapest = withMos.length ? withMos.reduce((a, b) => (b.mos > a.mos ? b : a)) : null;
-      const richest  = withMos.length ? withMos.reduce((a, b) => (b.mos < a.mos ? b : a)) : null;
+      // Argmax over every name reliably surfaces the WORST data point, not the
+      // best opportunity: the widest MoS in a sector is usually a split/stale
+      // artefact the engine already flagged (RAJESHEXPO printed "cheapest in
+      // Consumer Discretionary" at +112,872% off a 0.14x P/B the confidence
+      // check calls implausible). Rank among names the engine marks reliable;
+      // fall back only if a sector has none.
+      const pool = withMos.filter(c => c.reliable).length ? withMos.filter(c => c.reliable) : withMos;
+      const cheapest = pool.length ? pool.reduce((a, b) => (b.mos > a.mos ? b : a)) : null;
+      const richest  = pool.length ? pool.reduce((a, b) => (b.mos < a.mos ? b : a)) : null;
       return {
         name, n: cos.length,
         medPe: median(cos.map(c => c.pe)),
         medPb: median(cos.map(c => c.pb)),
-        avgMos: avg(cos.map(c => c.mos)),
+        medMos: median(cos.map(c => c.mos), false),
         counts, cheapest, richest,
         cos: [...cos].sort((a, b) => (b.mos ?? -Infinity) - (a.mos ?? -Infinity)),
       };
-    }).sort((a, b) => (b.avgMos ?? -Infinity) - (a.avgMos ?? -Infinity));
+    }).sort((a, b) => (b.medMos ?? -Infinity) - (a.medMos ?? -Infinity));
   }, [rows]);
 
   const totals = useMemo(() => ({
@@ -101,7 +116,7 @@ export default function Sectors({ API, onOpen }) {
     sectors: sectors.length,
     medPe: median((rows || []).map(c => c.pe)),
     medPb: median((rows || []).map(c => c.pb)),
-    avgMos: avg((rows || []).map(c => c.mos)),
+    medMos: median((rows || []).map(c => c.mos), false),
   }), [rows, sectors]);
 
   if (loading) return (
@@ -132,14 +147,10 @@ export default function Sectors({ API, onOpen }) {
 
   return (
     <div className="fadein" style={{ padding: "24px 32px" }}>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 4 }}>
-        <Layers size={20} color={C.gold} />
-        <span style={{ ...serif, fontSize: 30, color: C.text }}>Sectors</span>
-        <span style={{ ...sans, fontSize: 13, color: C.dim }}>{totals.sectors} sectors · {totals.n} companies</span>
-      </div>
-      <div style={{ ...sans, fontSize: 12, color: C.faint, marginBottom: 18 }}>
-        Valuation by sector — median multiples, average margin of safety, and where the cheapest &amp; richest names sit. Sorted by average MoS.
-      </div>
+      <PageHeader title="Sectors" meta={`${totals.sectors} sectors · ${totals.n} companies`}>
+        Valuation by sector — median multiples, median margin of safety, and where the cheapest &amp; richest names sit. Medians, not means: a handful of
+        split-affected names carry margins in the thousands of percent and would otherwise set the tone for a whole sector.
+      </PageHeader>
 
       {/* Totals header row */}
       <div style={{
@@ -152,7 +163,7 @@ export default function Sectors({ API, onOpen }) {
           ["Sectors", String(totals.sectors), C.text],
           ["Median P/E", multiple(totals.medPe, 1), C.text],
           ["Median P/B", multiple(totals.medPb, 2), C.text],
-          ["Avg MoS", signedPct(totals.avgMos), mosColor(totals.avgMos)],
+          ["Median MoS", signedPct(totals.medMos), mosColor(totals.medMos)],
         ].map(([l, v, col]) => (
           <div key={l}>
             <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: C.dim }}>{l}</div>
@@ -188,7 +199,7 @@ export default function Sectors({ API, onOpen }) {
               {[
                 ["Med P/E", multiple(s.medPe, 1), C.text],
                 ["Med P/B", multiple(s.medPb, 2), C.text],
-                ["Avg MoS", signedPct(s.avgMos), mosColor(s.avgMos)],
+                ["Median MoS", signedPct(s.medMos), mosColor(s.medMos)],
               ].map(([l, v, col]) => (
                 <div key={l}>
                   <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", color: C.dim }}>{l}</div>

@@ -10,7 +10,7 @@
 
    All data comes from the licensed vendor feed. A browsing aid, not advice. */
 import { useEffect, useMemo, useState } from "react";
-import { PiggyBank, ArrowLeft, Search } from "lucide-react";
+import { ArrowLeft, Search } from "lucide-react";
 import {
   AreaChart, Area, YAxis, Tooltip, ResponsiveContainer, ReferenceLine,
   PieChart, Pie, Cell,
@@ -18,6 +18,7 @@ import {
 import { C, mono, sans, serif, gridBg, series } from "../lib/theme.js";
 import { useIsMobile } from "../lib/useResponsive.js";
 import { selStyle } from "../lib/listControls.jsx";
+import PageHeader from "./ui/PageHeader.jsx";
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -141,15 +142,10 @@ function FundList({ data, onOpen, isMobile }) {
 
   return (
     <div className="fadein" style={{ padding: isMobile ? "20px 14px 40px" : "24px 32px 48px", maxWidth: 1240 }}>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 4 }}>
-        <PiggyBank size={20} color={C.gold} />
-        <span style={{ ...serif, fontSize: 30, color: C.text }}>Mutual Funds</span>
-        {data.as_of && <span style={{ ...mono, fontSize: 11, color: C.faint }}>as of {data.as_of}</span>}
-      </div>
-      <div style={{ ...sans, fontSize: 12, color: C.faint, marginBottom: 16, lineHeight: 1.6, maxWidth: 820 }}>
+      <PageHeader title="Mutual Funds" meta={data.as_of ? `as of ${data.as_of}` : null}>
         The fund universe by category — NAV, trailing returns, AUM and rating from the verified feed.
         Sort any column, filter by sub-category or rating, and open a fund for its full desk. A browsing aid, not advice.
-      </div>
+      </PageHeader>
 
       {!cats.length ? (
         <div style={{ ...sans, fontSize: 13, color: C.dim, border: `1px solid ${C.line}`,
