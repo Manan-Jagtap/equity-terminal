@@ -1,10 +1,13 @@
 /* Results.jsx — cross-company earnings scoreboard.
    Reads /api/results: latest reported quarter + sales/PAT YoY + EPS beat/miss. */
 import { useEffect, useMemo, useState } from "react";
-import { CalendarClock, Loader2, TrendingUp, TrendingDown, ChevronRight } from "lucide-react";
-import { C, sans, serif, mono } from "../lib/theme.js";
+import { Loader2, TrendingUp, TrendingDown, ChevronRight } from "lucide-react";
+import { C, sans, mono } from "../lib/theme.js";
 import { ListToolbar, applyControls, selStyle } from "../lib/listControls.jsx";
 import { VerdictBadge } from "./primitives.jsx";
+import PageHeader from "./ui/PageHeader.jsx";
+import ErrorState from "./ui/ErrorState.jsx";
+import useResource from "../lib/useResource.js";
 
 const cr   = v => v == null ? "—" : "₹" + Number(v).toLocaleString("en-IN", { maximumFractionDigits: 0 });
 const signed = v => v == null ? "—" : (v >= 0 ? "+" : "") + (v * 100).toFixed(1) + "%";   // fraction → %
@@ -135,20 +138,13 @@ function DividendCalendar({ API, onOpen }) {
 }
 
 export default function Results({ API, onOpen }) {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // See useResource: the previous fetch().then(r=>r.json()).catch() never fired
+  // its .catch on an API 4xx/5xx (FastAPI answers with JSON), so an outage
+  // rendered as "No results data yet — run a refresh".
+  const { data, error, loading, retry } = useResource(API ? `${API}/api/results` : null);
   const [sort, setSort] = useState("latest");
   const [controls, setControls] = useState({});
 
-  useEffect(() => {
-    if (!API) { setLoading(false); return; }
-    let live = true;
-    setLoading(true);
-    fetch(`${API}/api/results`).then(r => r.json())
-      .then(d => { if (live) { setData(d); setLoading(false); } })
-      .catch(() => { if (live) { setData(null); setLoading(false); } });
-    return () => { live = false; };
-  }, [API]);
 
   const rows = useMemo(() => {
     const items = applyControls( (data?.items || []).slice(), controls);
@@ -161,7 +157,16 @@ export default function Results({ API, onOpen }) {
 
   if (loading) return (
     <div style={{ padding: 48, display: "flex", alignItems: "center", gap: 10, color: C.dim, ...sans, fontSize: 13 }}>
-      <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> Loading results…
+      <Loader2 size={16} className="spin" /> Loading results…
+    </div>
+  );
+
+  if (error) return (
+    <div className="fadein" style={{ padding: "24px 32px" }}>
+      <PageHeader title="Results">
+        Most recent quarter, sales &amp; profit growth (YoY), and the latest full-year EPS vs the Street's estimate.
+      </PageHeader>
+      <ErrorState error={error} onRetry={retry} what="results" />
     </div>
   );
 
@@ -171,14 +176,9 @@ export default function Results({ API, onOpen }) {
 
   return (
     <div className="fadein" style={{ padding: "24px 32px" }}>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 4 }}>
-        <CalendarClock size={20} color={C.gold} />
-        <span style={{ ...serif, fontSize: 30, color: C.text }}>Results</span>
-        <span style={{ ...sans, fontSize: 13, color: C.dim }}>{rows.length} names · latest reported quarter</span>
-      </div>
-      <div style={{ ...sans, fontSize: 12, color: C.faint, marginBottom: 16 }}>
+      <PageHeader title="Results" meta={`${rows.length} names · latest reported quarter`}>
         Most recent quarter, sales &amp; profit growth (YoY), and the latest full-year EPS vs the Street's estimate.
-      </div>
+      </PageHeader>
 
       <div style={{ display: "flex", gap: 6, marginBottom: 14 }}>
         <ListToolbar rows={data?.items} controls={controls} setControls={setControls}
@@ -252,7 +252,7 @@ export default function Results({ API, onOpen }) {
             })}
             {rows.length === 0 && (
               <tr><td colSpan={10} style={{ ...sans, textAlign: "center", padding: 40, color: C.faint }}>
-                No results data yet — run a refresh to populate the quarter snapshots.
+                No quarterly results are published for this universe yet.
               </td></tr>
             )}
           </tbody>

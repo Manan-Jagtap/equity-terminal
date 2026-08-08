@@ -222,7 +222,7 @@ export default function OptionsTab({ co, API }) {
 
   if (loading) return (
     <div style={{ padding: 40, display: "flex", alignItems: "center", gap: 10, color: C.dim, ...sans, fontSize: 13 }}>
-      <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> Loading option chain…
+      <Loader2 size={16} className="spin" /> Loading option chain…
     </div>
   );
   if (!data || data.configured === false) return <Empty msg={data?.message || "Options require Dhan to be connected."} />;

@@ -76,7 +76,7 @@ export default function MarketDashboard({ API, companies, onOpen }) {
             : data?.as_of && <span style={{ ...mono, fontSize: 11, color: C.dim }}>as of {data.as_of}</span>}
           <button onClick={() => setTick(t => t + 1)} title="Refresh"
             style={{ ...sans, display: "flex", alignItems: "center", gap: 6, background: C.bg800, border: `1px solid ${C.line}`, color: C.dim, borderRadius: 7, padding: "5px 10px", fontSize: 12, cursor: "pointer" }}>
-            <RefreshCw size={12} style={loading ? { animation: "spin 1s linear infinite" } : undefined} /> Refresh
+            <RefreshCw size={12} className={loading ? "spin" : undefined} /> Refresh
           </button>
         </div>
       </div>

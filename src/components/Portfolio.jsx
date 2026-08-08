@@ -10,6 +10,7 @@ import { VerdictBadge } from "./primitives.jsx";
 import { SignInGate } from "./Watchlist.jsx";
 import { authFetch } from "../lib/auth.js";
 import { parseHoldings } from "../lib/brokerImport.js";
+import PageHeader from "./ui/PageHeader.jsx";
 
 const pnlColor = v => v == null ? C.dim : v >= 0 ? C.green : C.red;
 // Backend sends pnl_pct, weight AND mos all as FRACTIONS (0.124 = 12.4%),
@@ -242,7 +243,7 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
 
   if (loading) return (
     <div style={{ padding: 48, display: "flex", alignItems: "center", gap: 10, color: C.dim, ...sans, fontSize: 13 }}>
-      <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> Loading portfolio…
+      <Loader2 size={16} className="spin" /> Loading portfolio…
     </div>
   );
 
@@ -256,14 +257,9 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
 
   return (
     <div className="fadein" style={{ padding: "24px 32px" }}>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 4 }}>
-        <Briefcase size={20} color={C.gold} />
-        <span style={{ ...serif, fontSize: 30, color: C.text }}>Portfolio</span>
-        <span style={{ ...sans, fontSize: 13, color: C.dim }}>{items.length} {items.length === 1 ? "holding" : "holdings"}</span>
-      </div>
-      <div style={{ ...sans, fontSize: 12, color: C.faint, marginBottom: 18 }}>
+      <PageHeader title="Portfolio" meta={`${items.length} ${items.length === 1 ? "holding" : "holdings"}`}>
         Track your actual holdings against the model — live value, P&amp;L, and the value-weighted margin of safety of the book.
-      </div>
+      </PageHeader>
 
       {/* Summary cards */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginBottom: 18 }}>
@@ -475,7 +471,7 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
           border: `1px solid ${C.gold}66`, color: C.gold, background: C.gold + "0d",
           opacity: (!ticker.trim() || !qty || !avgCost || !buyDate) ? 0.5 : 1,
         }}>
-          {saving ? <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> : <Plus size={13} />}
+          {saving ? <Loader2 size={13} className="spin" /> : <Plus size={13} />}
           Add
         </button>
         <span style={{ width: 1, height: 20, background: C.line }} />
@@ -488,7 +484,7 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
             padding: "8px 14px", borderRadius: 8, cursor: importing ? "wait" : "pointer",
             border: `1px solid ${C.line2}`, color: C.text200, background: "transparent",
           }}>
-          {importing ? <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> : <Upload size={13} />}
+          {importing ? <Loader2 size={13} className="spin" /> : <Upload size={13} />}
           Import CSV / PDF
         </button>
         <button type="button" disabled={importing}
@@ -600,7 +596,7 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
                        padding: "8px 14px", borderRadius: 8, cursor: importing ? "wait" : "pointer",
                        border: `1px solid ${C.gold}66`, color: C.gold, background: C.gold + "0d",
                        opacity: !pasteText.trim() ? 0.5 : 1 }}>
-              {importing ? <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> : <Plus size={13} />}
+              {importing ? <Loader2 size={13} className="spin" /> : <Plus size={13} />}
               Import pasted holdings
             </button>
             <span style={{ ...sans, fontSize: 10.5, color: C.faint }}>

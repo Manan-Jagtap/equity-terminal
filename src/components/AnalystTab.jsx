@@ -8,10 +8,21 @@ import { Loader2, TrendingUp, Info } from "lucide-react";
 import { C, mono, sans, serif } from "../lib/theme.js";
 import { inr, fmt, multiple } from "../lib/formatters.js";
 import { useIsMobile } from "../lib/useResponsive.js";
+import { verdictColor } from "../design/tokens.js";
 
+/* The sell-side 5-point scale maps 1:1 onto the verdict ladder, so it uses the
+   ladder rather than a private palette. It previously carried its own five
+   colours, which meant "this is bad" rendered as #d97b6c on the screener,
+   #c4554d in forensics and #a83a30 here — three answers to one question.
+
+   #a83a30 was also a live WCAG AA failure at 3.14:1 on --ev-bg, and it was on
+   STRONG SELL: the most consequential label in the view wore the least legible
+   colour in the product. The ladder equivalents are 12.56 / 9.84 / 8.98 / 8.43
+   / 6.96 — every one clears AA. */
 const RATING_COLORS = {
-  "Strong Buy": "#2e8b57", "Buy": "#5a9367", "Hold": "#c89a39",
-  "Sell": "#c46f65", "Strong Sell": "#a83a30",
+  "Strong Buy": verdictColor("BUY"),    "Buy": verdictColor("ACCUMULATE"),
+  "Hold":       verdictColor("HOLD"),   "Sell": verdictColor("REDUCE"),
+  "Strong Sell": verdictColor("AVOID"),
 };
 const ratingFromMean = m =>
   m == null ? null :
@@ -67,7 +78,7 @@ export default function AnalystTab({ co, API, price }) {
 
   if (loading) return (
     <div style={{ padding: 60, textAlign: "center", color: C.dim }}>
-      <Loader2 size={22} style={{ animation: "spin 1s linear infinite" }} />
+      <Loader2 size={22} className="spin" />
       <div style={{ ...sans, marginTop: 10, fontSize: 13 }}>Loading analyst data…</div>
       <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
     </div>

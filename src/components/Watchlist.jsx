@@ -7,6 +7,7 @@ import { C, sans, serif, mono, gridBg } from "../lib/theme.js";
 import { VerdictBadge } from "./primitives.jsx";
 import Logo from "./Logo.jsx";
 import { fetchWatchlist, saveWatch, removeWatch } from "../lib/watchlist.js";
+import PageHeader from "./ui/PageHeader.jsx";
 
 const inr = v => v == null ? "—" : "₹" + Number(v).toLocaleString("en-IN", { maximumFractionDigits: 0 });
 const signed = v => v == null ? "—" : (v >= 0 ? "+" : "") + (v * 100).toFixed(1) + "%";
@@ -86,7 +87,7 @@ function SettingsPanel({ item, onSave, onClose }) {
         <button onClick={save} disabled={busy} style={{ ...sans, fontSize: 12, fontWeight: 600, color: C.bg,
           background: C.gold, border: "none", borderRadius: 7, padding: "7px 14px", cursor: "pointer",
           display: "inline-flex", alignItems: "center", gap: 6 }}>
-          {busy ? <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> : <Check size={13} />} Save
+          {busy ? <Loader2 size={13} className="spin" /> : <Check size={13} />} Save
         </button>
         <button onClick={onClose} style={{ ...sans, fontSize: 12, color: C.dim, background: "transparent",
           border: `1px solid ${C.line2}`, borderRadius: 7, padding: "7px 14px", cursor: "pointer" }}>Cancel</button>
@@ -148,25 +149,24 @@ export default function Watchlist({ API, onOpen, onChanged, user, requestAuth })
 
   if (loading) return (
     <div style={{ padding: 48, display: "flex", alignItems: "center", gap: 10, color: C.dim, ...sans, fontSize: 13 }}>
-      <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> Loading watchlist…
+      <Loader2 size={16} className="spin" /> Loading watchlist…
     </div>
   );
 
   const items = data?.items || [];
   return (
     <div className="fadein" style={{ padding: "24px 32px" }}>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 14, marginBottom: 4 }}>
-        <span style={{ ...serif, fontSize: 30, color: C.text }}>Watchlist</span>
-        <span style={{ ...sans, fontSize: 13, color: C.dim }}>{items.length} name{items.length === 1 ? "" : "s"}</span>
-        {data?.triggered > 0 && (
+      <PageHeader
+        title="Watchlist"
+        meta={`${items.length} name${items.length === 1 ? "" : "s"}`}
+        actions={data?.triggered > 0 && (
           <span style={{ ...sans, fontSize: 12, color: C.gold, border: `1px solid ${C.gold}55`, borderRadius: 99, padding: "2px 10px", display: "inline-flex", alignItems: "center", gap: 5 }}>
             <Bell size={12} /> {data.triggered} alert{data.triggered === 1 ? "" : "s"} live
           </span>
         )}
-      </div>
-      <div style={{ ...sans, fontSize: 12, color: C.faint, marginBottom: 20 }}>
+      >
         Saved names with live engine verdict, margin of safety, and your alert triggers. Star any company to add it here.
-      </div>
+      </PageHeader>
 
       {items.length === 0 ? (
         <div style={{ padding: 48, textAlign: "center", border: `1px dashed ${C.line2}`, borderRadius: 12 }}>

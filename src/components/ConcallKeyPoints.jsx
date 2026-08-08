@@ -11,7 +11,7 @@ import { C, sans, mono } from "../lib/theme.js";
 const GROUPS = [
   ["guidance", "Guidance & outlook", C.gold],
   ["margins", "Margins & costs", "#85a8c8"],
-  ["capex", "Capex & capacity", "#57c48a"],
+  ["capex", "Capex & capacity", "#5fb3b3"],   // teal — a CATEGORY tint must not reuse a verdict colour
   ["demand", "Demand & orders", "#5fb3b3"],
   ["risks", "Risks & watch-items", C.red],
 ];

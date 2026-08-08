@@ -42,7 +42,7 @@ export default function TranscriptSummary({ API, ticker }) {
             fontSize: 12, fontWeight: 500, padding: "7px 13px", borderRadius: 8,
             cursor: busy ? "wait" : "pointer", border: `1px solid ${C.gold}66`, color: C.gold, background: C.gold + "0d",
           }}>
-            {busy ? <Loader2 size={13} style={{ animation: "spin 1s linear infinite" }} /> : <Sparkles size={13} />}
+            {busy ? <Loader2 size={13} className="spin" /> : <Sparkles size={13} />}
             Summarize latest call
           </button>
         )}

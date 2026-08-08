@@ -85,7 +85,7 @@ export default function ScenarioBar({ API, ticker, assumptions, setAssumptions }
         border: `1px solid ${C.gold}66`, color: C.gold, background: C.gold + "0d",
         opacity: (busy || !name.trim()) ? 0.5 : 1,
       }}>
-        {busy ? <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} /> : <Save size={12} />} Save
+        {busy ? <Loader2 size={12} className="spin" /> : <Save size={12} />} Save
       </button>
       {list.length > 0 && <span style={{ width: 1, height: 18, background: C.line2 }} />}
       <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>

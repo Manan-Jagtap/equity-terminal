@@ -6,11 +6,12 @@
    (verdicts, MoS, weights, momentum, holding terms) — educational decision
    support; the owner decides. */
 import { useEffect, useState } from "react";
-import { BadgeCheck, Briefcase, Loader2, Sparkles, Landmark, GitCompare, ShieldAlert, Gem } from "lucide-react";
+import { BadgeCheck, Briefcase, Loader2, Landmark, GitCompare, ShieldAlert, Gem } from "lucide-react";
 import { C, sans, serif, mono } from "../lib/theme.js";
 import PageSkeleton from "./Skeleton.jsx";
 import { authFetch } from "../lib/auth.js";
 import { SignInGate } from "./Watchlist.jsx";
+import PageHeader from "./ui/PageHeader.jsx";
 
 const inr = v => v == null ? "—" : "₹" + Number(v).toLocaleString("en-IN", { maximumFractionDigits: 0 });
 
@@ -204,7 +205,7 @@ function CashBar({ cash, onSave, onClear, busy }) {
       )}
       {busy && (
         <span style={{ ...sans, fontSize: 11, color: C.dim, display: "flex", alignItems: "center", gap: 6 }}>
-          <Loader2 size={12} style={{ animation: "spin 1s linear infinite" }} /> updating…
+          <Loader2 size={12} className="spin" /> updating…
         </span>
       )}
       {!busy && cash?.deployable != null && cash.deployable > 0 && (
@@ -367,7 +368,7 @@ function HiddenGems({ API, onOpen }) {
 
       {!loaded && (
         <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 0", ...sans, fontSize: 12.5, color: C.dim }}>
-          <Loader2 size={14} style={{ animation: "spin 1s linear infinite" }} /> Screening the universe…
+          <Loader2 size={14} className="spin" /> Screening the universe…
         </div>
       )}
       {loaded && !data?.available && (
@@ -478,17 +479,12 @@ export default function FundManager({ API, user, requestAuth, onOpen }) {
 
   return (
     <div className="fadein" style={{ padding: "24px 32px", maxWidth: 1080 }}>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 4 }}>
-        <Sparkles size={20} color={C.gold} />
-        <span style={{ ...serif, fontSize: 30, color: C.text }}>Fund Manager</span>
-        {mgr?.aum ? <span style={{ ...mono, fontSize: 13, color: C.dim }}>book {inr(mgr.aum)}</span> : null}
-      </div>
-      <div style={{ ...sans, fontSize: 12, color: C.faint, marginBottom: 20, maxWidth: 860, lineHeight: 1.6 }}>
+      <PageHeader title="Fund Manager" meta={mgr?.aum ? `book ${inr(mgr.aum)}` : null}>
         Conviction comes from triangulated evidence — the model's fair value cross-examined against analyst
         consensus and each name's own 5-year valuation band, plus forensic accounting quality, institutional
         flow, results momentum and the macro tape. A model that fails cross-examination is set aside, and the
         action says so. You decide; nothing here is SEBI-registered advice.
-      </div>
+      </PageHeader>
 
       {/* Universe-wide discovery — shown whether or not the user holds anything. */}
       <HiddenGems API={API} onOpen={onOpen} />

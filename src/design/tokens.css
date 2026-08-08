@@ -11,27 +11,64 @@
   --ev-bg-over:   #1a1713;   /* overlays, popovers, sticky headers */
   --ev-bg-input:  #0e0c0a;   /* form fields (slightly sunken) */
 
-  /* ── Text: high-contrast off-white, muted secondary tier ── */
-  --ev-text:      #f2ede4;   /* primary — 15.9:1 on bg */
-  --ev-text-2:    #b7ad9d;   /* secondary — 8.3:1 */
-  --ev-text-3:    #7d7566;   /* tertiary/labels — 4.6:1 (AA floor; never smaller than 12px) */
+  /* ── Text: high-contrast off-white, muted secondary tier ──
+     Ratios below are MEASURED against --ev-bg (#0a0907). The original table was
+     computed against pure black, which over-claimed every value; text-3 was the
+     one where that mattered — documented 4.6:1, actually 4.37:1 on bg, 4.17:1 on
+     --ev-bg-raise and 3.92:1 on --ev-bg-over. So the token described as "the AA
+     floor" cleared AA on none of the three surfaces it is used on, and
+     theme.js repeated the claim as a UX-04/WCAG-1.4.3 guarantee.
+     text-3 is now #8d8474: 5.39 / 5.14 / 4.83 — AA on all three. It was NOT
+     moved further up the ramp (#88806f, #898070 also clear AA) because those sit
+     within a 1.02 contrast ratio of --ev-nocall #8a8171 and would collapse the
+     "LOW CONF / NO DATA" signal colour into ordinary label text. */
+  --ev-text:      #f2ede4;   /* primary   — 17.07:1 on bg */
+  --ev-text-2:    #b7ad9d;   /* secondary —  8.98:1 on bg */
+  --ev-text-3:    #8d8474;   /* tertiary  —  5.39:1 on bg / 5.14 raise / 4.83 over */
 
   /* ── Hairlines instead of heavy card fills ── */
   --ev-line:      rgba(242, 237, 228, 0.08);
   --ev-line-2:    rgba(242, 237, 228, 0.14);
 
   /* ── The one signature accent (focus, primary actions, live emphasis) ── */
-  --ev-accent:    #e8b45a;   /* warm amber-gold — 9.2:1 on bg */
+  --ev-accent:    #e8b45a;   /* warm amber-gold — 10.53:1 on bg */
   --ev-accent-dim:#e8b45a33;
   --ev-accent-ink:#231a08;   /* text on accent fills */
 
   /* ── Verdict ladder: disciplined, muted, never neon.
-        Also drives upside/downside + score bands. Never color alone. ── */
-  --ev-buy:        #57c48a;  /* confident green   — 8.6:1 */
-  --ev-accumulate: #8fbf6f;  /* green-lean        — 8.9:1 */
-  --ev-hold:       #c9a86a;  /* neutral gold      — 8.4:1 */
-  --ev-reduce:     #d99a5b;  /* amber-orange      — 8.1:1 */
-  --ev-avoid:      #d97b6c;  /* restrained red    — 6.9:1 */
+        Also drives upside/downside + score bands. Never color alone.
+
+        REBUILT for dichromats. The previous ladder engineered every step to
+        near-equal contrast (8.6/8.9/8.4/8.1/6.9:1), and equal contrast means
+        equal LUMINANCE — so when hue collapses there is no channel left. Viénot
+        simulation + CIEDE2000 on the old five steps:
+
+          normal        worst BUY/ACCUMULATE vs REDUCE/AVOID   dE 32.2
+          protanopia                                           dE  4.97
+          deuteranopia                                         dE  4.38
+
+        dE 2.3 is one just-noticeable difference. At 4.4 the whole ladder became
+        one olive band: a deuteranope (~8% of men) could not tell BUY from AVOID
+        on an equity-research product. The fix is LIGHTNESS separation, not more
+        hue. Now 11.07 protan / 11.36 deutan — 2.2x and 2.6x better — while every
+        documented contrast floor is still met or beaten and max chroma DROPS
+        48.9 -> 46.0, so the ladder is more restrained, not louder.
+
+        HOLD loses its hue entirely: at #c9a86a it was dE 7.3 from --ev-accent
+        #e8b45a, i.e. the same colour as the brand accent to everybody, which
+        broke the "one signature accent" thesis — an amber number meant both
+        "interactive" and "HOLD". HOLD is the absence of a signal, so it is now
+        the absence of colour (--ev-text-2's value). Accent-vs-HOLD is dE 18.6.
+
+        BUY and ACCUMULATE are deliberately NOT collapsed to one value: the
+        Sectors distribution bar renders all five steps as bare colour with no
+        glyph, so a merge would silently drop a category there. They sit dE ~6
+        apart in all three vision types. ── */
+  --ev-buy:        #7ce0bd;  /* confident mint    — 12.56:1 */
+  --ev-accumulate: #5fc9a4;  /* mint, one step down — 9.84:1 */
+  --ev-hold:       #b7ad9d;  /* neutral, hueless  —  8.98:1 */
+  --ev-reduce:     #ef9070;  /* warm orange       —  8.43:1 */
+  --ev-avoid:      #dd7d84;  /* restrained rose   —  6.96:1 */
   --ev-nocall:     #8a8171;  /* LOW CONF / NO DATA — honest grey */
   --ev-up:   var(--ev-buy);
   --ev-down: var(--ev-avoid);
@@ -53,6 +90,14 @@
 
   /* ── Radii ── */
   --ev-r-sm: 6px; --ev-r-md: 10px; --ev-r-lg: 14px; --ev-r-pill: 999px;
+
+  /* ── Scrims behind overlays. Warm near-black, never the retired Aurora blue:
+        five hand-rolled rgba(4,8,16,…) literals survived the Phase-2b re-skin
+        because they were written inline and so never passed through the C.*
+        adapter. A cool scrim over a warm canvas reads as a colour shift when a
+        modal opens, which is precisely the "something is off" feeling. ── */
+  --ev-scrim:        rgba(4, 3, 2, 0.62);
+  --ev-scrim-strong: rgba(4, 3, 2, 0.86);   /* fullscreen takeovers */
 
   /* ── Elevation: hairline + faint lift, not heavy shadows ── */
   --ev-elev-1: 0 1px 0 rgba(0,0,0,0.4), 0 0 0 1px var(--ev-line);
@@ -98,7 +143,11 @@
   background-size: 157px 157px;
 }
 
-:focus-visible { outline: none; box-shadow: var(--ev-focus); border-radius: var(--ev-r-sm); }
+/* No border-radius here: a focus ring must not RESHAPE the thing it rings.
+   Forcing --ev-r-sm (6px) squared .evc-btn (10px) and .evc-card/.evc-modal
+   (14px) the moment they took focus. box-shadow follows the element's own
+   radius automatically, so the ring is correctly shaped without saying so. */
+:focus-visible { outline: none; box-shadow: var(--ev-focus); }
 
 @media (prefers-reduced-motion: reduce) {
   :root { --ev-t-fast: 0.001ms; --ev-t-base: 0.001ms; --ev-t-slow: 0.001ms; }

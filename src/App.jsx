@@ -239,6 +239,18 @@ export default function App() {
             analystTarget: r.analyst_target, analystUpside: r.analyst_upside,
             analystRating: r.analyst_rating,
             sentiment: r.sentiment, sentimentLabel: r.sentiment_label,
+            // DAT-13b/DAT-15: the engine KEEPS its verdict while withholding the
+            // point estimate, and signals that with fair_value_note. Dropping it
+            // here made Screener.jsx's whole suppression path dead code — its
+            // `iv != null` guard then sent every suppressed name to the local
+            // browser-side recommend(), which published a fair value, a verdict
+            // and a confidence for names the engine had formally disowned.
+            // Measured 8 Aug 2026: 110/110 suppressed rows carry intrinsic=null,
+            // so ALL of them took that fallback. app/valuation_public.py exists
+            // to stop exactly this ("any surface that forgets the flag will
+            // print the number again") — this is the surface that forgot.
+            fairValueNote: r.fair_value_note || null,
+            gateState: r.gate_state || null,
           },
         }));
         setCompanies(built.length > 0 ? built : SEED);
@@ -433,7 +445,6 @@ export default function App() {
     return (
       <div style={{ minHeight: "100vh", background: C.bg, color: C.text, ...auroraBg }}>
         <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
           body { margin: 0; font-feature-settings: 'ss01','cv11'; }
           @keyframes fadein { from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;} }
           .fadein { animation: fadein .3s ease-out both; }
@@ -472,11 +483,10 @@ export default function App() {
   return (
     <div style={{ minHeight: "100vh", background: C.bg, color: C.text, paddingBottom: isMobile ? 62 : 0, ...auroraBg }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
         body { margin: 0; font-feature-settings: 'ss01','cv11'; }
         *::-webkit-scrollbar { height: 7px; width: 7px }
         *::-webkit-scrollbar-thumb { background: ${C.bg600}; border-radius: 4px }
-        input[type=range] { -webkit-appearance: none; height: 2px; background: rgba(191,204,228,.18); border-radius: 99px; }
+        input[type=range] { -webkit-appearance: none; height: 2px; background: var(--ev-line-2); border-radius: 99px; }
         input[type=range]::-webkit-slider-thumb {
           -webkit-appearance: none; height: 14px; width: 14px; border-radius: 50%;
           background: ${C.gold}; border: 2px solid ${C.bg}; cursor: pointer;
@@ -496,7 +506,7 @@ export default function App() {
           position: "fixed", left: 0, top: 0, bottom: 0, width: 216, zIndex: 110,
           display: "flex", flexDirection: "column", boxSizing: "border-box",
           padding: "18px 12px 14px", borderRight: `1px solid ${C.line}`,
-          background: "rgba(8,13,26,0.78)", backdropFilter: "blur(16px)",
+          background: "rgba(18,16,13,0.78)", backdropFilter: "blur(16px)",
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 9, padding: "2px 8px 14px" }}>
             <BrandMark size={22} />
@@ -751,7 +761,7 @@ export default function App() {
 
       {isMobile && moreOpen && (
         <div onClick={() => setMoreOpen(false)}
-          style={{ position: "fixed", inset: 0, zIndex: 118, background: "rgba(4,8,16,0.55)" }}>
+          style={{ position: "fixed", inset: 0, zIndex: 118, background: "var(--ev-scrim)" }}>
           <div onClick={e => e.stopPropagation()} style={{
             position: "absolute", left: 0, right: 0, bottom: 56,
             background: C.bg900, borderTop: `1px solid ${C.line2}`,

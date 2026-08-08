@@ -5,10 +5,11 @@
    no licensed source publishes. The honest analogues shown instead are the
    subscription rate (real demand) and listing gains (realised outcome). */
 import { useEffect, useMemo, useState } from "react";
-import { ExternalLink, Rocket } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { C, mono, sans, serif } from "../lib/theme.js";
 import { useIsMobile } from "../lib/useResponsive.js";
 import { selStyle } from "../lib/listControls.jsx";
+import PageHeader from "./ui/PageHeader.jsx";
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -149,16 +150,11 @@ export default function IPOBoard() {
 
   return (
     <div className="fadein" style={{ padding: isMobile ? "20px 14px 40px" : "24px 32px 48px", maxWidth: 1100 }}>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 4 }}>
-        <Rocket size={20} color={C.gold} />
-        <span style={{ ...serif, fontSize: 30, color: C.text }}>IPOs</span>
-        {data.as_of && <span style={{ ...mono, fontSize: 11, color: C.faint }}>as of {data.as_of}</span>}
-      </div>
-      <div style={{ ...sans, fontSize: 12, color: C.faint, marginBottom: 16, lineHeight: 1.6, maxWidth: 760 }}>
+      <PageHeader title="IPOs" meta={data.as_of ? `as of ${data.as_of}` : null}>
         Live pipeline from the verified feed — bands, lots, minimum investment, bidding/allotment/listing dates,
         subscription demand and realised listing gains. We don't publish GMP: grey-market premium is unregulated
         rumor with no accountable source; subscription and listing outcomes are what can be verified.
-      </div>
+      </PageHeader>
 
       {/* Tabs + mainboard/SME filter */}
       <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap", marginBottom: 14 }}>
@@ -218,7 +214,7 @@ function IPODetailModal({ d, onClose }) {
   const pr = pricing.priceRange || {};
   const bidding = dates.bidding || {};
   return (
-    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 200, background: "rgba(4,8,16,0.6)",
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 200, background: "var(--ev-scrim)",
       display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "6vh 16px", overflowY: "auto" }}>
       <div onClick={e => e.stopPropagation()} style={{ width: "100%", maxWidth: 620, background: C.bg900,
         border: `1px solid ${C.line2}`, borderRadius: 14, padding: "20px 22px" }}>

@@ -11,8 +11,8 @@ import {
 import { C, mono, sans } from "../lib/theme.js";
 import * as IND from "../lib/indicators.js";
 
-const UP = "#26A69A", DOWN = "#EF5350";
-const GRID = "rgba(147,171,255,0.05)", AXIS = "rgba(147,171,255,0.12)";
+const UP = "#7ce0bd", DOWN = "#dd7d84";   // --ev-buy / --ev-avoid
+const GRID = "rgba(242,237,228,0.06)", AXIS = "rgba(242,237,228,0.12)";
 
 function aggregate(rows, unit) {
   if (unit === "day") return rows;
@@ -65,7 +65,7 @@ export default function ChartTerminal({ data, livePrice, live, intrinsic, height
     if (!holder.current || !rows.length) return;
     const chart = createChart(holder.current, {
       height, autoSize: false,
-      layout: { background: { color: "transparent" }, textColor: C.dim, fontFamily: "'JetBrains Mono', monospace", fontSize: 11, attributionLogo: false, panes: { separatorColor: AXIS, separatorHoverColor: "rgba(147,171,255,0.2)" } },
+      layout: { background: { color: "transparent" }, textColor: C.dim, fontFamily: "'JetBrains Mono', monospace", fontSize: 11, attributionLogo: false, panes: { separatorColor: AXIS, separatorHoverColor: "rgba(242,237,228,0.2)" } },
       grid: { vertLines: { color: GRID }, horzLines: { color: GRID } },
       crosshair: { mode: CrosshairMode.Normal, vertLine: { color: C.dim, style: 3, labelBackgroundColor: C.bg800 }, horzLine: { color: C.dim, style: 3, labelBackgroundColor: C.bg800 } },
       rightPriceScale: { borderColor: AXIS, mode: log ? 1 : 0, scaleMargins: { top: 0.08, bottom: active.volume ? 0.24 : 0.08 } },

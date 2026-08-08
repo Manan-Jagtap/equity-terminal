@@ -10,8 +10,16 @@
  */
 import { C, sans } from "../lib/theme.js";
 
+/* The highlight stop MUST be lighter than the two base stops or there is no
+   shimmer — the animation still runs, it just has nothing to move.
+   This bit me: replacing the retired Aurora navy #16223A with
+   `var(--ev-bg-over)` looked like the right on-palette swap, but --ev-bg-over
+   IS #1a1713, the exact value C.panel2 already resolves to, so the gradient
+   became a flat colour and the skeleton silently stopped animating.
+   C.bg700 is one step up the warm ramp: contrast 1.093 against the base,
+   against 1.126 for the navy it replaces — same intensity, right hue. */
 const sheen = {
-  background: `linear-gradient(90deg, ${C.panel2} 25%, #16223A 50%, ${C.panel2} 75%)`,
+  background: `linear-gradient(90deg, ${C.panel2} 25%, ${C.bg700} 50%, ${C.panel2} 75%)`,
   backgroundSize: "200% 100%",
   animation: "ev-shimmer 1.3s ease-in-out infinite",
   borderRadius: 8,
