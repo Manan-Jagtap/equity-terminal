@@ -26,6 +26,7 @@ import { recommend } from "../lib/recommend.js";
 import { fundamentals, isFinancial } from "../lib/valuation.js";
 import { technicals } from "../lib/technicals.js";
 import { useIsMobile } from "../lib/useResponsive.js";
+import { verdictColor, color } from "../design/tokens.js";
 import DCFModel from "./DCFModel.jsx";
 import ThreeStatementModel from "./ThreeStatementModel.jsx";
 import ScenarioBar from "./ScenarioBar.jsx";
@@ -37,11 +38,16 @@ import OptionsTab from "./OptionsTab.jsx";
 import AnalystTab from "./AnalystTab.jsx";
 
 /* Verdict → colour tone (single mapping, used in header + snapshot). */
+/* The ONE verdict->colour mapping in this file. It previously hard-coded a
+   BUY/HOLD/AVOID triad and painted HOLD in C.gold — the brand ACCENT — so an
+   amber verdict and an amber "interactive" affordance were the same colour.
+   verdictColor() is the shared scale (ui/Badge, the screener and the sector bar
+   all read it); LOW CONF / NO DATA get --ev-nocall, which exists for exactly
+   that. A second local copy of this logic lived inside the detail component and
+   has been deleted in favour of this one. */
 function verdictTone(v) {
-  if (v === "BUY" || v === "ACCUMULATE") return C.green;
-  if (v === "HOLD") return C.gold;
-  if (v === "REDUCE" || v === "TRIM" || v === "AVOID") return C.red;
-  return C.dim; // NO DATA / LOW CONF
+  if (/LOW CONF|NO DATA|NO CALL/.test(v || "")) return color.nocall;
+  return verdictColor(v) || color.nocall;
 }
 
 /* Build descriptive tags from the actual company, instead of hard-coding
@@ -2206,7 +2212,11 @@ function AIThesisTab({ co, profile, insights, cd, price, API, onGoTab }) {
    EBITDA, leverage trend), each red/amber/green, plus a 0-100 composite grade.
    Classic Beneish M / Altman Z'' appear under "pending" until the ingester
    captures receivables / working capital / SG&A. */
-const FLAG_C = { green: "#3fb27f", amber: "#caa64a", red: "#c4554d" };
+/* Forensic flags ride the verdict ladder too — good / caution / bad. The
+   private triad here was a fourth verdict palette (red #c4554d sat right on
+   the 4.5 AA line at 4.51:1); green-vs-red is now dE 11.4 under deuteranopia
+   instead of collapsing with the rest. */
+const FLAG_C = { green: verdictColor("BUY"), amber: verdictColor("REDUCE"), red: verdictColor("AVOID") };
 function flagColor(f) { return FLAG_C[f] || C.dim; }
 
 const FORENSIC_META = {
@@ -2396,8 +2406,8 @@ function VerdictTab({ co, rec, cd, price, insights, apiVal }) {
 
   // Verdict — the engine's own independent call (identical to the screener/header).
   const verdict = apiRec?.verdict ?? rec.verdict ?? "NO DATA";
-  const verdictColor = /BUY|ACCUM/.test(verdict) ? C.green : /HOLD|CONF|DATA/.test(verdict) ? C.gold : C.red;
-  const confColor = conf?.level === "high" ? C.green : conf?.level === "medium" ? C.gold : C.red;
+  const confColor = conf?.level === "high" ? verdictColor("BUY")
+                  : conf?.level === "medium" ? verdictColor("HOLD") : verdictColor("AVOID");
 
   // Transparent sentiment (concall tone + estimate revision + beat/miss streak).
   // A read on NARRATIVE momentum shown beside the verdict — never blended into it.
@@ -2433,7 +2443,7 @@ function VerdictTab({ co, rec, cd, price, insights, apiVal }) {
           <div style={{ position:"relative", display:"grid", gridTemplateColumns:"1fr 1fr", gap:32 }}>
             <div>
               <div style={{ ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.18em", color:C.gold, marginBottom:8 }}>EquityVerdict · Independent Verdict</div>
-              <div style={{ ...serif, fontSize:88, color:verdictColor, lineHeight:1 }}>{verdict}</div>
+              <div style={{ ...serif, fontSize:88, color:verdictTone(verdict), lineHeight:1 }}>{verdict}</div>
               <div style={{ display:"flex", gap:28, marginTop:16, flexWrap:"wrap" }}>
                 {[
                   ["Fair-Value Range", fvLo==null?"—":"₹"+fmtN(fvLo,0)+" – ₹"+fmtN(fvHi,0), C.gold],
