@@ -200,13 +200,13 @@ export default function SegmentSOTP({ ticker, price, isMobile }) {
 
   return (
     <div style={{ border: `1px solid ${C.gold}3d`, borderRadius: 12, background: C.bg900, padding: 18, marginBottom: 24 }}>
-      <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.18em", color: "#857d65" }}>
+      <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.18em", color: C.faint }}>
         Sum-of-the-Parts · {ticker}
         {verified && <span style={{ color: C.green, marginLeft: 10 }}>● verified segments{verified.as_of ? ` · ${verified.as_of}` : ""}</span>}
       </div>
 
       {preset && <>
-      <div style={{ ...sans, fontSize: 11, color: "#5b5440", marginTop: 6, lineHeight: 1.6, maxWidth: 620 }}>
+      <div style={{ ...sans, fontSize: 11, color: C.faint, marginTop: 6, lineHeight: 1.6, maxWidth: 620 }}>
         A single DCF mis-values this conglomerate — its parts trade on different economics. Build a fair value by segment below.
         Values are illustrative starting points; edit each segment's enterprise value to your own estimate.
       </div>
@@ -217,9 +217,9 @@ export default function SegmentSOTP({ ticker, price, isMobile }) {
           <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "8px 0", borderBottom: `1px solid rgba(220,213,193,.07)` }}>
             <span style={{ ...sans, fontSize: 13, color: C.text200 }}>{s.name}</span>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <span style={{ ...sans, fontSize: 11, color: "#5b5440" }}>₹</span>
+              <span style={{ ...sans, fontSize: 11, color: C.faint }}>₹</span>
               <input type="number" value={s.ev} onChange={e => setEv(i, e.target.value)} style={inputStyle} />
-              <span style={{ ...sans, fontSize: 11, color: "#5b5440" }}>Cr EV</span>
+              <span style={{ ...sans, fontSize: 11, color: C.faint }}>Cr EV</span>
             </div>
           </div>
         ))}
@@ -227,9 +227,9 @@ export default function SegmentSOTP({ ticker, price, isMobile }) {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "8px 0", borderBottom: `1px solid rgba(220,213,193,.07)` }}>
           <span style={{ ...sans, fontSize: 13, color: C.red }}>(−) Net debt</span>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ ...sans, fontSize: 11, color: "#5b5440" }}>₹</span>
+            <span style={{ ...sans, fontSize: 11, color: C.faint }}>₹</span>
             <input type="number" value={netDebt} onChange={e => setNetDebt(e.target.value)} style={inputStyle} />
-            <span style={{ ...sans, fontSize: 11, color: "#5b5440" }}>Cr</span>
+            <span style={{ ...sans, fontSize: 11, color: C.faint }}>Cr</span>
           </div>
         </div>
       </div>
@@ -243,7 +243,7 @@ export default function SegmentSOTP({ ticker, price, isMobile }) {
           ["vs CMP " + (price ? inr(price, 0) : "—"), mos != null ? (mos >= 0 ? "+" : "") + (mos * 100).toFixed(0) + "%" : "—", mos == null ? C.dim : mos >= 0 ? C.green : C.red],
         ].map(([l, v, col]) => (
           <div key={l} style={{ background: "rgba(10,9,7,0.45)", border: `1px solid ${C.line}`, borderRadius: 8, padding: "12px 14px" }}>
-            <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", color: "#857d65" }}>{l}</div>
+            <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", color: C.faint }}>{l}</div>
             <div style={{ ...serif, fontSize: 22, color: col, marginTop: 4 }}>{v}</div>
           </div>
         ))}
@@ -256,7 +256,7 @@ export default function SegmentSOTP({ ticker, price, isMobile }) {
           <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.14em", color: C.green }}>
             Reported segment financials (Ind-AS 108) — drives the headline verdict
           </div>
-          <div style={{ ...sans, fontSize: 11, color: "#5b5440", marginTop: 5, lineHeight: 1.6, maxWidth: 640 }}>
+          <div style={{ ...sans, fontSize: 11, color: C.faint, marginTop: 5, lineHeight: 1.6, maxWidth: 640 }}>
             Enter the segment table straight off the latest filing: operating segments by <b>segment result (EBIT, ₹Cr)</b> —
             valued at the sector EV/EBITDA multiple — listed stakes by <b>market value (₹Cr)</b>. Saving overrides the
             illustrative preset; the backend then values {tk} on its real reported parts.
@@ -306,12 +306,12 @@ export default function SegmentSOTP({ ticker, price, isMobile }) {
           {savedSotp && (
             <div style={{ ...sans, fontSize: 12, color: C.text200, marginTop: 12 }}>
               <span style={{ color: C.green }}>Verified SOTP: {inr(savedSotp.intrinsic, 0)}/share</span>
-              <span style={{ color: "#5b5440" }}> · {(savedSotp.components || []).map(c => `${c.label} ₹${fmt(Math.round(c.value))}Cr${c.basis ? ` (${c.basis})` : ""}`).join(" · ")}</span>
+              <span style={{ color: C.faint }}> · {(savedSotp.components || []).map(c => `${c.label} ₹${fmt(Math.round(c.value))}Cr${c.basis ? ` (${c.basis})` : ""}`).join(" · ")}</span>
             </div>
           )}
           {msg && <div style={{ ...sans, fontSize: 11.5, color: msg.tone, marginTop: 8 }}>{msg.text}</div>}
           {!verified && adminStore.presets_only?.includes(tk) && (
-            <div style={{ ...sans, fontSize: 10.5, color: "#857d65", marginTop: 8 }}>
+            <div style={{ ...sans, fontSize: 10.5, color: C.faint, marginTop: 8 }}>
               {tk} currently values on an ILLUSTRATIVE preset — entering the reported table above upgrades it to verified segments.
             </div>
           )}

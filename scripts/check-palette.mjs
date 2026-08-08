@@ -21,7 +21,7 @@
  *
  * Reads the real tokens.css, so it cannot drift from what ships.
  */
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
@@ -165,6 +165,57 @@ for (const m of css.matchAll(/--ev-([\w-]+):\s*(#[0-9a-fA-F]{6});[^\n]*?(\d+\.?\
   const actual = contrast(hex, T.bg);
   check(Math.abs(actual - parseFloat(claimed)) <= 0.15,
     `--ev-${name} comment claims ${claimed}:1 but measures ${actual.toFixed(2)}:1 on --ev-bg`);
+}
+
+/* 6. No hex literal used as a TEXT colour may fail WCAG AA on the canvas.
+      This is the rule that keeps the palette from leaking back in one
+      component at a time. Measured before the fix: C.vfaint #453e33 at 1.89:1
+      was set as `color:` in seven places despite its own definition saying
+      "decoration only — never body text", and DCFModel/SegmentSOTP carried
+      #3a3528 (1.63:1), #4a4537 (2.08:1) and #5b5440 (2.64:1) as hint and
+      caption text — 39 literals in total, none of them in tokens.css.
+
+      Scoped to `color:` deliberately. Backgrounds, borders, chart series and
+      logo artwork have no AA obligation, and gating them would produce noise
+      that gets the whole check disabled. */
+const SRC = join(ROOT, "src");
+const walk = (dir) => readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
+  e.isDirectory() ? walk(join(dir, e.name)) : [join(dir, e.name)]);
+const AA_EXEMPT = new Set([
+  // The unfilled half of a 5-star rating track: a groove, not a value.
+  "#453e33",
+]);
+/* Text does not always sit on the canvas. A filled button sets its own
+   background and its ink is DARK on purpose — measuring that against --ev-bg
+   reports 1.2:1 for something that is actually 8.8:1 and correct. So resolve
+   the background declared in the same style object when there is one, and only
+   fall back to the canvas otherwise. */
+const THEME_BG = { "C.green": T.buy, "C.gold": T.accent, "C.red": T.avoid,
+  "C.panel": T["bg-raise"], "C.panel2": T["bg-over"], "C.bg800": T["bg-over"],
+  "C.bg900": T["bg-raise"], "C.bg": T.bg };
+const bgFor = (obj) => {
+  const m = obj.match(/background(?:Color)?:\s*(?:"(#[0-9a-fA-F]{6})"|(C\.[a-zA-Z0-9]+))/);
+  if (!m) return T.bg;
+  if (m[1]) return m[1].toLowerCase();
+  return THEME_BG[m[2]] || T.bg;
+};
+for (const file of walk(SRC).filter((f) => /\.jsx?$/.test(f))) {
+  if (/Logo\.jsx|BrandMark\.jsx/.test(file)) continue;   // artwork, not text
+  const src = readFileSync(file, "utf8");
+  for (const m of src.matchAll(/color:\s*"(#[0-9a-fA-F]{6})"/g)) {
+    const hex = m[1].toLowerCase();
+    if (AA_EXEMPT.has(hex)) continue;
+    // the enclosing style object, bounded so a neighbouring one cannot leak in
+    const from = Math.max(0, src.lastIndexOf("{{", m.index));
+    const to = src.indexOf("}}", m.index);
+    const bg = bgFor(src.slice(from, to < 0 ? m.index + 200 : to));
+    const c = contrast(hex, bg);
+    if (c < 4.5) {
+      const line = src.slice(0, m.index).split("\n").length;
+      fails.push(`${file.replace(ROOT + "/", "")}:${line} uses ${hex} as text on `
+        + `${bg} — ${c.toFixed(2)}:1, below the 4.5:1 AA floor`);
+    }
+  }
 }
 
 if (fails.length) {

@@ -225,7 +225,7 @@ function FundList({ data, onOpen, isMobile }) {
               </div>
             )}
           </div>
-          <div style={{ ...sans, fontSize: 10.5, color: C.vfaint, marginTop: 10 }}>
+          <div style={{ ...sans, fontSize: 10.5, color: C.faint, marginTop: 10 }}>
             Returns are trailing and absolute as reported by the feed. Past performance is not indicative of future results.
           </div>
         </>
@@ -405,7 +405,7 @@ function FundPage({ fund, onBack, isMobile }) {
                   </div>
                   {holdings.slice(0, 15).map((h, i) => (
                     <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "7px 0", borderTop: i ? `1px solid ${C.line}` : "none" }}>
-                      <span style={{ ...mono, fontSize: 10, color: C.vfaint, width: 18 }}>{i + 1}</span>
+                      <span style={{ ...mono, fontSize: 10, color: C.faint, width: 18 }}>{i + 1}</span>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ ...sans, fontSize: 12.5, color: C.text200, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{h.name}</div>
                         {h.sector && <div style={{ ...sans, fontSize: 9.5, color: C.faint }}>{h.sector}</div>}
@@ -470,7 +470,7 @@ function FundPage({ fund, onBack, isMobile }) {
             </div>
           </div>
         )}
-        <div style={{ ...sans, fontSize: 10.5, color: C.vfaint, marginTop: 18 }}>
+        <div style={{ ...sans, fontSize: 10.5, color: C.faint, marginTop: 18 }}>
           Data from the licensed vendor feed. Holdings are the latest disclosed portfolio and change over time.
           This is a browsing aid, not investment advice. Past performance is not indicative of future results.
         </div>
