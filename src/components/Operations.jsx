@@ -1,11 +1,14 @@
 /* Operations.jsx — cross-company operating-efficiency screen.
    Reads /api/operations: ROCE (+3y trend), ROE, working-capital cycle,
    debtor/inventory/payable days, cash conversion (+3y trend), asset turnover. */
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Gauge, Loader2, TrendingUp, TrendingDown, ChevronRight } from "lucide-react";
 import { C, sans, serif, mono } from "../lib/theme.js";
 import { ListToolbar, applyControls, SortableTh } from "../lib/listControls.jsx";
 import { VerdictBadge } from "./primitives.jsx";
+import PageHeader from "./ui/PageHeader.jsx";
+import ErrorState from "./ui/ErrorState.jsx";
+import useResource from "../lib/useResource.js";
 
 const p1 = v => v == null ? "—" : Number(v).toFixed(1) + "%";
 const d0 = v => v == null ? "—" : Math.round(v) + "d";
@@ -32,20 +35,13 @@ const SORTS = [
 ];
 
 export default function Operations({ API, onOpen }) {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // useResource: the old fetch().then(r=>r.json()).catch() never fired its
+  // .catch on an API 4xx/5xx (FastAPI answers with a JSON body), so an
+  // outage rendered as an empty dataset rather than a failure.
+  const { data, error, loading, retry } = useResource(API ? `${API}/api/operations` : null);
   const [sort, setSort] = useState("roce");
   const [controls, setControls] = useState({});
 
-  useEffect(() => {
-    if (!API) { setLoading(false); return; }
-    let live = true;
-    setLoading(true);
-    fetch(`${API}/api/operations`).then(r => r.json())
-      .then(d => { if (live) { setData(d); setLoading(false); } })
-      .catch(() => { if (live) { setData(null); setLoading(false); } });
-    return () => { live = false; };
-  }, [API]);
 
   const rows = useMemo(() => {
     const items = (data?.items || []).slice();
@@ -60,6 +56,17 @@ export default function Operations({ API, onOpen }) {
   if (loading) return (
     <div style={{ padding: 48, display: "flex", alignItems: "center", gap: 10, color: C.dim, ...sans, fontSize: 13 }}>
       <Loader2 size={16} className="spin" /> Loading operations…
+    </div>
+  );
+
+  // A failed request is not an empty dataset. useResource separates them;
+  // this is where that distinction reaches the user.
+  if (error) return (
+    <div className="fadein" style={{ padding: "24px 32px" }}>
+      <PageHeader title="Operations">
+        Operating quality across the covered universe.
+      </PageHeader>
+      <ErrorState error={error} onRetry={retry} what="operations" />
     </div>
   );
 

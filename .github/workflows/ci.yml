@@ -49,6 +49,13 @@ jobs:
         run: npm run build
       - name: Bundle budget (entry ≤ 175 kB gzip)
         run: node scripts/check-bundle-budget.mjs
+      # Colour is arithmetic, so it gets a numeric gate. Catches the class of
+      # defect that is invisible in review: a verdict ladder that collapses for
+      # dichromats, a text tier that fails AA on a surface it is used on, a
+      # sector tint that wears a verdict colour, or a contrast ratio documented
+      # in a comment that is simply not true. Every one of those shipped.
+      - name: Palette invariants (dichromat safety + WCAG AA)
+        run: node scripts/check-palette.mjs
       - name: Install Playwright chromium
         run: npx playwright install --with-deps chromium
       - name: Runtime smoke (seed mode)

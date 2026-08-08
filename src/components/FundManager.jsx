@@ -636,7 +636,7 @@ export default function FundManager({ API, user, requestAuth, onOpen }) {
           </div>
 
           {mgr.engine && (
-            <div style={{ ...mono, fontSize: 9.5, color: C.vfaint, marginBottom: 6 }}
+            <div style={{ ...mono, fontSize: 9.5, color: C.faint, marginBottom: 6 }}
               title="Signal weights are calibrated monthly against 5 years of the terminal's own full-universe history (information coefficients vs forward 6-month returns), shrunk toward research priors.">
               engine {mgr.engine.version}
               {mgr.engine.evidence_as_of ? ` · evidence ${String(mgr.engine.evidence_as_of).slice(0, 10)}` : ""}

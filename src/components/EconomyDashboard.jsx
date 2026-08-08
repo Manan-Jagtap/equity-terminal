@@ -177,7 +177,7 @@ function IndicatorCard({ r, onOpen }) {
         title={r.label}>{r.label}</div>
       {r.awaiting ? (
         <>
-          <div style={{ ...mono, fontSize: 18, color: C.vfaint, marginTop: 6 }}>—</div>
+          <div style={{ ...mono, fontSize: 18, color: C.faint, marginTop: 6 }}>—</div>
           <div style={{ ...sans, fontSize: 9.5, color: C.faint, marginTop: 8, lineHeight: 1.4 }}>
             awaiting feed{r.source ? ` · ${r.source}` : ""}
           </div>

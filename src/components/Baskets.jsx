@@ -11,12 +11,15 @@
    Each card shows its selection rule, basket-level aggregates, factor exposures,
    and its constituents (click a name to open it). A research aid — NOT
    investment advice and NOT a backtest. */
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Boxes, Info, ChevronRight } from "lucide-react";
 import { C, sans, serif, mono } from "../lib/theme.js";
 import PageSkeleton from "./Skeleton.jsx";
 import { VerdictBadge } from "./primitives.jsx";
 import StrategyLab from "./StrategyLab.jsx";
+import PageHeader from "./ui/PageHeader.jsx";
+import ErrorState from "./ui/ErrorState.jsx";
+import useResource from "../lib/useResource.js";
 
 const scoreColor = (v) => v == null ? C.dim : v >= 70 ? C.green : v >= 45 ? C.gold : C.red;
 const EXPO = [["value", "Val"], ["quality", "Qual"], ["momentum", "Mom"], ["low_vol", "LoVol"], ["growth", "Grow"]];
@@ -117,23 +120,27 @@ function BasketCard({ b, onOpen }) {
 }
 
 export default function Baskets({ API, onOpen }) {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // useResource: the old fetch().then(r=>r.json()).catch() never fired its
+  // .catch on an API 4xx/5xx (FastAPI answers with a JSON body), so an
+  // outage rendered as an empty dataset rather than a failure.
+  const { data: data, error, loading, retry } = useResource(API ? `${API}/api/baskets` : null);
   const [tab, setTab] = useState("smart_beta");
 
-  useEffect(() => {
-    if (!API) { setLoading(false); return; }
-    let live = true;
-    setLoading(true);
-    fetch(`${API}/api/baskets`).then(r => r.json())
-      .then(d => { if (live) { setData(d); setLoading(false); } })
-      .catch(() => { if (live) { setData(null); setLoading(false); } });
-    return () => { live = false; };
-  }, [API]);
 
   const baskets = useMemo(() => (data ? (data[tab] || []) : []), [data, tab]);
 
   if (loading) return <PageSkeleton label="Building baskets…" cards={4} />;
+
+  // A failed request is not an empty dataset. useResource separates them;
+  // this is where that distinction reaches the user.
+  if (error) return (
+    <div className="fadein" style={{ padding: "22px 26px 60px" }}>
+      <PageHeader title="Baskets">
+        Rules-based groupings of the covered universe.
+      </PageHeader>
+      <ErrorState error={error} onRetry={retry} what="baskets" />
+    </div>
+  );
 
   const tabBtn = (id, label) => (
     <button onClick={() => setTab(id)} style={{

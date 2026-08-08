@@ -36,7 +36,7 @@ const HL = ({ style }) => (
 
 const Label = ({ children, accent }) => (
   <div style={{ display:"flex", alignItems:"baseline", gap:10, marginBottom:14 }}>
-    <span style={{ ...sans, fontSize:10, letterSpacing:"0.18em", textTransform:"uppercase", color:"#857d65", fontWeight:500 }}>{children}</span>
+    <span style={{ ...sans, fontSize:10, letterSpacing:"0.18em", textTransform:"uppercase", color:C.faint, fontWeight:500 }}>{children}</span>
     {accent && <span style={{ ...sans, fontSize:10, color:C.gold+"cc" }}>{accent}</span>}
     <div style={{ flex:1, height:1, background:"rgba(220,213,193,.08)" }} />
   </div>
@@ -47,13 +47,13 @@ function SliderRow({ label, value, setValue, min, max, step, display, hint }) {
   return (
     <div style={{ marginBottom:14 }}>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", marginBottom:5 }}>
-        <span style={{ ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.09em", color:"#857d65", fontWeight:500 }}>{label}</span>
+        <span style={{ ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.09em", color:C.faint, fontWeight:500 }}>{label}</span>
         <span style={{ ...mono, fontSize:14, color:C.gold, fontWeight:500 }}>{shown}</span>
       </div>
       <input type="range" min={min} max={max} step={step} value={value}
         onChange={e => setValue(parseFloat(e.target.value))}
         style={{ width:"100%" }} />
-      {hint && <div style={{ ...sans, fontSize:10, color:"#3a3528", marginTop:3 }}>{hint}</div>}
+      {hint && <div style={{ ...sans, fontSize:10, color:C.faint, marginTop:3 }}>{hint}</div>}
     </div>
   );
 }
@@ -193,7 +193,7 @@ export default function DCFModel({ co, price, apiVal, a, onWork }) {
         <Card style={{ marginBottom:24, borderColor:`${C.gold}3d`, position:"relative", overflow:"hidden" }}>
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", flexWrap:"wrap", gap:16 }}>
             <div>
-              <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.18em", color:"#857d65" }}>
+              <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.18em", color:C.faint }}>
                 Valuation · Blended Fair Value
                 <span style={{ color: touched ? C.gold : "#3a3528", marginLeft:8 }}>
                   · {touched ? "your assumptions" : "base case"}
@@ -207,7 +207,7 @@ export default function DCFModel({ co, price, apiVal, a, onWork }) {
                 <span style={{ ...sans, fontSize:13, fontWeight:600, padding:"4px 12px", borderRadius:6,
                   color:verdColor(headVerd), border:`1px solid ${verdColor(headVerd)}55` }}>{headVerd}</span>
               </div>
-              <div style={{ ...sans, fontSize:11, color:"#5b5440", marginTop:10, lineHeight:1.6, maxWidth:600 }}>
+              <div style={{ ...sans, fontSize:11, color:C.faint, marginTop:10, lineHeight:1.6, maxWidth:600 }}>
                 {isF ? "Ke" : "WACC"} {fmtP(isF ? headKe : headWacc)} · triangulated from this company's own history.
                 {touched
                   ? " Reflecting your slider changes — reset by reloading. Base case matches the screener & header."
@@ -250,18 +250,18 @@ export default function DCFModel({ co, price, apiVal, a, onWork }) {
                 return (
                 <div key={c.method || c.label || i} title={c.basis || undefined}
                   style={{ background:"rgba(10,9,7,0.45)", border:"1px solid rgba(220,213,193,.08)", padding:"14px 16px" }}>
-                  <div style={{ ...sans, fontSize:11, color:"#857d65", textTransform:"uppercase", letterSpacing:"0.05em",
+                  <div style={{ ...sans, fontSize:11, color:C.faint, textTransform:"uppercase", letterSpacing:"0.05em",
                                 overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{name}</div>
                   <div style={{ ...serif, fontSize:32, color: c.value>0 ? C.text : "#4a4537", marginTop:6, lineHeight:1 }}>
                     {c.value>0 ? "₹"+fmtN(c.value) : "N/A"}
-                    {isSOTP && c.value>0 && <span style={{ ...sans, fontSize:12, color:"#857d65", marginLeft:5 }}>Cr EV</span>}
+                    {isSOTP && c.value>0 && <span style={{ ...sans, fontSize:12, color:C.faint, marginLeft:5 }}>Cr EV</span>}
                   </div>
                   {share != null && (
                     <div style={{ display:"flex", alignItems:"center", gap:8, marginTop:10 }}>
                       <div style={{ flex:1, height:4, background:"rgba(220,213,193,.08)", borderRadius:2, overflow:"hidden" }}>
                         <div style={{ width:`${share*100}%`, height:"100%", background: c.value>0 ? C.gold+"aa" : "#4a4537" }} />
                       </div>
-                      <span style={{ ...mono, fontSize:11, color:"#857d65" }}>{(share*100).toFixed(0)}%</span>
+                      <span style={{ ...mono, fontSize:11, color:C.faint }}>{(share*100).toFixed(0)}%</span>
                     </div>
                   )}
                 </div>
@@ -272,7 +272,7 @@ export default function DCFModel({ co, price, apiVal, a, onWork }) {
                   {isSOTP ? "Sum of the parts" : "Blended"}
                 </div>
                 <div style={{ ...serif, fontSize:32, color:C.gold, marginTop:6, lineHeight:1 }}>₹{fmtN(headIv)}</div>
-                <div style={{ ...sans, fontSize:10, color:"#857d65", marginTop:10 }}>
+                <div style={{ ...sans, fontSize:10, color:C.faint, marginTop:10 }}>
                   {isSOTP ? "per share, after net debt" : "weighted fair value"}
                 </div>
               </div>
@@ -280,7 +280,7 @@ export default function DCFModel({ co, price, apiVal, a, onWork }) {
             );
           })()}
 
-          <div style={{ display:"flex", gap:24, flexWrap:"wrap", ...mono, fontSize:11, color:"#857d65", marginTop:18, paddingTop:14, borderTop:"1px solid rgba(220,213,193,.07)" }}>
+          <div style={{ display:"flex", gap:24, flexWrap:"wrap", ...mono, fontSize:11, color:C.faint, marginTop:18, paddingTop:14, borderTop:"1px solid rgba(220,213,193,.07)" }}>
             <span>TV = {tvPct != null ? tvPct.toFixed(1) : "—"}% of total</span>
             {isF
               ? <span>Ke = {fmtP(headKe)}</span>
@@ -317,7 +317,7 @@ export default function DCFModel({ co, price, apiVal, a, onWork }) {
               </>
             )}
             <HL />
-            <div style={{ background:"rgba(10,9,7,0.6)", padding:"12px 14px", fontFamily:"'JetBrains Mono',monospace", fontSize:12, lineHeight:1.9, color:"#857d65" }}>
+            <div style={{ background:"rgba(10,9,7,0.6)", padding:"12px 14px", fontFamily:"'JetBrains Mono',monospace", fontSize:12, lineHeight:1.9, color:C.faint }}>
               <div>Ke = {fmtP(rf)} + {beta.toFixed(2)} × {fmtP(erp)} = <span style={{color:C.green}}>{fmtP(rf + beta*erp)}</span></div>
               {!isF && <>
                 <div>Kd(post-tax) = {fmtP(costDebt)} × (1−{fmtP(taxRate)}) = <span style={{color:C.green}}>{fmtP(costDebt*(1-taxRate))}</span></div>
@@ -352,7 +352,7 @@ export default function DCFModel({ co, price, apiVal, a, onWork }) {
 
           <Card>
             <Label accent="CROSS-CHECK">RELATIVE MULTIPLES</Label>
-            <div style={{ ...sans, fontSize:11, color:"#857d65", lineHeight:1.9 }}>
+            <div style={{ ...sans, fontSize:11, color:C.faint, lineHeight:1.9 }}>
               {isF ? (
                 <>Sector P/E <span style={{ ...mono, color:C.text }}>{sp.exit_pe}x</span> · Justified P/B <span style={{ ...mono, color:C.text }}>{sp.exit_pb ?? "—"}x</span></>
               ) : (
@@ -360,7 +360,7 @@ export default function DCFModel({ co, price, apiVal, a, onWork }) {
               )}
             </div>
             <HL />
-            <div style={{ ...sans, fontSize:11, color:"#5b5440", lineHeight:1.65 }}>
+            <div style={{ ...sans, fontSize:11, color:C.faint, lineHeight:1.65 }}>
               {isF
                 ? "Blended = RI 65% · Justified P/B 20% · P/E 15%"
                 : "Blended = FCFF DCF 55% · Exit Multiple 30% · P/E 15%"}
@@ -376,18 +376,18 @@ export default function DCFModel({ co, price, apiVal, a, onWork }) {
           <Card>
             <Label accent="WHAT THE PRICE IMPLIES">REVERSE DCF</Label>
             {reverse == null ? (
-              <div style={{ ...sans, fontSize:12, color:"#857d65" }}>Not computable from available data.</div>
+              <div style={{ ...sans, fontSize:12, color:C.faint }}>Not computable from available data.</div>
             ) : (
               <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
                 <div>
-                  <div style={{ ...sans, fontSize:11, color:"#857d65", textTransform:"uppercase", letterSpacing:"0.08em" }}>{reverse.label}</div>
+                  <div style={{ ...sans, fontSize:11, color:C.faint, textTransform:"uppercase", letterSpacing:"0.08em" }}>{reverse.label}</div>
                   <div style={{ ...serif, fontSize:40, color:C.gold, lineHeight:1.1, marginTop:4 }}>
                     {reverse.bounded === "above" ? ">" : reverse.bounded === "below" ? "<" : ""}{(reverse.value*100).toFixed(1)}%
                   </div>
-                  <div style={{ ...sans, fontSize:11, color:"#5b5440", marginTop:4 }}>implied by CMP ₹{fmtN(price)}</div>
+                  <div style={{ ...sans, fontSize:11, color:C.faint, marginTop:4 }}>implied by CMP ₹{fmtN(price)}</div>
                 </div>
                 <div>
-                  <div style={{ ...sans, fontSize:11, color:"#857d65", textTransform:"uppercase", letterSpacing:"0.08em" }}>Your assumption</div>
+                  <div style={{ ...sans, fontSize:11, color:C.faint, textTransform:"uppercase", letterSpacing:"0.08em" }}>Your assumption</div>
                   <div style={{ ...serif, fontSize:40, color:C.text, lineHeight:1.1, marginTop:4 }}>{(fwdDriver*100).toFixed(1)}%</div>
                   <div style={{ ...sans, fontSize:11, color: fwdDriver >= reverse.value ? C.green : C.red, marginTop:4 }}>
                     {fwdDriver >= reverse.value
@@ -396,7 +396,7 @@ export default function DCFModel({ co, price, apiVal, a, onWork }) {
                   </div>
                 </div>
                 {reverse.note && (
-                  <div style={{ gridColumn:"1/-1", ...sans, fontSize:11, color:"#857d65", lineHeight:1.6 }}>{reverse.note}</div>
+                  <div style={{ gridColumn:"1/-1", ...sans, fontSize:11, color:C.faint, lineHeight:1.6 }}>{reverse.note}</div>
                 )}
               </div>
             )}
@@ -437,7 +437,7 @@ export default function DCFModel({ co, price, apiVal, a, onWork }) {
               )}
             </div>
             {!mcResult && (
-              <div style={{ ...sans, fontSize:12, color:"#857d65", lineHeight:1.7 }}>
+              <div style={{ ...sans, fontSize:12, color:C.faint, lineHeight:1.7 }}>
                 Simulate 500 scenarios by randomly varying growth (σ=30%), margin (σ=15%), discount rate (σ=75bps) and terminal growth (σ=50bps) to produce a probability distribution of the blended fair value.
               </div>
             )}
@@ -446,7 +446,7 @@ export default function DCFModel({ co, price, apiVal, a, onWork }) {
                 <div style={{ display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:10, marginBottom:16 }}>
                   {[["P10 (Bear)",mcResult.p10,"neg"],["P25",mcResult.p25,null],["P50 (Median)",mcResult.p50,"gold"],["P75",mcResult.p75,null],["P90 (Bull)",mcResult.p90,"pos"]].map(([l,x,t]) => (
                     <div key={l} style={{ textAlign:"center", background:"rgba(10,9,7,.5)", padding:"10px 6px" }}>
-                      <div style={{ ...sans, fontSize:10, color:"#857d65", marginBottom:4, textTransform:"uppercase", letterSpacing:"0.08em" }}>{l}</div>
+                      <div style={{ ...sans, fontSize:10, color:C.faint, marginBottom:4, textTransform:"uppercase", letterSpacing:"0.08em" }}>{l}</div>
                       <div style={{ ...mono, fontSize:14, color:t==="gold"?C.gold:t==="pos"?C.green:t==="neg"?C.red:C.text }}>₹{fmtN(x)}</div>
                     </div>
                   ))}
@@ -472,8 +472,8 @@ export default function DCFModel({ co, price, apiVal, a, onWork }) {
                 <div style={{ marginTop:10, display:"flex", gap:20, ...sans, fontSize:12, flexWrap:"wrap" }}>
                   <div>Mean: <span style={{ ...mono, color:C.gold }}>₹{fmtN(mcResult.mean)}</span></div>
                   <div>Prob. undervalued: <span style={{ ...mono, color:mcResult.probUpside>0.5?C.green:C.red }}>{(mcResult.probUpside*100).toFixed(0)}%</span></div>
-                  <div>Simulations: <span style={{ ...mono, color:"#857d65" }}>{mcResult.simulations}</span></div>
-                  <button onClick={runMC} style={{ ...sans, fontSize:11, background:"transparent", border:`1px solid rgba(220,213,193,.15)`, color:"#857d65", padding:"3px 10px", cursor:"pointer" }}>Re-run</button>
+                  <div>Simulations: <span style={{ ...mono, color:C.faint }}>{mcResult.simulations}</span></div>
+                  <button onClick={runMC} style={{ ...sans, fontSize:11, background:"transparent", border:`1px solid rgba(220,213,193,.15)`, color:C.faint, padding:"3px 10px", cursor:"pointer" }}>Re-run</button>
                 </div>
               </>
             )}
@@ -482,17 +482,17 @@ export default function DCFModel({ co, price, apiVal, a, onWork }) {
           {/* Sensitivity grid */}
           <Card style={{ padding:"16px" }}>
             <div style={{ marginBottom:8 }}>
-              <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.18em", color:"#857d65" }}>INTRINSIC VALUE · ₹ / SHARE</div>
+              <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.18em", color:C.faint }}>INTRINSIC VALUE · ₹ / SHARE</div>
               <div style={{ ...serif, fontSize:20, color:C.text, marginTop:2 }}>Sensitivity — Discount Rate × Terminal Growth</div>
-              <div style={{ ...sans, fontSize:11, color:"#5b5440", marginTop:4 }}>Rows: ±100bps on Rf · Cols: ±100bps on g∞ · Centre = base case (primary model)</div>
+              <div style={{ ...sans, fontSize:11, color:C.faint, marginTop:4 }}>Rows: ±100bps on Rf · Cols: ±100bps on g∞ · Centre = base case (primary model)</div>
             </div>
             <div style={{ overflowX:"auto" }}>
               <table style={{ width:"100%", fontSize:12, borderCollapse:"collapse", marginTop:12 }}>
                 <thead>
                   <tr>
-                    <th style={{ ...sans, textAlign:"left", color:"#857d65", fontSize:10, paddingBottom:8, paddingRight:12 }}>Rf ↓ / g∞ →</th>
+                    <th style={{ ...sans, textAlign:"left", color:C.faint, fontSize:10, paddingBottom:8, paddingRight:12 }}>Rf ↓ / g∞ →</th>
                     {sens.g_deltas.map((g, i) => (
-                      <th key={i} style={{ ...mono, textAlign:"right", color:"#857d65", fontSize:10, paddingBottom:8, paddingLeft:8 }}>
+                      <th key={i} style={{ ...mono, textAlign:"right", color:C.faint, fontSize:10, paddingBottom:8, paddingLeft:8 }}>
                         {(g>=0?"+":"")+(g*100).toFixed(1)}%
                       </th>
                     ))}
@@ -501,7 +501,7 @@ export default function DCFModel({ co, price, apiVal, a, onWork }) {
                 <tbody>
                   {sens.grid.map((row, ri) => (
                     <tr key={ri}>
-                      <td style={{ ...mono, color:"#857d65", fontSize:11, paddingRight:12, paddingBottom:6 }}>
+                      <td style={{ ...mono, color:C.faint, fontSize:11, paddingRight:12, paddingBottom:6 }}>
                         {(sens.rate_deltas[ri]>=0?"+":"")+(sens.rate_deltas[ri]*100).toFixed(1)}%
                       </td>
                       {row.map((cell, ci) => {
@@ -537,7 +537,7 @@ export default function DCFModel({ co, price, apiVal, a, onWork }) {
                 <thead>
                   <tr style={{ borderTop:`1px solid rgba(220,213,193,.08)`, borderBottom:`1px solid rgba(220,213,193,.08)` }}>
                     {(isF ? ["Year","BV/sh","ROE","RI","PV(RI)"] : ["Year","Revenue (₹Cr)","FCFF (₹Cr)","PV (₹Cr)"]).map((h,i) => (
-                      <th key={i} style={{ ...sans, textAlign:i===0?"left":"right", padding:"8px 12px", fontSize:10, textTransform:"uppercase", color:"#857d65", fontWeight:500 }}>{h}</th>
+                      <th key={i} style={{ ...sans, textAlign:i===0?"left":"right", padding:"8px 12px", fontSize:10, textTransform:"uppercase", color:C.faint, fontWeight:500 }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -565,7 +565,7 @@ export default function DCFModel({ co, price, apiVal, a, onWork }) {
           {/* Methodology */}
           <Card style={{ display:"flex", gap:12, alignItems:"flex-start" }}>
             <Info size={14} color={C.gold} style={{ flexShrink:0, marginTop:2 }} />
-            <div style={{ ...sans, fontSize:12, color:"#857d65", lineHeight:1.7 }}>
+            <div style={{ ...sans, fontSize:12, color:C.faint, lineHeight:1.7 }}>
               <strong style={{ color:C.text }}>Methodology.</strong>{" "}
               {isF
                 ? "Two-stage Residual Income (Excess Return). Ke from CAPM. ROE holds for the high-return phase then fades to terminal ROE; book compounds at ROE × retention. Terminal RI = (ROE−Ke)×BV / (Ke−g)."

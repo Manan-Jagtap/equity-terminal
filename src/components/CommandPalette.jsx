@@ -273,7 +273,7 @@ export default function CommandPalette({ open, setOpen, companies, onOpenCompany
               <span style={{ ...mono, fontSize: 10, color: C.dim, border: `1px solid ${C.line2}`, borderRadius: 4, padding: "1px 5px" }}>{k}</span>{l}
             </span>
           ))}
-          <span style={{ ...serif, fontSize: 12, color: C.vfaint, marginLeft: "auto" }}>EquityVerdict</span>
+          <span style={{ ...serif, fontSize: 12, color: C.faint, marginLeft: "auto" }}>EquityVerdict</span>
         </div>
       </div>
     </div>

@@ -66,15 +66,41 @@ export const series = [
   "#a8a29a",  // warm steel
 ];
 
-// Sector accent hues — kept per-sector for identity, but desaturated into the
-// warm family so no sector shouts over the single amber brand accent.
+/* Sector accent hues — per-sector identity, desaturated into the warm family so
+   no sector shouts over the single amber brand accent.
+
+   These are NOT a categorical legend and must not be graded as one. There are
+   exactly two consumers: Logo.jsx's FALLBACK branch, which tints an initials
+   monogram (the letters are the identity; the colour is decoration on top of a
+   text label), and Company.jsx, which shows ONE sector's hue at a time. No
+   screen ever renders two sector tints side by side, so pairwise
+   discrimination — 16 of 55 pairs sit under dE 10 somewhere, telecom/textile
+   at dE 0.5 under deuteranopia — is not a defect here. Eleven perceptually
+   distinct hues is roughly double what one desaturated family can hold, and
+   the honest reason that is survivable is that nothing asks the user to tell
+   them apart.
+
+   What DOES matter is collision with a VERDICT colour, because the sector
+   accent and the verdict badge appear together on the company page. Two were
+   effectively identical to a ladder step after the ladder was rebuilt:
+
+     pharma  #6fb89a  dE 0.8 from --ev-hold   -> #6dbab2  (clears by 10.0)
+     energy  #c9a86a  dE 0.8 from --ev-reduce -> #a88538  (clears by 10.6)
+
+   (#c9a86a was the OLD --ev-hold and auto's #d99a5b was the OLD --ev-reduce —
+   freed when the ladder moved, which is why they drifted onto new steps.)
+   The remaining four sit dE 3.0-4.2 from a step under DICHROMACY ONLY, on
+   decorative chrome next to a badge that carries a glyph and the literal word
+   "REDUCE". Left alone deliberately: moving them costs real sector identity
+   (metal is "warm steel"; the nearest clearing colour is a mauve) to buy
+   nothing a user can act on. */
 const SECTOR_ACCENTS = [
   [/financial|bank|nbfc|insurance/, "#9d8fd4"],   // muted lavender — institutions
   [/tech|information/,              "#5fb3b3"],   // muted teal — software
-  [/pharma|health/,                 "#6fb89a"],   // muted jade — life (NOT --ev-buy: a sector tint must never equal a verdict colour)
+  [/pharma|health/,                 "#6dbab2"],   // muted teal-jade — life (clear of --ev-hold)
   [/auto/,                          "#d99a5b"],   // amber-orange — motion
   [/fmcg|consumer/,                 "#c98a94"],   // muted rose — retail
-  [/energy|oil|power|gas|utilit/,   "#c9a86a"],   // gold — energy
+  [/energy|oil|power|gas|utilit/,   "#a88538"],   // deep ochre — energy (clear of --ev-reduce)
   [/metal|mining/,                  "#a8a29a"],   // warm steel — heavy industry
   [/chem/,                          "#a78bda"],   // muted violet — chemistry
   [/realty|real estate|construction|cement|capital goods|engineering|industrial|defence/,
