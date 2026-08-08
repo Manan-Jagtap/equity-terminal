@@ -132,14 +132,48 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
   }, [API, userKey]);
   useEffect(() => { reloadScreens(); }, [reloadScreens]);
 
-  // Technical read for the whole visible universe — loaded once, keyed by ticker,
-  // used only when a technical filter is active.
+  /* Technical read for the whole visible universe — loaded once, keyed by
+     ticker, used only when a technical filter is active.
+
+     This is an OVERLAY on a screener that works fine without it, so it fails
+     quietly: no full-width error panel over a table that is rendering real
+     valuations. But quietly must not mean invisibly. Without the r.ok check a
+     404/500 still RESOLVED (the API answers errors with a JSON body — prod:
+     GET /api/definitely-not-a-route → HTTP 404, content-type
+     application/json), `d.items` was undefined, and techMap became {}. That is
+     the worst outcome available: the dropdown stayed ENABLED, and picking
+     "Above 200-DMA" filtered 1,001 names down to zero — the screen stating that
+     no stock in the universe is above its 200-day average. A failure rendered
+     as a finding.
+
+     So the failure is now its own state: the filter is disabled (it cannot
+     produce an honest answer) and says why, in one dim line, beside itself. */
+  const [techErr, setTechErr] = useState(false);
   useEffect(() => {
     if (!API) return;
     let live = true;
-    fetch(`${API}/api/screen/technical`).then(r => r.json())
-      .then(d => { if (!live) return; const m = {}; (d.items || []).forEach(t => { m[(t.ticker || "").toUpperCase()] = t; }); setTechMap(m); })
-      .catch(() => { if (live) setTechMap({}); });
+    fetch(`${API}/api/screen/technical`)
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then(d => {
+        if (!live) return;
+        const m = {};
+        (d.items || []).forEach(t => { m[(t.ticker || "").toUpperCase()] = t; });
+        setTechMap(m); setTechErr(false);
+      })
+      .catch(() => {
+        if (!live) return;
+        setTechMap(null); setTechErr(true);
+        // Drop any active technical filter rather than evaluate it against a
+        // map we never received. Leaving it set has only dishonest outcomes:
+        // apply it and every row fails the predicate (a failure shown as "no
+        // matches"), or skip it and unfiltered rows render under a filter
+        // label (a failure shown as data). Neither is allowed, so the filter
+        // stands down and the note beside the control says why.
+        setTf("All");
+      });
     return () => { live = false; };
   }, [API]);
   const saveScreen = async () => {
@@ -332,17 +366,40 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
           {[["All", "Any cap"], ["Large", "Large cap"], ["Mid", "Mid cap"], ["Small", "Small cap"]].map(([v, l]) =>
             <option key={v} value={v}>{l}</option>)}
         </select>
-        <select value={tf} onChange={e => setTf(e.target.value)} title="Technical filter"
+        <select value={tf} onChange={e => setTf(e.target.value)}
+          title={techErr
+            ? "Technical filter unavailable — the indicator feed didn't respond"
+            : "Technical filter"}
           disabled={techMap == null} style={{
           ...sans, background: C.panel2, border: `1px solid ${tf !== "All" ? C.gold + "88" : C.line}`,
           borderRadius: 8, color: tf !== "All" ? C.gold : C.text, padding: "8px 12px",
-          fontSize: 13, cursor: techMap == null ? "wait" : "pointer", outline: "none",
+          // "wait" promises something is coming. Once the request has failed
+          // nothing is, so the cursor stops lying too.
+          fontSize: 13, cursor: techErr ? "not-allowed" : techMap == null ? "wait" : "pointer",
+          outline: "none",
         }}>
           {[["All", "Any technical"], ["above200", "Above 200-DMA"], ["golden", "Golden cross"],
             ["near_high", "Near 52w high"], ["momo", "Strong momentum"], ["volspike", "Volume spike"],
             ["oversold", "Oversold (RSI<30)"], ["overbought", "Overbought (RSI>70)"]].map(([v, l]) =>
             <option key={v} value={v}>{l}</option>)}
         </select>
+        {techErr && (
+          /* Inline and quiet by design: the valuations in the table below are
+             real and unaffected, so a full-width ErrorState here would report
+             an outage the screen is not having. Scope the claim to the one
+             control that lost its data.
+
+             flexBasis 100% drops the note onto its own line of this wrapping
+             row. Measured in the browser: sitting between the technical select
+             and the MoS input it wrapped to three lines, grew the row from 38px
+             to 66px and pushed the MoS field out of the control line. On its
+             own row it is one line and the controls stay aligned. */
+          <span role="status" style={{ ...sans, fontSize: 11, color: C.faint,
+                                       flexBasis: "100%", marginTop: -4, lineHeight: 1.45 }}>
+            Technical filters are off — the indicator feed didn't respond. Everything else on
+            this screen is unaffected.
+          </span>
+        )}
         <input value={minMos} onChange={e => setMinMos(e.target.value)}
           placeholder="MoS ≥ %" inputMode="decimal" title="Minimum margin of safety (%)"
           style={{ ...mono, width: 74, background: C.panel2, fontSize: 12, color: minMos ? C.gold : C.text,

@@ -4,12 +4,14 @@
    rates, external sector, money & credit — every figure from a primary
    official source (RBI DBIE, MoSPI, GSTN, NPCI, Grid India), each carrying its
    own as-of date. A read-only reference, not investment advice. */
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Scale, ExternalLink } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { C, mono, sans, serif } from "../lib/theme.js";
 import { useIsMobile } from "../lib/useResponsive.js";
 import PageHeader from "./ui/PageHeader.jsx";
+import useResource from "../lib/useResource.js";
+import ErrorState from "./ui/ErrorState.jsx";
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -56,20 +58,18 @@ function Spark({ data, up }) {
 /* Full-history view for one indicator — opens when its card is clicked. For
    YoY indicators (CPI, WPI, IIP…) it charts the RATE, not the index level. */
 function SeriesModal({ slug, label, unit, kind, onClose }) {
-  const [data, setData] = useState(null);
   const [range, setRange] = useState("5Y");
   const isYoy = kind === "yoy";
   const chartUnit = isYoy ? "%" : unit;
 
-  useEffect(() => {
-    if (!API || !slug) return;
-    let dead = false;
-    fetch(`${API}/api/macro/series/${slug}${isYoy ? "?yoy=true" : ""}`)
-      .then(r => (r.ok ? r.json() : null))
-      .then(d => { if (!dead) setData(d || { points: [] }); })
-      .catch(() => { if (!dead) setData({ points: [] }); });
-    return () => { dead = true; };
-  }, [slug]);
+  /* This one already checked r.ok, so it never rendered an error envelope AS
+     data — but it then mapped every failure to { points: [] }, which reaches
+     the reader as "Not enough history to chart." The series has decades of
+     history; we just could not fetch it. useResource keeps the status check and
+     separates the two outcomes, and its reconnect listener makes the retry line
+     in ErrorState a description of behaviour rather than a hope. */
+  const { data, error, loading, retry } = useResource(
+    (API && slug) ? `${API}/api/macro/series/${slug}${isYoy ? "?yoy=true" : ""}` : null);
 
   const pts = useMemo(() => {
     const all = (data?.points || []).map(p => ({ ...p, t: p.date }));
@@ -112,7 +112,9 @@ function SeriesModal({ slug, label, unit, kind, onClose }) {
         <div style={{ ...mono, fontSize: 10.5, color: C.faint, marginBottom: 12 }}>
           {data?.name || slug}{data?.freq ? ` · ${{ D: "daily", W: "weekly", F: "fortnightly", M: "monthly", Q: "quarterly" }[data.freq] || data.freq}` : ""}
         </div>
-        {!data ? (
+        {error ? (
+          <ErrorState error={error} onRetry={retry} what={label} />
+        ) : (loading || !data) ? (
           <div style={{ ...sans, color: C.dim, fontSize: 13, padding: "28px 0" }}>Loading series…</div>
         ) : pts.length < 2 ? (
           <div style={{ ...sans, color: C.dim, fontSize: 13, padding: "28px 0" }}>Not enough history to chart.</div>
@@ -216,21 +218,22 @@ function Stat({ label, value, tone, sub }) {
 
 export default function EconomyDashboard() {
   const isMobile = useIsMobile();
-  const [data, setData] = useState(null);
-  const [reg, setReg] = useState(null);       // regulatory feed
   const [open, setOpen] = useState(null);     // {slug, label, unit} of expanded chart
 
-  useEffect(() => {
-    if (!API) return;
-    let dead = false;
-    fetch(`${API}/api/macro`).then(r => r.json())
-      .then(d => { if (!dead) setData(d); })
-      .catch(() => { if (!dead) setData({ sections: [], summary: {} }); });
-    fetch(`${API}/api/macro/regulatory`).then(r => r.json())
-      .then(d => { if (!dead) setReg(d); })
-      .catch(() => { if (!dead) setReg({ items: [] }); });
-    return () => { dead = true; };
-  }, []);
+  /* Two resources, two lifecycles. The macro grid IS this screen; the
+     regulatory radar is a footnote under it, so one failing must not decide how
+     the other renders.
+
+     Both were fetch(url).then(r => r.json()) with no r.ok check. The API answers
+     errors with JSON, so the promise resolved on a 4xx/5xx and neither .catch
+     ever fired — the error envelope became `data`, data.sections read undefined,
+     and the screen showed "Macro data is temporarily unavailable — please
+     refresh in a moment." Close, but it invited a remedy the reader cannot
+     verify, and the identical copy appeared when the server answered 200 with
+     nothing. Those are different facts. */
+  const { data, error, retry } = useResource(API ? `${API}/api/macro` : null);
+  const regRes = useResource(API ? `${API}/api/macro/regulatory` : null);
+  const reg = regRes.data;
 
   const s = data?.summary || {};
   const stance = REGIME[s.stance] || null;
@@ -262,6 +265,19 @@ export default function EconomyDashboard() {
     return out;
   }, [data]);
 
+  // A failed request is not a quiet month for the Indian economy.
+  if (error) return (
+    <div className="fadein" style={{ padding: isMobile ? "20px 14px 40px" : "24px 32px 48px", maxWidth: 1180 }}>
+      <PageHeader title="Economy">
+        India's high-frequency macro indicators — every figure sourced from a primary official publisher
+        (RBI, MoSPI, GSTN, NPCI, Grid India), each with its own reporting date. A reference, not advice.
+      </PageHeader>
+      <ErrorState error={error} onRetry={retry} what="the macro desk" />
+    </div>
+  );
+
+  // Covers both "still loading" and "no API configured" — the two states in
+  // which there is genuinely nothing to say yet.
   if (!data) return <div style={{ ...sans, padding: 48, color: C.dim, fontSize: 13 }}>Loading the macro desk…</div>;
 
   return (
@@ -354,11 +370,16 @@ export default function EconomyDashboard() {
         </div>
       )}
 
-      {/* Empty state — never a blank panel if the feed is momentarily down */}
+      {/* Genuinely empty, now that transport failure has its own path above:
+          the server answered and carried no series. Say that, rather than the
+          old "please refresh in a moment", which was aimed at an outage this
+          branch no longer sees and suggested a remedy the reader could not
+          verify had worked. */}
       {heroStats.length === 0 && (data.sections || []).length === 0 && (
         <div style={{ ...sans, fontSize: 13, color: C.dim, border: `1px solid ${C.line}`,
                       borderRadius: 12, background: C.panel, padding: "28px 24px" }}>
-          Macro data is temporarily unavailable — please refresh in a moment.
+          The macro service answered but is carrying no series right now — that's its own report, not a
+          failed request. Indicators reappear as each official source publishes.
         </div>
       )}
 
@@ -380,6 +401,26 @@ export default function EconomyDashboard() {
           </div>
         </div>
       ))}
+
+      {/* The radar is a footnote beneath the indicator grid, so its failure gets
+          a line and not the full-width dashed panel — an ErrorState here would
+          outweigh the section it replaces. Silence was the old behaviour, and
+          silence reads as "no circulars this week", which is a claim about RBI
+          and SEBI that we are in no position to make. */}
+      {regRes.error && (
+        <div role="status" style={{ display: "flex", alignItems: "center", gap: 8,
+                                    flexWrap: "wrap", marginBottom: 24 }}>
+          <Scale size={13} color={C.faint} aria-hidden="true" />
+          <span style={{ ...sans, fontSize: 11.5, color: C.dim }}>
+            Regulatory radar unavailable — the RBI/SEBI feed didn't load. That isn't "no circulars".
+          </span>
+          <button type="button" onClick={regRes.retry}
+            style={{ ...sans, fontSize: 11.5, color: C.gold, background: "transparent", border: "none",
+                     padding: 0, cursor: "pointer", textDecoration: "underline" }}>
+            Retry
+          </button>
+        </div>
+      )}
 
       {/* Regulatory radar — official RBI + SEBI feeds, tagged by market surface */}
       {reg && (reg.items || []).length > 0 && (

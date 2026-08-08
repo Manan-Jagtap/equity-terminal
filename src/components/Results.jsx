@@ -1,6 +1,6 @@
 /* Results.jsx — cross-company earnings scoreboard.
    Reads /api/results: latest reported quarter + sales/PAT YoY + EPS beat/miss. */
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Loader2, TrendingUp, TrendingDown, ChevronRight } from "lucide-react";
 import { C, sans, mono } from "../lib/theme.js";
 import { th, td, tdNum, thName, tdStack, stackLine } from "../design/table.js";
@@ -35,18 +35,25 @@ function Delta({ v }) {
 }
 
 function UpcomingCalendar({ API, onOpen }) {
-  const [cal, setCal] = useState(null);
+  /* This calendar is not a widget beside the table — when the "Upcoming" sort
+     is selected it REPLACES the table and is the whole content of the tab, so
+     it earns the full lifecycle rather than a quiet inline note.
+
+     The old `.catch(() => setCal({ items: [] }))` was wrong twice over. It
+     could not fire on an API 4xx/5xx, because the API answers errors with a
+     JSON body (prod: GET /api/definitely-not-a-route → HTTP 404, content-type
+     application/json) and so `r.json()` RESOLVES; and on the paths where it did
+     fire it synthesised an empty dataset, which rendered "No upcoming board
+     meetings on file yet — the calendar fills after the next weekly sweep of
+     exchange board-meeting notices". That is an outage reported to the user as
+     a fact about the exchange calendar, with a wait as the remedy. */
+  const { data: cal, error, loading, retry } =
+    useResource(API ? `${API}/api/results/upcoming` : null);
   const [controls, setControls] = useState({});
   const [when, setWhen] = useState("all"); // all | upcoming | done
-  useEffect(() => {
-    if (!API) return;
-    let live = true;
-    fetch(`${API}/api/results/upcoming`).then(r => r.json())
-      .then(d => { if (live) setCal(d); }).catch(() => { if (live) setCal({ items: [] }); });
-    return () => { live = false; };
-  }, [API]);
-  if (!cal) return <div style={{ ...sans, padding: 32, color: C.dim, fontSize: 13 }}>Loading calendar…</div>;
-  let items = applyControls(cal.items || [], controls);
+  if (loading) return <div style={{ ...sans, padding: 32, color: C.dim, fontSize: 13 }}>Loading calendar…</div>;
+  if (error) return <ErrorState error={error} onRetry={retry} what="the calendar" />;
+  let items = applyControls(cal?.items || [], controls);
   if (when === "upcoming") items = items.filter(r => r.days_away >= 0);
   if (when === "done") items = items.filter(r => r.days_away < 0);
   if (!items.length) return (
@@ -57,7 +64,7 @@ function UpcomingCalendar({ API, onOpen }) {
   );
   return (
     <>
-    <ListToolbar rows={cal.items} controls={controls} setControls={setControls}
+    <ListToolbar rows={cal?.items} controls={controls} setControls={setControls}
       extra={
         <select value={when} onChange={e => setWhen(e.target.value)} style={selStyle}
           title="Show meetings by status">
@@ -101,15 +108,14 @@ function actLabel(a) {
 }
 
 function DividendCalendar({ API, onOpen }) {
-  const [d, setD] = useState(null);
-  useEffect(() => {
-    if (!API) return;
-    let live = true;
-    fetch(`${API}/api/results/corporate-actions`).then(r => r.json())
-      .then(x => { if (live) setD(x); }).catch(() => { if (live) setD({ upcoming: [], recent: [] }); });
-    return () => { live = false; };
-  }, [API]);
-  if (!d) return <div style={{ ...sans, padding: 32, color: C.dim, fontSize: 13 }}>Loading calendar…</div>;
+  // Same shape as UpcomingCalendar: this IS the "Dividends" tab, and its
+  // fabricated `{ upcoming: [], recent: [] }` fallback rendered an outage as
+  // "No dividend / split / bonus ex-dates on file yet". An ex-date the user
+  // misses because we said there wasn't one is a real, dated loss.
+  const { data: d, error, loading, retry } =
+    useResource(API ? `${API}/api/results/corporate-actions` : null);
+  if (loading) return <div style={{ ...sans, padding: 32, color: C.dim, fontSize: 13 }}>Loading calendar…</div>;
+  if (error) return <ErrorState error={error} onRetry={retry} what="the calendar" />;
   const today = new Date().toISOString().slice(0, 10);
   const Row = (a, i) => (
     <div key={a.ticker + a.type + a.ex_date + i} onClick={() => onOpen && onOpen(a.ticker)}
@@ -130,7 +136,7 @@ function DividendCalendar({ API, onOpen }) {
       <div style={{ border: `1px solid ${C.line}`, borderRadius: 12, overflow: "hidden" }}>{arr.map(Row)}</div>
     </div>
   );
-  if (!(d.upcoming || []).length && !(d.recent || []).length) return (
+  if (!(d?.upcoming || []).length && !(d?.recent || []).length) return (
     <div style={{ ...sans, padding: 32, color: C.dim, fontSize: 13, lineHeight: 1.6 }}>
       No dividend / split / bonus ex-dates on file yet — the ledger fills from the corporate-actions feed on the next refresh.
     </div>

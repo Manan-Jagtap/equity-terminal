@@ -10,6 +10,8 @@ import { verdictColor } from "../design/tokens.js";
 import { multiple, signedPct } from "../lib/formatters.js";
 import PageHeader from "./ui/PageHeader.jsx";
 import ErrorState from "./ui/ErrorState.jsx";
+import Card from "./ui/Card.jsx";
+import StatTile from "./ui/StatTile.jsx";
 import useResource from "../lib/useResource.js";
 
 // UX-13: human-readable sector labels — the raw valuation_sector enum
@@ -137,7 +139,12 @@ export default function Sectors({ API, onOpen }) {
     </div>
   );
 
+  /* Two consumers, two shapes. mosColor still paints raw spans (the drilldown
+     rows and the cheapest/richest lines); mosTone hands StatTile a MEANING and
+     lets the tile own the colour. Same three-way split — null is its own case,
+     never a zero — so the two cannot disagree. */
   const mosColor = m => m == null ? C.dim : m >= 0 ? C.green : C.red;
+  const mosTone  = m => m == null ? "muted" : m >= 0 ? "up" : "down";
 
   const NameLink = ({ co, label, icon: Icon, tone }) => (
     <div style={{ display: "flex", alignItems: "center", gap: 7, minWidth: 0 }}>
@@ -165,22 +172,17 @@ export default function Sectors({ API, onOpen }) {
       </PageHeader>
 
       {/* Totals header row */}
-      <div style={{
-        display: "flex", flexWrap: "wrap", gap: 28, alignItems: "baseline",
-        border: `1px solid ${C.line}`, borderRadius: 12, background: C.panel,
-        padding: "14px 20px", marginBottom: 18,
+      <Card pad="sm" style={{
+        display: "flex", flexWrap: "wrap", gap: 28, alignItems: "baseline", marginBottom: 18,
       }}>
         {[
-          ["Companies", String(totals.n), C.text],
-          ["Sectors", String(totals.sectors), C.text],
-          ["Median P/E", multiple(totals.medPe, 1), C.text],
-          ["Median P/B", multiple(totals.medPb, 2), C.text],
-          ["Median MoS", signedPct(totals.medMos), mosColor(totals.medMos)],
-        ].map(([l, v, col]) => (
-          <div key={l}>
-            <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: C.dim }}>{l}</div>
-            <div style={{ ...mono, fontSize: 18, color: col, marginTop: 3 }}>{v}</div>
-          </div>
+          ["Companies", String(totals.n), undefined],
+          ["Sectors", String(totals.sectors), undefined],
+          ["Median P/E", multiple(totals.medPe, 1), undefined],
+          ["Median P/B", multiple(totals.medPb, 2), undefined],
+          ["Median MoS", signedPct(totals.medMos), mosTone(totals.medMos)],
+        ].map(([l, v, tone]) => (
+          <StatTile key={l} size="md" label={l} value={v} tone={tone} />
         ))}
         <div style={{ marginLeft: "auto", display: "flex", gap: 12, alignItems: "center" }}>
           {VERDICT_ORDER.map(({ id, col }) => (
@@ -189,15 +191,14 @@ export default function Sectors({ API, onOpen }) {
             </span>
           ))}
         </div>
-      </div>
+      </Card>
 
       {/* Sector cards */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(310px, 1fr))", gap: 14 }}>
         {sectors.map(s => (
-          <div key={s.name}
-            style={{ border: `1px solid ${openSector === s.name ? C.gold + "55" : C.line}`, borderRadius: 12,
-                     background: C.panel, padding: "16px 18px",
-                     gridColumn: openSector === s.name ? "1 / -1" : undefined }}>
+          <Card key={s.name} pad="sm"
+            tone={openSector === s.name ? "active" : "default"}
+            style={{ gridColumn: openSector === s.name ? "1 / -1" : undefined }}>
             <div onClick={() => setOpenSector(v => (v === s.name ? null : s.name))}
               title={openSector === s.name ? "Collapse" : `Show all ${s.n} ${prettySector(s.name)} names`}
               style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 12, cursor: "pointer" }}>
@@ -209,14 +210,11 @@ export default function Sectors({ API, onOpen }) {
 
             <div style={{ display: "flex", gap: 22, marginBottom: 12 }}>
               {[
-                ["Med P/E", multiple(s.medPe, 1), C.text],
-                ["Med P/B", multiple(s.medPb, 2), C.text],
-                ["Median MoS", signedPct(s.medMos), mosColor(s.medMos)],
-              ].map(([l, v, col]) => (
-                <div key={l}>
-                  <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", color: C.dim }}>{l}</div>
-                  <div style={{ ...mono, fontSize: 15, color: col, marginTop: 2 }}>{v}</div>
-                </div>
+                ["Med P/E", multiple(s.medPe, 1), undefined],
+                ["Med P/B", multiple(s.medPb, 2), undefined],
+                ["Median MoS", signedPct(s.medMos), mosTone(s.medMos)],
+              ].map(([l, v, tone]) => (
+                <StatTile key={l} size="sm" label={l} value={v} tone={tone} />
               ))}
             </div>
 
@@ -247,7 +245,7 @@ export default function Sectors({ API, onOpen }) {
                 ))}
               </div>
             )}
-          </div>
+          </Card>
         ))}
         {sectors.length === 0 && (
           <div style={{ ...sans, gridColumn: "1 / -1", textAlign: "center", padding: 48, color: C.faint, fontSize: 13,

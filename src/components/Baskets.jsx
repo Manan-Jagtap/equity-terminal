@@ -12,7 +12,7 @@
    and its constituents (click a name to open it). A research aid — NOT
    investment advice and NOT a backtest. */
 import { useMemo, useState } from "react";
-import { Boxes, Info, ChevronRight } from "lucide-react";
+import { Info, ChevronRight } from "lucide-react";
 import { C, sans, serif, mono } from "../lib/theme.js";
 import PageSkeleton from "./Skeleton.jsx";
 import { VerdictBadge } from "./primitives.jsx";
@@ -153,12 +153,16 @@ export default function Baskets({ API, onOpen }) {
 
   return (
     <div className="fadein" style={{ padding: "22px 26px 60px" }}>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap", marginBottom: 4 }}>
-        <h2 style={{ ...serif, fontSize: 26, color: C.text, margin: 0, display: "flex", alignItems: "center", gap: 9 }}>
-          <Boxes size={19} color={C.gold} /> Baskets
-        </h2>
-        <span style={{ ...sans, fontSize: 12, color: C.dim }}>{data?.universe || 0} names · updated live</span>
-      </div>
+      {/* PageHeader, not the old hand-rolled <h2>+<span>: this screen imported
+          PageHeader but mounted it ONLY in the `if (error)` branch, so the
+          healthy path — the one every user actually sees — shipped with no <h1>
+          at all. The import made it look done. Rendered and checked: the healthy
+          Baskets page now emits exactly one <h1> ("Baskets"), matching the shape
+          Operations was fixed into. WCAG 2.4.6 / 1.3.1: a document with no
+          heading gives a screen-reader user nothing to navigate by. */}
+      <PageHeader title="Baskets" meta={`${data?.universe || 0} names · updated live`}>
+        Rules-based groupings of the covered universe.
+      </PageHeader>
       <div style={{ ...sans, fontSize: 11.5, color: C.faint, lineHeight: 1.6, maxWidth: 820, marginBottom: 16, display: "flex", gap: 6 }}>
         <Info size={13} color={C.dim} style={{ flexShrink: 0, marginTop: 2 }} />
         <span>

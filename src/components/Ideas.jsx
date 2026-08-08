@@ -13,6 +13,8 @@ import PageSkeleton from "./Skeleton.jsx";
 import { selStyle } from "../lib/listControls.jsx";
 import { VerdictBadge } from "./primitives.jsx";
 import PageHeader from "./ui/PageHeader.jsx";
+import ErrorState from "./ui/ErrorState.jsx";
+import useResource from "../lib/useResource.js";
 
 const FACTORS = [
   ["value", "Value"], ["quality", "Quality"], ["momentum", "Momentum"],
@@ -52,22 +54,44 @@ function Cell({ v }) {
 }
 
 export default function Ideas({ API, onOpen }) {
-  const [data, setData] = useState(null);
-  const [bt, setBt] = useState(null);
-  const [loading, setLoading] = useState(true);
+  /* /api/factors IS this screen, so it gets the full honest lifecycle.
+     The old code was `fetch(url).then(r => r.json()).catch(...)`, which
+     RESOLVES on a 4xx/5xx because the API answers errors with a JSON body
+     (verified on prod: GET /api/definitely-not-a-route → HTTP 404,
+     content-type application/json). The .catch therefore never fired, `data`
+     became the error envelope, `data?.ideas` was undefined, and the screen
+     rendered "No ranked ideas yet — the factor pass runs after the daily
+     valuation recompute": a confident statement about the user's data that we
+     had no evidence for, followed by a remedy that could not have helped. */
+  const { data, error, loading, retry } = useResource(API ? `${API}/api/factors` : null);
   const [sector, setSector] = useState("All");
   const [sortKey, setSortKey] = useState("alpha_score");
   const [sortDir, setSortDir] = useState("desc");
 
+  /* The backtest is a SECONDARY card beside sector strength — the ranked table
+     below stands on its own without it, so a failure here degrades quietly
+     (one dim line inside the card) rather than replacing a working screen with
+     a full-width error panel.
+
+     btErr is tracked separately from `bt` because the card has two very
+     different stories to tell and the old code collapsed them into one: "we
+     could not reach the backtest" vs "we reached it and it has fewer than 5
+     snapshot days so far". Only the second one justifies the "Accruing…" copy.
+     Same r.ok bug as above — without the check a 500 fell into the bt-is-truthy
+     branch with bt.n undefined, so `bt.n >= 5` was false and the outage read as
+     "Accruing". */
+  const [bt, setBt] = useState(null);
+  const [btErr, setBtErr] = useState(false);
   useEffect(() => {
-    if (!API) { setLoading(false); return; }
+    if (!API) return;
     let live = true;
-    setLoading(true);
-    fetch(`${API}/api/factors`).then(r => r.json())
-      .then(d => { if (live) { setData(d); setLoading(false); } })
-      .catch(() => { if (live) { setData(null); setLoading(false); } });
-    fetch(`${API}/api/factors/backtest`).then(r => r.json())
-      .then(d => { if (live) setBt(d); }).catch(() => { if (live) setBt(null); });
+    fetch(`${API}/api/factors/backtest`)
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then(d => { if (live) { setBt(d); setBtErr(false); } })
+      .catch(() => { if (live) { setBt(null); setBtErr(true); } });
     return () => { live = false; };
   }, [API]);
 
@@ -89,6 +113,18 @@ export default function Ideas({ API, onOpen }) {
   }, [ideas, sector, sortKey, sortDir]);
 
   if (loading) return <PageSkeleton label="Ranking the universe…" cards={3} />;
+
+  // A failed request is not an empty ranking. useResource keeps the two apart;
+  // this is where that distinction reaches the user.
+  if (error) return (
+    <div className="fadein" style={{ padding: "22px 26px 60px" }}>
+      <PageHeader title="Ideas">
+        A transparent 7-factor Alpha Score — quality, momentum, value, low-vol, growth,
+        estimate revisions and earnings surprise, each shown so you can disagree with it.
+      </PageHeader>
+      <ErrorState error={error} onRetry={retry} what="the ranking" />
+    </div>
+  );
 
   return (
     <div className="fadein" style={{ padding: "22px 26px 60px" }}>
@@ -118,7 +154,18 @@ export default function Ideas({ API, onOpen }) {
           <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: C.dim, marginBottom: 10 }}>
             Factor backtest · forward return by Alpha bucket
           </div>
-          {bt && bt.n >= 5 ? (
+          {btErr ? (
+            /* Quiet, in-card, and scoped to what actually failed: this is a
+               supplementary panel in a sidebar-width card, so a full-width
+               ErrorState here would announce an outage the rest of the screen
+               is not having. No auto-retry is claimed because this fetch has
+               no online/visibility listener — the effect is keyed on API, so
+               it genuinely re-runs on the next mount and nothing sooner. */
+            <div style={{ ...sans, fontSize: 11, color: C.faint, lineHeight: 1.6 }}>
+              The factor track record didn't load — this card only. The ranking below is
+              unaffected and comes from a separate request. It reloads next time you open Ideas.
+            </div>
+          ) : bt && bt.n >= 5 ? (
             <>
               <div style={{ display: "flex", alignItems: "flex-end", gap: 6 }}>
                 {bt.buckets.map(b => {

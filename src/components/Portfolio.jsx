@@ -160,10 +160,32 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
         .replace(/\b(ltd|limited|company|corp|corporation|industries|enterprises|the|and|of|india)\b\.?/g, " ")
         .split(/[^a-z0-9]+/).filter(Boolean).join(" ");
       let maps = null;
+      /* Tracks "we could not read the ticker lookup at all", which is NOT the
+         same fact as "we read it and this name is not in it" — and the import
+         summary below is the one place a user ever learns which happened.
+
+         The r.ok check is what makes the distinction possible. This was
+         `fetch(url).then(r => r.json())`, and the API answers errors with a
+         JSON body (prod: GET /api/definitely-not-a-route → HTTP 404,
+         content-type application/json), so a 404/500 RESOLVED: maps became the
+         error envelope, maps.names was undefined, every lookup missed, and the
+         import reported the user's own holdings as "outside coverage" — a
+         confident claim about OUR universe that we had never actually checked.
+         Falling back to empty maps is right (name resolution is best-effort and
+         the import must still run); reporting the result as coverage was not. */
+      let mapsUnavailable = false;
       const loadMaps = async () => {
         if (maps) return maps;
-        try { maps = await fetch(`${API}/api/isin-map`).then(r => r.json()); }
-        catch { maps = { map: {}, names: {} }; }
+        try {
+          const r = await fetch(`${API}/api/isin-map`);
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          const j = await r.json();
+          if (!j || typeof j !== "object") throw new Error("Malformed response");
+          maps = j;
+        } catch {
+          maps = { map: {}, names: {} };
+          mapsUnavailable = true;
+        }
         return maps;
       };
       const resolveName = label => {
@@ -229,7 +251,12 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
         } catch { uncovered.push(h.label || h.ticker); }
       }
       const parts = [`Imported ${ok} holding${ok === 1 ? "" : "s"}`];
-      if (uncovered.length) parts.push(`outside coverage: ${uncovered.join(", ")}`);
+      // "Outside coverage" is a finding; it may only be reported when the
+      // lookup actually answered. If it didn't, say the truth instead — the
+      // rows are unmatched and the reason is on our side, not their book's.
+      if (uncovered.length) parts.push(mapsUnavailable
+        ? `not matched — the ticker lookup didn't respond, so coverage was never checked: ${uncovered.join(", ")}`
+        : `outside coverage: ${uncovered.join(", ")}`);
       if (skipped.length) parts.push(`${skipped.length} row${skipped.length === 1 ? "" : "s"} unparseable`);
       setImportMsg({ tone: uncovered.length || !ok ? C.gold : C.green, text: parts.join(" · ") });
       if (ok) { setPasteOpen(false); setPasteText(""); }
@@ -643,6 +670,11 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
           error={{ kind: "status", detail: err }}
           onRetry={reload}
           what="your holdings"
+          /* This screen loads through authFetch (the request needs the session
+             header), not useResource, so nothing here listens for `online` or
+             tab-visible. Saying otherwise would promise a retry that never
+             happens — on the one screen holding real money. */
+          autoRetries={false}
         />
       ) : items.length === 0 ? (
         <div style={{ border: `1px solid ${C.line}`, borderRadius: 12, background: C.panel, padding: "48px 24px", textAlign: "center" }}>

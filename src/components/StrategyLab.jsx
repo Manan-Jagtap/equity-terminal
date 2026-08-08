@@ -9,6 +9,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Loader2, Info, ChevronRight, Play } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { C, sans, mono } from "../lib/theme.js";
+import useResource from "../lib/useResource.js";
+import ErrorState from "./ui/ErrorState.jsx";
 
 const pct = (x, d = 1) => x == null ? "—" : `${x >= 0 ? "+" : ""}${(x * 100).toFixed(d)}%`;
 const pctAbs = (x, d = 1) => x == null ? "—" : `${(x * 100).toFixed(d)}%`;
@@ -25,28 +27,64 @@ function Metric({ label, value, color, sub }) {
 
 export default function StrategyLab({ API, onOpen }) {
   const [opts, setOpts] = useState(null);
+  // "have we heard back about the strategy list, either way" — distinct from
+  // `opts`, which is null both BEFORE the request and after it fails. See the
+  // auto-run effect below for why the difference mattered.
+  const [optsSettled, setOptsSettled] = useState(false);
   const [signal, setSignal] = useState("momentum");
   const [topN, setTopN] = useState(15);
   const [rebalance, setRebalance] = useState("M");
   const [years, setYears] = useState(5);
-  const [res, setRes] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [query, setQuery] = useState(null);   // the backtest URL currently asked for
 
   useEffect(() => {
     if (!API) return;
-    fetch(`${API}/api/strategy/list`).then(r => r.json()).then(setOpts).catch(() => setOpts(null));
+    let live = true;
+    /* This request deliberately fails OPEN: the dropdown falls back to the
+       built-in Momentum entry and the lab stays usable, so there is nothing to
+       report to the reader and no error state to render. The r.ok check is
+       still required, because a non-2xx must not be parsed as data — a 404's
+       {"detail":"Not Found"} used to land in `opts`, where it is truthy.
+
+       That truthiness is not cosmetic. The auto-run effect below was gated on
+       `opts` alone, so the two failure modes diverged: an API error left opts
+       truthy and the backtest ran, while a network error left opts null, the
+       auto-run never fired, and the panel sat on "Running backtest…" forever
+       with nothing running. Settling a separate flag in .finally makes both
+       paths reach the same place. */
+    fetch(`${API}/api/strategy/list`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (live) setOpts(Array.isArray(d?.strategies) ? d : null); })
+      .catch(() => { if (live) setOpts(null); })
+      .finally(() => { if (live) setOptsSettled(true); });
+    return () => { live = false; };
   }, [API]);
+
+  /* The backtest IS this panel's content, so it gets useResource: r.ok, the
+     status/network/parse split, and a re-fetch when the browser comes back
+     online. The old code was .then(r => r.json()) with a .catch that could not
+     fire — a 500 resolved, `res` became {"detail": …}, res.ok read undefined,
+     and the panel printed res.reason || "No result." An outage was reported as
+     a backtest that ran fine and found nothing.
+
+     Driving it off a URL rather than a click keeps that honesty: the request is
+     a function of the chosen parameters, and re-running the SAME parameters is
+     retry(), because the URL has not changed for the hook to react to. */
+  const { data: res, error, loading, retry } = useResource(query);
 
   const run = () => {
     if (!API) return;
-    setLoading(true);
-    fetch(`${API}/api/strategy/backtest?signal=${signal}&top_n=${topN}&rebalance=${rebalance}&years=${years}`)
-      .then(r => r.json()).then(d => { setRes(d); setLoading(false); })
-      .catch(() => { setRes({ ok: false, reason: "Backtest request failed." }); setLoading(false); });
+    const next = `${API}/api/strategy/backtest?signal=${signal}&top_n=${topN}&rebalance=${rebalance}&years=${years}`;
+    if (next === query) retry(); else setQuery(next);
   };
 
-  // run once on first load (default momentum)
-  useEffect(() => { if (API && opts && !res) run(); /* eslint-disable-line */ }, [API, opts]);
+  /* With no API there is nothing to wait for, so don't wait — a flag that can
+     never settle is exactly how this panel used to spin forever. */
+  const listSettled = optsSettled || !API;
+
+  // Run once on first load (default momentum), whether or not the strategy list
+  // arrived — a missing dropdown does not stop the default rule from running.
+  useEffect(() => { if (API && listSettled && !query) run(); /* eslint-disable-line */ }, [API, listSettled]);
 
   const chartData = useMemo(() => {
     if (!res?.curve) return [];
@@ -110,7 +148,14 @@ export default function StrategyLab({ API, onOpen }) {
         </button>
       </div>
 
-      {res && !res.ok ? (
+      {error ? (
+        /* Not the one-line "No result." — the backtest is the whole panel, and
+           the distinction is the point: {ok:false, reason} on a 200 means the
+           engine ran and explained itself (too few names, no price history),
+           which is worth quoting verbatim below. `error` means we never got an
+           answer we could read, which is not a fact about any strategy. */
+        <ErrorState error={error} onRetry={retry} what="the backtest" />
+      ) : res && !res.ok ? (
         <div style={{ ...sans, fontSize: 12.5, color: C.dim, padding: "24px 0" }}>{res.reason || "No result."}</div>
       ) : res && res.ok ? (
         <>
@@ -172,9 +217,17 @@ export default function StrategyLab({ API, onOpen }) {
             </div>
           )}
         </>
-      ) : (
+      ) : (loading || query || !listSettled) ? (
         <div style={{ padding: 40, display: "flex", alignItems: "center", gap: 10, color: C.dim, ...sans, fontSize: 13 }}>
           <Loader2 size={16} className="spin" /> Running backtest…
+        </div>
+      ) : (
+        /* Nothing is in flight and nothing has been asked for. The old code
+           showed the spinner in this state too — a claim that a simulation is
+           running when none is, and (with no API configured) a spinner that
+           could never resolve. */
+        <div style={{ padding: 40, color: C.dim, ...sans, fontSize: 13 }}>
+          Choose a rule and press <b style={{ color: C.text200 }}>Run backtest</b>.
         </div>
       )}
     </div>

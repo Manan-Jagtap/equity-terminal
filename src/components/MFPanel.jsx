@@ -9,7 +9,7 @@
      portfolio holdings with a concentration donut, and a fund-facts panel.
 
    All data comes from the licensed vendor feed. A browsing aid, not advice. */
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { ArrowLeft, Search } from "lucide-react";
 import {
   AreaChart, Area, YAxis, Tooltip, ResponsiveContainer, ReferenceLine,
@@ -19,6 +19,8 @@ import { C, mono, sans, serif, gridBg, series } from "../lib/theme.js";
 import { useIsMobile } from "../lib/useResponsive.js";
 import { selStyle } from "../lib/listControls.jsx";
 import PageHeader from "./ui/PageHeader.jsx";
+import useResource from "../lib/useResource.js";
+import ErrorState from "./ui/ErrorState.jsx";
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -57,24 +59,34 @@ const DONUT = series;
    ════════════════════════════════════════════════════════════════ */
 export default function MFPanel() {
   const isMobile = useIsMobile();
-  const [data, setData] = useState(null);
   const [open, setOpen] = useState(null);   // the selected fund row → full page
 
-  useEffect(() => {
-    if (!API) return;
-    let dead = false;
-    fetch(`${API}/api/mutual-funds`).then(r => r.json())
-      .then(d => { if (!dead) setData(d); })
-      .catch(() => { if (!dead) setData({ available: false, categories: [] }); });
-    return () => { dead = true; };
-  }, []);
+  /* useResource: the old fetch(url).then(r => r.json()) had no r.ok check, and
+     the API answers errors with JSON, so a 4xx/5xx RESOLVED — the .catch never
+     fired, the error envelope became `data`, data.categories read undefined and
+     the list fell into its empty branch. That branch read "The fund feed is
+     unreachable right now — it retries automatically", which was the right
+     diagnosis reached by accident and paired with a promise nothing kept: this
+     component fetched once on mount, with no listener and no interval.
+     useResource makes the retry real (online + tab-visible, while errored). */
+  const { data, error, retry } = useResource(API ? `${API}/api/mutual-funds` : null);
 
   // key= resets all page state (range, series, detail) when switching funds.
   if (open) return <FundPage key={open.name} fund={open} onBack={() => setOpen(null)} isMobile={isMobile} />;
 
+  // A failed request is not an empty fund universe.
+  if (error) return (
+    <div className="fadein" style={{ padding: isMobile ? "20px 14px 40px" : "24px 32px 48px", maxWidth: 1240 }}>
+      <PageHeader title="Mutual Funds">
+        The fund universe by category — NAV, trailing returns, AUM and rating from the verified feed.
+      </PageHeader>
+      <ErrorState error={error} onRetry={retry} what="the fund universe" />
+    </div>
+  );
+
   if (!data) return <div style={{ ...sans, padding: 48, color: C.dim, fontSize: 13 }}>Loading the fund desk…</div>;
 
-  return <FundList data={data} onOpen={setOpen} isMobile={isMobile} />;
+  return <FundList data={data} onOpen={setOpen} onRetry={retry} isMobile={isMobile} />;
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -82,7 +94,7 @@ export default function MFPanel() {
    ════════════════════════════════════════════════════════════════ */
 const RATING_OPTS = [[0, "Any rating"], [3, "★★★ +"], [4, "★★★★ +"], [5, "★★★★★"]];
 
-function FundList({ data, onOpen, isMobile }) {
+function FundList({ data, onOpen, onRetry, isMobile }) {
   const cats = data.categories || [];
   const [cat, setCat] = useState(cats[0]?.name || null);
   const [sub, setSub] = useState("");
@@ -150,7 +162,17 @@ function FundList({ data, onOpen, isMobile }) {
       {!cats.length ? (
         <div style={{ ...sans, fontSize: 13, color: C.dim, border: `1px solid ${C.line}`,
           borderRadius: 12, padding: 32, textAlign: "center" }}>
-          The fund feed is unreachable right now — it retries automatically.
+          {/* Unreachable is now ErrorState's job upstairs, so this branch means
+              what it always literally was: a 200 carrying no categories
+              (app/mf_routes.py returns {"categories": [], "available": False}
+              when the vendor hands the server nothing). Nothing re-polls a 200,
+              hence a button instead of the old automatic-retry claim. */}
+          The fund feed answered with no categories — the server reached the vendor and got nothing back.{" "}
+          <button type="button" onClick={onRetry}
+            style={{ ...sans, fontSize: 13, color: C.gold, background: "transparent", border: "none",
+              padding: 0, cursor: "pointer", textDecoration: "underline" }}>
+            Check again
+          </button>
         </div>
       ) : (
         <>
@@ -241,35 +263,44 @@ function FundList({ data, onOpen, isMobile }) {
 const RANGES = ["1M", "6M", "1Y", "5Y", "MAX"];
 
 function FundPage({ fund, onBack, isMobile }) {
-  const [detail, setDetail] = useState(null);
   const [range, setRange] = useState("1Y");
-  const [navSeries, setNavSeries] = useState(null);
+  // NAV series for a range OTHER than the 1Y one that arrives inside /detail.
+  // null = "no override yet, show what /detail returned".
+  const [navOverride, setNavOverride] = useState(null);
+  const [navFailed, setNavFailed] = useState(false);
   const [navLoading, setNavLoading] = useState(false);
 
-  // Initial load — holdings, facts, and the default (1Y) NAV series.
-  // (No reset dance needed: the parent keys this component on fund.name.)
-  useEffect(() => {
-    if (!API) return;
-    let dead = false;
-    fetch(`${API}/api/mutual-funds/detail?name=${encodeURIComponent(fund.name)}&range=1Y`)
-      .then(r => r.json())
-      .then(d => { if (!dead) { setDetail(d); setNavSeries(d?.nav_history || []); } })
-      .catch(() => { if (!dead) setDetail({ available: false }); });
-    return () => { dead = true; };
-  }, [fund.name]);
+  /* Initial load — holdings, facts, and the default (1Y) NAV series. No reset
+     dance needed: the parent keys this component on fund.name.
+
+     The old effect mapped every failure to { available: false }, which renders
+     as "We couldn't resolve this scheme in the vendor feed" — the vendor
+     accused of not carrying a scheme it carries perfectly well, whenever OUR
+     API was the thing that fell over. And because there was no r.ok check, the
+     .catch it relied on never even ran on a 4xx/5xx. */
+  const { data: detail, error: detailError, retry: retryDetail } = useResource(
+    API ? `${API}/api/mutual-funds/detail?name=${encodeURIComponent(fund.name)}&range=1Y` : null);
 
   // Range toggle — swap just the NAV series once we know the scheme id.
   const pickRange = r => {
     setRange(r);
     if (!detail?.id) return;
     setNavLoading(true);
+    setNavFailed(false);
     fetch(`${API}/api/mutual-funds/nav?id=${encodeURIComponent(detail.id)}&range=${r}`)
-      .then(res => res.json()).then(d => setNavSeries(d?.nav_history || []))
-      .catch(() => setNavSeries([]))
+      /* A user-triggered one-shot, so useResource — mount-scoped, and it
+         auto-retries — is the wrong tool here. The r.ok check is not optional
+         either way: without it a 500's JSON body parsed cleanly, nav_history
+         came back undefined, and the chart drew "No NAV data for 5Y." That is
+         the defect in miniature — an outage in our own API reported to the user
+         as a gap in the fund's price history. */
+      .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
+      .then(d => setNavOverride(d?.nav_history || []))
+      .catch(() => { setNavOverride([]); setNavFailed(true); })
       .finally(() => setNavLoading(false));
   };
 
-  const series = navSeries || [];
+  const series = navOverride ?? (detail?.nav_history || []);
   const first = series[0]?.nav, last = series[series.length - 1]?.nav;
   const winRet = (first && last) ? (last / first - 1) * 100 : null;
   const info = detail?.info || {};
@@ -346,7 +377,12 @@ function FundPage({ fund, onBack, isMobile }) {
           </div>
         )}
 
-        {!detail ? (
+        {detailError ? (
+          /* The holdings, the NAV chart and the fund facts are this page's body,
+             so the failure gets the full panel. The trailing-returns strip above
+             comes from the list row and stays up — it is still true. */
+          <ErrorState error={detailError} onRetry={retryDetail} what="this fund's detail" />
+        ) : !detail ? (
           <div style={{ ...sans, color: C.dim, fontSize: 13, padding: "40px 0" }}>Loading the fund desk…</div>
         ) : detail.available === false ? (
           <div style={{ ...sans, color: C.dim, fontSize: 13, border: `1px solid ${C.line}`, borderRadius: 12, padding: 28 }}>
@@ -389,8 +425,18 @@ function FundPage({ fund, onBack, isMobile }) {
                       </AreaChart>
                     </ResponsiveContainer>
                   ) : (
-                    <div style={{ ...sans, fontSize: 12, color: C.faint, display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
-                      {navLoading ? "Loading…" : `No NAV data for ${range}.`}
+                    /* One card inside a two-column page, so a dashed full-width
+                       ErrorState would be out of scale — a line in the chart
+                       well says the same thing at the right volume. Pressing
+                       the already-selected range button re-runs pickRange, so
+                       "tap the range again" is a real retry, not a figure of
+                       speech. */
+                    <div role={navFailed ? "status" : undefined}
+                      style={{ ...sans, fontSize: 12, color: navFailed ? C.dim : C.faint, textAlign: "center",
+                        lineHeight: 1.6, padding: "0 16px", display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+                      {navLoading ? "Loading…"
+                        : navFailed ? `Couldn't load the ${range} NAV history — the request didn't complete. The series isn't missing; tap ${range} again to retry.`
+                        : `No NAV data for ${range}.`}
                     </div>
                   )}
                 </div>

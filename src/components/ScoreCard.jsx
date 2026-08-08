@@ -37,20 +37,35 @@ function Bar({ k, s }) {
 }
 
 export default function ScoreCard({ API, ticker }) {
-  const [loaded, setLoaded] = useState({ ticker: null, data: null });
+  const [loaded, setLoaded] = useState({ ticker: null, data: null, error: null });
+  const [nonce, setNonce] = useState(0);
 
   useEffect(() => {
     if (!API || !ticker) return;
     let dead = false;
     fetch(`${API}/api/companies/${ticker}/scorecard`)
-      .then(r => r.json())
-      .then(d => { if (!dead) setLoaded({ ticker, data: d }); })
-      .catch(() => { if (!dead) setLoaded({ ticker, data: { available: false } }); });
+      .then(r => {
+        /* The r.ok check is the whole fix. /scorecard answers 4xx/5xx with a
+           JSON body, so r.json() RESOLVED on an outage and the old .catch never
+           ran: {"detail":"Not Found"} arrived with `available` undefined and
+           this card said "Not scored yet — the nightly evidence build ... will
+           populate this automatically". That told the user the engine had not
+           covered their stock, when in fact the engine had scored it and we
+           merely could not read the answer. */
+        if (!r.ok) throw Object.assign(new Error(`HTTP ${r.status}`), { kind: "status" });
+        return r.json().catch(() => {
+          throw Object.assign(new Error("unreadable"), { kind: "parse" });
+        });
+      })
+      .then(d => { if (!dead) setLoaded({ ticker, data: d, error: null }); })
+      .catch(e => { if (!dead) setLoaded({ ticker, data: null, error: { kind: e.kind || "network" } }); });
     return () => { dead = true; };
-  }, [API, ticker]);
+  }, [API, ticker, nonce]);
 
-  const d = loaded.ticker === ticker ? loaded.data : null;
-  if (!d) return null;
+  const fresh = loaded.ticker === ticker;
+  const d = fresh ? loaded.data : null;
+  const err = fresh ? loaded.error : null;
+  if (!d && !err) return null;
 
   return (
     <div style={{ border: `1px solid ${C.line}`, borderRadius: 14, background: C.panel,
@@ -62,7 +77,31 @@ export default function ScoreCard({ API, ticker }) {
         </span>
       </div>
 
-      {!d.available ? (
+      {err ? (
+        /* Quiet and in place, not a full-width dashed ErrorState: this card is
+           one of several on the overview, and a box that loud would dominate
+           the page it is only a part of. All it has to do is stop claiming the
+           name is unscored, and offer the retry that the surrounding page will
+           not do on its own. */
+        <div role="status" style={{ ...sans, fontSize: 12.5, color: C.dim, lineHeight: 1.6,
+                                    display: "flex", alignItems: "baseline", gap: 8, flexWrap: "wrap" }}>
+          <AlertTriangle size={12} color={C.gold} aria-hidden="true" style={{ flexShrink: 0 }} />
+          <span>
+            Couldn't load the scorecard — {err.kind === "status" ? "the data service refused the request"
+              : err.kind === "parse" ? "the response came back unreadable"
+              : "the request didn't get through"}. This name may well be scored; we can't read the answer right now.
+          </span>
+          {/* Clearing `loaded` before the refetch is what gives the click any
+              feedback at all: this card renders nothing while loading, so it
+              collapses and comes back — the same thing useResource's own retry
+              does on the screens that use it. */}
+          <button type="button" onClick={() => { setLoaded({ ticker: null, data: null, error: null }); setNonce(n => n + 1); }}
+            style={{ ...sans, fontSize: 11.5, color: C.gold, background: "transparent",
+                     border: "none", padding: 0, cursor: "pointer", textDecoration: "underline" }}>
+            Retry
+          </button>
+        </div>
+      ) : !d.available ? (
         <div style={{ ...sans, fontSize: 12.5, color: C.dim, lineHeight: 1.6 }}>
           Not scored yet — the nightly evidence build covers the visible universe and will populate this automatically.
         </div>
@@ -89,7 +128,7 @@ export default function ScoreCard({ API, ticker }) {
         </div>
       )}
 
-      {d.available && (d.green_flags?.length || d.red_flags?.length) ? (
+      {d?.available && (d.green_flags?.length || d.red_flags?.length) ? (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 16, marginTop: 16,
                       borderTop: `1px solid ${C.line}`, paddingTop: 14 }}>
           {d.green_flags?.length > 0 && (

@@ -1,12 +1,14 @@
 /* Compare.jsx — side-by-side comparison of up to 4 names.
    Pulls /api/compare and renders a grouped metric table with best-in-row
    highlighting (model valuation, multiples, analyst, forensics). */
-import { useEffect, useMemo, useState, Fragment } from "react";
+import { useMemo, useState, Fragment } from "react";
 import { Search, X, Plus, Loader2, GitCompare } from "lucide-react";
 import { C, sans, serif, mono } from "../lib/theme.js";
 import { VerdictBadge } from "./primitives.jsx";
 import Logo from "./Logo.jsx";
 import PageHeader from "./ui/PageHeader.jsx";
+import ErrorState from "./ui/ErrorState.jsx";
+import useResource from "../lib/useResource.js";
 
 const MAX = 4;
 
@@ -78,19 +80,16 @@ function bestIndex(items, row) {
 export default function Compare({ API, companies = [], onOpen, seed = [] }) {
   const [sel, setSel] = useState(() => seed.slice(0, MAX));
   const [q, setQ] = useState("");
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (!API || sel.length === 0) { setData(null); return; }
-    let live = true;
-    setLoading(true);
-    fetch(`${API}/api/compare?tickers=${encodeURIComponent(sel.join(","))}`)
-      .then(r => r.json())
-      .then(d => { if (live) { setData(d); setLoading(false); } })
-      .catch(() => { if (live) { setData(null); setLoading(false); } });
-    return () => { live = false; };
-  }, [API, sel]);
+  /* This screen is nothing but the table, so a failed /api/compare gets the
+     full ErrorState. The old fetch had no r.ok check: /api/compare answers
+     4xx/5xx with a JSON envelope, so r.json() RESOLVED, `.catch` never ran, and
+     `data.items` was simply undefined — the user was left staring at their four
+     picker chips above a table with no rows and no explanation, which reads as
+     "these names have nothing to compare". */
+  const url = API && sel.length > 0
+    ? `${API}/api/compare?tickers=${encodeURIComponent(sel.join(","))}` : null;
+  const { data, error, loading, retry } = useResource(url);
 
   const options = useMemo(() => {
     const picked = new Set(sel);
@@ -104,6 +103,12 @@ export default function Compare({ API, companies = [], onOpen, seed = [] }) {
   const add = t => { if (sel.length < MAX && !sel.includes(t)) { setSel([...sel, t]); setQ(""); } };
   const remove = t => setSel(sel.filter(x => x !== t));
 
+  /* useResource clears data per request where the old code left the previous
+     payload in state, so editing the picker now shows the spinner below instead
+     of the old table. That is the honest ordering — stale rows for a selection
+     the user has already changed are exactly the confusion this pass is about —
+     and holding them would mean reading a ref during render (react-hooks/refs)
+     or a setState inside an effect, both of which the lint gate rejects. */
   const items = data?.items || [];
 
   return (
@@ -157,6 +162,8 @@ export default function Compare({ API, companies = [], onOpen, seed = [] }) {
           <GitCompare size={26} color={C.faint} style={{ marginBottom: 10 }} />
           <div style={{ ...sans, fontSize: 14, color: C.dim }}>Add two or more names to compare them.</div>
         </div>
+      ) : error ? (
+        <ErrorState error={error} onRetry={retry} what="the comparison" />
       ) : loading && items.length === 0 ? (
         <div style={{ padding: 40, display: "flex", alignItems: "center", gap: 10, color: C.dim, ...sans, fontSize: 13 }}>
           <Loader2 size={16} className="spin" /> Loading comparison…
