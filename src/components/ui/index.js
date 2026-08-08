@@ -16,6 +16,7 @@ export { default as Skeleton, SkeletonText } from "./Skeleton.jsx";
 export { default as Table } from "./Table.jsx";
 export { default as StatTile } from "./StatTile.jsx";
 export { default as PageHeader } from "./PageHeader.jsx";
+export { default as ErrorState } from "./ErrorState.jsx";
 export { default as AlphaScore } from "./AlphaScore.jsx";
 export { default as ValuationPanel } from "./ValuationPanel.jsx";
 export { default as FinancialsTable } from "./FinancialsTable.jsx";

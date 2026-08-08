@@ -340,3 +340,33 @@
   .evc-pagehead-title { font-size: var(--ev-fs-2xl); }
   .evc-pagehead-aside { width: 100%; justify-content: space-between; }
 }
+
+/* ── ErrorState ─────────────────────────────────────────────────────────────
+   Shown when a request FAILED, which is a different fact from a request that
+   returned nothing. Eleven screens previously had only an empty state and used
+   it for both. */
+.evc-errstate {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  gap: var(--ev-s2); padding: var(--ev-s7) var(--ev-s5);
+  border: 1px dashed var(--ev-line-2); border-radius: var(--ev-r-md);
+  background: var(--ev-bg-raise);
+}
+.evc-errstate-icon { color: var(--ev-reduce); }
+.evc-errstate-head {
+  font-family: var(--ev-font-ui); font-size: var(--ev-fs-lg);
+  color: var(--ev-text); letter-spacing: var(--ev-track-ui);
+}
+.evc-errstate-body {
+  margin: 0; max-width: 52ch;
+  font-size: var(--ev-fs-md); line-height: var(--ev-lh-body); color: var(--ev-text-2);
+}
+.evc-errstate-btn {
+  display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+  margin-top: var(--ev-s2); padding: 7px 14px;
+  font-family: var(--ev-font-ui); font-size: var(--ev-fs-sm); font-weight: 500;
+  color: var(--ev-accent); background: var(--ev-accent-dim);
+  border: 1px solid var(--ev-accent); border-radius: var(--ev-r-sm);
+  transition: background var(--ev-t-fast) var(--ev-ease);
+}
+.evc-errstate-btn:hover { background: var(--ev-accent); color: var(--ev-accent-ink); }
+.evc-errstate-detail { font-size: var(--ev-fs-2xs); color: var(--ev-text-3); }

@@ -6,6 +6,8 @@ import { C, sans, mono } from "../lib/theme.js";
 import { ListToolbar, applyControls, selStyle } from "../lib/listControls.jsx";
 import { VerdictBadge } from "./primitives.jsx";
 import PageHeader from "./ui/PageHeader.jsx";
+import ErrorState from "./ui/ErrorState.jsx";
+import useResource from "../lib/useResource.js";
 
 const cr   = v => v == null ? "—" : "₹" + Number(v).toLocaleString("en-IN", { maximumFractionDigits: 0 });
 const signed = v => v == null ? "—" : (v >= 0 ? "+" : "") + (v * 100).toFixed(1) + "%";   // fraction → %
@@ -136,20 +138,13 @@ function DividendCalendar({ API, onOpen }) {
 }
 
 export default function Results({ API, onOpen }) {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // See useResource: the previous fetch().then(r=>r.json()).catch() never fired
+  // its .catch on an API 4xx/5xx (FastAPI answers with JSON), so an outage
+  // rendered as "No results data yet — run a refresh".
+  const { data, error, loading, retry } = useResource(API ? `${API}/api/results` : null);
   const [sort, setSort] = useState("latest");
   const [controls, setControls] = useState({});
 
-  useEffect(() => {
-    if (!API) { setLoading(false); return; }
-    let live = true;
-    setLoading(true);
-    fetch(`${API}/api/results`).then(r => r.json())
-      .then(d => { if (live) { setData(d); setLoading(false); } })
-      .catch(() => { if (live) { setData(null); setLoading(false); } });
-    return () => { live = false; };
-  }, [API]);
 
   const rows = useMemo(() => {
     const items = applyControls( (data?.items || []).slice(), controls);
@@ -163,6 +158,15 @@ export default function Results({ API, onOpen }) {
   if (loading) return (
     <div style={{ padding: 48, display: "flex", alignItems: "center", gap: 10, color: C.dim, ...sans, fontSize: 13 }}>
       <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> Loading results…
+    </div>
+  );
+
+  if (error) return (
+    <div className="fadein" style={{ padding: "24px 32px" }}>
+      <PageHeader title="Results">
+        Most recent quarter, sales &amp; profit growth (YoY), and the latest full-year EPS vs the Street's estimate.
+      </PageHeader>
+      <ErrorState error={error} onRetry={retry} what="results" />
     </div>
   );
 
@@ -248,7 +252,7 @@ export default function Results({ API, onOpen }) {
             })}
             {rows.length === 0 && (
               <tr><td colSpan={10} style={{ ...sans, textAlign: "center", padding: 40, color: C.faint }}>
-                No results data yet — run a refresh to populate the quarter snapshots.
+                No quarterly results are published for this universe yet.
               </td></tr>
             )}
           </tbody>

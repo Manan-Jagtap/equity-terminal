@@ -1,10 +1,12 @@
 /* Ownership.jsx — cross-company institutional & MF ownership trends.
    Reads /api/ownership: promoter / FII / DII / MF / public % + QoQ deltas. */
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Loader2, TrendingUp, TrendingDown, ChevronRight } from "lucide-react";
 import { C, sans, mono } from "../lib/theme.js";
 import { ListToolbar, applyControls } from "../lib/listControls.jsx";
 import PageHeader from "./ui/PageHeader.jsx";
+import ErrorState from "./ui/ErrorState.jsx";
+import useResource from "../lib/useResource.js";
 
 const p1 = v => v == null ? "—" : Number(v).toFixed(1) + "%";
 
@@ -34,22 +36,18 @@ const SORTS = [
 ];
 
 export default function Ownership({ API, onOpen }) {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // useResource, not a bare fetch: the old code was
+  //   fetch(url).then(r => r.json()).catch(() => setData(null))
+  // which RESOLVES on a 4xx/5xx because FastAPI answers with a JSON body, so
+  // the .catch never fired and an outage rendered as "No ownership data yet —
+  // run a refresh", i.e. the user was told their data does not exist and
+  // handed a remedy that cannot work.
+  const { data, error, loading, retry } = useResource(API ? `${API}/api/ownership` : null);
   const [sort, setSort] = useState("inst");
   // Column-header sort: by holding LEVEL (pct), toggling asc/desc.
   const [colSort, setColSort] = useState(null); // {key, dir}
   const [controls, setControls] = useState({});
 
-  useEffect(() => {
-    if (!API) { setLoading(false); return; }
-    let live = true;
-    setLoading(true);
-    fetch(`${API}/api/ownership`).then(r => r.json())
-      .then(d => { if (live) { setData(d); setLoading(false); } })
-      .catch(() => { if (live) { setData(null); setLoading(false); } });
-    return () => { live = false; };
-  }, [API]);
 
   const rows = useMemo(() => {
     const items = applyControls((data?.items || []).slice(), controls);
@@ -80,6 +78,16 @@ export default function Ownership({ API, onOpen }) {
   if (loading) return (
     <div style={{ padding: 48, display: "flex", alignItems: "center", gap: 10, color: C.dim, ...sans, fontSize: 13 }}>
       <Loader2 size={16} style={{ animation: "spin 1s linear infinite" }} /> Loading ownership…
+    </div>
+  );
+
+  // A failed request is not an empty dataset. Say which one happened.
+  if (error) return (
+    <div className="fadein" style={{ padding: "24px 32px" }}>
+      <PageHeader title="Ownership">
+        Latest shareholding by promoter, foreign (FII), domestic (DII) and mutual funds.
+      </PageHeader>
+      <ErrorState error={error} onRetry={retry} what="ownership" />
     </div>
   );
 
@@ -146,7 +154,7 @@ export default function Ownership({ API, onOpen }) {
             ))}
             {rows.length === 0 && (
               <tr><td colSpan={8} style={{ ...sans, textAlign: "center", padding: 40, color: C.faint }}>
-                No ownership data yet — run a refresh to populate shareholding snapshots.
+                No shareholding snapshots are published for this universe yet.
               </td></tr>
             )}
           </tbody>
