@@ -99,7 +99,7 @@ function MacroStrip({ macro }) {
 /* Evidence chips: what actually voted on this action. */
 function EvidenceChips({ ev }) {
   if (!ev) return null;
-  const chip = { ...mono, fontSize: 9.5, padding: "2px 7px", borderRadius: 5,
+  const chip = { ...mono, fontSize: 9.5, padding: "2px 7px", borderRadius: 6,
                  border: `1px solid ${C.line}`, color: C.dim, whiteSpace: "nowrap" };
   return (
     <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 5 }}>
@@ -181,8 +181,8 @@ function CashBar({ cash, onSave, onClear, busy }) {
           <input autoFocus type="number" value={val} onChange={e => setVal(e.target.value)}
             onKeyDown={e => e.key === "Enter" && commit()}
             placeholder="₹ amount" style={{ ...mono, fontSize: 13, width: 130, padding: "5px 9px",
-              borderRadius: 7, background: C.bg800, color: C.text, border: `1px solid ${C.line2}`, outline: "none" }} />
-          <button onClick={commit} style={{ ...sans, fontSize: 11, padding: "5px 11px", borderRadius: 7,
+              borderRadius: 6, background: C.bg800, color: C.text, border: `1px solid ${C.line2}`, outline: "none" }} />
+          <button onClick={commit} style={{ ...sans, fontSize: 11, padding: "5px 11px", borderRadius: 6,
             cursor: "pointer", border: `1px solid ${C.gold}66`, background: C.gold + "14", color: C.gold }}>Save</button>
         </>
       ) : (
@@ -190,13 +190,13 @@ function CashBar({ cash, onSave, onClear, busy }) {
           <span style={{ ...mono, fontSize: 16, color: amount ? C.text : C.faint }}>
             {amount != null ? inr(amount) : "not set"}
           </span>
-          <button onClick={start} disabled={busy} style={{ ...sans, fontSize: 11, padding: "5px 11px", borderRadius: 7,
+          <button onClick={start} disabled={busy} style={{ ...sans, fontSize: 11, padding: "5px 11px", borderRadius: 6,
             cursor: busy ? "default" : "pointer", border: `1px solid ${C.line2}`, background: "transparent", color: C.dim }}>
             {amount != null ? "Edit" : "Set dry powder"}
           </button>
           {amount != null && (
             <button onClick={onClear} disabled={busy} title="Remove the cash setting"
-              style={{ ...sans, fontSize: 11, padding: "5px 10px", borderRadius: 7,
+              style={{ ...sans, fontSize: 11, padding: "5px 10px", borderRadius: 6,
                 cursor: busy ? "default" : "pointer", border: `1px solid ${C.line2}`, background: "transparent", color: C.faint }}>
               Remove
             </button>
@@ -400,7 +400,7 @@ function HiddenGems({ API, onOpen }) {
               </span>
               {g.under_followed && (
                 <span style={{ ...sans, fontSize: 9, fontWeight: 700, letterSpacing: "0.05em", color: "#E8B054",
-                               background: "#E8B05416", borderRadius: 5, padding: "2px 7px" }}>NO STREET COVERAGE</span>
+                               background: "#E8B05416", borderRadius: 6, padding: "2px 7px" }}>NO STREET COVERAGE</span>
               )}
               <span style={{ marginLeft: "auto", display: "flex", gap: 16, flexWrap: "wrap" }}>
                 <GemStat label={g.cap_tier || "Cap"} value={g.market_cap_cr != null ? inr(g.market_cap_cr) + " Cr" : null} />
@@ -534,7 +534,7 @@ export default function FundManager({ API, user, requestAuth, onOpen }) {
                          borderTop: `1px solid ${C.line}`, cursor: "pointer" }}>
                 <ConvictionBar v={a.conviction} />
                 <span style={{ ...sans, fontSize: 9.5, fontWeight: 700, letterSpacing: "0.06em", flexShrink: 0,
-                               padding: "3px 8px", borderRadius: 5, marginTop: 2,
+                               padding: "3px 8px", borderRadius: 6, marginTop: 2,
                                color: actionTone(a.action), background: actionTone(a.action) + "1a" }}>
                   {a.action}
                 </span>
@@ -585,20 +585,20 @@ export default function FundManager({ API, user, requestAuth, onOpen }) {
                   {(a.hold_for_results || a.cash_note) && (
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 5 }}>
                       {a.hold_for_results && (
-                        <span style={{ ...mono, fontSize: 9.5, padding: "2px 8px", borderRadius: 5,
+                        <span style={{ ...mono, fontSize: 9.5, padding: "2px 8px", borderRadius: 6,
                           color: "#E8B054", border: "1px solid #E8B05455", background: "#E8B05412" }}
                           title={`Reports ${a.results_due?.date} — the manager is holding for the print`}>
                           ⏳ WAIT FOR RESULTS{a.results_due?.days_away >= 0 ? ` · ${a.results_due.days_away}d` : ""}
                         </span>
                       )}
                       {a.cash_note && (
-                        <span style={{ ...mono, fontSize: 9.5, padding: "2px 8px", borderRadius: 5,
+                        <span style={{ ...mono, fontSize: 9.5, padding: "2px 8px", borderRadius: 6,
                           color: C.dim, border: `1px solid ${C.line2}` }} title="Sized against your investable cash">
                           {a.fundable === false ? "⛔ " : ""}{a.cash_note}
                         </span>
                       )}
                       {a.fundable === true && (
-                        <span style={{ ...mono, fontSize: 9.5, padding: "2px 8px", borderRadius: 5,
+                        <span style={{ ...mono, fontSize: 9.5, padding: "2px 8px", borderRadius: 6,
                           color: C.green, border: `1px solid ${C.green}44` }} title="Funded by your available cash">
                           ✓ funded from cash
                         </span>

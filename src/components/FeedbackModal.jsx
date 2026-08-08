@@ -98,7 +98,7 @@ export default function FeedbackModal({ open, onClose, API }) {
                 ...mono, width: "100%", boxSizing: "border-box", resize: "vertical",
                 fontSize: 13, lineHeight: 1.5, color: C.text,
                 background: C.bg800, border: `1px solid ${C.line2}`,
-                borderRadius: 9, padding: "11px 12px", outline: "none",
+                borderRadius: 10, padding: "11px 12px", outline: "none",
               }} />
             <div style={{ display: "flex", alignItems: "center", marginTop: 10 }}>
               <span style={{ ...mono, fontSize: 10.5, color: C.faint }}>{msg.length}/{MAX}</span>

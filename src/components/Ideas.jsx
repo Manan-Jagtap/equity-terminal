@@ -6,11 +6,13 @@
    into a short idea list, with a factor breakdown per name. A research/
    ranking aid — NOT investment advice. */
 import { useEffect, useMemo, useState } from "react";
-import { Sparkles, Info } from "lucide-react";
-import { C, sans, serif, mono } from "../lib/theme.js";
+import { Info } from "lucide-react";
+import { C, sans, mono } from "../lib/theme.js";
+import { th, td, tdNum, thName, tdStack, stackLine } from "../design/table.js";
 import PageSkeleton from "./Skeleton.jsx";
 import { selStyle } from "../lib/listControls.jsx";
 import { VerdictBadge } from "./primitives.jsx";
+import PageHeader from "./ui/PageHeader.jsx";
 
 const FACTORS = [
   ["value", "Value"], ["quality", "Quality"], ["momentum", "Momentum"],
@@ -40,7 +42,7 @@ const scoreColor = (v) =>
 function Cell({ v }) {
   // 0-100 factor cell: number + a thin proportional bar.
   return (
-    <td style={{ padding: "8px 10px", textAlign: "right", minWidth: 62 }}>
+    <td style={{ ...tdNum, minWidth: 62 }}>
       <div style={{ ...mono, fontSize: 11, color: scoreColor(v) }}>{v == null ? "—" : Math.round(v)}</div>
       <div style={{ height: 3, background: C.bg600, borderRadius: 2, marginTop: 3, overflow: "hidden" }}>
         <div style={{ height: "100%", width: `${v == null ? 0 : v}%`, background: scoreColor(v), opacity: 0.7 }} />
@@ -88,18 +90,12 @@ export default function Ideas({ API, onOpen }) {
 
   if (loading) return <PageSkeleton label="Ranking the universe…" cards={3} />;
 
-  const th = { ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.07em",
-               color: C.dim, textAlign: "right", padding: "9px 10px", whiteSpace: "nowrap" };
-  const td = { ...mono, fontSize: 12, color: C.text, textAlign: "right", padding: "8px 10px", whiteSpace: "nowrap" };
-
   return (
     <div className="fadein" style={{ padding: "22px 26px 60px" }}>
-      <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap", marginBottom: 4 }}>
-        <h2 style={{ ...serif, fontSize: 26, color: C.text, margin: 0, display: "flex", alignItems: "center", gap: 9 }}>
-          <Sparkles size={19} color={C.gold} /> Ideas · Alpha Score
-        </h2>
-        <span style={{ ...sans, fontSize: 12, color: C.dim }}>{ideas.length} names ranked</span>
-      </div>
+      <PageHeader title="Ideas" meta={`${ideas.length} names ranked`}>
+        A transparent 7-factor Alpha Score — quality, momentum, value, low-vol, growth,
+        estimate revisions and earnings surprise, each shown so you can disagree with it.
+      </PageHeader>
       <div style={{ ...sans, fontSize: 11.5, color: C.faint, lineHeight: 1.6, maxWidth: 780, marginBottom: 14, display: "flex", gap: 6 }}>
         <Info size={13} color={C.dim} style={{ flexShrink: 0, marginTop: 2 }} />
         <span>
@@ -159,8 +155,8 @@ export default function Ideas({ API, onOpen }) {
             <div key={s.sector} onClick={() => setSector(s.sector)}
                  style={{ display: "flex", alignItems: "center", gap: 8, padding: "3px 0", cursor: "pointer" }}>
               <div style={{ ...sans, fontSize: 11, color: C.text200, width: 130, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.sector}</div>
-              <div style={{ flex: 1, height: 5, background: C.bg600, borderRadius: 3 }}>
-                <div style={{ height: "100%", width: `${s.avg_alpha || 0}%`, background: scoreColor(s.avg_alpha), borderRadius: 3 }} />
+              <div style={{ flex: 1, height: 5, background: C.bg600, borderRadius: 6 }}>
+                <div style={{ height: "100%", width: `${s.avg_alpha || 0}%`, background: scoreColor(s.avg_alpha), borderRadius: 6 }} />
               </div>
               <div style={{ ...mono, fontSize: 11, color: scoreColor(s.avg_alpha), width: 26, textAlign: "right" }}>{s.avg_alpha != null ? Math.round(s.avg_alpha) : "—"}</div>
             </div>
@@ -197,7 +193,7 @@ export default function Ideas({ API, onOpen }) {
             <thead>
               <tr style={{ borderBottom: `1px solid ${C.line}` }}>
                 <th style={{ ...th, textAlign: "left" }}>#</th>
-                <th style={{ ...th, textAlign: "left" }}>Company</th>
+                <th style={thName}>Company</th>
                 <th style={th}>Alpha</th>
                 {FACTORS.map(([, label]) => <th key={label} style={th}>{label}</th>)}
                 <th style={th}>Verdict</th>
@@ -210,23 +206,33 @@ export default function Ideas({ API, onOpen }) {
                     style={{ borderBottom: `1px solid ${C.line}`, cursor: onOpen ? "pointer" : "default" }}
                     onMouseEnter={e => { e.currentTarget.style.background = C.panel2; }}
                     onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}>
-                  <td style={{ ...td, textAlign: "left", color: C.faint }}>{r.rank}</td>
-                  <td style={{ padding: "8px 10px", textAlign: "left", maxWidth: 260 }}>
-                    <div style={{ ...sans, fontSize: 12.5, fontWeight: 500, color: C.gold }}>{r.ticker}</div>
-                    <div style={{ ...sans, fontSize: 10, color: C.faint }}>{r.sector || ""}</div>
+                  <td style={{ ...tdNum, textAlign: "left", color: C.faint }}>{r.rank}</td>
+                  {/* Ticker and sector clamp to one line each; the whyRanked
+                      sentence clamps to TWO. A single-line clamp would cut the
+                      explanation, and no clamp let the row track the sentence's
+                      length — measured at four distinct heights, 99-126px, a
+                      27px spread across 40 rows. Two lines fits the sentence in
+                      the common case and pins the row in every case; the full
+                      text stays on hover. */}
+                  <td style={tdStack}>
+                    <div style={{ ...sans, fontSize: 12.5, fontWeight: 500, color: C.gold, ...stackLine }}>{r.ticker}</div>
+                    <div style={{ ...sans, fontSize: 10, color: C.faint, ...stackLine }}>{r.sector || ""}</div>
                     {whyRanked(r) && (
-                      <div style={{ ...sans, fontSize: 10.5, color: C.dim, marginTop: 3, lineHeight: 1.45 }}>
+                      <div title={whyRanked(r)}
+                        style={{ ...sans, fontSize: 10.5, color: C.dim, marginTop: 3, lineHeight: 1.45,
+                                 overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box",
+                                 WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
                         {whyRanked(r)}
                       </div>
                     )}
                   </td>
-                  <td style={{ padding: "8px 10px", textAlign: "right" }}>
+                  <td style={tdNum}>
                     <span style={{ ...mono, fontSize: 15, fontWeight: 600, color: scoreColor(r.alpha_score) }}>
                       {r.alpha_score == null ? "—" : r.alpha_score}
                     </span>
                   </td>
                   {FACTORS.map(([k]) => <Cell key={k} v={r.factors?.[k]} />)}
-                  <td style={{ padding: "8px 10px", textAlign: "right" }}>
+                  <td style={td}>
                     <VerdictBadge verdict={r.verdict || "—"} />
                     {r.engines_disagree && (
                       /* FIX-15: the two engines tell opposite stories — say so
@@ -234,7 +240,7 @@ export default function Ideas({ API, onOpen }) {
                       <div
                         title={r.disagree_note || ""}
                         style={{ ...sans, fontSize: 9.5, marginTop: 3, color: C.gold,
-                                 border: `1px solid ${C.gold}44`, borderRadius: 4,
+                                 border: `1px solid ${C.gold}44`, borderRadius: 6,
                                  padding: "1px 5px", display: "inline-block", cursor: "help" }}>
                         ⚖ engines disagree
                       </div>

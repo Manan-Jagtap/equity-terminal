@@ -198,7 +198,7 @@ export default function ChartTerminal({ data, livePrice, live, intrinsic, height
   const h = hover || liveBar || last;
   const up = (h.close ?? 0) >= (h.open ?? h.close);
   const showLive = !hover && !!liveBar;
-  const btn = (on, extra = {}) => ({ ...sans, fontSize: 11, padding: "4px 10px", borderRadius: 7, cursor: "pointer", border: `1px solid ${on ? C.gold + "66" : "transparent"}`, background: on ? C.gold + "12" : "transparent", color: on ? C.gold : C.dim, ...extra });
+  const btn = (on, extra = {}) => ({ ...sans, fontSize: 11, padding: "4px 10px", borderRadius: 6, cursor: "pointer", border: `1px solid ${on ? C.gold + "66" : "transparent"}`, background: on ? C.gold + "12" : "transparent", color: on ? C.gold : C.dim, ...extra });
   const legendItems = [...OVERLAYS, ...OSCILLATORS].filter(k => active[k]);
 
   return (
@@ -258,7 +258,7 @@ function MenuRow({ k, label, on, onClick }) {
   return (
     <div onClick={onClick} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 6px", borderRadius: 6, cursor: "pointer", ...sans, fontSize: 12, color: on ? C.text : C.dim }}
       onMouseEnter={e => e.currentTarget.style.background = C.bg800} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-      <span style={{ width: 13, height: 13, borderRadius: 3, border: `1px solid ${on ? C.gold : C.line2}`, background: on ? C.gold : "transparent", flexShrink: 0 }} />
+      <span style={{ width: 13, height: 13, borderRadius: 6, border: `1px solid ${on ? C.gold : C.line2}`, background: on ? C.gold : "transparent", flexShrink: 0 }} />
       {meta && <span style={{ width: 10, height: 2, background: meta.color, flexShrink: 0 }} />}
       {label || meta?.label || k}
     </div>

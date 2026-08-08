@@ -17,7 +17,7 @@ function AlertChip({ a }) {
   const col = ALERT_C[a.level] || C.dim;
   return (
     <span style={{ ...sans, fontSize: 11, color: col, border: `1px solid ${col}55`,
-      borderRadius: 4, padding: "3px 8px", display: "inline-flex", alignItems: "center", gap: 5 }}>
+      borderRadius: 6, padding: "3px 8px", display: "inline-flex", alignItems: "center", gap: 5 }}>
       <Bell size={11} /> {a.message}
     </span>
   );
@@ -85,12 +85,12 @@ function SettingsPanel({ item, onSave, onClose }) {
       <Row label="Alert on big daily move"><Toggle k="alert_move" /></Row>
       <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
         <button onClick={save} disabled={busy} style={{ ...sans, fontSize: 12, fontWeight: 600, color: C.bg,
-          background: C.gold, border: "none", borderRadius: 7, padding: "7px 14px", cursor: "pointer",
+          background: C.gold, border: "none", borderRadius: 6, padding: "7px 14px", cursor: "pointer",
           display: "inline-flex", alignItems: "center", gap: 6 }}>
           {busy ? <Loader2 size={13} className="spin" /> : <Check size={13} />} Save
         </button>
         <button onClick={onClose} style={{ ...sans, fontSize: 12, color: C.dim, background: "transparent",
-          border: `1px solid ${C.line2}`, borderRadius: 7, padding: "7px 14px", cursor: "pointer" }}>Cancel</button>
+          border: `1px solid ${C.line2}`, borderRadius: 6, padding: "7px 14px", cursor: "pointer" }}>Cancel</button>
       </div>
     </div>
   );
@@ -232,5 +232,5 @@ export default function Watchlist({ API, onOpen, onChanged, user, requestAuth })
 
 const iconBtn = {
   display: "inline-flex", alignItems: "center", justifyContent: "center", width: 30, height: 30,
-  borderRadius: 7, border: `1px solid ${C.line2}`, background: "transparent", color: C.dim, cursor: "pointer",
+  borderRadius: 6, border: `1px solid ${C.line2}`, background: "transparent", color: C.dim, cursor: "pointer",
 };

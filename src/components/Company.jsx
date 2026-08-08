@@ -7,7 +7,7 @@ import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import Logo from "./Logo.jsx";
 import {
   ArrowLeft, Building2, FileText, Activity, Calculator,
-  Users, Brain, Shield, Sparkles, Check,
+  Users, Brain, Shield, Sparkles, Check, AlertTriangle,
   Info, Loader2, TrendingUp, TrendingDown, Newspaper, Download, PieChart,
   ShieldAlert, Star, FolderOpen, FileSpreadsheet, ExternalLink, Layers, Table,
 } from "lucide-react";
@@ -26,6 +26,8 @@ import { recommend } from "../lib/recommend.js";
 import { fundamentals, isFinancial } from "../lib/valuation.js";
 import { technicals } from "../lib/technicals.js";
 import { useIsMobile } from "../lib/useResponsive.js";
+import { useResource } from "../lib/useResource.js";
+import ErrorState from "./ui/ErrorState.jsx";
 import { verdictColor, color } from "../design/tokens.js";
 import DCFModel from "./DCFModel.jsx";
 import ThreeStatementModel from "./ThreeStatementModel.jsx";
@@ -294,6 +296,33 @@ function Sep() {
   return <div style={{ height:1, background:`linear-gradient(90deg,transparent,${C.line2}55,transparent)`, margin:"8px 0" }} />;
 }
 
+/* Failure notice for a SECTION inside a tab, as opposed to a whole tab.
+
+   ui/ErrorState is a full-width dashed box with a headline — right when it IS
+   the tab's content, far too loud for one card among four. The distinction it
+   draws is the one that matters and it is preserved here in a single line: the
+   request failed, so this section is UNKNOWN, not empty. Kinds match
+   useResource's ("status" = the server answered and refused, "network" = we
+   never reached it, "parse" = it answered with something that wasn't data). */
+function InlineFetchError({ error, onRetry, what }) {
+  const why = error?.kind === "status" ? "the data service refused the request"
+            : error?.kind === "parse"  ? "the response came back unreadable"
+            : "the request didn't get through";
+  return (
+    <div role="status" style={{ ...sans, fontSize:12, color:C.dim, lineHeight:1.6,
+                                display:"flex", alignItems:"baseline", gap:8, padding:"10px 0" }}>
+      <AlertTriangle size={12} color={C.gold} aria-hidden="true" style={{ flexShrink:0, alignSelf:"center" }} />
+      <span>Couldn't load {what} — {why}. Nothing is missing; it just hasn't loaded.</span>
+      {onRetry && (
+        <button type="button" onClick={onRetry} style={{ ...sans, fontSize:11.5, color:C.gold,
+          background:"transparent", border:"none", padding:0, cursor:"pointer", textDecoration:"underline" }}>
+          Retry
+        </button>
+      )}
+    </div>
+  );
+}
+
 function KV({ label, value, tone }) {
   const col = tone === "gold" ? C.gold : tone === "pos" ? C.green : tone === "neg" ? C.red : C.text;
   return (
@@ -310,7 +339,7 @@ function Chip({ children, tone="neutral" }) {
   return (
     <span style={{
       ...sans, display:"inline-flex", alignItems:"center", padding:"3px 9px",
-      borderRadius:99, fontSize:11, letterSpacing:"0.04em", textTransform:"uppercase",
+      borderRadius: 99, fontSize:11, letterSpacing:"0.04em", textTransform:"uppercase",
       fontWeight:500, border:`1px solid ${col}55`, color:col, background:bg,
     }}>{children}</span>
   );
@@ -417,7 +446,7 @@ function ShareholdingCard({ data }) {
               <span style={{ color:C.text200 }}>{s.name}</span>
               <span style={{ ...mono, color:C.text }}>{s.pct != null ? s.pct.toFixed(2) + "%" : "—"}</span>
             </div>
-            <div style={{ height:5, background:C.bg700, borderRadius:3, overflow:"hidden" }}>
+            <div style={{ height:5, background:C.bg700, borderRadius: 6, overflow:"hidden" }}>
               <div style={{ width:`${Math.min(s.pct || 0, 100)}%`, height:"100%", background:colorFor(s.name) }} />
             </div>
           </div>
@@ -465,7 +494,7 @@ function ProfileKeyFacts({ kf }) {
   );
 }
 
-function OverviewTab({ co, rec, cd, profile }) {
+function OverviewTab({ co, rec, cd, profile, profileError }) {
   const isMobile = useIsMobile();
   const f = rec.f;
   const histPAT = cd?.pnl?.years?.slice(0, 5).map((y, i) => ({
@@ -484,7 +513,12 @@ function OverviewTab({ co, rec, cd, profile }) {
             : <SectionLabel accent="FROM EXCHANGE FILINGS">BUSINESS PROFILE</SectionLabel>}
           <div style={{ ...sans, fontSize:14, lineHeight:1.75, color:C.text200 }}>
             {cd?.description && <span style={{ ...serif, fontSize:36, float:"left", marginRight:10, lineHeight:1, color:C.gold }}>"</span>}
-            {cd?.description || profile?.description || `${co.name} operates in the ${co.sector} sector. Profile data loading…`}
+            {/* "Profile data loading…" was shown for BOTH states: still in
+                flight, and the request came back 404 and set profile to null —
+                in which case the card sat there loading forever. */}
+            {cd?.description || profile?.description || (profileError
+              ? `${co.name} operates in the ${co.sector} sector. Its filed business profile couldn't be loaded — the request failed, so this is unknown rather than empty.`
+              : `${co.name} operates in the ${co.sector} sector. Profile data loading…`)}
           </div>
           <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginTop:16 }}>
             {tagsFor(co, rec).map(({ t, tone }) => (
@@ -542,7 +576,7 @@ function OverviewTab({ co, rec, cd, profile }) {
                   <XAxis dataKey="y" tick={{ fill:C.dim, fontSize:11 }} axisLine={{ stroke:"rgba(220,213,193,.1)" }} tickLine={false} />
                   <YAxis yAxisId="L" tick={{ fill:C.dim, fontSize:11 }} axisLine={false} tickLine={false} tickFormatter={v => fmtN(v/1000,0)+"k"} />
                   <YAxis yAxisId="R" orientation="right" tick={{ fill:C.gold, fontSize:11 }} axisLine={false} tickLine={false} tickFormatter={v => fmtN(v/1000,0)+"k"} />
-                  <Tooltip contentStyle={{ background:C.bg800, border:`1px solid ${C.bg600}`, borderRadius:0, fontSize:12 }} labelStyle={{ color:C.text }} formatter={(v,n) => ["₹"+fmtN(v,0)+" Cr", n==="aum"?"AUM":"PAT"]} />
+                  <Tooltip contentStyle={{ background:C.bg800, border:`1px solid ${C.bg600}`, borderRadius: 0, fontSize:12 }} labelStyle={{ color:C.text }} formatter={(v,n) => ["₹"+fmtN(v,0)+" Cr", n==="aum"?"AUM":"PAT"]} />
                   <Bar yAxisId="L" dataKey="aum" fill={C.bg500} radius={[2,2,0,0]} />
                   <Line yAxisId="R" dataKey="pat" stroke={C.gold} strokeWidth={2} dot={{ fill:C.gold, r:4 }} />
                 </ComposedChart>
@@ -661,14 +695,18 @@ function ShareholdingTrendCard({ trend }) {
   );
 }
 
-function OwnershipTab({ profile, ownership }) {
+function OwnershipTab({ profile, ownership, error, onRetry }) {
   const isMobile = useIsMobile();
-  if (!profile) {
-    return <div style={{ padding:40, ...sans, color:C.dim, fontSize:13 }}>Loading ownership…</div>;
-  }
-  const hasAny = profile.shareholding?.length || profile.corporate_actions?.length ||
-                 profile.shareholding_trend?.rows?.length || profile.leadership?.length;
-  if (!hasAny && ownership) {
+  /* The old first line was `if (!profile) return "Loading ownership…"`, and the
+     page-level /profile fetch set profile to null on failure — so a 404 left
+     this tab claiming to be loading, forever. Order matters below: the insights
+     fallback runs FIRST, because when /profile fails but /insights succeeded we
+     hold a real shareholding pattern and should show it, not an error box. */
+  const hasAny = profile && (profile.shareholding?.length || profile.corporate_actions?.length ||
+                 profile.shareholding_trend?.rows?.length || profile.leadership?.length);
+  // `(profile || error)` = the profile request has settled. Without it the
+  // fallback would flash while the (slow) profile call was still in flight.
+  if (!hasAny && ownership && (profile || error)) {
     // Insights-blob fallback: quarterly shareholding pattern with QoQ deltas.
     const rows = [["Promoter", ownership.promoter], ["FII", ownership.fii],
                   ["Mutual Funds", ownership.mf], ["DII", ownership.dii],
@@ -678,7 +716,7 @@ function OwnershipTab({ profile, ownership }) {
     if (rows.length) {
       return (
         <div className="fadein" style={{ padding: isMobile ? 16 : 32, maxWidth: 520 }}>
-          <div style={{ border:`1px solid ${C.line}`, borderRadius:12, background:C.panel, padding:"18px 20px" }}>
+          <div style={{ border:`1px solid ${C.line}`, borderRadius: 12, background:C.panel, padding:"18px 20px" }}>
             <div style={{ ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.1em", color:C.dim, marginBottom:12 }}>
               Shareholding Pattern{ownership.as_of ? ` · as of ${ownership.as_of}` : ""}
             </div>
@@ -693,13 +731,29 @@ function OwnershipTab({ profile, ownership }) {
                 )}
               </div>
             ))}
-            <div style={{ ...sans, fontSize:10.5, color:C.faint, marginTop:10 }}>
-              Historical trend, corporate actions and leadership arrive with the detailed profile refresh.
-            </div>
+            {/* "…arrive with the detailed profile refresh" is a promise about a
+                future ingest. When the profile request failed, the data may be
+                sitting there already and a refresh would not be the fix. */}
+            {error
+              ? <InlineFetchError error={error} onRetry={onRetry}
+                  what="the detailed profile — trend, corporate actions, leadership" />
+              : <div style={{ ...sans, fontSize:10.5, color:C.faint, marginTop:10 }}>
+                  Historical trend, corporate actions and leadership arrive with the detailed profile refresh.
+                </div>}
           </div>
         </div>
       );
     }
+  }
+  if (error) {
+    return (
+      <div className="fadein" style={{ padding: isMobile ? 16 : 32 }}>
+        <ErrorState error={error} onRetry={onRetry} what="ownership" />
+      </div>
+    );
+  }
+  if (!profile) {
+    return <div style={{ padding:40, ...sans, color:C.dim, fontSize:13 }}>Loading ownership…</div>;
   }
   if (!hasAny) {
     return <div style={{ padding:40, ...sans, color:C.dim, fontSize:13 }}>No ownership data available for this company.</div>;
@@ -930,17 +984,21 @@ function ScreenerIncomeTable({ accent, title = "Income Statement", periods, metr
 
 /* Quarterly results — last 5 quarters from /quarterly. */
 function QuarterlyResults({ co, API }) {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    if (!API || !co.ticker) { setLoading(false); return; }
-    setLoading(true);
-    fetch(`${API}/api/companies/${co.ticker}/quarterly`)
-      .then(r => r.json()).then(setData).catch(() => setData(null))
-      .finally(() => setLoading(false));
-  }, [co.ticker, API]);
+  const { data, error, loading, retry } = useResource(
+    (API && co.ticker) ? `${API}/api/companies/${co.ticker}/quarterly` : null);
 
   if (loading) return <div style={{ ...sans, color:C.dim, fontSize:13, textAlign:"center", padding:40 }}>Loading quarterly results…</div>;
+  /* This is the whole content of the Quarterly view, so a failure gets the full
+     error box. It is also the worst case in this file: the API answers 4xx
+     with JSON, so the old `.then(r => r.json())` resolved with
+     {"detail":"Not Found"}, `has_data` came back undefined, and the component
+     fell through to the fallback below — which then told the user "Quarterly
+     results aren't published in our data feed ... they arrive with the weekly
+     refresh". An outage was reported as a publication gap, with a remedy that
+     could not help. */
+  if (error) return (
+    <div style={{ padding:"8px 0" }}><ErrorState error={error} onRetry={retry} what="quarterly results" /></div>
+  );
   if (!data?.has_data || !(data.quarters || []).length) return <QuarterlyInsightsFallback co={co} API={API} />;
   return <ScreenerIncomeTable accent={`QUARTERLY RESULTS · LAST ${data.quarters.length} QUARTERS`}
                               periods={data.quarters} metrics={data.metrics} order={data.order} kind="quarterly" growth />;
@@ -950,16 +1008,17 @@ function QuarterlyResults({ co, API }) {
    insights.latest_q (same filings feed) carries the latest quarter + TTM P&L
    for nearly all 500 (wiring audit #3). Two honest columns beat an empty tab. */
 function QuarterlyInsightsFallback({ co, API }) {
-  const [q, setQ] = useState(undefined);          // undefined=loading, null=absent
-  useEffect(() => {
-    let live = true;
-    fetch(`${API}/api/companies/${co.ticker}/insights`)
-      .then(r => r.json())
-      .then(d => { if (live) setQ(d?.latest_q || null); })
-      .catch(() => { if (live) setQ(null); });
-    return () => { live = false; };
-  }, [co.ticker, API]);
-  if (q === undefined) return <div style={{ ...sans, color:C.dim, fontSize:13, textAlign:"center", padding:40 }}>Loading quarterly results…</div>;
+  const { data, error, loading, retry } = useResource(
+    (API && co.ticker) ? `${API}/api/companies/${co.ticker}/insights` : null);
+  const q = data?.latest_q || null;
+  if (loading) return <div style={{ ...sans, color:C.dim, fontSize:13, textAlign:"center", padding:40 }}>Loading quarterly results…</div>;
+  /* Same trap one level down: this component IS the Quarterly view when
+     /quarterly is empty, and its "aren't published in our data feed" copy is a
+     claim about the FILINGS, so it may only be shown when the request succeeded
+     and genuinely carried no latest quarter. */
+  if (error) return (
+    <div style={{ padding:"8px 0" }}><ErrorState error={error} onRetry={retry} what="quarterly results" /></div>
+  );
   const rows = [["Sales", "sales"], ["Expenses", "expenses"], ["Operating Profit", "operating_profit"],
     ["OPM %", "opm"], ["Other Income", "other_income"], ["Interest", "interest"],
     ["Depreciation", "depreciation"], ["Profit Before Tax", "profit_before_tax"],
@@ -1004,15 +1063,23 @@ function QuarterlyInsightsFallback({ co, API }) {
 /* Annual income statement — last 5 years from /annual_pl, SAME format as
    quarterly. Falls back to the legacy statement table if unavailable. */
 function AnnualIncomeStatement({ co, API, fallback }) {
-  const [data, setData] = useState(undefined);
-  useEffect(() => {
-    if (!API || !co.ticker) { setData(null); return; }
-    setData(undefined);
-    fetch(`${API}/api/companies/${co.ticker}/annual_pl`)
-      .then(r => r.json()).then(setData).catch(() => setData(null));
-  }, [co.ticker, API]);
+  const { data, error, loading, retry } = useResource(
+    (API && co.ticker) ? `${API}/api/companies/${co.ticker}/annual_pl` : null);
 
-  if (data === undefined) return <div style={{ ...sans, color:C.dim, fontSize:13, padding:24 }}>Loading income statement…</div>;
+  if (loading) return <div style={{ ...sans, color:C.dim, fontSize:13, padding:24 }}>Loading income statement…</div>;
+  /* One section among three in the Financials tab, and its `fallback` is a REAL
+     table built from /financials data the tab already holds. So on failure we
+     render that — substituting one dataset for another is legitimate — but we
+     say so, because otherwise a working-looking table would be the only trace
+     of a failed request. With no fallback there is nothing to show, and `null`
+     would read as "this company files no income statement". */
+  if (error) return (
+    <div>
+      <InlineFetchError error={error} onRetry={retry}
+        what={fallback ? "the filings-feed income statement (showing the stored statements instead)" : "the income statement"} />
+      {fallback || null}
+    </div>
+  );
   if (!data?.has_data || !(data.periods || []).length) return fallback || null;
   return <ScreenerIncomeTable accent={`ANNUAL RESULTS · LAST ${data.periods.length} YEARS`}
                               periods={data.periods} metrics={data.metrics} order={data.order} kind="annual" growth />;
@@ -1021,21 +1088,24 @@ function AnnualIncomeStatement({ co, API, fallback }) {
 /* Generic annual statement (Balance Sheet / Cash Flow) — original IndianAPI
    line items via /balance_sheet or /cash_flow. Falls back to the legacy table. */
 function PeriodicStatement({ co, API, endpoint, title, accent, fallback }) {
-  const [data, setData] = useState(undefined);
-  useEffect(() => {
-    if (!API || !co.ticker) { setData(null); return; }
-    setData(undefined);
-    fetch(`${API}/api/companies/${co.ticker}/${endpoint}`)
-      .then(r => r.json()).then(setData).catch(() => setData(null));
-  }, [co.ticker, API, endpoint]);
+  const { data, error, loading, retry } = useResource(
+    (API && co.ticker) ? `${API}/api/companies/${co.ticker}/${endpoint}` : null);
 
-  if (data === undefined) return <div style={{ ...sans, color:C.dim, fontSize:13, padding:24 }}>Loading {title.toLowerCase()}…</div>;
+  if (loading) return <div style={{ ...sans, color:C.dim, fontSize:13, padding:24 }}>Loading {title.toLowerCase()}…</div>;
+  // Same shape as AnnualIncomeStatement above, and for the same reason.
+  if (error) return (
+    <div>
+      <InlineFetchError error={error} onRetry={retry}
+        what={fallback ? `the filings-feed ${title.toLowerCase()} (showing the stored statements instead)` : `the ${title.toLowerCase()}`} />
+      {fallback || null}
+    </div>
+  );
   if (!data?.has_data || !(data.periods || []).length) return fallback || null;
   return <ScreenerIncomeTable title={title} accent={accent || `${title.toUpperCase()} · LAST ${data.periods.length} YEARS`}
                               periods={data.periods} metrics={data.metrics} order={data.order} kind="annual" padCols={1} />;
 }
 
-function FinancialsTab({ co, cd, liveFinancials, API }) {
+function FinancialsTab({ co, cd, liveFinancials, statementsError, onRetryStatements, API }) {
   const [view, setView] = useState("annual");
   const isF = co.type === "financial";
   const hasLive = liveFinancials?.has_data;
@@ -1072,6 +1142,11 @@ function FinancialsTab({ co, cd, liveFinancials, API }) {
         </div>
       );
     }
+    /* "They populate on the next scheduled refresh" is a claim about the
+       INGESTION, and it is only true when /financials answered and said it has
+       nothing. The page-level fetch used to swallow a 4xx into the same null,
+       so an outage promised the user a refresh that would not fix anything. */
+    if (statementsError) return <ErrorState error={statementsError} onRetry={onRetryStatements} what="the statements" />;
     return (
       <Card><div style={{ ...sans, color:C.dim, fontSize:13, textAlign:"center", padding:40, lineHeight:1.7 }}>
         No multi-year statements for <b style={{ color:C.text }}>{co.ticker}</b> yet — they populate on the next scheduled refresh.
@@ -1084,7 +1159,7 @@ function FinancialsTab({ co, cd, liveFinancials, API }) {
       <div style={{ display:"flex", gap:4, marginBottom:20 }}>
         {[["annual","Annual"],["quarterly","Quarterly"]].map(([id, label]) => (
           <button key={id} onClick={() => setView(id)} style={{
-            ...sans, padding:"7px 16px", borderRadius:8, cursor:"pointer", fontSize:13, fontWeight:500,
+            ...sans, padding:"7px 16px", borderRadius: 8, cursor:"pointer", fontSize:13, fontWeight:500,
             border:`1px solid ${view===id?C.line2:"transparent"}`,
             background:view===id?C.bg800:"transparent",
             color:view===id?C.gold:C.dim,
@@ -1131,15 +1206,15 @@ function LiveMetricCard({ cat }) {
 
 function RatiosTab({ co, API, liveMetrics }) {
   const isMobile = useIsMobile();
-  const [ratios, setRatios] = useState(undefined);
-  const [insights, setInsights] = useState(null);
+  const base = (API && co.ticker) ? `${API}/api/companies/${co.ticker}` : null;
+  // Two independent sources, so two independent lifecycles: /ratios_live fills
+  // the operating-ratios table, /insights fills the valuation card, the growth
+  // table AND the ratios fallback. One failing must not blank the other.
+  const ratiosRes   = useResource(base && `${base}/ratios_live`);
+  const insightsRes = useResource(base && `${base}/insights`);
+  const ratios   = ratiosRes.data;
+  const insights = insightsRes.data;
   const liveCats = (liveMetrics?.categories || []).filter(c => c.metrics.some(m => m.value != null));
-  useEffect(() => {
-    if (!API || !co.ticker) { setRatios(null); return; }
-    setRatios(undefined);
-    fetch(`${API}/api/companies/${co.ticker}/ratios_live`).then(r => r.json()).then(setRatios).catch(() => setRatios(null));
-    fetch(`${API}/api/companies/${co.ticker}/insights`).then(r => r.json()).then(setInsights).catch(() => setInsights(null));
-  }, [co.ticker, API]);
 
   const sm = insights?.self_metrics;
   const growth = insights?.growth;       // profit_loss_stats: {metric: {"10 Years:": "9%", ...}}
@@ -1158,11 +1233,29 @@ function RatiosTab({ co, API, liveMetrics }) {
     return "—";
   };
 
+  /* Nothing left to render: both requests failed and the page-level /metrics
+     categories are absent too. Previously this drew the header line and then
+     stopped, which looks exactly like a company with no reported ratios. */
+  if (ratiosRes.error && insightsRes.error && !liveCats.length) return (
+    <div className="fadein" style={{ padding: isMobile ? 16 : 32 }}>
+      <ErrorState error={ratiosRes.error} what="ratios"
+        onRetry={() => { ratiosRes.retry(); insightsRes.retry(); }} />
+    </div>
+  );
+
   return (
     <div className="fadein" style={{ padding: isMobile ? 16 : 32, display:"flex", flexDirection:"column", gap:24 }}>
       <div style={{ ...sans, fontSize:12, color:C.dim, display:"flex", alignItems:"center", gap:8 }}>
         <Info size={13} color={C.faint} /> Ratios as reported in the source feed — sector-specific, no standardised template.
       </div>
+
+      {/* The valuation card and the growth table below both come from /insights;
+          when it fails they simply don't render, which is indistinguishable from
+          a name the feed carries no multiples for. */}
+      {insightsRes.error && (
+        <InlineFetchError error={insightsRes.error} onRetry={insightsRes.retry}
+          what="the reported multiples and growth history" />
+      )}
 
       {/* Valuation & returns — IndianAPI's own TTM multiples (same card style) */}
       <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr", gap:20, alignItems:"start" }}>
@@ -1189,7 +1282,7 @@ function RatiosTab({ co, API, liveMetrics }) {
       </div>
 
       {/* Operating ratios — original line items, capped to the latest 5 years */}
-      {ratios === undefined ? (
+      {ratiosRes.loading ? (
         <div style={{ ...sans, color:C.dim, fontSize:13, padding:24 }}>Loading ratios…</div>
       ) : (ratios?.has_data && (ratios.periods || []).length) ? (
         <ScreenerIncomeTable title="Ratios" accent="OPERATING RATIOS · REPORTED"
@@ -1231,6 +1324,10 @@ function RatiosTab({ co, API, liveMetrics }) {
             </Card>
           );
         })()
+      ) : ratiosRes.error ? (
+        // No table and no insights fallback — without this the slot renders
+        // nothing, which reads as "this company reports no operating ratios".
+        <InlineFetchError error={ratiosRes.error} onRetry={ratiosRes.retry} what="the operating ratios" />
       ) : null}
 
       {/* Growth & returns — styled to match the financials / operating tables */}
@@ -1499,21 +1596,38 @@ function IndianApiPeers({ co, peers, selfMetrics, universe, onOpenTicker }) {
 }
 
 function PeersTab({ co, cd, allCompanies, API, onOpenTicker }) {
-  const [iaData, setIaData] = useState(undefined); // undefined = loading
+  const { data: iaData, error, loading, retry } = useResource(
+    (API && co.ticker) ? `${API}/api/companies/${co.ticker}/insights` : null);
+  /* Supplementary, and deliberately NOT given an error surface: /peer_universe
+     only backfills the hero row's own net margin / dividend yield / rating, and
+     every one of those already has a fallback chain below. The r.ok check is
+     still required, and here it prevents a crash rather than a lie: the
+     endpoint returns a bare JSON ARRAY, so on a 404 the object {"detail": ...}
+     became `universe` and the `(universe || []).find(...)` below threw
+     "universe.find is not a function" mid-render. */
   const [universe, setUniverse] = useState(null);
   useEffect(() => {
-    if (!API || !co.ticker) { setIaData(null); return; }
-    setIaData(undefined);
-    fetch(`${API}/api/companies/${co.ticker}/insights`)
-      .then(r => r.json()).then(setIaData).catch(() => setIaData(null));
-  }, [co.ticker, API]);
-  useEffect(() => {
     if (!API) return;
-    fetch(`${API}/api/peer_universe`).then(r => r.json()).then(setUniverse).catch(() => setUniverse(null));
+    let live = true;
+    fetch(`${API}/api/peer_universe`)
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (live) setUniverse(Array.isArray(d) ? d : null); })
+      .catch(() => { if (live) setUniverse(null); });
+    return () => { live = false; };
   }, [API]);
 
-  if (iaData === undefined)
+  if (loading)
     return <div style={{ padding: 40, textAlign: "center", ...sans, color: C.dim, fontSize: 13 }}>Loading peers…</div>;
+  /* Main content of the tab. The old .catch left iaData null, which fell
+     through to the curated/DynamicPeers path — so a failed request rendered a
+     DIFFERENT peer set with no indication that the vendor comparison was
+     missing, and for names with neither it rendered "Not enough peers in this
+     sector yet". Retry is honest here: useResource re-fetches on reconnect. */
+  if (error) return (
+    <div className="fadein" style={{ padding:32 }}>
+      <ErrorState error={error} onRetry={retry} what="peers" />
+    </div>
+  );
   if (iaData?.peers && iaData.peers.length) {
     // Hero-row fallback: the peer table showed "—" for the company's own
     // net margin / div yield / rating while every peer had values (audit #7).
@@ -1584,7 +1698,7 @@ function PeersTab({ co, cd, allCompanies, API, onOpenTicker }) {
                 <CartesianGrid strokeDasharray="2 3" stroke="rgba(220,213,193,.08)" vertical={false} />
                 <XAxis dataKey="name" tick={{ fill:C.dim, fontSize:11 }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fill:C.dim, fontSize:11 }} axisLine={false} tickLine={false} tickFormatter={v=>v+"x"} />
-                <Tooltip contentStyle={{ background:C.bg800, border:`1px solid ${C.bg600}`, borderRadius:0 }} formatter={v=>[v+"x","P/B"]} />
+                <Tooltip contentStyle={{ background:C.bg800, border:`1px solid ${C.bg600}`, borderRadius: 0 }} formatter={v=>[v+"x","P/B"]} />
                 <Bar dataKey="pb" radius={[2,2,0,0]}>
                   {peers.map((p,i) => <Cell key={i} fill={p.tkr===co.ticker ? C.gold : C.bg500} />)}
                 </Bar>
@@ -1600,7 +1714,7 @@ function PeersTab({ co, cd, allCompanies, API, onOpenTicker }) {
                 <CartesianGrid strokeDasharray="2 3" stroke="rgba(220,213,193,.08)" horizontal={false} />
                 <XAxis type="number" tick={{ fill:C.dim, fontSize:11 }} axisLine={false} tickLine={false} tickFormatter={v=>v+"%"} />
                 <YAxis type="category" dataKey="name" tick={{ fill:C.text, fontSize:11 }} axisLine={false} tickLine={false} width={80} tickFormatter={n=>n.split(" ")[0]} />
-                <Tooltip contentStyle={{ background:C.bg800, border:`1px solid ${C.bg600}`, borderRadius:0 }} formatter={v=>[v+"%","AUM Growth"]} />
+                <Tooltip contentStyle={{ background:C.bg800, border:`1px solid ${C.bg600}`, borderRadius: 0 }} formatter={v=>[v+"%","AUM Growth"]} />
                 <Bar dataKey="aumGr">
                   {sorted.map((p,i) => <Cell key={i} fill={p.tkr===co.ticker ? C.gold : C.bg400} />)}
                 </Bar>
@@ -1615,25 +1729,16 @@ function PeersTab({ co, cd, allCompanies, API, onOpenTicker }) {
 
 /* ── News Tab ────────────────────────────────────────────────────── */
 function NewsTab({ co, API, profile, preloaded }) {
-  const [news, setNews]       = useState(preloaded || null);
-  const [loading, setLoading] = useState(!preloaded);
-  const [error, setError]     = useState(null);
-
-  useEffect(() => {
-    if (preloaded) { setNews(preloaded); setLoading(false); setError(null); return; }
-    if (!API) { setLoading(false); return; }
-    // Stale-response guard: a slow response for a previous ticker must not
-    // overwrite the current one on a rapid switch (audit E9 — the only Company
-    // effect that lacked it).
-    let dead = false;
-    setLoading(true);
-    setError(null); // clear any stale error from a previous ticker/fetch
-    fetch(`${API}/api/companies/${co.ticker}/news`)
-      .then(r => r.json())
-      .then(d => { if (!dead) { setNews(d); setLoading(false); } })
-      .catch(e => { if (!dead) { setError(e.message); setLoading(false); } });
-    return () => { dead = true; };
-  }, [co.ticker, API, preloaded]);
+  /* The page already fetched news (to decide whether this tab exists at all),
+     so only fetch our own copy when it didn't hand one down. useResource keeps
+     the stale-response guard the old effect had (audit E9) and adds the r.ok
+     check it lacked: the previous `.catch(e => setError(e.message))` fired on a
+     dropped connection but NEVER on a 4xx/5xx, because the API returns those as
+     JSON and r.json() resolved. A 500 landed in the "No syndicated news for
+     {ticker} right now — smaller names get thinner coverage" branch. */
+  const { data, error, loading, retry } = useResource(
+    (!preloaded && API && co.ticker) ? `${API}/api/companies/${co.ticker}/news` : null);
+  const news = preloaded || data;
 
   const typeColor = t => t === "announcement" ? C.blue : t === "result" ? C.green : C.text200;
   const typeLabel = t => t === "announcement" ? "📋 Announcement" : t === "result" ? "📊 Result" : "📰 News";
@@ -1653,7 +1758,8 @@ function NewsTab({ co, API, profile, preloaded }) {
         <div>
           <div style={{ ...serif, fontSize:22, color:C.text }}>{co.name} — Latest News</div>
           <div style={{ ...sans, fontSize:12, color:C.dim, marginTop:4 }}>
-            {news ? [`${news.count} items`, (news.sources||[]).length ? `Sources: ${news.sources.join(", ")}` : null, "refreshes every 30 min"].filter(Boolean).join(" · ") : "Loading…"}
+            {news ? [`${news.count} items`, (news.sources||[]).length ? `Sources: ${news.sources.join(", ")}` : null, "refreshes every 30 min"].filter(Boolean).join(" · ")
+                  : loading ? "Loading…" : "Not loaded"}
           </div>
         </div>
         {news?.count > 0 && (
@@ -1670,12 +1776,11 @@ function NewsTab({ co, API, profile, preloaded }) {
         </div>
       )}
 
+      {/* The old copy here promised recovery "on the next refresh" while the
+          component fetched exactly once on mount. ErrorState only claims a
+          retry because useResource actually performs one on reconnect. */}
       {error && !loading && (
-        <Card>
-          <div style={{ ...sans, color:C.red, fontSize:13 }}>
-            News is temporarily unreachable — it usually recovers on the next refresh.
-          </div>
-        </Card>
+        <ErrorState error={error} onRetry={retry} what="news" />
       )}
 
       {!loading && !error && (!news || news.count === 0) && (
@@ -1748,7 +1853,12 @@ function ResearchNoteCard({ co, API }) {
     if (!API || noteBusy) return;
     setNoteBusy(true);
     fetch(`${API}/api/companies/${co.ticker}/thesis`)
-      .then(r => r.json())
+      // A user-triggered one-shot, so useResource (mount-scoped, auto-retrying)
+      // is the wrong tool — but the r.ok check is not optional. Without it a
+      // 404 resolved to {"detail":"Not Found"}, whose `status` is undefined, so
+      // NONE of the three result branches below matched: the button went back
+      // to idle and the card rendered nothing at all.
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(d => { setNote(d); setNoteBusy(false); })
       .catch(e => { setNote({ status: "error", reason: e.message }); setNoteBusy(false); });
   };
@@ -1806,19 +1916,8 @@ function ResearchNoteCard({ co, API }) {
 
 
 function DocsTab({ co, API, profile }) {
-  const [docs, setDocs]         = useState(null);
-  const [loading, setLoading]   = useState(true);
-
-  useEffect(() => {
-    if (!API) { setLoading(false); return; }
-    let live = true;
-    setLoading(true);
-    fetch(`${API}/api/companies/${co.ticker}/documents`)
-      .then(r => r.json())
-      .then(d => { if (live) { setDocs(d || {}); setLoading(false); } })
-      .catch(() => { if (live) { setDocs(null); setLoading(false); } });
-    return () => { live = false; };
-  }, [co.ticker, API]);
+  const { data: docs, error, loading, retry } = useResource(
+    (API && co.ticker) ? `${API}/api/companies/${co.ticker}/documents` : null);
 
   const concalls = docs?.concalls || [];
   const reports  = docs?.annual_reports || [];
@@ -1828,7 +1927,12 @@ function DocsTab({ co, API, profile }) {
   // narrative, consolidated here so it lives in exactly one place.
   const mgmtCalls = (profile?.concalls || []).filter(c =>
     c && typeof c.ai_summary === "string" && !c.ai_summary.startsWith("/") && c.ai_summary.trim().length > 40);
-  const empty    = !loading && concalls.length === 0 && reports.length === 0 && ratings.length === 0 && anns.length === 0 && mgmtCalls.length === 0;
+  /* `empty` drives copy that makes a claim about the FILINGS ("No documents
+     found ... appear here as filings are collected"), so it must exclude the
+     case where we simply couldn't ask. This matters more here than anywhere:
+     the vendor revoked /documents (DATA-12), so this endpoint really does fail,
+     and the tab was telling users their filings hadn't been collected yet. */
+  const empty    = !loading && !error && concalls.length === 0 && reports.length === 0 && ratings.length === 0 && anns.length === 0 && mgmtCalls.length === 0;
 
   // The feed publishes dates at MIXED granularity: "May 2026" (concalls carry
   // no day), "30 Jun 2026", or relative ages ("1d"). Rendering through Date()
@@ -1857,7 +1961,7 @@ function DocsTab({ co, API, profile }) {
       onMouseLeave={e => e.currentTarget.style.borderColor = C.line2}
       style={{ ...sans, display:"inline-flex", alignItems:"center", gap:5, fontSize:11,
         color:C.gold, textDecoration:"none", border:`1px solid ${C.line2}`,
-        borderRadius:6, padding:"3px 9px" }}>
+        borderRadius: 6, padding:"3px 9px" }}>
       {label} <ExternalLink size={10} />
     </a>
   ) : null;
@@ -1883,6 +1987,10 @@ function DocsTab({ co, API, profile }) {
           <Loader2 size={20} color={C.gold} className="spin" />
           Fetching documents…
         </div>
+      )}
+
+      {error && !loading && (
+        <ErrorState error={error} onRetry={retry} what="documents" />
       )}
 
       {empty && (
@@ -1918,7 +2026,9 @@ function DocsTab({ co, API, profile }) {
         </Card>
       )}
 
-      {!loading && !empty && (
+      {/* Four cards whose empty copy is "No concall documents." / "No annual
+          reports." — true statements only when the fetch succeeded. */}
+      {!loading && !error && !empty && (
         <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(340px, 1fr))", gap:20 }}>
           {/* Concalls */}
           <Card>
@@ -2233,22 +2343,20 @@ const FORENSIC_ORDER = ["beneish_m", "altman_z", "piotroski", "accrual_ratio",
                         "cash_conversion", "interest_coverage", "net_debt_ebitda", "leverage_trend"];
 
 function ForensicsTab({ co, API }) {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  useEffect(() => {
-    if (!API || !co.ticker) { setLoading(false); return; }
-    let live = true;
-    setLoading(true);
-    fetch(`${API}/api/companies/${co.ticker}/forensics`)
-      .then(r => r.json())
-      .then(d => { if (live) { setData(d); setLoading(false); } })
-      .catch(() => { if (live) { setData(null); setLoading(false); } });
-    return () => { live = false; };
-  }, [co.ticker, API]);
+  const { data, error, loading, retry } = useResource(
+    (API && co.ticker) ? `${API}/api/companies/${co.ticker}/forensics` : null);
 
   if (loading) return (
     <div className="fadein" style={{ padding:48, display:"flex", alignItems:"center", gap:10, color:C.dim, ...sans, fontSize:13 }}>
       <Loader2 size={16} className="spin" /> Computing forensic checks…
+    </div>
+  );
+  /* "Not enough statement history to run forensic analysis" is a finding about
+     the company's filings — an accusation of thin data. A 500 must not be
+     allowed to make it. */
+  if (error) return (
+    <div className="fadein" style={{ padding:32 }}>
+      <ErrorState error={error} onRetry={retry} what="the forensic checks" />
     </div>
   );
   if (!data || data.available === false) return (
@@ -2271,7 +2379,7 @@ function ForensicsTab({ co, API }) {
       <div style={{ position:"absolute", inset:"0 auto 0 0", width:Math.max(0,Math.min(100,v))+"%", background:color || `linear-gradient(90deg,${C.gold500},${C.gold})` }} />
     </div>
   );
-  const Dot = ({ f }) => <span style={{ width:8, height:8, borderRadius:0, background:flagColor(f), flexShrink:0, display:"inline-block" }} />;
+  const Dot = ({ f }) => <span style={{ width:8, height:8, borderRadius: 0, background:flagColor(f), flexShrink:0, display:"inline-block" }} />;
 
   return (
     <div className="fadein" style={{ padding:32, display:"grid", gridTemplateColumns:"1fr 1fr", gap:24 }}>
@@ -2341,7 +2449,7 @@ function ForensicsTab({ co, API }) {
                 <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginTop:7 }}>
                   {m.tests.map((t, j) => (
                     <span key={j} title={t.note} style={{ ...sans, fontSize:9.5, textTransform:"uppercase", letterSpacing:"0.04em",
-                      color: t.pass ? C.green : C.red, border:`1px solid ${(t.pass?C.green:C.red)}44`, borderRadius:3, padding:"2px 6px" }}>
+                      color: t.pass ? C.green : C.red, border:`1px solid ${(t.pass?C.green:C.red)}44`, borderRadius: 6, padding:"2px 6px" }}>
                       {t.pass ? "✓" : "✗"} {t.name}
                     </span>
                   ))}
@@ -2350,7 +2458,7 @@ function ForensicsTab({ co, API }) {
               {k === "beneish_m" && m.components && (
                 <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginTop:7 }}>
                   {Object.entries(m.components).map(([name, v]) => (
-                    <span key={name} style={{ ...mono, fontSize:9.5, color:C.dim, border:`1px solid ${C.bg600}`, borderRadius:3, padding:"2px 6px" }}>
+                    <span key={name} style={{ ...mono, fontSize:9.5, color:C.dim, border:`1px solid ${C.bg600}`, borderRadius: 6, padding:"2px 6px" }}>
                       {name} {v}
                     </span>
                   ))}
@@ -2462,7 +2570,7 @@ function VerdictTab({ co, rec, cd, price, insights, apiVal }) {
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
                 <span style={{ ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.18em", color:C.dim }}>Composite Score</span>
                 {conf?.level && (
-                  <span style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.1em", color:confColor, border:`1px solid ${confColor}55`, borderRadius:4, padding:"2px 8px" }}>
+                  <span style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.1em", color:confColor, border:`1px solid ${confColor}55`, borderRadius: 6, padding:"2px 8px" }}>
                     {conf.level} confidence
                   </span>
                 )}
@@ -2515,7 +2623,7 @@ function VerdictTab({ co, rec, cd, price, insights, apiVal }) {
             <div style={{ display:"flex", alignItems:"baseline", gap:10, marginBottom:12 }}>
               <span style={{ ...serif, fontSize:44, color:sentTone, lineHeight:1 }}>{sentiment.score}</span>
               <span style={{ ...sans, fontSize:13, color:C.dim }}>/ 100</span>
-              <span style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.1em", color:sentTone, border:`1px solid ${sentTone}55`, borderRadius:4, padding:"3px 9px", marginLeft:"auto" }}>{sentiment.label}</span>
+              <span style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.1em", color:sentTone, border:`1px solid ${sentTone}55`, borderRadius: 6, padding:"3px 9px", marginLeft:"auto" }}>{sentiment.label}</span>
             </div>
             <Bar v={sentiment.score} />
             <div style={{ marginTop:12 }}>
@@ -2542,7 +2650,7 @@ function VerdictTab({ co, rec, cd, price, insights, apiVal }) {
             <SectionLabel>PRINCIPAL RISKS</SectionLabel>
             {risks.map((r, i) => (
               <div key={i} style={{ display:"flex", alignItems:"flex-start", gap:10, padding:"6px 0" }}>
-                <div style={{ width:6, height:6, borderRadius:0, background:C.red, flexShrink:0, marginTop:6 }} />
+                <div style={{ width:6, height:6, borderRadius: 0, background:C.red, flexShrink:0, marginTop:6 }} />
                 <span style={{ ...sans, fontSize:12.5, color:C.text200, lineHeight:1.6 }}>{r}</span>
               </div>
             ))}
@@ -2593,6 +2701,10 @@ function parseLatestPL(d) {
   return { revenue, ebitda, ebit, netProfit, taxRate };
 }
 
+// Tooltip for a snapshot cell whose "—" is a failed request rather than an
+// absent figure. One string so the two readings can never drift apart.
+const NOT_LOADED = "Not loaded — this request failed, so the figure is unknown rather than absent.";
+
 /* ── Main Company component ──────────────────────────────────────── */
 export default function Company({ co, assumptions, setAssumptions, price, setPrice, onBack, API, allCompanies, histPrices, isWatched, onToggleWatch, initialTab, onOpenTicker }) {
   const isMobile = useIsMobile();
@@ -2606,13 +2718,47 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
     setPrevInitialTab(initialTab);
     if (initialTab) setTab(initialTab);
   }
-  const [liveFinancials, setLiveFinancials] = useState(null);
-  const [liveMetrics,    setLiveMetrics]    = useState(null);
-  const [liveProfile,    setLiveProfile]    = useState(null);
-  const [liveInsights,   setLiveInsights]   = useState(null);
   const [scnNonce,       setScnNonce]       = useState(0);   // remounts DCF sliders on scenario load
-  const [liveStatement,  setLiveStatement]  = useState(null); // real latest-FY operating figures
-  const [apiVal,         setApiVal]         = useState(null); // backend INDEPENDENT valuation (authoritative)
+
+  /* Page-level resources — six requests that feed the header, the snapshot
+     strip and most of the tabs. They were one effect of
+     `fetch(u).then(r => r.json()).catch(() => setX(null))`, which cannot fail:
+     the API answers 4xx/5xx with a JSON body, so r.json() RESOLVED and the
+     error envelope became the state. {"detail":"Not Found"} has no
+     .recommendation, so the strip printed "—" for Fair Value, Upside and
+     Verdict — the exact three dashes the engine prints when it deliberately has
+     no call. useResource keeps the stale-response guard those effects had and
+     adds the r.ok check they didn't, so each of these now reports its own
+     failure (banner below, plus the tab-level states that used to claim the
+     data simply hadn't been ingested yet). */
+  const coUrl = (API && co.ticker) ? `${API}/api/companies/${co.ticker}` : null;
+  const financialsRes = useResource(coUrl && `${coUrl}/financials`);
+  const metricsRes    = useResource(coUrl && `${coUrl}/metrics`);
+  const profileRes    = useResource(coUrl && `${coUrl}/profile`);   // slow (5 chained vendor calls) — never blocks the rest
+  const insightsRes   = useResource(coUrl && `${coUrl}/insights`);
+  // Real latest-FY operating figures → fed into the DCF/Verdict engine.
+  const statementRes  = useResource(coUrl && `${coUrl}/annual_pl`, { transform: parseLatestPL });
+  // Backend INDEPENDENT valuation (history-derived DCF/RI + analyst block). This
+  // is the authoritative number the screener also shows, so the DCF & Verdict
+  // tabs display exactly what the backend computed — no client/server drift.
+  const valRes        = useResource(coUrl);
+  const liveFinancials = financialsRes.data;
+  const liveMetrics    = metricsRes.data;
+  const liveProfile    = profileRes.data;
+  const liveInsights   = insightsRes.data;
+  const liveStatement  = statementRes.data;
+  const apiVal         = valRes.data;
+
+  // Named for the banner: which of the six could not be loaded, in the words a
+  // reader of this page would use for them.
+  const pageFailures = [
+    [valRes,        "the valuation"],
+    [insightsRes,   "reported metrics and consensus"],
+    [financialsRes, "financial statements"],
+    [metricsRes,    "computed ratios"],
+    [profileRes,    "the company profile"],
+    [statementRes,  "latest-year operating figures"],
+  ].filter(([r]) => r.error);
 
   // F&O-underlying universe (Dhan scrip master, cached ~daily server-side).
   // Cash-only names get no Options tab — showing an always-empty tab reads
@@ -2717,35 +2863,6 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
   const livePx = liveFeed.prices?.[(co.ticker || "").toUpperCase()];
   const displayPrice = livePx || price;
   const mcap = (price && co.shares) ? price * co.shares : null; // never the curated snapshot
-
-  useEffect(() => {
-    if (!API || !co.ticker) return;
-    // Stale-response guard: if the ticker changes (or the component unmounts)
-    // before a response lands, that response must NOT overwrite newer data.
-    let live = true;
-    Promise.all([
-      fetch(`${API}/api/companies/${co.ticker}/financials`).then(r=>r.json()).catch(()=>null),
-      fetch(`${API}/api/companies/${co.ticker}/metrics`).then(r=>r.json()).catch(()=>null),
-    ]).then(([fins, mets]) => { if (live) { setLiveFinancials(fins); setLiveMetrics(mets); } });
-    // Profile (slow: 5 chained calls) fetched separately so it doesn't block the rest.
-    setLiveProfile(null);
-    fetch(`${API}/api/companies/${co.ticker}/profile`)
-      .then(r=>r.json()).then(d=>{ if (live) setLiveProfile(d); }).catch(()=>{ if (live) setLiveProfile(null); });
-    // Insights carries self_metrics (the company's own IndianAPI multiples) for the snapshot.
-    fetch(`${API}/api/companies/${co.ticker}/insights`)
-      .then(r=>r.json()).then(d=>{ if (live) setLiveInsights(d); }).catch(()=>{ if (live) setLiveInsights(null); });
-    // Real latest-FY operating figures → fed into the DCF/Verdict engine.
-    setLiveStatement(null);
-    fetch(`${API}/api/companies/${co.ticker}/annual_pl`)
-      .then(r=>r.json()).then(d=>{ if (live) setLiveStatement(parseLatestPL(d)); }).catch(()=>{ if (live) setLiveStatement(null); });
-    // Backend INDEPENDENT valuation (history-derived DCF/RI + analyst block). This
-    // is the authoritative number the screener also shows, so the DCF & Verdict
-    // tabs display exactly what the backend computed — no client/server drift.
-    setApiVal(null);
-    fetch(`${API}/api/companies/${co.ticker}`)
-      .then(r=>r.json()).then(d=>{ if (live) setApiVal(d); }).catch(()=>{ if (live) setApiVal(null); });
-    return () => { live = false; };
-  }, [co.ticker, API]);
 
   // Seed the interactive DCF sliders from the backend's OWN history-derived
   // assumptions (apiVal.assumptions) rather than generic scenario defaults — so
@@ -2945,7 +3062,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
                   title={isWatched ? "Remove from watchlist" : "Add to watchlist"}
                   style={{ ...sans, display:"flex", alignItems:"center", gap:6, cursor:"pointer",
                     background:"transparent", border:`1px solid ${isWatched ? C.gold+"66" : C.line2}`,
-                    borderRadius:8, padding:"5px 10px", color:isWatched ? C.gold : C.dim, fontSize:12 }}>
+                    borderRadius: 8, padding:"5px 10px", color:isWatched ? C.gold : C.dim, fontSize:12 }}>
                   <Star size={13} color={isWatched ? C.gold : C.dim} fill={isWatched ? C.gold : "none"} />
                   {isWatched ? "Watching" : "Watch"}
                 </button>
@@ -3019,8 +3136,15 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
                   // Header teaser: first two sentences. The FULL profile lives in
                   // the Business tab — repeating it verbatim in both places made
                   // the page read like a copy-paste bug.
-                  const full = liveProfile?.description || cd?.description ||
-                    `${co.name} is a ${co.sector} company in the terminal's Nifty 500 coverage. The figures on this page are its live market data and our independent model's read; a detailed business profile arrives with the next data refresh.`;
+                  // The generic line ends "…arrives with the next data refresh",
+                  // which is only true if we ASKED and were told there is no
+                  // profile. On a failed /profile the description may already
+                  // exist, so promising a refresh would send the user waiting
+                  // for something that has already happened.
+                  const missing = profileRes.error
+                    ? `${co.name} is a ${co.sector} company in the terminal's Nifty 500 coverage. Its business profile couldn't be loaded just now — see the notice below.`
+                    : `${co.name} is a ${co.sector} company in the terminal's Nifty 500 coverage. The figures on this page are its live market data and our independent model's read; a detailed business profile arrives with the next data refresh.`;
+                  const full = liveProfile?.description || cd?.description || missing;
                   const parts = full.match(/[^.!?]+[.!?]+(\s|$)/g) || [full];
                   const teaser = parts.slice(0, 2).join("").trim();
                   return teaser.length < full.trim().length ? teaser + " …" : teaser;
@@ -3074,6 +3198,35 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
         </div>
       )}
 
+      {/* One notice for the page-level requests, placed directly above the strip
+          it explains. Without it the failure is invisible: every field these
+          six feed degrades to "—", which on this page means "the engine has no
+          call" — a statement about the company, not about the network. Named
+          individually because a reader needs to know WHICH numbers below are
+          missing rather than merely unknown. */}
+      {pageFailures.length > 0 && (
+        <div role="alert" style={{ borderBottom:`1px solid ${C.line}`, background:C.bg800 }}>
+          <div style={{ padding:`12px ${PAD}px`, display:"flex", gap:12, alignItems:"flex-start",
+                        ...sans, fontSize:13, color:C.text200, lineHeight:1.55 }}>
+            <AlertTriangle size={15} color={C.gold} aria-hidden="true" style={{ flexShrink:0, marginTop:2 }} />
+            <div>
+              <span style={{ color:C.gold, fontWeight:600, textTransform:"uppercase",
+                             letterSpacing:"0.08em", fontSize:11, marginRight:8 }}>
+                Not loaded
+              </span>
+              This terminal couldn't reach the engine for {pageFailures.map(([, n]) => n).join(", ")}.
+              Fields fed by {pageFailures.length > 1 ? "them" : "it"} read “—” because the request failed,
+              not because the figure doesn't exist. It retries by itself when the connection returns.
+              <button type="button" onClick={() => pageFailures.forEach(([r]) => r.retry())}
+                style={{ ...sans, fontSize:12.5, color:C.gold, background:"transparent", border:"none",
+                         padding:0, marginLeft:8, cursor:"pointer", textDecoration:"underline" }}>
+                Try again
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Snapshot strip ─────────────────────────────────────── */}
       <div style={{ borderBottom:`1px solid ${C.line}`, background:C.bg900+"55" }}>
         <div style={{ padding:`14px ${PAD}px`, display:"grid", gridTemplateColumns: isMobile ? "repeat(3,1fr)" : "repeat(11,1fr)", gap: isMobile ? 14 : 8, rowGap: isMobile ? 16 : 8 }}>
@@ -3105,13 +3258,18 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
             // residual behind heavy debt, so the point estimate is meaningless
             // while the AVOID still stands). "—" would read as "we have nothing";
             // "n/m" plus the reason says "we looked, and this figure would mislead".
+            // …and a THIRD meaning of "—" is possible here: the valuation request
+            // failed. The banner above says so; these tooltips say it on the cell.
             { l:"Fair Value",
               v: fairValue != null ? inrOrDash(fairValue,0)
                  : fairValueNote ? "n/m" : "—",
-              title: fairValueNote || undefined,
+              title: fairValueNote || (valRes.error ? NOT_LOADED : undefined),
               accent: fairValueNote ? C.dim : C.gold },
-            { l:"Upside",           v:fairUpside!=null?signedPct(fairUpside):"—", accent:fairUpside==null?C.dim:fairUpside>=0?C.green:C.red },
-            { l:"Verdict",          v:modelVerdict||"—", accent:modelVerdictColor, large:true },
+            { l:"Upside",           v:fairUpside!=null?signedPct(fairUpside):"—",
+              title: (fairUpside == null && valRes.error) ? NOT_LOADED : undefined,
+              accent:fairUpside==null?C.dim:fairUpside>=0?C.green:C.red },
+            { l:"Verdict",          v:modelVerdict||"—", accent:modelVerdictColor, large:true,
+              title: (!modelVerdict && valRes.error) ? NOT_LOADED : undefined },
           ].filter(Boolean).map(s => (
             <div key={s.l} style={{ minWidth: 0 }}>
               <div style={{ ...sans, fontSize:10, textTransform:"uppercase", letterSpacing:"0.12em", color:C.dim, fontWeight:500, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }} title={s.l}>{s.l}</div>
@@ -3144,9 +3302,10 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
 
       {/* ── Tab content ───────────────────────────────────────── */}
       <main>
-        {tab==="overview"   && <><ScoreCard API={API} ticker={co.ticker} /><OverviewTab co={co2} rec={rec} cd={cd} profile={liveProfile} /></>}
+        {tab==="overview"   && <><ScoreCard API={API} ticker={co.ticker} /><OverviewTab co={co2} rec={rec} cd={cd} profile={liveProfile} profileError={profileRes.error} /></>}
         {tab==="chart"      && <PriceChart     data={histPrices?.data} intrinsic={fairValue} price={price} ticker={co.ticker} API={API} livePrice={livePx} live={!!liveFeed.live} />}
-        {tab==="financials" && <FinancialsTab  co={co2} cd={cd} liveFinancials={liveFinancials} API={API} />}
+        {tab==="financials" && <FinancialsTab  co={co2} cd={cd} liveFinancials={liveFinancials}
+              statementsError={financialsRes.error} onRetryStatements={financialsRes.retry} API={API} />}
         {tab==="ratios"     && <RatiosTab      co={co2} API={API} liveMetrics={liveMetrics} />}
         {tab==="dcf"        && <><ScenarioBar API={API} ticker={co.ticker} assumptions={assumptions}
               setAssumptions={d => { setAssumptions(d); setScnNonce(n => n + 1); }} />
@@ -3157,7 +3316,8 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
         {tab==="analyst"    && <AnalystTab     co={co2} API={API} price={price} />}
         {tab==="options"    && <OptionsTab     co={co2} API={API} />}
         {tab==="peers"      && <PeersTab       co={co2} cd={cd} allCompanies={allCompanies} API={API} onOpenTicker={onOpenTicker} />}
-        {tab==="ownership"  && <OwnershipTab   profile={liveProfile} ownership={liveInsights?.ownership} />}
+        {tab==="ownership"  && <OwnershipTab   profile={liveProfile} ownership={liveInsights?.ownership}
+              error={profileRes.error} onRetry={profileRes.retry} />}
         {tab==="news"       && <NewsTab        co={co2} API={API} profile={liveProfile} preloaded={newsData} />}
         {tab==="docs"       && <DocsTab        co={co2} API={API} profile={liveProfile} />}
         {tab==="thesis"     && <AIThesisTab    co={co2} profile={liveProfile} insights={liveInsights} cd={cd} price={price} API={API} onGoTab={setTab} />}

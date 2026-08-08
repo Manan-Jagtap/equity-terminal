@@ -25,7 +25,7 @@ function ToneGauge({ tone, direction }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
       <span style={{ ...mono, fontSize: 11, color: col }}>{label} tone</span>
-      <div style={{ width: 120, height: 5, background: C.line, borderRadius: 3, position: "relative" }}>
+      <div style={{ width: 120, height: 5, background: C.line, borderRadius: 6, position: "relative" }}>
         <div style={{ position: "absolute", left: `${pct}%`, top: -2, width: 3, height: 9,
                       background: col, borderRadius: 2, transform: "translateX(-50%)" }} />
       </div>

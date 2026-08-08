@@ -55,7 +55,7 @@ export default function FvRange({ co, price, base }) {
       <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: C.dim, marginBottom: 6 }}>
         Fair-value range · bear → bull
       </div>
-      <div style={{ position: "relative", height: 6, borderRadius: 3,
+      <div style={{ position: "relative", height: 6, borderRadius: 6,
                     background: `linear-gradient(90deg, ${C.red}44, ${C.gold}44, ${C.green}44)` }}>
         {/* base marker */}
         <div title={`Base ${inr(base)}`} style={{ position: "absolute", left: `${pos(base)}%`, top: -3,

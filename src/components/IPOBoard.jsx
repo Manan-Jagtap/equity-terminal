@@ -56,11 +56,11 @@ function Card({ r, onOpen }) {
       <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
         <span style={{ ...sans, fontSize: 14, fontWeight: 500, color: C.text }}>{r.name}</span>
         {r.is_sme && <span style={{ ...sans, fontSize: 9, fontWeight: 700, color: "#E8B054",
-          background: "#E8B0541a", borderRadius: 4, padding: "2px 6px" }}>SME</span>}
+          background: "#E8B0541a", borderRadius: 6, padding: "2px 6px" }}>SME</span>}
         <span style={{ ...mono, fontSize: 10, color: C.faint }}>{r.symbol || ""}</span>
         {r.industry && <span style={{ ...sans, fontSize: 10, color: C.dim }}>{r.industry}</span>}
-        {r.nse_enabled && <span style={{ ...sans, fontSize: 9, color: C.gold, border: `1px solid ${C.gold}44`, borderRadius: 4, padding: "1px 5px" }}>NSE</span>}
-        {r.bse_enabled && <span style={{ ...sans, fontSize: 9, color: "#8FB4D8", border: "1px solid #8FB4D844", borderRadius: 4, padding: "1px 5px" }}>BSE</span>}
+        {r.nse_enabled && <span style={{ ...sans, fontSize: 9, color: C.gold, border: `1px solid ${C.gold}44`, borderRadius: 6, padding: "1px 5px" }}>NSE</span>}
+        {r.bse_enabled && <span style={{ ...sans, fontSize: 9, color: "#8FB4D8", border: "1px solid #8FB4D844", borderRadius: 6, padding: "1px 5px" }}>BSE</span>}
         {r.document_url && (
           <a href={r.document_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
             style={{ ...sans, fontSize: 11, color: C.gold, textDecoration: "none",
@@ -221,7 +221,7 @@ function IPODetailModal({ d, onClose }) {
         <div style={{ display: "flex", alignItems: "baseline", gap: 10, marginBottom: 12 }}>
           <span style={{ ...serif, fontSize: 18, color: C.text, flex: 1 }}>{basic.name || "IPO detail"}</span>
           <button onClick={onClose} style={{ ...sans, fontSize: 12, color: C.dim, background: "transparent",
-            border: `1px solid ${C.line2}`, borderRadius: 7, padding: "4px 10px", cursor: "pointer" }}>Close</button>
+            border: `1px solid ${C.line2}`, borderRadius: 6, padding: "4px 10px", cursor: "pointer" }}>Close</button>
         </div>
         {!d ? <div style={{ ...sans, color: C.dim, fontSize: 13, padding: "20px 0" }}>Loading…</div>
           : d.available === false ? <div style={{ ...sans, color: C.dim, fontSize: 13, padding: "20px 0" }}>No extra detail for this IPO yet.</div>

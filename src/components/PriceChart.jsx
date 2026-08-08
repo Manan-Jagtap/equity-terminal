@@ -118,7 +118,7 @@ export default function PriceChart({ data, intrinsic, ticker, API, livePrice, li
     <div style={{ display: "inline-flex", gap: 4, marginRight: 8 }}>
       {[["candles", "Candles"], ["line", "Line"], ["intraday", "1D"]].map(([id, lbl]) => (
         <button key={id} onClick={() => setStyle(id)} style={{
-          ...sans, fontSize: 11, padding: "4px 11px", borderRadius: 7, cursor: "pointer",
+          ...sans, fontSize: 11, padding: "4px 11px", borderRadius: 6, cursor: "pointer",
           border: `1px solid ${style === id ? C.gold + "66" : C.line2}`,
           background: style === id ? C.gold + "0d" : "transparent",
           color: style === id ? C.gold : C.dim }}>{lbl}</button>
@@ -204,7 +204,7 @@ export default function PriceChart({ data, intrinsic, ticker, API, livePrice, li
         <div style={{ display: "flex", gap: 5, marginLeft: "auto", flexWrap: "wrap" }}>
           {RANGES.map(([lbl, n]) => (
             <button key={lbl} onClick={() => setRange(n)} style={{
-              ...sans, fontSize: 11, padding: "4px 11px", borderRadius: 7, cursor: "pointer",
+              ...sans, fontSize: 11, padding: "4px 11px", borderRadius: 6, cursor: "pointer",
               border: `1px solid ${range === n ? C.line2 : "transparent"}`,
               background: range === n ? C.bg800 : "transparent", color: range === n ? C.gold : C.dim,
             }}>{lbl}</button>

@@ -224,7 +224,7 @@ export default function DCFModel({ co, price, apiVal, a, onWork }) {
                 <span style={{ ...sans, fontSize:16, fontWeight:600, color: (headMos ?? 0)>=0?C.green:C.red }}>
                   {(headMos ?? 0)>=0?"+":""}{((headMos ?? 0)*100).toFixed(1)}% MoS
                 </span>
-                <span style={{ ...sans, fontSize:13, fontWeight:600, padding:"4px 12px", borderRadius:6,
+                <span style={{ ...sans, fontSize:13, fontWeight:600, padding:"4px 12px", borderRadius: 6,
                   color:verdColor(headVerd), border:`1px solid ${verdColor(headVerd)}55` }}>{headVerd}</span>
               </div>
               <div style={{ ...sans, fontSize:11, color:C.faint, marginTop:10, lineHeight:1.6, maxWidth:600 }}>
@@ -278,7 +278,7 @@ export default function DCFModel({ co, price, apiVal, a, onWork }) {
                   </div>
                   {share != null && (
                     <div style={{ display:"flex", alignItems:"center", gap:8, marginTop:10 }}>
-                      <div style={{ flex:1, height:4, background:"rgba(220,213,193,.08)", borderRadius:2, overflow:"hidden" }}>
+                      <div style={{ flex:1, height:4, background:"rgba(220,213,193,.08)", borderRadius: 2, overflow:"hidden" }}>
                         <div style={{ width:`${share*100}%`, height:"100%", background: c.value>0 ? C.gold+"aa" : "#4a4537" }} />
                       </div>
                       <span style={{ ...mono, fontSize:11, color:C.faint }}>{(share*100).toFixed(0)}%</span>
@@ -435,7 +435,7 @@ export default function DCFModel({ co, price, apiVal, a, onWork }) {
                   <CartesianGrid strokeDasharray="2 3" stroke="rgba(220,213,193,.07)" vertical={false} />
                   <XAxis dataKey="year" tick={{ fill:"#857d65", fontSize:11 }} axisLine={{ stroke:"rgba(220,213,193,.1)" }} tickLine={false} />
                   <YAxis tick={{ fill:"#857d65", fontSize:10 }} axisLine={false} tickLine={false} tickFormatter={x=>x>=1000?(x/1000).toFixed(0)+"k":x} />
-                  <Tooltip contentStyle={{ background:"#181510", border:"1px solid #2c2820", borderRadius:0, fontSize:12 }} labelStyle={{ color:C.text }}
+                  <Tooltip contentStyle={{ background:"#181510", border:"1px solid #2c2820", borderRadius: 0, fontSize:12 }} labelStyle={{ color:C.text }}
                     formatter={(x,n)=>["₹"+fmtN(x)+" Cr", n==="val"?(isF?"RI (₹ Cr)":"FCFF (₹ Cr)"):"PV (₹ Cr)"]} />
                   <Bar dataKey="val" fill="rgba(212,169,62,.20)" stroke="rgba(212,169,62,.4)" radius={[2,2,0,0]} />
                   <Line type="monotone" dataKey="pv" stroke={C.gold} strokeWidth={2.5} dot={{ fill:C.gold, r:3 }} name="PV" />

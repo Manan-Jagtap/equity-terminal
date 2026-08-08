@@ -140,7 +140,7 @@ export default function Compare({ API, companies = [], onOpen, seed = [] }) {
                 {options.map(c => (
                   <button key={c.ticker} onClick={() => add(c.ticker)} style={{ ...sans, fontSize: 13, color: C.text,
                     width: "100%", textAlign: "left", background: "transparent", border: "none", cursor: "pointer",
-                    padding: "7px 9px", borderRadius: 7, display: "flex", alignItems: "center", gap: 8 }}
+                    padding: "7px 9px", borderRadius: 6, display: "flex", alignItems: "center", gap: 8 }}
                     onMouseEnter={e => e.currentTarget.style.background = C.bg600}
                     onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                     <Plus size={12} color={C.gold} /> {c.name} <span style={{ ...mono, fontSize: 10, color: C.faint }}>{c.ticker}</span>

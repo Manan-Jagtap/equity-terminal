@@ -28,8 +28,8 @@ function Bar({ k, s }) {
         <span style={{ ...sans, fontSize: 11.5, color: C.text200 }}>{LABELS[k]}</span>
         <span style={{ ...mono, fontSize: 12, color: toneOf(v) }}>{v == null ? "—" : Math.round(v)}</span>
       </div>
-      <div style={{ height: 5, background: C.line, borderRadius: 3 }}>
-        <div style={{ height: 5, width: `${v || 0}%`, borderRadius: 3, background: toneOf(v),
+      <div style={{ height: 5, background: C.line, borderRadius: 6 }}>
+        <div style={{ height: 5, width: `${v || 0}%`, borderRadius: 6, background: toneOf(v),
                       transition: "width 300ms" }} />
       </div>
     </div>
@@ -75,7 +75,7 @@ export default function ScoreCard({ API, ticker }) {
             {d.alpha != null && <div style={{ ...mono, fontSize: 9.5, color: C.faint, marginTop: 3 }}>α-rank {Math.round(d.alpha)}</div>}
             {d.valuation_suspect && (
               <div style={{ ...mono, fontSize: 8.5, color: "#E8B054", marginTop: 5, border: "1px solid #E8B05455",
-                            borderRadius: 4, padding: "2px 5px" }} title="The DCF failed cross-examination and was set aside; valuation leans on consensus + the own-history band.">
+                            borderRadius: 6, padding: "2px 5px" }} title="The DCF failed cross-examination and was set aside; valuation leans on consensus + the own-history band.">
                 model set aside
               </div>
             )}

@@ -8,6 +8,7 @@
 import { useMemo, useState } from "react";
 import { Loader2, TrendingUp, TrendingDown, ShieldCheck } from "lucide-react";
 import { C, sans, mono } from "../lib/theme.js";
+import { th, td, tdNum, thName, tdName } from "../design/table.js";
 import { VerdictBadge } from "./primitives.jsx";
 import PageHeader from "./ui/PageHeader.jsx";
 import ErrorState from "./ui/ErrorState.jsx";
@@ -123,10 +124,6 @@ export default function TrackRecord({ API, onOpen }) {
   const buyTR = cohorts?.BUY?.avg_total_return;
   const bench = data?.benchmark?.total_return;
   const excess = (buyTR != null && bench != null) ? buyTR - bench : null;
-  const th = { ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em",
-               color: C.dim, textAlign: "right", padding: "8px 10px", whiteSpace: "nowrap" };
-  const td = { ...mono, fontSize: 12, color: C.text, textAlign: "right", padding: "8px 10px", whiteSpace: "nowrap" };
-
   return (
     <div style={{ padding: "20px 24px 60px" }}>
       <PageHeader
@@ -317,7 +314,7 @@ export default function TrackRecord({ API, onOpen }) {
           <table style={{ width: "100%", borderCollapse: "collapse", background: "rgba(16,14,10,0.6)" }}>
             <thead>
               <tr style={{ borderBottom: `1px solid ${C.line}` }}>
-                <th style={{ ...th, textAlign: "left" }}>Company</th>
+                <th style={thName}>Company</th>
                 <th style={{ ...th, textAlign: "left" }}>Call</th>
                 <th style={th}>Opened</th>
                 <th style={th}>Entry</th>
@@ -336,19 +333,21 @@ export default function TrackRecord({ API, onOpen }) {
                     style={{ borderBottom: `1px solid ${C.line}`, cursor: onOpen ? "pointer" : "default" }}
                     onMouseEnter={e => { e.currentTarget.style.background = C.panel2; }}
                     onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}>
-                  <td style={{ ...td, textAlign: "left", color: C.gold }}>{c.ticker || "—"}</td>
-                  <td style={{ padding: "8px 10px", textAlign: "left" }}><VerdictBadge verdict={c.verdict} /></td>
-                  <td style={td}>{fmtDate(c.start_date)}</td>
-                  <td style={td}>{inr(c.start_price)}</td>
-                  <td style={td}>{pct(c.mos_at_call)}</td>
-                  <td style={{ ...td, color: c.open ? C.green : C.dim }}>{c.open ? "OPEN" : `closed ${fmtDate(c.end_date)}`}</td>
-                  <td style={td}>{inr(c.end_price)}</td>
-                  <td style={{ padding: "8px 10px", textAlign: "right" }}><Ret v={c.ret} /></td>
-                  <td style={{ padding: "8px 10px", textAlign: "right" }}
+                  {/* One line of ticker, so this column can take tdName whole —
+                      clamp included. */}
+                  <td style={{ ...tdName, ...mono, color: C.gold }}>{c.ticker || "—"}</td>
+                  <td style={{ ...td, textAlign: "left" }}><VerdictBadge verdict={c.verdict} /></td>
+                  <td style={tdNum}>{fmtDate(c.start_date)}</td>
+                  <td style={tdNum}>{inr(c.start_price)}</td>
+                  <td style={tdNum}>{pct(c.mos_at_call)}</td>
+                  <td style={{ ...tdNum, color: c.open ? C.green : C.dim }}>{c.open ? "OPEN" : `closed ${fmtDate(c.end_date)}`}</td>
+                  <td style={tdNum}>{inr(c.end_price)}</td>
+                  <td style={td}><Ret v={c.ret} /></td>
+                  <td style={td}
                       title={c.div_ret ? `incl. ${pct(c.div_ret)} from dividends` : "no dividends in window"}>
                     <Ret v={c.total_ret != null ? c.total_ret : c.ret} />
                   </td>
-                  <td style={td}>{c.days}</td>
+                  <td style={tdNum}>{c.days}</td>
                 </tr>
               ))}
             </tbody>

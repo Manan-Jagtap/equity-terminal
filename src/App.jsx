@@ -234,7 +234,16 @@ export default function App() {
           ...buildFromApi(r),
           api: {
             iv: r.intrinsic, mos: r.mos, verdict: r.verdict, composite: r.composite,
-            reliable: r.reliable, confidence: r.confidence,
+            reliable: r.reliable,
+            // LEVEL ONLY — a bare "high"/"medium"/"low" string, in 1013/1013
+            // rows of the live payload (checked 9 Aug 2026). The per-ticker
+            // endpoint returns {score, level, flags} with the actual reasons;
+            // the list endpoint drops them (app/main.py _build_companies_rows
+            // keeps only .level, and valuations.confidence is a String column),
+            // so there is nothing richer to carry through here. Surfacing the
+            // reasons on the screener needs a backend field first — do not
+            // manufacture a flags array on this side to fill the gap.
+            confidence: r.confidence,
             roe: r.roe, pb: r.pb, pe: r.pe,
             analystTarget: r.analyst_target, analystUpside: r.analyst_upside,
             analystRating: r.analyst_rating,
@@ -515,19 +524,19 @@ export default function App() {
 
           <button onClick={() => setPaletteOpen(true)} title="Search companies (⌘K)" style={{
             ...sans, display: "flex", alignItems: "center", gap: 8,
-            padding: "8px 12px", borderRadius: 9, cursor: "pointer", fontSize: 12.5,
+            padding: "8px 12px", borderRadius: 10, cursor: "pointer", fontSize: 12.5,
             border: `1px solid ${C.line2}`, background: C.bg900, color: C.dim, marginBottom: 12,
           }}>
             <Search size={14} strokeWidth={1.6} />Search
             <span style={{ ...mono, fontSize: 10, color: C.faint, border: `1px solid ${C.line}`,
-              borderRadius: 4, padding: "1px 5px", marginLeft: "auto" }}>⌘K</span>
+              borderRadius: 6, padding: "1px 5px", marginLeft: "auto" }}>⌘K</span>
           </button>
 
           <nav style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column", gap: 2 }}>
             {NAV.map(({ id, label, icon: Icon }) => (
               <button key={id} onClick={() => setView(id)} style={{
                 ...sans, display: "flex", alignItems: "center", gap: 10, position: "relative",
-                padding: "9px 12px", borderRadius: 9, cursor: "pointer",
+                padding: "9px 12px", borderRadius: 10, cursor: "pointer",
                 fontSize: 13, fontWeight: 500, textAlign: "left", border: "none",
                 background: view === id ? C.gold + "14" : "transparent",
                 color: view === id ? C.gold : C.dim,
@@ -546,7 +555,7 @@ export default function App() {
           <div style={{ position: "relative", borderTop: `1px solid ${C.line}`, paddingTop: 10, marginTop: 8 }}>
             <button onClick={() => setUserMenu(m => !m)} style={{
               ...sans, display: "flex", alignItems: "center", gap: 9, width: "100%",
-              padding: "7px 8px", borderRadius: 9, cursor: "pointer",
+              padding: "7px 8px", borderRadius: 10, cursor: "pointer",
               fontSize: 12.5, fontWeight: 500, border: "none",
               background: "transparent", color: C.text200, textAlign: "left",
             }}>
@@ -630,13 +639,13 @@ export default function App() {
           <BrandMark size={21} />
           <span style={{ ...serif, fontSize: 18, fontWeight: 600, color: C.text }}>EquityVerdict</span>
           <button onClick={() => setPaletteOpen(true)} aria-label="Search" style={{
-            marginLeft: "auto", display: "flex", padding: 8, borderRadius: 9, cursor: "pointer",
+            marginLeft: "auto", display: "flex", padding: 8, borderRadius: 10, cursor: "pointer",
             border: `1px solid ${C.line2}`, background: "transparent",
           }}>
             <Search size={16} color={C.dim} strokeWidth={1.6} />
           </button>
           <button onClick={signOut} title="Sign out" aria-label="Sign out" style={{
-            display: "flex", padding: 8, borderRadius: 9, cursor: "pointer",
+            display: "flex", padding: 8, borderRadius: 10, cursor: "pointer",
             border: `1px solid ${C.line2}`, background: "transparent",
           }}>
             <LogOut size={16} color={C.dim} strokeWidth={1.6} />

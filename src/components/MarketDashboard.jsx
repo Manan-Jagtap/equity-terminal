@@ -75,7 +75,7 @@ export default function MarketDashboard({ API, companies, onOpen }) {
               </span>
             : data?.as_of && <span style={{ ...mono, fontSize: 11, color: C.dim }}>as of {data.as_of}</span>}
           <button onClick={() => setTick(t => t + 1)} title="Refresh"
-            style={{ ...sans, display: "flex", alignItems: "center", gap: 6, background: C.bg800, border: `1px solid ${C.line}`, color: C.dim, borderRadius: 7, padding: "5px 10px", fontSize: 12, cursor: "pointer" }}>
+            style={{ ...sans, display: "flex", alignItems: "center", gap: 6, background: C.bg800, border: `1px solid ${C.line}`, color: C.dim, borderRadius: 6, padding: "5px 10px", fontSize: 12, cursor: "pointer" }}>
             <RefreshCw size={12} className={loading ? "spin" : undefined} /> Refresh
           </button>
         </div>
@@ -103,7 +103,7 @@ export default function MarketDashboard({ API, companies, onOpen }) {
                 <span style={{ ...sans, fontSize: 11, color: C.dim, textTransform: "uppercase", letterSpacing: "0.04em", whiteSpace: "nowrap" }}>{ix.name}</span>
                 {ix.exchange === "BSE" && (
                   <span style={{ ...mono, fontSize: 8, color: C.faint, border: `1px solid ${C.line2}`,
-                                 borderRadius: 3, padding: "0 4px", letterSpacing: "0.03em" }}>BSE</span>
+                                 borderRadius: 6, padding: "0 4px", letterSpacing: "0.03em" }}>BSE</span>
                 )}
               </div>
               <div style={{ ...mono, fontSize: 18, color: C.text, marginTop: 4 }}>{fmtN(liveFeed.indices?.[ix.name] ?? ix.price)}</div>

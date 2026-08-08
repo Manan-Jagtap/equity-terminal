@@ -135,7 +135,7 @@ export default function Styleguide() {
           <div style={{ display: "flex", gap: 8, alignItems: "flex-end", marginBottom: 16 }}>
             {Object.entries(space).map(([k, v]) => (
               <div key={k} style={{ width: v, height: v, background: color.accentDim,
-                borderRadius: 3 }} title={`${k}=${v}`} />
+                borderRadius: 6 }} title={`${k}=${v}`} />
             ))}
             <code style={{ fontFamily: font.mono, fontSize: 11, color: color.text3 }}>4→64 (8pt base)</code>
           </div>
@@ -186,7 +186,7 @@ export default function Styleguide() {
           <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 14 }}>
             {chart.series.map((c, i) => (
               <div key={i} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ width: 22, height: 22, borderRadius: 4, background: c,
+                <span style={{ width: 22, height: 22, borderRadius: 6, background: c,
                   boxShadow: `0 0 0 1px ${color.line2}` }} />
                 <code style={{ fontFamily: font.mono, fontSize: 11, color: color.text3 }}>series[{i}]</code>
               </div>

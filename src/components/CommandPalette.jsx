@@ -192,7 +192,7 @@ export default function CommandPalette({ open, setOpen, companies, onOpenCompany
             placeholder='Ticker, page, or a model: "TCS DCF at 12% growth"…'
             style={{ ...sans, flex: 1, background: "transparent", border: "none", outline: "none", color: C.text, fontSize: 16 }}
           />
-          <span style={{ ...mono, fontSize: 10, color: C.faint, border: `1px solid ${C.line2}`, borderRadius: 5, padding: "2px 6px" }}>ESC</span>
+          <span style={{ ...mono, fontSize: 10, color: C.faint, border: `1px solid ${C.line2}`, borderRadius: 6, padding: "2px 6px" }}>ESC</span>
         </div>
 
         {/* Results */}
@@ -270,7 +270,7 @@ export default function CommandPalette({ open, setOpen, companies, onOpenCompany
         <div style={{ display: "flex", gap: 16, padding: "9px 18px", borderTop: `1px solid ${C.line}` }}>
           {[["↑↓", "navigate"], ["↵", "open"], ["esc", "close"]].map(([k, l]) => (
             <span key={l} style={{ ...sans, fontSize: 11, color: C.faint, display: "inline-flex", alignItems: "center", gap: 5 }}>
-              <span style={{ ...mono, fontSize: 10, color: C.dim, border: `1px solid ${C.line2}`, borderRadius: 4, padding: "1px 5px" }}>{k}</span>{l}
+              <span style={{ ...mono, fontSize: 10, color: C.dim, border: `1px solid ${C.line2}`, borderRadius: 6, padding: "1px 5px" }}>{k}</span>{l}
             </span>
           ))}
           <span style={{ ...serif, fontSize: 12, color: C.faint, marginLeft: "auto" }}>EquityVerdict</span>

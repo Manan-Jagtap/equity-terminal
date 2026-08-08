@@ -134,7 +134,7 @@ export default function AnalystTab({ co, API, price }) {
               {a.bullish_pct != null && <div style={{ ...sans, fontSize: 12, color: C.text200, marginTop: 4 }}>{pctRaw(a.bullish_pct)} bullish</div>}
               {dist.length > 0 && (
                 <>
-                  <div style={{ display: "flex", height: 9, borderRadius: 5, overflow: "hidden", marginTop: 14, border: `1px solid ${C.line}` }}>
+                  <div style={{ display: "flex", height: 9, borderRadius: 6, overflow: "hidden", marginTop: 14, border: `1px solid ${C.line}` }}>
                     {dist.map((d, i) => (
                       <div key={i} title={`${d.rating}: ${d.count}`} style={{ width: `${(d.count / distTotal) * 100}%`, background: RATING_COLORS[d.rating] || C.faint }} />
                     ))}
@@ -231,9 +231,9 @@ export default function AnalystTab({ co, API, price }) {
               <span style={{ ...serif, fontSize: 30, color: tone }}>{b.current}×</span>
               <span style={{ ...sans, fontSize: 13, color: tone }}>{b.percentile}th percentile — {label}</span>
             </div>
-            <div style={{ position: "relative", height: 10, borderRadius: 5, background: `linear-gradient(90deg, ${C.green}55, ${C.gold}55, ${C.red}55)` }}>
+            <div style={{ position: "relative", height: 10, borderRadius: 6, background: `linear-gradient(90deg, ${C.green}55, ${C.gold}55, ${C.red}55)` }}>
               <div title={`median ${b.median}×`} style={{ position: "absolute", left: `${at(b.median)}%`, top: -4, width: 2, height: 18, background: C.dim }} />
-              <div title={`current ${b.current}×`} style={{ position: "absolute", left: `${at(b.current)}%`, top: -6, transform: "translateX(-50%)", width: 12, height: 22, borderRadius: 3, background: tone, border: `2px solid ${C.bg900}` }} />
+              <div title={`current ${b.current}×`} style={{ position: "absolute", left: `${at(b.current)}%`, top: -6, transform: "translateX(-50%)", width: 12, height: 22, borderRadius: 6, background: tone, border: `2px solid ${C.bg900}` }} />
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", marginTop: 9, ...mono, fontSize: 11, color: C.dim }}>
               <span>min {b.min}×</span><span>median {b.median}×</span><span>max {b.max}×</span>

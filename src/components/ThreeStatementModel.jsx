@@ -9,6 +9,7 @@
 import { useMemo, useState } from "react";
 import { Table, RotateCcw } from "lucide-react";
 import { C, sans, serif, mono } from "../lib/theme.js";
+import { th, td, tdNum } from "../design/table.js";
 import * as engine from "../lib/engine.js";
 
 const cr = v => v == null ? "—" : "₹" + Math.round(v).toLocaleString("en-IN");
@@ -115,8 +116,6 @@ export default function ThreeStatementModel({ co, price, apiVal }) {
   );
 
   const upside = (m.perShare != null && price > 0) ? m.perShare / price - 1 : null;
-  const th = { ...sans, fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".05em", color: C.dim, padding: "7px 10px", textAlign: "right", whiteSpace: "nowrap" };
-  const td = { ...mono, fontSize: 11.5, padding: "6px 10px", textAlign: "right", whiteSpace: "nowrap", color: C.text200 };
 
   return (
     <div className="fadein" style={{ padding: "4px 2px" }}>
@@ -125,7 +124,7 @@ export default function ThreeStatementModel({ co, price, apiVal }) {
           <Table size={17} color={C.gold} /> 3-Statement Model
         </span>
         <span style={{ ...sans, fontSize: 12, color: C.dim }}>your editable scratchpad · separate from the engine headline</span>
-        <button onClick={reset} style={{ ...sans, marginLeft: "auto", fontSize: 11.5, color: C.dim, background: "transparent", border: `1px solid ${C.line2}`, borderRadius: 7, padding: "5px 10px", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
+        <button onClick={reset} style={{ ...sans, marginLeft: "auto", fontSize: 11.5, color: C.dim, background: "transparent", border: `1px solid ${C.line2}`, borderRadius: 6, padding: "5px 10px", cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
           <RotateCcw size={12} /> Reset to base
         </button>
       </div>
@@ -177,15 +176,15 @@ export default function ThreeStatementModel({ co, price, apiVal }) {
             {m.rows.map(r => (
               <tr key={r.t} style={{ borderTop: `1px solid ${C.line}` }}>
                 <td style={{ ...td, textAlign: "left", color: C.faint }}>Y{r.t}</td>
-                <td style={td}>{cr(r.rev)}</td>
-                <td style={{ ...td, color: C.dim }}>{pct1(r.g)}</td>
-                <td style={td}>{cr(r.ebitda)}</td>
-                <td style={td}>{cr(r.ebit)}</td>
-                <td style={{ ...td, color: r.pat >= 0 ? C.text : C.red }}>{cr(r.pat)}</td>
-                <td style={{ ...td, color: C.dim }}>{cr(r.capex)}</td>
-                <td style={{ ...td, color: r.fcff >= 0 ? C.green : C.red }}>{cr(r.fcff)}</td>
-                <td style={{ ...td, color: r.netDebt > 0 ? C.text200 : C.green }}>{cr(r.netDebt)}</td>
-                <td style={{ ...td, color: C.gold }}>{cr(r.pv)}</td>
+                <td style={tdNum}>{cr(r.rev)}</td>
+                <td style={{ ...tdNum, color: C.dim }}>{pct1(r.g)}</td>
+                <td style={tdNum}>{cr(r.ebitda)}</td>
+                <td style={tdNum}>{cr(r.ebit)}</td>
+                <td style={{ ...tdNum, color: r.pat >= 0 ? C.text : C.red }}>{cr(r.pat)}</td>
+                <td style={{ ...tdNum, color: C.dim }}>{cr(r.capex)}</td>
+                <td style={{ ...tdNum, color: r.fcff >= 0 ? C.green : C.red }}>{cr(r.fcff)}</td>
+                <td style={{ ...tdNum, color: r.netDebt > 0 ? C.text200 : C.green }}>{cr(r.netDebt)}</td>
+                <td style={{ ...tdNum, color: C.gold }}>{cr(r.pv)}</td>
               </tr>
             ))}
           </tbody>
