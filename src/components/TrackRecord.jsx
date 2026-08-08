@@ -6,8 +6,8 @@
    cohort; the headline is the BUY−AVOID spread. No backfilled history, no
    survivorship editing — the ledger starts the day tracking began. */
 import { useMemo, useState } from "react";
-import { History, Loader2, TrendingUp, TrendingDown, ShieldCheck } from "lucide-react";
-import { C, sans, serif, mono } from "../lib/theme.js";
+import { Loader2, TrendingUp, TrendingDown, ShieldCheck } from "lucide-react";
+import { C, sans, mono } from "../lib/theme.js";
 import { VerdictBadge } from "./primitives.jsx";
 import PageHeader from "./ui/PageHeader.jsx";
 import ErrorState from "./ui/ErrorState.jsx";
@@ -15,6 +15,10 @@ import useResource from "../lib/useResource.js";
 
 const inr = v => v == null ? "—" : "₹" + Number(v).toLocaleString("en-IN", { maximumFractionDigits: v >= 100 ? 0 : 2 });
 const pct = v => v == null ? "—" : (v >= 0 ? "+" : "") + (v * 100).toFixed(1) + "%";
+/* Unsigned sibling for LEVELS (hit rate, share of book). pct() prefixes "+",
+   which is correct for a return or an alpha and wrong for a rate — "+61.3% hit
+   rate" reads as a 61-point improvement rather than a level. */
+const rate = v => v == null ? "—" : (v * 100).toFixed(1) + "%";
 const fmtDate = d => {
   if (!d) return "—";
   const dt = new Date(d + "T00:00:00");
@@ -22,6 +26,11 @@ const fmtDate = d => {
 };
 
 const COHORT_ORDER = ["BUY", "ACCUMULATE", "HOLD", "REDUCE", "AVOID"];
+/* The ledger is append-only and already 2,457 calls; rendering every row
+   produced a ~100,000px document (about 25,000 DOM nodes) that buried every
+   section below it. The sort controls above make the interesting ends —
+   best, worst, longest held — reachable without dumping the whole table. */
+const ROWS_SHOWN = 200;
 const SORTS = [
   { id: "latest", label: "Latest" },
   { id: "best",   label: "Best" },
@@ -70,7 +79,16 @@ export default function TrackRecord({ API, onOpen }) {
   // useResource: the old fetch().then(r=>r.json()).catch() never fired its
   // .catch on an API 4xx/5xx (FastAPI answers with a JSON body), so an
   // outage rendered as an empty dataset rather than a failure.
-  const { data: data, error, loading, retry } = useResource(API ? `${API}/api/backtest` : null);
+  const { data, error, loading, retry } = useResource(API ? `${API}/api/backtest` : null);
+  /* The engine ledger is a SECOND, richer public record — 191 graded calls
+     benchmarked against NIFTY 50 over the same windows, plus the gap log and
+     the dated methodology change-log. It has been live and reachable without
+     auth the whole time and had no screen anywhere in the app. Its own note
+     states the doctrine this page claims: "Recorded nightly, never backfilled
+     — and, symmetrically, never scrubbed." That belongs in front of the user,
+     not in a JSON payload.
+     Non-blocking: if it fails, the backtest sections above still render. */
+  const ledger = useResource(API ? `${API}/api/portfolio/engine-ledger` : null);
   const [sort, setSort] = useState("latest");
 
 
@@ -111,17 +129,16 @@ export default function TrackRecord({ API, onOpen }) {
 
   return (
     <div style={{ padding: "20px 24px 60px" }}>
-      {/* Header */}
-      <div style={{ display: "flex", alignItems: "baseline", gap: 12, flexWrap: "wrap", marginBottom: 6 }}>
-        <h2 style={{ ...serif, fontSize: 22, color: C.text, margin: 0, display: "flex", alignItems: "center", gap: 8 }}>
-          <History size={18} color={C.gold} /> Track Record
-        </h2>
-        <span style={{ ...sans, fontSize: 11, color: C.dim }}>
-          {data?.tracking_since
-            ? `tracking since ${fmtDate(data.tracking_since)} · ${data.companies_tracked} companies · ${data.snapshot_days} snapshot day${data.snapshot_days > 1 ? "s" : ""} · ${data.total_calls} calls`
-            : "no snapshots yet — the ledger starts with the next scheduler run"}
-        </span>
-      </div>
+      <PageHeader
+        title="Track Record"
+        meta={data?.tracking_since
+          ? `since ${fmtDate(data.tracking_since)} · ${data.total_calls} calls`
+          : "no snapshots yet"}
+      >
+        {data?.tracking_since
+          ? `${data.companies_tracked} companies · ${data.snapshot_days} snapshot day${data.snapshot_days > 1 ? "s" : ""}`
+          : "The ledger starts with the next scheduler run."}
+      </PageHeader>
       <div style={{ ...sans, fontSize: 11, color: C.dim, marginBottom: 18, display: "flex", alignItems: "center", gap: 6 }}>
         <ShieldCheck size={12} color={C.gold} />
         Every verdict is recorded the day it is issued and marked to market daily. Nothing is backfilled, edited or removed —
@@ -174,9 +191,110 @@ export default function TrackRecord({ API, onOpen }) {
         {COHORT_ORDER.map(v => <CohortCard key={v} name={v} c={cohorts[v]} />)}
       </div>
 
+      {/* ── Engine ledger ──────────────────────────────────────────────────
+          A second public record that had no screen: 191 graded calls marked
+          against NIFTY 50 over the SAME windows, plus the gap log and the
+          dated methodology change-log.
+
+          Alpha leads, not the hit rate. The engine hits 61.3% and returns
+          2.13% while NIFTY returned 1.98% over the same windows — so the
+          honest number is +0.15pp, and a 61% hit rate quoted on its own would
+          read as an edge that the benchmark says is not there. This page
+          exists to grade the model in public; leading with the flattering
+          figure would defeat it. */}
+      {ledger.data?.summary && (() => {
+        const s = ledger.data.summary;
+        const alpha = s.alpha;
+        const Stat = ({ label, value, tone, note }) => (
+          <div style={{ background: "rgba(16,14,10,0.6)", border: `1px solid ${C.line2}`,
+                        padding: "14px 20px", minWidth: 210 }}>
+            <div style={{ ...sans, fontSize: 10, textTransform: "uppercase",
+                          letterSpacing: "0.12em", color: C.dim, marginBottom: 6 }}>{label}</div>
+            <div style={{ ...mono, fontSize: 26, color: tone || C.text }}>{value}</div>
+            {note && <div style={{ ...sans, fontSize: 10, color: C.dim, marginTop: 4 }}>{note}</div>}
+          </div>
+        );
+        return (
+          <div style={{ marginTop: 34 }}>
+            <div style={{ ...sans, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.12em",
+                          color: C.gold, marginBottom: 4 }}>Engine ledger</div>
+            <div style={{ ...sans, fontSize: 11.5, color: C.dim, marginBottom: 14, maxWidth: "72ch",
+                          lineHeight: 1.6 }}>
+              {ledger.data.note}
+            </div>
+            <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginBottom: 14 }}>
+              <Stat label={`Alpha vs ${s.benchmark || "benchmark"}`}
+                    value={alpha == null ? "—" : pct(alpha)}
+                    tone={alpha == null ? C.dim : alpha >= 0 ? C.green : C.red}
+                    note={`engine ${pct(s.avg_return)} · benchmark ${pct(s.benchmark_return)}`} />
+              <Stat label="Hit rate" value={rate(s.hit_rate)}
+                    note={`${s.n_graded} calls graded, 7+ days old`} />
+            </div>
+            {alpha != null && Math.abs(alpha) < 0.02 && (
+              <div style={{ ...sans, fontSize: 11.5, lineHeight: 1.55, color: C.text200,
+                background: C.gold + "12", border: `1px solid ${C.gold}33`, borderRadius: 8,
+                padding: "10px 14px", marginBottom: 16, maxWidth: "78ch" }}>
+                <b style={{ color: C.gold }}>No demonstrated edge yet.</b>{" "}
+                A {rate(s.hit_rate)} hit rate sounds like skill, but against the benchmark over the
+                same windows the difference is {(alpha * 100).toFixed(2)}pp — inside the noise. The hit rate is shown
+                second on purpose.
+              </div>
+            )}
+
+            {/* The gap log. A missing stretch is disclosed rather than quietly
+                interpolated — that is the whole claim this page makes. */}
+            {ledger.data.gaps?.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ ...sans, fontSize: 10, textTransform: "uppercase",
+                              letterSpacing: "0.1em", color: C.dim, marginBottom: 6 }}>
+                  Recorded gaps — not backfilled
+                </div>
+                {ledger.data.gaps.map((g, i) => (
+                  <div key={i} style={{ ...sans, fontSize: 11.5, lineHeight: 1.6, color: C.text200,
+                    border: `1px solid ${C.line}`, borderLeft: `2px solid ${C.gold}`,
+                    borderRadius: 6, padding: "9px 13px", marginBottom: 6, maxWidth: "82ch" }}>
+                    <span style={{ ...mono, color: C.gold }}>{fmtDate(g.from)} → {fmtDate(g.to)}</span>
+                    {" — "}{g.reason}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {ledger.data.methodology_notes?.length > 0 && (
+              <div>
+                <div style={{ ...sans, fontSize: 10, textTransform: "uppercase",
+                              letterSpacing: "0.1em", color: C.dim, marginBottom: 6 }}>
+                  Methodology changes — disclosed, never applied backwards
+                </div>
+                {ledger.data.methodology_notes.map((n, i) => (
+                  <details key={i} style={{ border: `1px solid ${C.line}`, borderRadius: 6,
+                    padding: "9px 13px", marginBottom: 6, maxWidth: "82ch" }}>
+                    <summary style={{ ...sans, fontSize: 11.5, color: C.text200, cursor: "pointer" }}>
+                      <span style={{ ...mono, color: C.gold }}>{fmtDate(n.effective)}</span>
+                      {" — "}{String(n.change).split(".")[0]}.
+                    </summary>
+                    <div style={{ ...sans, fontSize: 11.5, lineHeight: 1.65, color: C.dim, marginTop: 8 }}>
+                      {n.change}
+                    </div>
+                  </details>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
       {/* Calls ledger */}
       <div style={{ display: "flex", alignItems: "center", gap: 8, margin: "20px 0 10px" }}>
         <span style={{ ...sans, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.1em", color: C.dim }}>Call ledger</span>
+        {/* Say what is being withheld. A truncated table that does not admit
+            it is truncated reads as the complete record, which on THIS page
+            of all pages would be the wrong impression. */}
+        {calls.length > ROWS_SHOWN && (
+          <span style={{ ...mono, fontSize: 10, color: C.faint }}>
+            showing {ROWS_SHOWN} of {calls.length.toLocaleString("en-IN")} — re-sort to see the other ends
+          </span>
+        )}
         <div style={{ flex: 1 }} />
         {SORTS.map(s => (
           <button key={s.id} onClick={() => setSort(s.id)} style={{
@@ -212,7 +330,7 @@ export default function TrackRecord({ API, onOpen }) {
               </tr>
             </thead>
             <tbody>
-              {calls.map((c, i) => (
+              {calls.slice(0, ROWS_SHOWN).map((c, i) => (
                 <tr key={`${c.ticker}-${c.start_date}-${i}`}
                     onClick={() => onOpen && c.ticker && onOpen(c.ticker)}
                     style={{ borderBottom: `1px solid ${C.line}`, cursor: onOpen ? "pointer" : "default" }}
@@ -237,6 +355,7 @@ export default function TrackRecord({ API, onOpen }) {
           </table>
         </div>
       )}
+
     </div>
   );
 }
