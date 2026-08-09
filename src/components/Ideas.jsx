@@ -15,6 +15,7 @@ import { VerdictBadge } from "./primitives.jsx";
 import PageHeader from "./ui/PageHeader.jsx";
 import ErrorState from "./ui/ErrorState.jsx";
 import useResource from "../lib/useResource.js";
+import { rowActivate, buttonReset } from "../lib/a11y.js";
 
 const FACTORS = [
   ["value", "Value"], ["quality", "Quality"], ["momentum", "Momentum"],
@@ -199,14 +200,14 @@ export default function Ideas({ API, onOpen }) {
             Sector strength · avg Alpha (click to filter)
           </div>
           {(data?.sectors || []).slice(0, 6).map(s => (
-            <div key={s.sector} onClick={() => setSector(s.sector)}
-                 style={{ display: "flex", alignItems: "center", gap: 8, padding: "3px 0", cursor: "pointer" }}>
+            <button type="button" key={s.sector} onClick={() => setSector(s.sector)}
+                 style={{ ...buttonReset,  display: "flex", alignItems: "center", gap: 8, padding: "3px 0", cursor: "pointer"  }}>
               <div style={{ ...sans, fontSize: 11, color: C.text200, width: 130, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.sector}</div>
               <div style={{ flex: 1, height: 5, background: C.bg600, borderRadius: 6 }}>
                 <div style={{ height: "100%", width: `${s.avg_alpha || 0}%`, background: scoreColor(s.avg_alpha), borderRadius: 6 }} />
               </div>
               <div style={{ ...mono, fontSize: 11, color: scoreColor(s.avg_alpha), width: 26, textAlign: "right" }}>{s.avg_alpha != null ? Math.round(s.avg_alpha) : "—"}</div>
-            </div>
+            </button>
           ))}
         </div>
       </div>
@@ -249,7 +250,7 @@ export default function Ideas({ API, onOpen }) {
             <tbody>
               {shown.map((r) => (
                 <tr key={r.ticker}
-                    onClick={() => onOpen && onOpen(r.ticker)}
+                    {...rowActivate(() => onOpen && onOpen(r.ticker))}
                     style={{ borderBottom: `1px solid ${C.line}`, cursor: onOpen ? "pointer" : "default" }}
                     onMouseEnter={e => { e.currentTarget.style.background = C.panel2; }}
                     onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}>

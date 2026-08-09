@@ -8,6 +8,7 @@ import { ListToolbar, applyControls } from "../lib/listControls.jsx";
 import PageHeader from "./ui/PageHeader.jsx";
 import ErrorState from "./ui/ErrorState.jsx";
 import useResource from "../lib/useResource.js";
+import { rowActivate } from "../lib/a11y.js";
 
 const p1 = v => v == null ? "—" : Number(v).toFixed(1) + "%";
 
@@ -128,7 +129,7 @@ export default function Ownership({ API, onOpen }) {
           </thead>
           <tbody>
             {rows.map(r => (
-              <tr key={r.ticker} onClick={() => onOpen && onOpen(r.ticker)} style={{ cursor: "pointer" }}
+              <tr key={r.ticker} {...rowActivate(() => onOpen && onOpen(r.ticker))} style={{ cursor: "pointer" }}
                 onMouseEnter={e => e.currentTarget.style.background = C.bg800}
                 onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                 {/* Identity column: tdName's left gutter without its single-line

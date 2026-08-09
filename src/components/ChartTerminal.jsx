@@ -10,6 +10,7 @@ import {
 } from "lightweight-charts";
 import { C, mono, sans } from "../lib/theme.js";
 import * as IND from "../lib/indicators.js";
+import { buttonReset } from "../lib/a11y.js";
 
 const UP = "#7ce0bd", DOWN = "#dd7d84";   // --ev-buy / --ev-avoid
 const GRID = "rgba(242,237,228,0.06)", AXIS = "rgba(242,237,228,0.12)";
@@ -256,11 +257,11 @@ export default function ChartTerminal({ data, livePrice, live, intrinsic, height
 function MenuRow({ k, label, on, onClick }) {
   const meta = IND.INDICATORS[k];
   return (
-    <div onClick={onClick} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 6px", borderRadius: 6, cursor: "pointer", ...sans, fontSize: 12, color: on ? C.text : C.dim }}
+    <button type="button" onClick={onClick} style={{ ...buttonReset,  display: "flex", alignItems: "center", gap: 8, padding: "4px 6px", borderRadius: 6, cursor: "pointer", ...sans, fontSize: 12, color: on ? C.text : C.dim  }}
       onMouseEnter={e => e.currentTarget.style.background = C.bg800} onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
       <span style={{ width: 13, height: 13, borderRadius: 6, border: `1px solid ${on ? C.gold : C.line2}`, background: on ? C.gold : "transparent", flexShrink: 0 }} />
       {meta && <span style={{ width: 10, height: 2, background: meta.color, flexShrink: 0 }} />}
       {label || meta?.label || k}
-    </div>
+    </button>
   );
 }

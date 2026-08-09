@@ -38,6 +38,7 @@ import TranscriptSummary from "./TranscriptSummary.jsx";
 import ConcallKeyPoints from "./ConcallKeyPoints.jsx";
 import OptionsTab from "./OptionsTab.jsx";
 import AnalystTab from "./AnalystTab.jsx";
+import { rowActivate, buttonReset } from "../lib/a11y.js";
 
 /* Verdict → colour tone (single mapping, used in header + snapshot). */
 /* The ONE verdict->colour mapping in this file. It previously hard-coded a
@@ -1563,19 +1564,19 @@ function IndianApiPeers({ co, peers, selfMetrics, universe, onOpenTicker }) {
               {ordered.map((p) => {
                 const on = sel.has(p.key);
                 return (
-                  <tr key={p.key} onClick={() => toggle(p.key)} style={{ borderBottom: `1px solid ${C.line}`, cursor: "pointer", opacity: on ? 1 : 0.5 }}>
+                  <tr key={p.key} {...rowActivate(() => toggle(p.key))} style={{ borderBottom: `1px solid ${C.line}`, cursor: "pointer", opacity: on ? 1 : 0.5 }}>
                     <td style={{ textAlign: "center" }}>
                       <input type="checkbox" checked={on} readOnly style={{ accentColor: C.gold, cursor: "pointer" }} />
                     </td>
                     <td style={{ ...sans, padding: "9px 20px", color: C.text200 }}>
-                      <span
+                      <button type="button"
                         onClick={e => { if (onOpenTicker && p.ticker) { e.stopPropagation(); onOpenTicker(p.ticker); } }}
                         onMouseEnter={e => { if (p.ticker) e.currentTarget.style.color = C.gold; }}
                         onMouseLeave={e => { e.currentTarget.style.color = ""; }}
                         title={p.ticker ? `Open ${p.ticker}` : undefined}
-                        style={{ cursor: p.ticker && onOpenTicker ? "pointer" : "inherit" }}>
+                        style={{ ...buttonReset,  cursor: p.ticker && onOpenTicker ? "pointer" : "inherit"  }}>
                         {p.name}
-                      </span>
+                      </button>
                       {p.src === "sector" && <span style={{ ...sans, fontSize: 9, color: C.faint, marginLeft: 6, textTransform: "uppercase" }}>sector</span>}
                     </td>
                     {cell(p)}

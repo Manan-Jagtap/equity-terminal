@@ -16,6 +16,7 @@ import Card from "./ui/Card.jsx";
 import Button from "./ui/Button.jsx";
 import StatTile from "./ui/StatTile.jsx";
 import useResource from "../lib/useResource.js";
+import { rowActivate } from "../lib/a11y.js";
 
 const inr = v => v == null ? "—" : "₹" + Number(v).toLocaleString("en-IN", { maximumFractionDigits: v >= 100 ? 0 : 2 });
 const pct = v => v == null ? "—" : (v >= 0 ? "+" : "") + (v * 100).toFixed(1) + "%";
@@ -338,7 +339,7 @@ export default function TrackRecord({ API, onOpen }) {
             <tbody>
               {calls.slice(0, ROWS_SHOWN).map((c, i) => (
                 <tr key={`${c.ticker}-${c.start_date}-${i}`}
-                    onClick={() => onOpen && c.ticker && onOpen(c.ticker)}
+                    {...rowActivate(() => onOpen && c.ticker && onOpen(c.ticker))}
                     style={{ borderBottom: `1px solid ${C.line}`, cursor: onOpen ? "pointer" : "default" }}
                     onMouseEnter={e => { e.currentTarget.style.background = C.panel2; }}
                     onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}>

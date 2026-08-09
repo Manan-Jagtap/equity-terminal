@@ -20,6 +20,7 @@ import StrategyLab from "./StrategyLab.jsx";
 import PageHeader from "./ui/PageHeader.jsx";
 import ErrorState from "./ui/ErrorState.jsx";
 import useResource from "../lib/useResource.js";
+import { buttonReset } from "../lib/a11y.js";
 
 const scoreColor = (v) => v == null ? C.dim : v >= 70 ? C.green : v >= 45 ? C.gold : C.red;
 const EXPO = [["value", "Val"], ["quality", "Qual"], ["momentum", "Mom"], ["low_vol", "LoVol"], ["growth", "Grow"]];
@@ -92,8 +93,8 @@ function BasketCard({ b, onOpen }) {
       {/* constituents */}
       <div style={{ marginTop: 12, paddingTop: 10, borderTop: `1px solid ${C.line}` }}>
         {shown.map((m) => (
-          <div key={m.ticker} onClick={() => onOpen && onOpen(m.ticker)}
-               style={{ display: "flex", alignItems: "center", gap: 8, padding: "5px 4px", cursor: onOpen ? "pointer" : "default", borderRadius: 6 }}
+          <button type="button" key={m.ticker} onClick={() => onOpen && onOpen(m.ticker)}
+               style={{ ...buttonReset,  display: "flex", alignItems: "center", gap: 8, padding: "5px 4px", cursor: onOpen ? "pointer" : "default", borderRadius: 6  }}
                onMouseEnter={e => (e.currentTarget.style.background = C.panel2)}
                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
             <div style={{ ...sans, fontSize: 12, fontWeight: 500, color: C.gold, width: 90, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{m.ticker}</div>
@@ -106,7 +107,7 @@ function BasketCard({ b, onOpen }) {
               <VerdictBadge verdict={m.verdict || "—"} />
               <ChevronRight size={13} color={C.faint} />
             </div>
-          </div>
+          </button>
         ))}
         {cons.length > 5 && (
           <button onClick={() => setOpen(o => !o)}

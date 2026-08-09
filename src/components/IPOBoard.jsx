@@ -12,6 +12,7 @@ import { selStyle } from "../lib/listControls.jsx";
 import PageHeader from "./ui/PageHeader.jsx";
 import useResource from "../lib/useResource.js";
 import ErrorState from "./ui/ErrorState.jsx";
+import { buttonReset, useEscape } from "../lib/a11y.js";
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -51,10 +52,10 @@ function Card({ r, onOpen }) {
   const g = r.listing_gains;
   const clickable = !!r.detail_id;
   return (
-    <div onClick={() => clickable && onOpen(r.detail_id)}
+    <button type="button" onClick={() => clickable && onOpen(r.detail_id)}
       onMouseEnter={e => { if (clickable) e.currentTarget.style.background = C.bg800; }}
       onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
-      style={{ padding: "13px 16px", borderTop: `1px solid ${C.line}`, cursor: clickable ? "pointer" : "default" }}>
+      style={{ ...buttonReset,  padding: "13px 16px", borderTop: `1px solid ${C.line}`, cursor: clickable ? "pointer" : "default"  }}>
       <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
         <span style={{ ...sans, fontSize: 14, fontWeight: 500, color: C.text }}>{r.name}</span>
         {r.is_sme && <span style={{ ...sans, fontSize: 9, fontWeight: 700, color: "#E8B054",
@@ -91,7 +92,7 @@ function Card({ r, onOpen }) {
       {r.additional_text && (
         <div style={{ ...sans, fontSize: 11, color: C.dim, marginTop: 5 }}>{r.additional_text}</div>
       )}
-    </div>
+    </button>
   );
 }
 
@@ -242,6 +243,11 @@ function IPODetailModal({ detail, onClose }) {
   const reg = d?.registrar || {}, links = d?.links || {};
   const pr = pricing.priceRange || {};
   const bidding = dates.bidding || {};
+  /* Escape closes it. The backdrop's onClick is a MOUSE affordance and the
+     backdrop stays a div — a backdrop is not a control, and a button there
+     would add a tab stop announcing nothing. Without this a keyboard user
+     could open the overlay and had no way out: a keyboard trap. */
+  useEscape(onClose);
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 200, background: "var(--ev-scrim)",
       display: "flex", alignItems: "flex-start", justifyContent: "center", padding: "6vh 16px", overflowY: "auto" }}>
