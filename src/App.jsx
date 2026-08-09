@@ -24,6 +24,7 @@ import { getUser, me, clearSession, authFetch, logoutAll } from "./lib/auth.js";
 import { VIEW_IDS, parsePath, pathForRoute, hashToPath, pageTitle } from "./lib/route.js";
 import { track } from "./lib/telemetry.js";
 import FeedbackModal from "./components/FeedbackModal.jsx";
+import { useEscape } from "./lib/a11y.js";
 
 /* Heavy views are code-split: each loads on first visit. Dashboard and
    Screener stay eager — they are the landing experience.
@@ -128,6 +129,11 @@ export default function App() {
     window.addEventListener("auth:required", onRequired);
     return () => window.removeEventListener("auth:required", onRequired);
   }, []);
+
+  /* The user menu and the mobile nav sheet dismissed on a backdrop CLICK
+     only — a mouse affordance. Both were keyboard traps once open. */
+  useEscape(() => setUserMenu(false), userMenu);
+  useEscape(() => setMoreOpen(false), moreOpen);
 
   const signOut = useCallback(() => {
     clearSession();

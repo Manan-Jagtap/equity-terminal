@@ -10,6 +10,7 @@ import { useIsMobile } from "../lib/useResponsive.js";
 import { useLive, liveDotStyle } from "../lib/live.js";
 import useResource from "../lib/useResource.js";
 import ErrorState from "./ui/ErrorState.jsx";
+import { buttonReset } from "../lib/a11y.js";
 
 // Lazy: keeps recharts out of the eager dashboard bundle — the chart only
 // loads the first time an index card is clicked.
@@ -116,12 +117,12 @@ export default function MarketDashboard({ API, companies, onOpen }) {
       {indices.length > 0 && (
         <div style={{ display: "flex", gap: 10, overflowX: "auto", paddingBottom: 6, marginBottom: 22 }}>
           {indices.map((ix, i) => (
-            <div key={i} onClick={() => ix.name && setIdxChart(ix.name)}
+            <button type="button" key={i} onClick={() => ix.name && setIdxChart(ix.name)}
               title={`${ix.name} — open chart`}
               onMouseEnter={e => { e.currentTarget.style.borderColor = C.gold + "66"; e.currentTarget.style.background = C.bg800; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = ""; e.currentTarget.style.background = C.bg900; }}
-              style={{ flex: "0 0 auto", minWidth: 150, border: `1px solid ${C.line}`, borderRadius: 10,
-                       background: C.bg900, padding: "12px 14px", cursor: "pointer" }}>
+              style={{ ...buttonReset,  flex: "0 0 auto", minWidth: 150, border: `1px solid ${C.line}`, borderRadius: 10,
+                       background: C.bg900, padding: "12px 14px", cursor: "pointer"  }}>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 <span style={{ ...sans, fontSize: 11, color: C.dim, textTransform: "uppercase", letterSpacing: "0.04em", whiteSpace: "nowrap" }}>{ix.name}</span>
                 {ix.exchange === "BSE" && (
@@ -133,7 +134,7 @@ export default function MarketDashboard({ API, companies, onOpen }) {
               {(ix.pct != null || ix.net != null)
                 ? <div style={{ ...mono, fontSize: 12, color: toneOf(ix.pct), marginTop: 2 }}>{fmtP(ix.pct)} <span style={{ color: C.faint }}>·</span> {ix.net >= 0 ? "+" : ""}{fmtN(ix.net)}</div>
                 : <div style={{ ...sans, fontSize: 10.5, color: C.faint, marginTop: 3 }}>tap for full history</div>}
-            </div>
+            </button>
           ))}
         </div>
       )}
@@ -270,8 +271,8 @@ function DataHealth({ API, onOpen }) {
 
   return (
     <div style={{ border: `1px solid ${C.line}`, borderRadius: 10, background: C.bg900, padding: "10px 14px", marginBottom: 18 }}>
-      <div onClick={() => !clean && setExpand(e => !e)}
-        style={{ display: "flex", alignItems: "center", gap: 8, cursor: clean ? "default" : "pointer" }}>
+      <button type="button" onClick={() => !clean && setExpand(e => !e)}
+        style={{ ...buttonReset,  display: "flex", alignItems: "center", gap: 8, cursor: clean ? "default" : "pointer"  }}>
         <Icon size={14} color={tone} strokeWidth={1.7} />
         <span style={{ ...sans, fontSize: 12, color: C.text200 }}>
           {clean
@@ -280,15 +281,15 @@ function DataHealth({ API, onOpen }) {
         </span>
         <span style={{ ...mono, fontSize: 10, color: C.faint, marginLeft: "auto" }}>Dhan × IndianAPI</span>
         {!clean && <ChevronDown size={13} color={C.dim} style={{ transform: expand ? "rotate(180deg)" : "none", transition: "transform .15s" }} />}
-      </div>
+      </button>
       {expand && flagged.length > 0 && (
         <div style={{ marginTop: 8, borderTop: `1px solid ${C.line}`, paddingTop: 6 }}>
           {flagged.slice(0, 12).map((f, i) => (
-            <div key={i} onClick={() => onOpen(f.ticker)}
-              style={{ display: "flex", alignItems: "baseline", gap: 10, padding: "4px 2px", cursor: "pointer" }}>
+            <button type="button" key={i} onClick={() => onOpen(f.ticker)}
+              style={{ ...buttonReset,  display: "flex", alignItems: "baseline", gap: 10, padding: "4px 2px", cursor: "pointer"  }}>
               <span style={{ ...mono, fontSize: 11.5, color: f.status === "alert" ? C.red : C.gold, minWidth: 90 }}>{f.ticker}</span>
               <span style={{ ...sans, fontSize: 11.5, color: C.dim }}>{(f.flags || []).map(x => x.message).join(" · ")}</span>
-            </div>
+            </button>
           ))}
           {flagged.length > 12 && (
             <div style={{ ...sans, fontSize: 11, color: C.faint, padding: "4px 2px" }}>+{flagged.length - 12} more</div>
@@ -320,8 +321,8 @@ const MoverList = ({ title, icon, tone, rows, openIf, known }) => (
 );
 
 const Row = ({ left, sub, right, rightTone, pct, icon, clickable, onClick }) => (
-  <div onClick={clickable ? onClick : undefined}
-    style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 16px", cursor: clickable ? "pointer" : "default" }}
+  <button type="button" onClick={clickable ? onClick : undefined}
+    style={{ ...buttonReset,  display: "flex", alignItems: "center", gap: 10, padding: "8px 16px", cursor: clickable ? "pointer" : "default"  }}
     onMouseEnter={e => clickable && (e.currentTarget.style.background = C.bg800)}
     onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
     {icon}
@@ -333,7 +334,7 @@ const Row = ({ left, sub, right, rightTone, pct, icon, clickable, onClick }) => 
       <div style={{ ...mono, fontSize: 13, color: rightTone || C.text }}>{right}</div>
       {pct != null && <div style={{ ...mono, fontSize: 11, color: toneOf(pct) }}>{fmtP(pct)}</div>}
     </div>
-  </div>
+  </button>
 );
 
 const Empty = () => (

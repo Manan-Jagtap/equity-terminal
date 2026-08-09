@@ -21,6 +21,7 @@ import { selStyle } from "../lib/listControls.jsx";
 import PageHeader from "./ui/PageHeader.jsx";
 import useResource from "../lib/useResource.js";
 import ErrorState from "./ui/ErrorState.jsx";
+import { rowActivate } from "../lib/a11y.js";
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -222,7 +223,7 @@ function FundList({ data, onOpen, onRetry, isMobile }) {
                 </thead>
                 <tbody>
                   {rows.map((f, i) => (
-                    <tr key={(f.name || "") + i} onClick={() => onOpen(f)}
+                    <tr key={(f.name || "") + i} {...rowActivate(() => onOpen(f))}
                       onMouseEnter={e => e.currentTarget.style.background = C.bg800}
                       onMouseLeave={e => e.currentTarget.style.background = "transparent"}
                       style={{ cursor: "pointer", borderTop: `1px solid ${C.line}` }}>

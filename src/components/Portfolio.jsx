@@ -14,6 +14,7 @@ import { parseHoldings } from "../lib/brokerImport.js";
 import PageHeader from "./ui/PageHeader.jsx";
 import { useToast } from "./ui/toast-context.js";
 import ErrorState from "./ui/ErrorState.jsx";
+import { rowActivate, buttonReset } from "../lib/a11y.js";
 
 const pnlColor = v => v == null ? C.dim : v >= 0 ? C.green : C.red;
 // Backend sends pnl_pct, weight AND mos all as FRACTIONS (0.124 = 12.4%),
@@ -366,11 +367,11 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
               {[...(digest.movers?.gainers || []), ...(digest.movers?.losers || [])].length === 0
                 ? <div style={{ ...sans, fontSize: 12, color: C.dim }}>No cost basis to compare yet.</div>
                 : [...(digest.movers?.gainers || []), ...(digest.movers?.losers || [])].map(m => (
-                  <div key={m.ticker} onClick={() => onOpen && onOpen(m.ticker)}
-                    style={{ display: "flex", justifyContent: "space-between", padding: "4px 0", cursor: "pointer" }}>
+                  <button type="button" key={m.ticker} onClick={() => onOpen && onOpen(m.ticker)}
+                    style={{ ...buttonReset,  display: "flex", justifyContent: "space-between", padding: "4px 0", cursor: "pointer"  }}>
                     <span style={{ ...mono, fontSize: 12, color: C.gold }}>{m.ticker}</span>
                     <span style={{ ...mono, fontSize: 12, color: pnlColor(m.pnl_pct) }}>{pctNum(m.pnl_pct)}</span>
-                  </div>
+                  </button>
                 ))}
             </div>
             {/* Needs attention */}
@@ -379,14 +380,14 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
               {(digest.attention || []).length === 0
                 ? <div style={{ ...sans, fontSize: 12, color: C.green }}>Nothing flagged — no model sells, no over-concentration, no earnings this week.</div>
                 : (digest.attention || []).map((a, i) => (
-                  <div key={i} onClick={() => a.ticker && onOpen && onOpen(a.ticker)}
-                    style={{ display: "flex", gap: 7, alignItems: "baseline", padding: "4px 0", cursor: a.ticker ? "pointer" : "default" }}>
+                  <button type="button" key={i} onClick={() => a.ticker && onOpen && onOpen(a.ticker)}
+                    style={{ ...buttonReset,  display: "flex", gap: 7, alignItems: "baseline", padding: "4px 0", cursor: a.ticker ? "pointer" : "default"  }}>
                     <span style={{ width: 6, height: 6, borderRadius: 6, flexShrink: 0, marginTop: 4,
                                    background: a.kind === "verdict" ? C.red : a.kind === "results" ? C.gold : "#E8B054" }} />
                     <span style={{ ...sans, fontSize: 11.5, color: C.text200 }}>
                       {a.ticker && <span style={{ ...mono, color: C.gold }}>{a.ticker}</span>} {a.text}
                     </span>
-                  </div>
+                  </button>
                 ))}
             </div>
             {/* Tax opportunities */}
@@ -402,10 +403,10 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
                         <span style={{ ...mono, fontSize: 12, color: C.text }}>{v}</span>
                       </div>
                     ))}
-                    <div onClick={() => { setShowAnalysis(true); }}
-                      style={{ ...sans, fontSize: 10.5, color: C.gold, cursor: "pointer", marginTop: 6 }}>
+                    <button type="button" onClick={() => { setShowAnalysis(true); }}
+                      style={{ ...buttonReset,  ...sans, fontSize: 10.5, color: C.gold, cursor: "pointer", marginTop: 6  }}>
                       full breakdown in Analyse →
-                    </div>
+                    </button>
                   </>
                 : <div style={{ ...sans, fontSize: 12, color: C.dim }}>Add purchase dates to see the tax view.</div>}
             </div>
@@ -480,7 +481,7 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
               <tbody>
                 {xray.items.map(it => (
                   <tr key={it.ticker} style={{ borderTop: `1px solid ${C.line}`, cursor: onOpen ? "pointer" : "default" }}
-                      onClick={() => onOpen && onOpen(it.ticker)}>
+                      {...rowActivate(() => onOpen && onOpen(it.ticker))}>
                     <td style={{ ...tdName, ...mono, color: C.gold }}>{it.ticker}</td>
                     <td style={{ ...tdNum, color: it.alpha_score == null ? C.dim : it.alpha_score >= 60 ? C.green : it.alpha_score >= 40 ? C.gold : C.red }}>{it.alpha_score != null ? Math.round(it.alpha_score) : "—"}</td>
                     <td style={tdNum}>{it.weight != null ? (it.weight * 100).toFixed(0) + "%" : "—"}</td>
@@ -707,7 +708,7 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
             </thead>
             <tbody>
               {items.map(h => (
-                <tr key={h.id} onClick={() => onOpen && onOpen(h.ticker)} style={{ cursor: "pointer" }}
+                <tr key={h.id} {...rowActivate(() => onOpen && onOpen(h.ticker))} style={{ cursor: "pointer" }}
                   onMouseEnter={e => e.currentTarget.style.background = C.bg800}
                   onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                                     {/* Each LINE clamps independently: clamping the cell would drop the
@@ -903,9 +904,9 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
                     <div style={{ marginBottom: 8 }}>
                       <div style={{ ...sans, fontSize: 11, color: C.green, marginBottom: 3 }}>Wait for long-term</div>
                       {(analysis.tax.lt_timing || []).slice(0, 3).map(t => (
-                        <div key={t.ticker} onClick={() => onOpen && onOpen(t.ticker)} style={{ ...sans, fontSize: 11, color: C.text200, cursor: "pointer", padding: "2px 0" }}>
+                        <button type="button" key={t.ticker} onClick={() => onOpen && onOpen(t.ticker)} style={{ ...buttonReset,  ...sans, fontSize: 11, color: C.text200, cursor: "pointer", padding: "2px 0"  }}>
                           <span style={{ ...mono, color: C.gold }}>{t.ticker}</span> turns LT in <span style={{ color: C.gold }}>{t.days_to_lt}d</span> — saves {inr(t.tax_saving)}
-                        </div>
+                        </button>
                       ))}
                     </div>
                   )}
@@ -913,9 +914,9 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
                     <div>
                       <div style={{ ...sans, fontSize: 11, color: C.red, marginBottom: 3 }}>Loss-harvest candidates</div>
                       {(analysis.tax.harvest || []).slice(0, 3).map(h => (
-                        <div key={h.ticker} onClick={() => onOpen && onOpen(h.ticker)} style={{ ...sans, fontSize: 11, color: C.text200, cursor: "pointer", padding: "2px 0" }}>
+                        <button type="button" key={h.ticker} onClick={() => onOpen && onOpen(h.ticker)} style={{ ...buttonReset,  ...sans, fontSize: 11, color: C.text200, cursor: "pointer", padding: "2px 0"  }}>
                           <span style={{ ...mono, color: C.gold }}>{h.ticker}</span> {h.term === "long" ? "LT" : "ST"} loss {inr(h.loss)}
-                        </div>
+                        </button>
                       ))}
                     </div>
                   )}
@@ -936,18 +937,18 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
                 <span style={{ ...sans, fontSize: 11, textTransform: "uppercase", letterSpacing: "0.1em", color: C.gold }}>Strategist</span>
                 <span style={{ ...sans, fontSize: 11, color: C.dim }}>mechanical read of your book against the model — you decide</span>
                 {onAnalyse && (
-                  <span onClick={onAnalyse}
-                    style={{ ...sans, fontSize: 11, color: C.gold, cursor: "pointer", marginLeft: "auto" }}>
+                  <button type="button" onClick={onAnalyse}
+                    style={{ ...buttonReset,  ...sans, fontSize: 11, color: C.gold, cursor: "pointer", marginLeft: "auto"  }}>
                     open the Fund Manager desk →
-                  </span>
+                  </button>
                 )}
               </div>
               {(analysis.recommendations || []).map((r, i) => (
-                <div key={i} onClick={() => onOpen && onOpen(r.ticker)}
+                <button type="button" key={i} onClick={() => onOpen && onOpen(r.ticker)}
                   onMouseEnter={e => e.currentTarget.style.background = C.bg800}
                   onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                  style={{ display: "flex", alignItems: "baseline", gap: 12, padding: "10px 6px",
-                           borderTop: `1px solid ${C.line}`, cursor: "pointer" }}>
+                  style={{ ...buttonReset,  display: "flex", alignItems: "baseline", gap: 12, padding: "10px 6px",
+                           borderTop: `1px solid ${C.line}`, cursor: "pointer"  }}>
                   <span style={{ ...sans, fontSize: 9.5, fontWeight: 700, letterSpacing: "0.06em", flexShrink: 0,
                                  padding: "3px 8px", borderRadius: 6,
                                  color: r.action.includes("EXIT") ? C.red : r.action.includes("TRIM") ? "#E8B054" : C.green,
@@ -958,7 +959,7 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
                   <span style={{ ...sans, fontSize: 12, color: C.text200, lineHeight: 1.55 }}>
                     {(r.reasons || []).join(" · ")}
                   </span>
-                </div>
+                </button>
               ))}
               <div style={{ ...sans, fontSize: 10, color: C.faint, marginTop: 12, lineHeight: 1.5 }}>
                 {analysis.disclaimer}

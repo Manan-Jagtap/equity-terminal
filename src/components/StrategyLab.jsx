@@ -11,6 +11,7 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceL
 import { C, sans, mono } from "../lib/theme.js";
 import useResource from "../lib/useResource.js";
 import ErrorState from "./ui/ErrorState.jsx";
+import { buttonReset } from "../lib/a11y.js";
 
 const pct = (x, d = 1) => x == null ? "—" : `${x >= 0 ? "+" : ""}${(x * 100).toFixed(d)}%`;
 const pctAbs = (x, d = 1) => x == null ? "—" : `${(x * 100).toFixed(d)}%`;
@@ -202,8 +203,8 @@ export default function StrategyLab({ API, onOpen }) {
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))", gap: 6 }}>
                 {res.holdings.map(h => (
-                  <div key={h.ticker} onClick={() => onOpen && onOpen(h.ticker)}
-                       style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 9px", border: `1px solid ${C.line}`, borderRadius: 8, cursor: onOpen ? "pointer" : "default" }}
+                  <button type="button" key={h.ticker} onClick={() => onOpen && onOpen(h.ticker)}
+                       style={{ ...buttonReset,  display: "flex", alignItems: "center", gap: 8, padding: "7px 9px", border: `1px solid ${C.line}`, borderRadius: 8, cursor: onOpen ? "pointer" : "default"  }}
                        onMouseEnter={e => (e.currentTarget.style.background = C.panel2)}
                        onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
                     <div style={{ minWidth: 0 }}>
@@ -211,7 +212,7 @@ export default function StrategyLab({ API, onOpen }) {
                       <div style={{ ...sans, fontSize: 9.5, color: C.faint, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{h.sector || ""}</div>
                     </div>
                     <ChevronRight size={13} color={C.faint} style={{ marginLeft: "auto", flexShrink: 0 }} />
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>

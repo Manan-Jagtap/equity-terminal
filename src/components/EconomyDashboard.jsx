@@ -12,6 +12,7 @@ import { useIsMobile } from "../lib/useResponsive.js";
 import PageHeader from "./ui/PageHeader.jsx";
 import useResource from "../lib/useResource.js";
 import ErrorState from "./ui/ErrorState.jsx";
+import { buttonReset, useEscape } from "../lib/a11y.js";
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -91,6 +92,11 @@ function SeriesModal({ slug, label, unit, kind, onClose }) {
   const up = stats ? stats.chg >= 0 : true;
   const col = up ? C.green : C.red;
 
+  /* Escape closes it. The backdrop's onClick is a MOUSE affordance and the
+     backdrop stays a div — a backdrop is not a control, and a button there
+     would add a tab stop announcing nothing. Without this a keyboard user
+     could open the overlay and had no way out: a keyboard trap. */
+  useEscape(onClose);
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, zIndex: 200,
       background: "var(--ev-scrim)", display: "flex", alignItems: "flex-start",
@@ -167,13 +173,13 @@ function IndicatorCard({ r, onOpen }) {
   const chg = (r.value != null && r.prev != null) ? r.value - r.prev : null;
   const clickable = !r.awaiting;
   return (
-    <div onClick={clickable ? () => onOpen(r) : undefined}
+    <button type="button" onClick={clickable ? () => onOpen(r) : undefined}
       onMouseEnter={e => { if (clickable) e.currentTarget.style.borderColor = C.gold + "55"; }}
       onMouseLeave={e => { if (clickable) e.currentTarget.style.borderColor = C.line; }}
       title={clickable ? "Click for the full history" : undefined}
-      style={{ border: `1px solid ${C.line}`, borderRadius: 12, background: C.panel,
+      style={{ ...buttonReset,  border: `1px solid ${C.line}`, borderRadius: 12, background: C.panel,
                padding: "13px 15px", minWidth: 0, cursor: clickable ? "pointer" : "default",
-               transition: "border-color 120ms" }}>
+               transition: "border-color 120ms"  }}>
       <div style={{ ...sans, fontSize: 11.5, color: C.text200, marginBottom: 3,
                     whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}
         title={r.label}>{r.label}</div>
@@ -202,7 +208,7 @@ function IndicatorCard({ r, onOpen }) {
           </div>
         </>
       )}
-    </div>
+    </button>
   );
 }
 

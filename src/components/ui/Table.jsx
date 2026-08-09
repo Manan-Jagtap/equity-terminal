@@ -7,6 +7,7 @@
        renderCell={(row, col) => …}   // optional; defaults to row[col.key]
        onRowClick={fn} sticky />                                              */
 import "./ui.css";
+import { rowActivate } from "../../lib/a11y.js";
 
 export default function Table({
   columns = [], rows = [], renderCell, onRowClick, sticky = false,
@@ -28,7 +29,7 @@ export default function Table({
           {rows.length === 0 ? (
             <tr><td colSpan={columns.length} style={{ textAlign: "center", padding: "24px 12px" }}>{empty}</td></tr>
           ) : rows.map((row, i) => (
-            <tr key={rowKey(row, i)} onClick={onRowClick ? () => onRowClick(row) : undefined}>
+            <tr key={rowKey(row, i)} {...rowActivate(onRowClick ? () => onRowClick(row) : undefined)}>
               {columns.map((c) => (
                 <td key={c.key} data-num={c.num || undefined}>
                   {renderCell ? renderCell(row, c) : row[c.key]}

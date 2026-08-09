@@ -12,6 +12,7 @@ import PageHeader from "./ui/PageHeader.jsx";
 import Logo from "./Logo.jsx";
 import { authFetch, getUser } from "../lib/auth.js";
 import { useLive } from "../lib/live.js";
+import { rowActivate } from "../lib/a11y.js";
 
 const confColor = lvl => lvl === "high" ? C.green : lvl === "medium" ? C.gold : C.red;
 
@@ -475,7 +476,7 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
             ) : rows.map((r, idx) => (
               <tr
                 key={r.co.ticker || r.co.id}
-                onClick={() => onOpen(r.co.ticker || r.co.id)}
+                {...rowActivate(() => onOpen(r.co.ticker || r.co.id))}
                 style={{ borderTop: idx ? `1px solid ${C.line}` : "none", cursor: "pointer" }}
                 onMouseEnter={e => (e.currentTarget.style.background = C.panel2)}
                 onMouseLeave={e => (e.currentTarget.style.background = "transparent")}

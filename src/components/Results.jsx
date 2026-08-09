@@ -9,6 +9,7 @@ import { VerdictBadge } from "./primitives.jsx";
 import PageHeader from "./ui/PageHeader.jsx";
 import ErrorState from "./ui/ErrorState.jsx";
 import useResource from "../lib/useResource.js";
+import { rowActivate, buttonReset } from "../lib/a11y.js";
 
 const cr   = v => v == null ? "—" : "₹" + Number(v).toLocaleString("en-IN", { maximumFractionDigits: 0 });
 const signed = v => v == null ? "—" : (v >= 0 ? "+" : "") + (v * 100).toFixed(1) + "%";   // fraction → %
@@ -75,11 +76,11 @@ function UpcomingCalendar({ API, onOpen }) {
       } />
     <div style={{ border: `1px solid ${C.line}`, borderRadius: 12, overflow: "hidden" }}>
       {items.map((r, i) => (
-        <div key={i} onClick={() => onOpen && onOpen(r.ticker)}
+        <button type="button" key={i} onClick={() => onOpen && onOpen(r.ticker)}
           onMouseEnter={e => e.currentTarget.style.background = C.bg800}
           onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-          style={{ display: "flex", alignItems: "baseline", gap: 14, padding: "11px 16px",
-                   borderTop: i ? `1px solid ${C.line}` : "none", cursor: "pointer" }}>
+          style={{ ...buttonReset,  display: "flex", alignItems: "baseline", gap: 14, padding: "11px 16px",
+                   borderTop: i ? `1px solid ${C.line}` : "none", cursor: "pointer"  }}>
           <span style={{ ...mono, fontSize: 12, color: r.days_away <= 3 ? C.gold : C.text200, flexShrink: 0, minWidth: 88 }}>
             {r.date}
           </span>
@@ -92,7 +93,7 @@ function UpcomingCalendar({ API, onOpen }) {
             background: C.green + "1a", borderRadius: 6, padding: "2px 7px", flexShrink: 0 }}>RESULTS</span>}
           <span style={{ ...sans, fontSize: 11, color: C.faint, whiteSpace: "nowrap", overflow: "hidden",
                          textOverflow: "ellipsis" }}>{r.agenda}</span>
-        </div>
+        </button>
       ))}
     </div>
     </>
@@ -118,17 +119,17 @@ function DividendCalendar({ API, onOpen }) {
   if (error) return <ErrorState error={error} onRetry={retry} what="the calendar" />;
   const today = new Date().toISOString().slice(0, 10);
   const Row = (a, i) => (
-    <div key={a.ticker + a.type + a.ex_date + i} onClick={() => onOpen && onOpen(a.ticker)}
+    <button type="button" key={a.ticker + a.type + a.ex_date + i} onClick={() => onOpen && onOpen(a.ticker)}
       onMouseEnter={e => e.currentTarget.style.background = C.bg800}
       onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-      style={{ display: "flex", alignItems: "baseline", gap: 14, padding: "11px 16px",
-               borderTop: i ? `1px solid ${C.line}` : "none", cursor: "pointer" }}>
+      style={{ ...buttonReset,  display: "flex", alignItems: "baseline", gap: 14, padding: "11px 16px",
+               borderTop: i ? `1px solid ${C.line}` : "none", cursor: "pointer"  }}>
       <span style={{ ...mono, fontSize: 12, color: a.ex_date >= today ? C.gold : C.text200, flexShrink: 0, minWidth: 92 }}>{a.ex_date}</span>
       <span style={{ ...mono, fontSize: 9, textTransform: "uppercase", letterSpacing: "0.06em",
                      color: ACT_TONE[a.type] || C.dim, flexShrink: 0, minWidth: 62 }}>ex · {a.type}</span>
       <span style={{ ...sans, fontSize: 13, color: C.text, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.name}</span>
       <span style={{ ...mono, fontSize: 11.5, color: ACT_TONE[a.type] || C.text200, flexShrink: 0 }}>{actLabel(a)}</span>
-    </div>
+    </button>
   );
   const section = (title, arr) => (arr || []).length > 0 && (
     <div style={{ marginBottom: 18 }}>
@@ -219,7 +220,7 @@ export default function Results({ API, onOpen }) {
             {rows.map(r => {
               const s = r.surprise;
               return (
-                <tr key={r.ticker} onClick={() => onOpen && onOpen(r.ticker)} style={{ cursor: "pointer" }}
+                <tr key={r.ticker} {...rowActivate(() => onOpen && onOpen(r.ticker))} style={{ cursor: "pointer" }}
                   onMouseEnter={e => e.currentTarget.style.background = C.bg800}
                   onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                                     {/* Each LINE clamps independently: clamping the cell would drop the

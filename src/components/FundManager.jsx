@@ -12,6 +12,7 @@ import PageSkeleton from "./Skeleton.jsx";
 import { authFetch } from "../lib/auth.js";
 import { SignInGate } from "./Watchlist.jsx";
 import PageHeader from "./ui/PageHeader.jsx";
+import { buttonReset } from "../lib/a11y.js";
 
 const inr = v => v == null ? "—" : "₹" + Number(v).toLocaleString("en-IN", { maximumFractionDigits: 0 });
 
@@ -394,10 +395,10 @@ function HiddenGems({ API, onOpen }) {
                          border: `1px solid ${gemScoreColor(g.score)}44`, borderRadius: 6, padding: "3px 8px", flexShrink: 0 }}>
                 {Math.round(g.score)}
               </span>
-              <span onClick={() => onOpen && onOpen(g.ticker)} style={{ cursor: "pointer", display: "flex", gap: 8, alignItems: "baseline", minWidth: 0 }}>
+              <button type="button" onClick={() => onOpen && onOpen(g.ticker)} style={{ ...buttonReset,  cursor: "pointer", display: "flex", gap: 8, alignItems: "baseline", minWidth: 0  }}>
                 <span style={{ ...mono, fontSize: 12.5, color: C.gold }}>{g.ticker}</span>
                 <span style={{ ...sans, fontSize: 12.5, color: C.text }}>{g.name}</span>
-              </span>
+              </button>
               {g.under_followed && (
                 <span style={{ ...sans, fontSize: 9, fontWeight: 700, letterSpacing: "0.05em", color: "#E8B054",
                                background: "#E8B05416", borderRadius: 6, padding: "2px 7px" }}>NO STREET COVERAGE</span>
@@ -527,11 +528,11 @@ export default function FundManager({ API, user, requestAuth, onOpen }) {
               </div>
             )}
             {(mgr.actions || []).map((a, i) => (
-              <div key={i} onClick={() => onOpen && onOpen(a.ticker)}
+              <button type="button" key={i} onClick={() => onOpen && onOpen(a.ticker)}
                 onMouseEnter={e => e.currentTarget.style.background = C.bg800}
                 onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                style={{ display: "flex", alignItems: "flex-start", gap: 14, padding: "12px 6px",
-                         borderTop: `1px solid ${C.line}`, cursor: "pointer" }}>
+                style={{ ...buttonReset,  display: "flex", alignItems: "flex-start", gap: 14, padding: "12px 6px",
+                         borderTop: `1px solid ${C.line}`, cursor: "pointer"  }}>
                 <ConvictionBar v={a.conviction} />
                 <span style={{ ...sans, fontSize: 9.5, fontWeight: 700, letterSpacing: "0.06em", flexShrink: 0,
                                padding: "3px 8px", borderRadius: 6, marginTop: 2,
@@ -615,7 +616,7 @@ export default function FundManager({ API, user, requestAuth, onOpen }) {
                     </div>
                   )}
                 </div>
-              </div>
+              </button>
             ))}
           </div>
 

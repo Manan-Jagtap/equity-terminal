@@ -13,6 +13,7 @@ import PageHeader from "./ui/PageHeader.jsx";
 import Card from "./ui/Card.jsx";
 import Button from "./ui/Button.jsx";
 import StatTile from "./ui/StatTile.jsx";
+import { buttonReset } from "../lib/a11y.js";
 
 const inr = v => v == null ? "—" : "₹" + Number(v).toLocaleString("en-IN", { maximumFractionDigits: 0 });
 const signed = v => v == null ? "—" : (v >= 0 ? "+" : "") + (v * 100).toFixed(1) + "%";
@@ -189,14 +190,14 @@ export default function Watchlist({ API, onOpen, onChanged, user, requestAuth })
           <div style={{ position: "absolute", inset: 0, ...gridBg, opacity: 0.25, pointerEvents: "none" }} />
           <div style={{ position: "relative" }}>
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
-              <div onClick={() => onOpen(it.ticker)} style={{ cursor: "pointer", flex: 1 }}>
+              <button type="button" onClick={() => onOpen(it.ticker)} style={{ ...buttonReset,  cursor: "pointer", flex: 1  }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <Logo ticker={it.ticker} name={it.name} sector={it.sector} size={30} />
                   <span style={{ ...serif, fontSize: 20, color: C.text }}>{it.name}</span>
                   <VerdictBadge verdict={it.verdict} />
                 </div>
                 <div style={{ ...mono, fontSize: 10, color: C.faint, marginTop: 2 }}>{it.ticker} · {it.sector}</div>
-              </div>
+              </button>
               <div style={{ display: "flex", gap: 6 }}>
                 <Button size="sm" iconOnly tone="muted" title="Alert settings"
                   pressed={editing === it.ticker}

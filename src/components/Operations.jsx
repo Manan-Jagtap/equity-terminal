@@ -10,6 +10,7 @@ import { VerdictBadge } from "./primitives.jsx";
 import PageHeader from "./ui/PageHeader.jsx";
 import ErrorState from "./ui/ErrorState.jsx";
 import useResource from "../lib/useResource.js";
+import { rowActivate } from "../lib/a11y.js";
 
 const p1 = v => v == null ? "—" : Number(v).toFixed(1) + "%";
 const d0 = v => v == null ? "—" : Math.round(v) + "d";
@@ -110,7 +111,7 @@ export default function Operations({ API, onOpen }) {
           </thead>
           <tbody>
             {rows.map(r => (
-              <tr key={r.ticker} onClick={() => onOpen && onOpen(r.ticker)} style={{ cursor: "pointer" }}
+              <tr key={r.ticker} {...rowActivate(() => onOpen && onOpen(r.ticker))} style={{ cursor: "pointer" }}
                 onMouseEnter={e => e.currentTarget.style.background = C.bg800}
                 onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                                 {/* Each LINE clamps independently: clamping the cell would drop the
