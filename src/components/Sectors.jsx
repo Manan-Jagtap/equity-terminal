@@ -11,6 +11,7 @@ import { multiple, signedPct } from "../lib/formatters.js";
 import PageHeader from "./ui/PageHeader.jsx";
 import ErrorState from "./ui/ErrorState.jsx";
 import Card from "./ui/Card.jsx";
+import Button from "./ui/Button.jsx";
 import StatTile from "./ui/StatTile.jsx";
 import useResource from "../lib/useResource.js";
 
@@ -151,14 +152,22 @@ export default function Sectors({ API, onOpen }) {
       <Icon size={12} color={tone} style={{ flexShrink: 0 }} />
       <span style={{ ...sans, fontSize: 10, color: C.dim, textTransform: "uppercase", letterSpacing: "0.08em", flexShrink: 0 }}>{label}</span>
       {co ? (
-        <span
+        /* Opens a company — a navigation action, so it is a real control. As a
+           <span onClick> it was mouse-only, and the hover colour was applied by
+           mutating style on mouseenter, which no keyboard focus could trigger.
+           :focus-visible now gets the token focus ring for free. */
+        <button type="button"
           onClick={() => onOpen && onOpen(co.ticker)}
+          title={`Open ${co.name}`}
+          style={{ ...sans, fontSize: 12, fontWeight: 500, color: C.text, cursor: "pointer",
+            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+            background: "none", border: "none", padding: 0, textAlign: "left", minWidth: 0 }}
           onMouseEnter={e => e.currentTarget.style.color = C.gold}
           onMouseLeave={e => e.currentTarget.style.color = C.text}
-          style={{ ...sans, fontSize: 12, fontWeight: 500, color: C.text, cursor: "pointer",
-            whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          onFocus={e => e.currentTarget.style.color = C.gold}
+          onBlur={e => e.currentTarget.style.color = C.text}>
           {co.name}
-        </span>
+        </button>
       ) : <span style={{ ...sans, fontSize: 12, color: C.faint }}>—</span>}
       {co && <span style={{ ...mono, fontSize: 11, color: mosColor(co.mos), marginLeft: "auto", flexShrink: 0 }}>{signedPct(co.mos)}</span>}
     </div>
@@ -199,14 +208,26 @@ export default function Sectors({ API, onOpen }) {
           <Card key={s.name} pad="sm"
             tone={openSector === s.name ? "active" : "default"}
             style={{ gridColumn: openSector === s.name ? "1 / -1" : undefined }}>
-            <div onClick={() => setOpenSector(v => (v === s.name ? null : s.name))}
+            {/* A real <button>, not a <div onClick>. This toggle expands the
+                sector's full name list and was reachable by MOUSE ONLY — no
+                onKeyDown, no role, no tabIndex — so a keyboard or screen-reader
+                user could not open any of the 25 sectors. It stayed a div
+                because ui/Button had no full-width space-between shape; that
+                gap is now `block`, and aria-expanded means the state is
+                announced rather than only drawn as ▾ / ▸. */}
+            <Button block variant="ghost"
+              expanded={openSector === s.name}
+              onClick={() => setOpenSector(v => (v === s.name ? null : s.name))}
               title={openSector === s.name ? "Collapse" : `Show all ${s.n} ${prettySector(s.name)} names`}
-              style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 12, cursor: "pointer" }}>
-              <span style={{ ...serif, fontSize: 19, color: C.text }}>{prettySector(s.name)}</span>
-              <span style={{ ...sans, fontSize: 11, color: openSector === s.name ? C.gold : C.faint }}>
-                {s.n} {s.n === 1 ? "company" : "companies"} {openSector === s.name ? "▾" : "▸"}
+              style={{ marginBottom: 12 }}>
+              <span className="evc-btn-blocktitle"
+                style={{ ...serif, fontSize: 19, color: C.text, transition: "color var(--ev-t-fast) var(--ev-ease)" }}>
+                {prettySector(s.name)}
               </span>
-            </div>
+              <span style={{ ...sans, fontSize: 11, color: openSector === s.name ? C.gold : C.faint }}>
+                {s.n} {s.n === 1 ? "company" : "companies"} <span aria-hidden="true">{openSector === s.name ? "▾" : "▸"}</span>
+              </span>
+            </Button>
 
             <div style={{ display: "flex", gap: 22, marginBottom: 12 }}>
               {[
@@ -229,19 +250,28 @@ export default function Sectors({ API, onOpen }) {
             {openSector === s.name && (
               <div style={{ marginTop: 13, borderTop: `1px solid ${C.line}`, maxHeight: 420, overflowY: "auto" }}>
                 {s.cos.map(c => (
-                  <div key={c.ticker}
+                  /* Each row opens a company, so each row is a button. The
+                     stopPropagation is no longer needed for the header toggle
+                     (that is now a sibling <button>, not an ancestor), but it
+                     is kept because the row still sits inside the Card. */
+                  <button key={c.ticker} type="button"
                     onClick={e => { e.stopPropagation(); onOpen && onOpen(c.ticker); }}
+                    title={`Open ${c.name}`}
                     onMouseEnter={e => e.currentTarget.style.background = C.bg800}
                     onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                    onFocus={e => e.currentTarget.style.background = C.bg800}
+                    onBlur={e => e.currentTarget.style.background = "transparent"}
                     style={{ display: "flex", alignItems: "baseline", gap: 10, padding: "8px 6px",
-                             borderBottom: `1px solid ${C.line}`, cursor: "pointer" }}>
+                             borderBottom: `1px solid ${C.line}`, cursor: "pointer",
+                             width: "100%", background: "transparent", border: "none",
+                             borderBottomStyle: "solid", textAlign: "left" }}>
                     <span style={{ ...mono, fontSize: 11, color: C.gold, flexShrink: 0, minWidth: 92 }}>{c.ticker}</span>
                     <span style={{ ...sans, fontSize: 12.5, color: C.text200, whiteSpace: "nowrap",
                                    overflow: "hidden", textOverflow: "ellipsis", flex: 1 }}>{c.name}</span>
                     <span style={{ ...mono, fontSize: 11.5, color: C.dim, flexShrink: 0 }}>{multiple(c.pe, 1)}</span>
                     <span style={{ ...mono, fontSize: 11.5, color: mosColor(c.mos), flexShrink: 0, minWidth: 64, textAlign: "right" }}>{signedPct(c.mos)}</span>
                     {c.verdict && <span style={{ ...sans, fontSize: 10, color: C.dim, flexShrink: 0, minWidth: 66, textAlign: "right" }}>{c.verdict === "TRIM" ? "REDUCE" : c.verdict}</span>}
-                  </div>
+                  </button>
                 ))}
               </div>
             )}

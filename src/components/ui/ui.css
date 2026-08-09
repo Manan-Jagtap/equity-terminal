@@ -525,3 +525,17 @@
 }
 .evc-errstate-btn:hover { background: var(--ev-accent); color: var(--ev-accent-ink); }
 .evc-errstate-detail { font-size: var(--ev-fs-2xs); color: var(--ev-text-3); }
+
+/* Button `block` — a full-width row that lays its children out with
+   space-between. Disclosure headers, list rows and card title bars were all
+   written as `<div onClick>` because the primitive could not take this shape;
+   it is inline-flex and centre-justified. Height goes auto so a two-line row
+   is not clipped, and the horizontal padding is dropped because a block button
+   is usually already inside a padded surface. */
+.evc-btn[data-block] {
+  display: flex; width: 100%; justify-content: space-between; align-items: baseline;
+  height: auto; padding: 0; text-align: left; background: none; border: none;
+}
+.evc-btn[data-block]:hover:not(:disabled) { background: none; }
+/* The affordance has to survive losing the box: hover tints the LABEL instead. */
+.evc-btn[data-block]:hover:not(:disabled) .evc-btn-blocktitle { color: var(--ev-accent); }
