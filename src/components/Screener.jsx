@@ -453,9 +453,18 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
                 <td style={{ padding: "11px 16px", maxWidth: 340 }}>
                   <div style={{ display:"flex", alignItems:"center", gap:7 }}>
                     {onToggleWatch && (
+                      /* Measured 18x18 at 375px, under WCAG 2.5.8's 24x24 floor,
+                         and its only accessible name was a `title` — which a
+                         touch device never surfaces (no hover) and screen
+                         readers treat as the weakest fallback. Padding buys the
+                         hit area without moving the star; aria-label names it
+                         for real and aria-pressed carries the toggle STATE,
+                         which colour alone was carrying before. */
                       <button title={isWatched(r.co.ticker) ? "Remove from watchlist" : "Add to watchlist"}
+                        aria-label={`${isWatched(r.co.ticker) ? "Remove" : "Add"} ${r.co.name || r.co.ticker} ${isWatched(r.co.ticker) ? "from" : "to"} watchlist`}
+                        aria-pressed={isWatched(r.co.ticker)}
                         onClick={e => { e.stopPropagation(); onToggleWatch(r.co.ticker); }}
-                        style={{ background:"transparent", border:"none", cursor:"pointer", padding:2, lineHeight:0, flexShrink:0 }}>
+                        style={{ background:"transparent", border:"none", cursor:"pointer", padding:5, margin:-3, lineHeight:0, flexShrink:0 }}>
                         <Star size={14} color={isWatched(r.co.ticker) ? C.gold : C.faint}
                           fill={isWatched(r.co.ticker) ? C.gold : "none"} />
                       </button>
