@@ -410,14 +410,26 @@ export default function App() {
   // State → URL (the writer). The path is rebuilt from state and the query
   // string preserved (?scenario=). A navigation the URL triggered is a
   // replaceState (history already moved); a click is a pushState (new entry).
+  /* Browser tab title — its own effect, because it depends on `user` and the URL
+     writer below deliberately does not.
+
+     Only once the reader is actually IN the app. Everything in this component
+     runs above the `if (!user)` gate, so a logged-out visitor on the marketing
+     page was getting the title of whatever `view` happened to hold — by default
+     "Dashboard — EquityVerdict", naming a screen they cannot see. That title is
+     what a bookmark, a shared link and a JS-executing crawler all record, so the
+     public page keeps the one index.html ships with. */
+  useEffect(() => {
+    if (!user) return;
+    const co = view === "company" && selectedId
+      ? companies.find(c => (c.ticker || c.id) === selectedId) : null;
+    document.title = pageTitle(view, selectedId, co && co.name);
+  }, [user, view, selectedId, companies]);
+
   useEffect(() => {
     const path = pathForRoute(view, selectedId);
     const want = path + window.location.search;
     const cur = window.location.pathname + window.location.search;
-    // Keep the browser tab title in sync per page.
-    const co = view === "company" && selectedId
-      ? companies.find(c => (c.ticker || c.id) === selectedId) : null;
-    document.title = pageTitle(view, selectedId, co && co.name);
     // Don't overwrite the initial /company/TCS deep-link URL until it resolves.
     // Clears the moment the company opens (so future nav writes normally) OR the
     // user navigates elsewhere (deep link superseded). StrictMode-safe.
@@ -436,7 +448,9 @@ export default function App() {
     } else {
       history.pushState(null, "", want);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // (the exhaustive-deps suppression that used to sit here is gone: `companies`
+    //  moved out with the title effect above, so view/selectedId really are the
+    //  only deps this reads.)
   }, [view, selectedId]);
 
   // INST-01 usage beacon: one event per view change (event names only, path

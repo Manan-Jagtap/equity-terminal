@@ -3312,7 +3312,10 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
       </nav>
 
       {/* ── Tab content ───────────────────────────────────────── */}
-      <main>
+      {/* A <section>, not a <main>: App.jsx already opens the document's <main>
+          and this renders inside it. Nested <main> is invalid, and it announced
+          a second "main" landmark, so "skip to main content" became ambiguous. */}
+      <section aria-label={`${co.name} — ${tab}`}>
         {tab==="overview"   && <><ScoreCard API={API} ticker={co.ticker} /><OverviewTab co={co2} rec={rec} cd={cd} profile={liveProfile} profileError={profileRes.error} /></>}
         {tab==="chart"      && <PriceChart     data={histPrices?.data} intrinsic={fairValue} price={price} ticker={co.ticker} API={API} livePrice={livePx} live={!!liveFeed.live} />}
         {tab==="financials" && <FinancialsTab  co={co2} cd={cd} liveFinancials={liveFinancials}
@@ -3334,7 +3337,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
         {tab==="thesis"     && <AIThesisTab    co={co2} profile={liveProfile} insights={liveInsights} cd={cd} price={price} API={API} onGoTab={setTab} />}
         {tab==="forensics"  && <ForensicsTab   co={co2} API={API} />}
         {tab==="verdict"    && <VerdictTab     co={co2} rec={rec} cd={cd} price={price} insights={liveInsights} apiVal={apiVal} />}
-      </main>
+      </section>
 
       <footer style={{ borderTop:`1px solid ${C.line}`, padding:"20px 32px", display:"flex", justifyContent:"space-between", ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.1em", color:C.dim+"99", marginTop:48 }}>
         <span>EquityVerdict v0.3 — Sector-Aware Valuation Platform</span>

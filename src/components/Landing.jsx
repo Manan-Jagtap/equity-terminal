@@ -55,6 +55,10 @@ export default function Landing({ onSignIn }) {
         </button>
       </header>
 
+      {/* This page had a header and a footer but no <main>, so a screen-reader
+          user had no main landmark to jump to on the ONE page every visitor
+          sees before signing in. */}
+      <main>
       {/* Hero */}
       <section style={{ padding: `${isMobile ? 48 : 88}px ${PAD}px ${isMobile ? 36 : 56}px`, maxWidth: 880, margin: "0 auto", textAlign: "center" }}>
         <h1 style={{ ...serif, fontSize: isMobile ? 34 : 52, lineHeight: 1.15, color: C.text, margin: 0, fontWeight: 400 }}>
@@ -93,6 +97,7 @@ export default function Landing({ onSignIn }) {
           </div>
         ))}
       </section>
+      </main>
 
       {/* Compliance footer — deliberately prominent, not fine print. */}
       <footer style={{ marginTop: "auto", borderTop: `1px solid ${C.line}`, padding: `18px ${PAD}px 26px` }}>
@@ -104,8 +109,12 @@ export default function Landing({ onSignIn }) {
           investment adviser before acting.
         </p>
         <div style={{ textAlign: "center", marginTop: 10 }}>
+          {/* padding, not font-size: measured 76x14 on a 375px viewport, which
+              misses WCAG 2.5.8's 24x24 minimum. The vertical padding brings the
+              hit area up without changing how the footer reads. */}
           <button onClick={() => setPolicyOpen(true)} style={{
-            ...sans, background: "transparent", border: "none", padding: 0,
+            ...sans, background: "transparent", border: "none",
+            padding: "6px 8px", margin: "0 -8px",
             color: C.dim, cursor: "pointer", fontSize: 11.5, textDecoration: "underline",
           }}>Privacy Policy</button>
         </div>
