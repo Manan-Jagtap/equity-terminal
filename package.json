@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test:parity": "node tests/engineParity.mjs && node tests/deriveParity.mjs",
+    "test:suppression": "node tests/suppressionContract.mjs",
     "test:e2e": "playwright test",
     "test:palette": "node scripts/check-palette.mjs"
   },

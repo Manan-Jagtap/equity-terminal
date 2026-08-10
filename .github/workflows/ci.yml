@@ -45,6 +45,13 @@ jobs:
         run: node tests/engineParity.mjs
       - name: Derive parity (must be 48/48)
         run: node tests/deriveParity.mjs
+      # The engine withholds a fair value while keeping its verdict. A surface
+      # that reinvents the withheld number breaks the product's core claim —
+      # and it has shipped TWICE, each time because the guard enumerated the
+      # suppression shapes it knew about and missed the rest. This gates the
+      # invariant (provenance, not populated-ness) instead of the shapes.
+      - name: Suppression contract (no surface reinvents a withheld valuation)
+        run: node tests/suppressionContract.mjs
       - name: Build
         run: npm run build
       - name: Bundle budget (entry ≤ 175 kB gzip)

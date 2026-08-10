@@ -23,6 +23,7 @@ import NumberTicker from "./ui/NumberTicker.jsx";
 import { useLive, liveDotStyle } from "../lib/live.js";
 import { multiple, inrOrDash, signedPct } from "../lib/formatters.js";
 import { recommend } from "../lib/recommend.js";
+import { valuationView } from "../lib/engineView.js";
 import { fundamentals, isFinancial } from "../lib/valuation.js";
 import { technicals } from "../lib/technicals.js";
 import { useIsMobile } from "../lib/useResponsive.js";
@@ -1395,10 +1396,16 @@ function DynamicPeers({ co, allCompanies }) {
   );
   const rows = (universe.length >= 2 ? universe : (allCompanies || []).filter(c => c.type === co.type))
     .map(c => {
-      const r = recommend(c, c.assumptions);
-      return { c, iv: r.iv, mos: r.mos, pe: r.f.pe, pb: r.f.pb, roe: r.f.roe, verdict: r.verdict, conf: r.confidence };
+      // The engine's view wins whenever it has one. This table used to call the
+      // local recompute unconditionally, so every peer the engine had declined
+      // to value still showed a fair value, a verdict and a margin of safety —
+      // and the sort below ranked them ON that fabricated MoS.
+      const r = valuationView(c, c.assumptions);
+      return { c, iv: r.iv, mos: r.mos, pe: r.pe, pb: r.pb, roe: r.roe,
+               verdict: r.verdict, conf: r.confidence,
+               fairValueNote: r.fairValueNote, noCall: r.noCall, sortMos: r.sortMos };
     })
-    .sort((a, b) => (b.mos ?? -Infinity) - (a.mos ?? -Infinity));
+    .sort((a, b) => b.sortMos - a.sortMos);
 
   if (rows.length < 2) return (
     <div className="fadein" style={{ padding:32 }}>
@@ -1433,7 +1440,10 @@ function DynamicPeers({ co, allCompanies }) {
                       {p.c.name} <span style={{ ...mono, fontSize:10, color:C.dim }}>· {p.c.ticker}</span>
                     </td>
                     <td style={{ ...mono, textAlign:"right", padding:"10px 8px", color:C.text }}>{inrOrDash(p.c.price,0)}</td>
-                    <td style={{ ...mono, textAlign:"right", padding:"10px 8px", color:C.gold }}>{inrOrDash(p.iv,0)}</td>
+                    <td style={{ ...mono, textAlign:"right", padding:"10px 8px", color:p.iv==null&&p.fairValueNote?C.dim:C.gold }}
+                        title={p.fairValueNote || undefined}>
+                      {p.iv!=null ? inrOrDash(p.iv,0) : p.fairValueNote ? "n/m" : "—"}
+                    </td>
                     <td style={{ ...mono, textAlign:"right", padding:"10px 8px", color:p.mos==null?C.dim:p.mos>=0?C.green:C.red }}>{signedPct(p.mos)}</td>
                     <td style={{ ...mono, textAlign:"right", padding:"10px 8px", color:C.text }}>{multiple(p.pe,1)}</td>
                     <td style={{ ...mono, textAlign:"right", padding:"10px 8px", color:C.text }}>{multiple(p.pb,1)}</td>
