@@ -105,6 +105,25 @@ const seed = valuationView({
 check("seed/offline row still recomputes locally", seed.source === "local", `source=${seed.source}`);
 check("seed/offline row produces a verdict", typeof seed.verdict === "string" && seed.verdict.length > 0);
 
+/* The local mirror owes the same discipline: when IT says LOW CONF / NO DATA it
+   has disowned its own number, so it must not print one either. This path runs
+   in production whenever /api/companies fails and App.jsx falls back to SEED. */
+const thin = valuationView({
+  id: "THIN", ticker: "THIN", name: "Thin Data Co", type: "nonfinancial",
+  sector: "Software & Programming", template_code: "IT_SERVICES",
+  // No equity / netProfit / revenue: the local engine will reach a verdict it
+  // has no confidence in.
+  price: 100, shares: 10,
+  assumptions: { rf: 0.069, erp: 0.05 },
+});
+if (thin.verdict === "LOW CONF" || thin.verdict === "NO DATA") {
+  check("local no-call withholds its own fair value", thin.iv == null, `got iv=${thin.iv}`);
+  check("local no-call withholds its own MoS", thin.mos == null, `got mos=${thin.mos}`);
+  check("local no-call never sorts as undervalued", thin.sortMos === -Infinity, `got ${thin.sortMos}`);
+} else {
+  console.log(`  skip  local no-call fixture reached ${thin.verdict}, not a no-call verdict`);
+}
+
 console.log(failures === 0
   ? "\nsuppression-contract: OK — no surface reinvents a withheld valuation."
   : `\nsuppression-contract: ${failures} FAILURE(S)`);

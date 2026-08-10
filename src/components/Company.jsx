@@ -284,12 +284,18 @@ function Card({ children, style, noPad }) {
   );
 }
 
+/* Renders an <h2>, not a styled <div>. This is the section title used 33 times
+   across the company page, and the whole file contained ZERO heading elements —
+   so the product's most important screen offered a screen reader no outline at
+   all, and "jump to next heading" had nothing to land on. The <h2> is styled to
+   look exactly as it did (margin/font reset inline), so this is a semantic
+   change only. */
 function SectionLabel({ children, accent }) {
   return (
     <div style={{ display:"flex", alignItems:"baseline", gap:12, marginBottom:16 }}>
-      <span style={{ ...sans, fontSize:10, letterSpacing:"0.18em", textTransform:"uppercase", color: C.dim, fontWeight:500 }}>{children}</span>
+      <h2 style={{ ...sans, fontSize:10, letterSpacing:"0.18em", textTransform:"uppercase", color: C.dim, fontWeight:500, margin:0 }}>{children}</h2>
       {accent && <span style={{ ...sans, fontSize:10, color: C.gold500 + "cc" }}>{accent}</span>}
-      <div style={{ flex:1, height:1, background:`linear-gradient(90deg,${C.line2},transparent)` }} />
+      <div aria-hidden="true" style={{ flex:1, height:1, background:`linear-gradient(90deg,${C.line2},transparent)` }} />
     </div>
   );
 }
@@ -3140,7 +3146,10 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
               </div>
               <div style={{ display:"flex", alignItems:"center", gap:14 }}>
                 <Logo ticker={co.ticker} name={co.name} sector={co.sector} size={isMobile ? 36 : 48} radius={10} />
-                <div style={{ ...serif, fontSize: isMobile ? 34 : 60, color:C.text, lineHeight:1.05, letterSpacing:"-0.02em" }}>{co.name}</div>
+                {/* The page's <h1>. It was a 60px <div>, so the company page —
+                    the screen this whole product exists to render — had no
+                    heading at all, and every other screen has one. */}
+                <h1 style={{ ...serif, fontSize: isMobile ? 34 : 60, color:C.text, lineHeight:1.05, letterSpacing:"-0.02em", margin:0, fontWeight:"inherit" }}>{co.name}</h1>
               </div>
               <div style={{ ...sans, fontSize:13, color:C.text200, marginTop:12, maxWidth:680, lineHeight:1.6 }}>
                 {(() => {

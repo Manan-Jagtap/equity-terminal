@@ -82,12 +82,18 @@ export function valuationView(co, assumptions) {
   }
 
   // Seed / offline rows only: nothing upstream has an opinion, so the local
-  // engine mirror is the only source there is.
+  // engine mirror is the only source there is. This path still runs in
+  // PRODUCTION whenever /api/companies fails and App.jsx falls back to SEED.
   const r = recommend(co, assumptions ?? co.assumptions);
+  // The same no-call discipline the engine path applies. Without it the local
+  // mirror printed a fair value and a +210% margin of safety beside its own
+  // "LOW CONF" badge — the mirror disowning its number in one column while
+  // publishing it in the next.
+  const localNoCall = r.verdict === "LOW CONF" || r.verdict === "NO DATA";
   return {
     source: "local",
-    iv: r.iv,
-    mos: r.mos,
+    iv:  localNoCall ? null : r.iv,
+    mos: localNoCall ? null : r.mos,
     consensus: null,
     consensusUpside: null,
     verdict: r.verdict,
@@ -96,12 +102,13 @@ export function valuationView(co, assumptions) {
     confidence: r.confidence,
     fairValueNote: null,
     gateState: null,
-    noCall: r.iv == null,
+    noCall: localNoCall || r.iv == null,
     f: r.f,
     pb: r.f.pb, pe: r.f.pe, roe: r.f.roe,
     sentiment: null,
     sentimentLabel: null,
-    sortMos: r.mos ?? -Infinity,
+    // A disowned figure must not rank as if it were a real one, on either path.
+    sortMos: localNoCall ? -Infinity : (r.mos ?? -Infinity),
     // Extra fields the company page's local path still reads.
     v: r.v, blended: r.blended, t: r.t, reasons: r.reasons,
   };
