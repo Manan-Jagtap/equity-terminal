@@ -3131,17 +3131,29 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
           <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr auto", gap: isMobile ? 16 : 32, alignItems: isMobile ? "stretch" : "flex-end" }}>
             <div>
               <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8, flexWrap:"wrap", ...sans, fontSize:11, letterSpacing:"0.16em", textTransform:"uppercase", color:C.dim }}>
-                <span>NSE: {co.ticker}</span>
-                <span style={{ color:C.bg500 }}>·</span>
-                {(liveProfile?.key_facts?.bse_code || cd?.meta?.bse) && <span>BSE: {liveProfile?.key_facts?.bse_code || cd?.meta?.bse}</span>}
-                <span style={{ color:C.bg500 }}>·</span>
-                {(liveProfile?.key_facts?.isin || cd?.meta?.isin) && <span>ISIN: {liveProfile?.key_facts?.isin || cd?.meta?.isin}</span>}
-                <span style={{ color:C.bg500 }}>·</span>
+                {/* Built as a list and joined, because the separators used to be
+                    unconditional while the things they separate are not: a name
+                    with no BSE code and no ISIN rendered
+                    "NSE: BAJFINANCE · · · LARGE CAP" — three dots with nothing
+                    between them. Roughly 160 names carry null vendor identifiers,
+                    so this was on screen in production. The separators are
+                    aria-hidden: they are punctuation, and a screen reader was
+                    reading each one out. */}
                 {(() => {
+                  const bse  = liveProfile?.key_facts?.bse_code || cd?.meta?.bse;
+                  const isin = liveProfile?.key_facts?.isin || cd?.meta?.isin;
                   const m = price && co.shares ? price * co.shares : null;
                   const band = m == null ? mktData.sebiCap
                     : m >= 67000 ? "Large Cap" : m >= 22000 ? "Mid Cap" : "Small Cap";
-                  return band ? <span style={{ color:C.gold }}>{band}</span> : null;
+                  const parts = [
+                    <span key="nse">NSE: {co.ticker}</span>,
+                    bse  ? <span key="bse">BSE: {bse}</span> : null,
+                    isin ? <span key="isin">ISIN: {isin}</span> : null,
+                    band ? <span key="band" style={{ color:C.gold }}>{band}</span> : null,
+                  ].filter(Boolean);
+                  return parts.flatMap((p, i) => i === 0 ? [p] : [
+                    <span key={`sep${i}`} aria-hidden="true" style={{ color:C.bg500 }}>·</span>, p,
+                  ]);
                 })()}
               </div>
               <div style={{ display:"flex", alignItems:"center", gap:14 }}>
