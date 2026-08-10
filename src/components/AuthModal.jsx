@@ -138,12 +138,12 @@ export default function AuthModal({ open, onClose, API, onAuthed }) {
               Enter it below to activate your account. Check spam if it isn't there in a minute.
             </div>
             <div style={{ marginBottom: 16 }}>
-              <label style={label}>Verification code</label>
-              <input value={code} autoFocus inputMode="numeric" maxLength={6}
+              <label htmlFor="auth-code" style={label}>Verification code</label>
+              <input id="auth-code" value={code} autoFocus inputMode="numeric" maxLength={6}
                 onChange={e => setCode(e.target.value.replace(/\D/g, ""))}
                 placeholder="000000" style={{ ...field, letterSpacing: "0.4em", textAlign: "center", fontSize: 20 }} />
             </div>
-            {err && <div style={{ ...sans, fontSize: 12.5, color: C.red, marginBottom: 12 }}>{err}</div>}
+            {err && <div role="alert" style={{ ...sans, fontSize: 12.5, color: C.red, marginBottom: 12 }}>{err}</div>}
             <button type="submit" disabled={busy || code.length < 6} style={{
               ...sans, width: "100%", padding: "13px 0", fontSize: 14.5, fontWeight: 600,
               borderRadius: 10, border: "none", cursor: busy ? "default" : "pointer",
@@ -161,20 +161,24 @@ export default function AuthModal({ open, onClose, API, onAuthed }) {
         <form onSubmit={submit} style={{ padding: "22px 28px 26px" }}>
           {mode === "signup" && (
             <div style={{ marginBottom: 14 }}>
-              <label style={label}>Name</label>
-              <input value={name} onChange={e => setName(e.target.value)} required
+              <label htmlFor="auth-name" style={label}>Name</label>
+              <input id="auth-name" value={name} onChange={e => setName(e.target.value)} required
                 placeholder="Your name" autoComplete="name" style={field} />
             </div>
           )}
           <div style={{ marginBottom: 14 }}>
-            <label style={label}>Email</label>
-            <input ref={emailRef} value={email} onChange={e => setEmail(e.target.value)}
-              type="email" placeholder="you@example.com" autoComplete="email" style={field} />
+            <label htmlFor="auth-email" style={label}>Email</label>
+            <input id="auth-email" ref={emailRef} value={email} onChange={e => setEmail(e.target.value)}
+              type="email" required placeholder="you@example.com" autoComplete="email"
+              aria-invalid={err ? true : undefined}
+              aria-describedby={err ? "auth-error" : undefined} style={field} />
           </div>
           <div style={{ marginBottom: 18 }}>
-            <label style={label}>Password</label>
-            <input value={pw} onChange={e => setPw(e.target.value)}
-              type="password" placeholder={mode === "signup" ? "8+ characters" : "••••••••"}
+            <label htmlFor="auth-password" style={label}>Password</label>
+            <input id="auth-password" value={pw} onChange={e => setPw(e.target.value)}
+              type="password" required placeholder={mode === "signup" ? "8+ characters" : "••••••••"}
+              aria-invalid={err ? true : undefined}
+              aria-describedby={err ? "auth-error" : undefined}
               autoComplete={mode === "signup" ? "new-password" : "current-password"} style={field} />
           </div>
 
@@ -194,7 +198,11 @@ export default function AuthModal({ open, onClose, API, onAuthed }) {
           )}
 
           {err && (
-            <div style={{ ...sans, fontSize: 12, color: C.red, border: `1px solid ${C.red}44`,
+            /* role=alert so a screen reader hears the failure — the message
+               appears without focus moving, so nothing would announce it
+               otherwise. Referenced by the fields' aria-describedby. */
+            <div id="auth-error" role="alert"
+              style={{ ...sans, fontSize: 12, color: C.red, border: `1px solid ${C.red}44`,
               borderRadius: 6, padding: "8px 12px", marginBottom: 14, background: C.red + "10" }}>
               {err}
             </div>

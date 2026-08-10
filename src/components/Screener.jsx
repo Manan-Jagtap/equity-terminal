@@ -6,7 +6,7 @@ import { Search, ChevronRight, Database, Star, Download, Bookmark, Save, Trash2 
 import { C, mono, sans } from "../lib/theme.js";
 import { fmt, inr, pct, multiple, inrOrDash, signedPct } from "../lib/formatters.js";
 import { fundamentals } from "../lib/valuation.js";
-import { recommend } from "../lib/recommend.js";
+import { valuationView } from "../lib/engineView.js";
 import { VerdictBadge } from "./primitives.jsx";
 import PageHeader from "./ui/PageHeader.jsx";
 import Logo from "./Logo.jsx";
@@ -204,48 +204,17 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
   const rows = useMemo(() => companies
     .map(co => {
       const f = fundamentals(co);
-      const a = co.api;
-      // Prefer the backend's CONSENSUS-ANCHORED screener metrics (these include
-      // the analyst overlay). Only fall back to a local recompute for seed/offline
-      // rows that never came from the API.
-      // Enter the API branch whenever the backend has a VIEW on this name —
-      // including when it deliberately withheld the number. Gating on
-      // `iv != null` alone excluded every suppressed row (all 110 arrive with
-      // intrinsic=null by design) and dropped them into the local recompute
-      // below, republishing a figure the engine had withdrawn.
-      if (a && (a.iv != null || a.fairValueNote)) {
-        // NO CALL / NO DATA names: the model has disowned its own intrinsic, so
-        // never display or sort on it — that's how a +717% "margin of safety"
-        // ends up green next to a grey badge. Fall back to analyst consensus
-        // (clearly labeled) so the row still gives the user a reference point.
-        const noCall = a.verdict === "LOW CONF" || a.verdict === "NO DATA";
-        return {
-          co,
-          iv: noCall ? null : a.iv,
-          mos: noCall ? null : a.mos,
-          consensus: noCall ? a.analystTarget : null,
-          consensusUpside: noCall ? a.analystUpside : null,
-          verdict: a.verdict,
-          composite: a.composite ?? 0,
-          reliable: a.reliable !== false,
-          // No `flags` key: /api/companies sends a level string and nothing
-          // else, so the reasons are UNKNOWN here, not absent. See the note on
-          // confDetail above — an empty array here read as "we checked, it's
-          // clean" and silently emptied the confidence tooltip for 963 rows.
-          confidence: { level: a.confidence || "medium" },
-          pb: a.pb ?? f.pb, pe: a.pe ?? f.pe, roe: a.roe ?? f.roe,
-          sentiment: a.sentiment ?? null, sentimentLabel: a.sentimentLabel ?? null,
-          // DAT-13b: verdict stands, the number is withheld. mos/iv already
-          // arrive null from the API; carry the note so the cell can say why.
-          fairValueNote: a.fairValueNote || null,
-          gateState: a.gateState || null,
-          // -Infinity keeps these out of the "most undervalued" end of a sort —
-          // a withheld figure must never rank as if it were a real one.
-          sortMos: noCall ? -Infinity : (a.mos ?? -Infinity),
-        };
-      }
-      const r = recommend(co, co.assumptions);
-      return { co, ...r, pb: f.pb, pe: f.pe, roe: f.roe, sortMos: r.mos ?? -Infinity };
+      // Provenance, not populated-ness, decides this — see lib/engineView.js.
+      // The old guard asked "did the backend give me a number OR a note?", which
+      // silently excluded the 50 rows the engine abstains on with neither, and
+      // dropped them into the local recompute below, republishing a figure the
+      // engine had withdrawn.
+      const view = valuationView(co, co.assumptions);
+      return {
+        co,
+        ...view,
+        pb: view.pb ?? f.pb, pe: view.pe ?? f.pe, roe: view.roe ?? f.roe,
+      };
     })
     .filter(r => {
       const mQ = (r.co.name + r.co.ticker).toLowerCase().includes(q.toLowerCase());
@@ -484,9 +453,18 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
                 <td style={{ padding: "11px 16px", maxWidth: 340 }}>
                   <div style={{ display:"flex", alignItems:"center", gap:7 }}>
                     {onToggleWatch && (
+                      /* Measured 18x18 at 375px, under WCAG 2.5.8's 24x24 floor,
+                         and its only accessible name was a `title` — which a
+                         touch device never surfaces (no hover) and screen
+                         readers treat as the weakest fallback. Padding buys the
+                         hit area without moving the star; aria-label names it
+                         for real and aria-pressed carries the toggle STATE,
+                         which colour alone was carrying before. */
                       <button title={isWatched(r.co.ticker) ? "Remove from watchlist" : "Add to watchlist"}
+                        aria-label={`${isWatched(r.co.ticker) ? "Remove" : "Add"} ${r.co.name || r.co.ticker} ${isWatched(r.co.ticker) ? "from" : "to"} watchlist`}
+                        aria-pressed={isWatched(r.co.ticker)}
                         onClick={e => { e.stopPropagation(); onToggleWatch(r.co.ticker); }}
-                        style={{ background:"transparent", border:"none", cursor:"pointer", padding:2, lineHeight:0, flexShrink:0 }}>
+                        style={{ background:"transparent", border:"none", cursor:"pointer", padding:5, margin:-3, lineHeight:0, flexShrink:0 }}>
                         <Star size={14} color={isWatched(r.co.ticker) ? C.gold : C.faint}
                           fill={isWatched(r.co.ticker) ? C.gold : "none"} />
                       </button>

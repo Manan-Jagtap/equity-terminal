@@ -10,7 +10,7 @@
       ],
       "port": 5173,
       "env": {
-        "VITE_API_URL": "https://equity-terminal-backend-production.up.railway.app"
+        "VITE_API_URL": "https://api.equityverdict.com"
       }
     },
     {

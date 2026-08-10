@@ -23,6 +23,7 @@ import NumberTicker from "./ui/NumberTicker.jsx";
 import { useLive, liveDotStyle } from "../lib/live.js";
 import { multiple, inrOrDash, signedPct } from "../lib/formatters.js";
 import { recommend } from "../lib/recommend.js";
+import { valuationView } from "../lib/engineView.js";
 import { fundamentals, isFinancial } from "../lib/valuation.js";
 import { technicals } from "../lib/technicals.js";
 import { useIsMobile } from "../lib/useResponsive.js";
@@ -283,12 +284,18 @@ function Card({ children, style, noPad }) {
   );
 }
 
+/* Renders an <h2>, not a styled <div>. This is the section title used 33 times
+   across the company page, and the whole file contained ZERO heading elements —
+   so the product's most important screen offered a screen reader no outline at
+   all, and "jump to next heading" had nothing to land on. The <h2> is styled to
+   look exactly as it did (margin/font reset inline), so this is a semantic
+   change only. */
 function SectionLabel({ children, accent }) {
   return (
     <div style={{ display:"flex", alignItems:"baseline", gap:12, marginBottom:16 }}>
-      <span style={{ ...sans, fontSize:10, letterSpacing:"0.18em", textTransform:"uppercase", color: C.dim, fontWeight:500 }}>{children}</span>
+      <h2 style={{ ...sans, fontSize:10, letterSpacing:"0.18em", textTransform:"uppercase", color: C.dim, fontWeight:500, margin:0 }}>{children}</h2>
       {accent && <span style={{ ...sans, fontSize:10, color: C.gold500 + "cc" }}>{accent}</span>}
-      <div style={{ flex:1, height:1, background:`linear-gradient(90deg,${C.line2},transparent)` }} />
+      <div aria-hidden="true" style={{ flex:1, height:1, background:`linear-gradient(90deg,${C.line2},transparent)` }} />
     </div>
   );
 }
@@ -1395,10 +1402,16 @@ function DynamicPeers({ co, allCompanies }) {
   );
   const rows = (universe.length >= 2 ? universe : (allCompanies || []).filter(c => c.type === co.type))
     .map(c => {
-      const r = recommend(c, c.assumptions);
-      return { c, iv: r.iv, mos: r.mos, pe: r.f.pe, pb: r.f.pb, roe: r.f.roe, verdict: r.verdict, conf: r.confidence };
+      // The engine's view wins whenever it has one. This table used to call the
+      // local recompute unconditionally, so every peer the engine had declined
+      // to value still showed a fair value, a verdict and a margin of safety —
+      // and the sort below ranked them ON that fabricated MoS.
+      const r = valuationView(c, c.assumptions);
+      return { c, iv: r.iv, mos: r.mos, pe: r.pe, pb: r.pb, roe: r.roe,
+               verdict: r.verdict, conf: r.confidence,
+               fairValueNote: r.fairValueNote, noCall: r.noCall, sortMos: r.sortMos };
     })
-    .sort((a, b) => (b.mos ?? -Infinity) - (a.mos ?? -Infinity));
+    .sort((a, b) => b.sortMos - a.sortMos);
 
   if (rows.length < 2) return (
     <div className="fadein" style={{ padding:32 }}>
@@ -1433,7 +1446,10 @@ function DynamicPeers({ co, allCompanies }) {
                       {p.c.name} <span style={{ ...mono, fontSize:10, color:C.dim }}>· {p.c.ticker}</span>
                     </td>
                     <td style={{ ...mono, textAlign:"right", padding:"10px 8px", color:C.text }}>{inrOrDash(p.c.price,0)}</td>
-                    <td style={{ ...mono, textAlign:"right", padding:"10px 8px", color:C.gold }}>{inrOrDash(p.iv,0)}</td>
+                    <td style={{ ...mono, textAlign:"right", padding:"10px 8px", color:p.iv==null&&p.fairValueNote?C.dim:C.gold }}
+                        title={p.fairValueNote || undefined}>
+                      {p.iv!=null ? inrOrDash(p.iv,0) : p.fairValueNote ? "n/m" : "—"}
+                    </td>
                     <td style={{ ...mono, textAlign:"right", padding:"10px 8px", color:p.mos==null?C.dim:p.mos>=0?C.green:C.red }}>{signedPct(p.mos)}</td>
                     <td style={{ ...mono, textAlign:"right", padding:"10px 8px", color:C.text }}>{multiple(p.pe,1)}</td>
                     <td style={{ ...mono, textAlign:"right", padding:"10px 8px", color:C.text }}>{multiple(p.pb,1)}</td>
@@ -3115,22 +3131,37 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
           <div style={{ display:"grid", gridTemplateColumns: isMobile ? "1fr" : "1fr auto", gap: isMobile ? 16 : 32, alignItems: isMobile ? "stretch" : "flex-end" }}>
             <div>
               <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8, flexWrap:"wrap", ...sans, fontSize:11, letterSpacing:"0.16em", textTransform:"uppercase", color:C.dim }}>
-                <span>NSE: {co.ticker}</span>
-                <span style={{ color:C.bg500 }}>·</span>
-                {(liveProfile?.key_facts?.bse_code || cd?.meta?.bse) && <span>BSE: {liveProfile?.key_facts?.bse_code || cd?.meta?.bse}</span>}
-                <span style={{ color:C.bg500 }}>·</span>
-                {(liveProfile?.key_facts?.isin || cd?.meta?.isin) && <span>ISIN: {liveProfile?.key_facts?.isin || cd?.meta?.isin}</span>}
-                <span style={{ color:C.bg500 }}>·</span>
+                {/* Built as a list and joined, because the separators used to be
+                    unconditional while the things they separate are not: a name
+                    with no BSE code and no ISIN rendered
+                    "NSE: BAJFINANCE · · · LARGE CAP" — three dots with nothing
+                    between them. Roughly 160 names carry null vendor identifiers,
+                    so this was on screen in production. The separators are
+                    aria-hidden: they are punctuation, and a screen reader was
+                    reading each one out. */}
                 {(() => {
+                  const bse  = liveProfile?.key_facts?.bse_code || cd?.meta?.bse;
+                  const isin = liveProfile?.key_facts?.isin || cd?.meta?.isin;
                   const m = price && co.shares ? price * co.shares : null;
                   const band = m == null ? mktData.sebiCap
                     : m >= 67000 ? "Large Cap" : m >= 22000 ? "Mid Cap" : "Small Cap";
-                  return band ? <span style={{ color:C.gold }}>{band}</span> : null;
+                  const parts = [
+                    <span key="nse">NSE: {co.ticker}</span>,
+                    bse  ? <span key="bse">BSE: {bse}</span> : null,
+                    isin ? <span key="isin">ISIN: {isin}</span> : null,
+                    band ? <span key="band" style={{ color:C.gold }}>{band}</span> : null,
+                  ].filter(Boolean);
+                  return parts.flatMap((p, i) => i === 0 ? [p] : [
+                    <span key={`sep${i}`} aria-hidden="true" style={{ color:C.bg500 }}>·</span>, p,
+                  ]);
                 })()}
               </div>
               <div style={{ display:"flex", alignItems:"center", gap:14 }}>
                 <Logo ticker={co.ticker} name={co.name} sector={co.sector} size={isMobile ? 36 : 48} radius={10} />
-                <div style={{ ...serif, fontSize: isMobile ? 34 : 60, color:C.text, lineHeight:1.05, letterSpacing:"-0.02em" }}>{co.name}</div>
+                {/* The page's <h1>. It was a 60px <div>, so the company page —
+                    the screen this whole product exists to render — had no
+                    heading at all, and every other screen has one. */}
+                <h1 style={{ ...serif, fontSize: isMobile ? 34 : 60, color:C.text, lineHeight:1.05, letterSpacing:"-0.02em", margin:0, fontWeight:"inherit" }}>{co.name}</h1>
               </div>
               <div style={{ ...sans, fontSize:13, color:C.text200, marginTop:12, maxWidth:680, lineHeight:1.6 }}>
                 {(() => {
@@ -3302,7 +3333,10 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
       </nav>
 
       {/* ── Tab content ───────────────────────────────────────── */}
-      <main>
+      {/* A <section>, not a <main>: App.jsx already opens the document's <main>
+          and this renders inside it. Nested <main> is invalid, and it announced
+          a second "main" landmark, so "skip to main content" became ambiguous. */}
+      <section aria-label={`${co.name} — ${tab}`}>
         {tab==="overview"   && <><ScoreCard API={API} ticker={co.ticker} /><OverviewTab co={co2} rec={rec} cd={cd} profile={liveProfile} profileError={profileRes.error} /></>}
         {tab==="chart"      && <PriceChart     data={histPrices?.data} intrinsic={fairValue} price={price} ticker={co.ticker} API={API} livePrice={livePx} live={!!liveFeed.live} />}
         {tab==="financials" && <FinancialsTab  co={co2} cd={cd} liveFinancials={liveFinancials}
@@ -3324,7 +3358,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
         {tab==="thesis"     && <AIThesisTab    co={co2} profile={liveProfile} insights={liveInsights} cd={cd} price={price} API={API} onGoTab={setTab} />}
         {tab==="forensics"  && <ForensicsTab   co={co2} API={API} />}
         {tab==="verdict"    && <VerdictTab     co={co2} rec={rec} cd={cd} price={price} insights={liveInsights} apiVal={apiVal} />}
-      </main>
+      </section>
 
       <footer style={{ borderTop:`1px solid ${C.line}`, padding:"20px 32px", display:"flex", justifyContent:"space-between", ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.1em", color:C.dim+"99", marginTop:48 }}>
         <span>EquityVerdict v0.3 — Sector-Aware Valuation Platform</span>
