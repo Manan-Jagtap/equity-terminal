@@ -17,7 +17,7 @@
  *
  *     node tests/suppressionContract.mjs
  */
-import { valuationView } from "../src/lib/engineView.js";
+import { valuationView, isValueSuppressed } from "../src/lib/engineView.js";
 
 let failures = 0;
 const check = (name, cond, detail) => {
@@ -123,6 +123,30 @@ if (thin.verdict === "LOW CONF" || thin.verdict === "NO DATA") {
 } else {
   console.log(`  skip  local no-call fixture reached ${thin.verdict}, not a no-call verdict`);
 }
+
+/* The company DETAIL endpoint is a different shape (`recommendation`), and the
+   surfaces reading it used `apiRec?.blended ?? apiRec?.intrinsic ?? rec.iv`.
+   A suppressed name arrives with all three null, so `??` read the withholding
+   as "missing" and substituted the browser's recompute. Live example: the API
+   returns ADANIGREEN as intrinsic=null, value_suppressed=true — while the
+   Verdict tab printed a fair value and a margin of safety. */
+console.log("");
+const detailSuppressed = { verdict: "AVOID", intrinsic: null, blended: null, mos: null,
+                           value_suppressed: true, fair_value_note: "not meaningful" };
+const detailValued     = { verdict: "ACCUMULATE", intrinsic: 2729, blended: 2729, mos: 0.12,
+                           value_suppressed: false };
+check("detail: suppression detected on the flag, not on null",
+      isValueSuppressed(detailSuppressed) === true);
+check("detail: a valued name is not treated as suppressed",
+      isValueSuppressed(detailValued) === false);
+check("detail: a still-loading response is not treated as suppressed",
+      isValueSuppressed(undefined) === false && isValueSuppressed(null) === false);
+// the `??` chain, gated the way VerdictTab now gates it
+const derive = r => isValueSuppressed(r) ? null : (r?.blended ?? r?.intrinsic ?? 1234);
+check("detail: suppressed name yields no fair value", derive(detailSuppressed) === null,
+      `got ${derive(detailSuppressed)}`);
+check("detail: valued name keeps the engine's number", derive(detailValued) === 2729);
+check("detail: loading state still falls back to the local mirror", derive(null) === 1234);
 
 console.log(failures === 0
   ? "\nsuppression-contract: OK — no surface reinvents a withheld valuation."

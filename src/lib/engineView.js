@@ -35,6 +35,22 @@ export function hasEngineView(co) {
   return Boolean(co && co.api);
 }
 
+/* Has the engine WITHHELD its point estimate for this name?
+ *
+ * Takes the `recommendation` object from /api/companies/{ticker} (a different
+ * shape from the list row's `co.api`). Ask this BEFORE any `?? fallback` chain:
+ * a suppressed name arrives with intrinsic/blended/mos all null, so `??` reads
+ * the withholding as "missing" and helpfully substitutes the browser's own
+ * recompute — publishing a number the engine formally withdrew.
+ *
+ * Keyed on the explicit flags, never on the value being null, for the same
+ * reason valuationView keys on provenance: null is what suppression LOOKS like,
+ * not what it IS.
+ */
+export function isValueSuppressed(apiRec) {
+  return Boolean(apiRec && (apiRec.value_suppressed || apiRec.fair_value_note));
+}
+
 /* The valuation figures a surface may DISPLAY for a company.
  *
  * Returns the same shape either way, so a caller never branches on provenance:
