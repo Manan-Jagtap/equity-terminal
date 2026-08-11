@@ -86,7 +86,21 @@ export default function AuthModal({ open, onClose, API, onAuthed }) {
         position: "fixed", inset: 0, zIndex: 200,
         background: "rgba(10,9,7,0.82)", backdropFilter: "blur(6px)",
         display: "flex", justifyContent: "center", alignItems: "flex-start",
+        // The scrim is position:fixed, so when the dialog is taller than the
+        // viewport NOTHING scrolls it: the page scrolls behind a fixed overlay,
+        // and the overlay itself was overflow:visible. Measured on production at
+        // a 480px-tall viewport, "Create account" sat 71px below the fold and
+        // survived page scroll, scrim scroll AND scrollIntoView — so on a
+        // landscape phone, a short laptop, or any screen with the on-screen
+        // keyboard open, the signup button could not be reached at all.
+        // overflowY makes the scrim itself the scroll container.
+        overflowY: "auto",
         paddingTop: "14vh",
+        // Without this the last control sits flush against the scroll end.
+        paddingBottom: 24,
+        // The sign-up form is the tall one (name + email + password + consent),
+        // so it is the case that overflows first.
+        overscrollBehavior: "contain",
       }}>
       <div ref={dialogRef} role="dialog" aria-modal="true"
         aria-label={mode === "signin" ? "Sign in to EquityVerdict" : "Create your EquityVerdict account"}
