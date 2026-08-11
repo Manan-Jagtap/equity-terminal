@@ -87,8 +87,13 @@ function StrategyBuilder({ data, spot }) {
       const S = lo + (hi - lo) * (i / n);
       pts.push({ S, pnl: netPayoff(legs, S) * lot });
     }
+    /* Extremes must be measured over the payoff's REAL bounded domain, not over
+       the ±35% window the chart draws. The window edge is an arbitrary price,
+       and reporting the P&L there as "Max loss" understated a short put's true
+       worst case (which occurs at S = 0) with a comfortable-looking number. */
     let mp = -Infinity, ml = Infinity;
-    pts.forEach(p => { mp = Math.max(mp, p.pnl); ml = Math.min(ml, p.pnl); });
+    const bound = [0, ...pts.map(p => p.S), hi];
+    bound.forEach(S => { const v = netPayoff(legs, S) * lot; mp = Math.max(mp, v); ml = Math.min(ml, v); });
     // breakevens: sign changes of pnl between grid points
     const bes = [];
     for (let i = 1; i < pts.length; i++) {
@@ -98,10 +103,27 @@ function StrategyBuilder({ data, spot }) {
         bes.push(a.S + (b.S - a.S) * t);
       }
     }
-    // unbounded detection: net long calls → unlimited up; net long puts / short → down
-    const upSlope = legs.reduce((a, l) => a + (l.type === "call" ? (l.action === "buy" ? 1 : -1) * (l.lots || 1) : 0), 0);
-    const downSlope = legs.reduce((a, l) => a + (l.type === "put" ? (l.action === "buy" ? 1 : -1) * (l.lots || 1) : 0), 0);
-    return { curve: pts, maxP: mp, maxL: ml, breakevens: bes, unlimitedUp: upSlope > 0, unlimitedDown: downSlope > 0 };
+    /* UNBOUNDEDNESS. Only ONE thing is unbounded in an options payoff: the
+       underlying rising without limit. As S → ∞ the slope is the NET CALL
+       position — long calls gain without bound, SHORT CALLS LOSE WITHOUT BOUND.
+       As S → 0 the payoff is always bounded, because the underlying cannot go
+       below zero.
+
+       The previous logic asked whether the net PUT position was long and called
+       that "unlimited down", which inverted the two cases that matter most:
+
+         Short Straddle  (sell call + sell put) — genuinely unlimited loss above.
+           net calls = -1, net puts = -1 → both flags false → the UI printed a
+           finite, reassuring "Max loss" for the single most dangerous position
+           in the preset list.
+         Long Put / Long Straddle — loss is capped at the premium paid.
+           net puts = +1 → flagged "Max loss: Unlimited" on a defined-risk trade.
+
+       So it told the user the unlimited-risk position was capped and the capped
+       position was unlimited. Both directions now key off the net call leg. */
+    const netCalls = legs.reduce((a, l) => a + (l.type === "call" ? (l.action === "buy" ? 1 : -1) * (l.lots || 1) : 0), 0);
+    return { curve: pts, maxP: mp, maxL: ml, breakevens: bes,
+             unlimitedUp: netCalls > 0, unlimitedDown: netCalls < 0 };
   }, [legs, spot, lot]);
 
   const prem = netPremium(legs) * lot;

@@ -23,7 +23,7 @@ import NumberTicker from "./ui/NumberTicker.jsx";
 import { useLive, liveDotStyle } from "../lib/live.js";
 import { multiple, inrOrDash, signedPct } from "../lib/formatters.js";
 import { recommend } from "../lib/recommend.js";
-import { valuationView } from "../lib/engineView.js";
+import { valuationView, isValueSuppressed } from "../lib/engineView.js";
 import { fundamentals, isFinancial } from "../lib/valuation.js";
 import { technicals } from "../lib/technicals.js";
 import { useIsMobile } from "../lib/useResponsive.js";
@@ -2513,8 +2513,16 @@ function VerdictTab({ co, rec, cd, price, insights, apiVal }) {
   // engine that drives the screener, the header and the now-unified DCF tab).
   // The client recompute (`rec`) is only a graceful fallback while apiVal loads.
   const f        = apiRec?.fundamentals ?? rec.f ?? {};
-  const dcfIv    = apiRec?.blended ?? apiRec?.intrinsic ?? rec.iv;
-  const dcfMos   = apiRec?.mos ?? rec.mos;            // fraction
+  // A suppressed name arrives with blended/intrinsic/mos ALL null, so `??` read
+  // the withholding as "missing" and substituted the browser's own recompute —
+  // printing a fair value and a margin of safety 30px below a snapshot strip
+  // that says "n/m". ADANIGREEN rendered ₹45 / −96.7% here while the engine had
+  // withdrawn its estimate, and ₹45 was not even the engine's own withheld
+  // figure. Ask about suppression BEFORE falling back.
+  const suppressed = isValueSuppressed(apiRec);
+  const dcfIv    = suppressed ? null : (apiRec?.blended ?? apiRec?.intrinsic ?? rec.iv);
+  const dcfMos   = suppressed ? null : (apiRec?.mos ?? rec.mos);            // fraction
+  const fvNote   = apiRec?.fair_value_note || null;
   const reasons  = apiRec?.reasons ?? rec.reasons ?? [];
   const composite = apiRec?.composite ?? null;        // 0–100 (engine composite)
   const conf      = apiRec?.confidence ?? null;       // {score, level, flags}
@@ -2544,11 +2552,29 @@ function VerdictTab({ co, rec, cd, price, insights, apiVal }) {
   // Scorecard = the engine's OWN factor scores (Valuation / Quality / Momentum /
   // Risk, 0–100). This is the transparent reasoning behind the verdict, not a
   // separate second model.
-  const sc = reasons.map(r => ({ k: r.label, s: r.score ?? 50, n: r.note, good: r.good, bad: r.bad }));
+  /* The engine's Valuation reason note EMBEDS the figure the API nulled out —
+     "-95.3% margin of safety vs intrinsic ₹64" arrives on ADANIGREEN, whose
+     intrinsic the same response reports as null. So the suppressed number was
+     being printed as prose, twice (scorecard + principal risks), on a page whose
+     snapshot strip says "n/m".
+
+     The real repair belongs in the backend reason builder; this is the guard on
+     the render side so a backend regression cannot re-leak it. Only the note is
+     replaced — the factor, its score and its bar still show, because the engine
+     genuinely did score valuation; it just will not publish the level. */
+  const scrubNote = (r) => {
+    if (!suppressed || !r?.note) return r?.note;
+    return /intrinsic|margin of safety|fair value/i.test(r.note)
+      ? (fvNote ? `Fair value ${fvNote} — the engine withheld its estimate for this name.`
+                : "The engine withheld its fair-value estimate for this name.")
+      : r.note;
+  };
+
+  const sc = reasons.map(r => ({ k: r.label, s: r.score ?? 50, n: scrubNote(r), good: r.good, bad: r.bad }));
 
   // Principal risks: the engine's flagged-bad factors + any data-quality flags.
   const risks = [
-    ...reasons.filter(r => r.bad).map(r => r.note),
+    ...reasons.filter(r => r.bad).map(scrubNote),
     ...((conf?.flags) || []),
     ...((cd?.risks) || []),
   ].filter(Boolean).slice(0, 6);
