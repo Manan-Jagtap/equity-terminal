@@ -61,7 +61,14 @@ function SliderRow({ label, value, setValue, min, max, step, display, hint, driv
         <span style={{ ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.09em", color:C.faint, fontWeight:500 }}>{label}</span>
         <span style={{ ...mono, fontSize:14, color:C.gold, fontWeight:500 }}>{shown}</span>
       </div>
+      {/* The <span> above is a visual label only — it was never associated with
+          the input, so all 14 of these announced as an unnamed slider reading
+          the RAW value ("0.069") rather than the "6.9%" on screen. aria-label
+          names it; aria-valuetext makes the announced value match what the user
+          can see, which is the whole point of a slider they are reasoning with. */}
       <input type="range" min={min} max={max} step={step} value={value}
+        aria-label={label}
+        aria-valuetext={String(shown)}
         onChange={e => setValue(parseFloat(e.target.value))}
         style={{ width:"100%" }} />
       {hint && <div style={{ ...sans, fontSize:10, color:C.faint, marginTop:3 }}>{hint}</div>}
