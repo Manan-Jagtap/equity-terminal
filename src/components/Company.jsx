@@ -21,7 +21,7 @@ import { C, mono, sans, serif, gridBg, sectorAccent } from "../lib/theme.js";
 import FvRange from "./FvRange.jsx";
 import NumberTicker from "./ui/NumberTicker.jsx";
 import { useLive, liveDotStyle } from "../lib/live.js";
-import { multiple, inrOrDash, signedPct } from "../lib/formatters.js";
+import { multiple, inrOrDash, signedPct, growthOnBase } from "../lib/formatters.js";
 import { recommend } from "../lib/recommend.js";
 import { valuationView, isValueSuppressed } from "../lib/engineView.js";
 import { fundamentals, isFinancial } from "../lib/valuation.js";
@@ -917,9 +917,14 @@ function ScreenerIncomeTable({ accent, title = "Income Statement", periods, metr
     const c = Number(m[name]?.[ci]), p = Number(m[name]?.[pi]);
     if (isNaN(c) || isNaN(p)) return { txt: "—", tone: C.dim };
     if (String(name).includes("%")) { const d = c - p; return { txt: (d >= 0 ? "+" : "") + d.toFixed(0) + " pp", tone: d >= 0 ? C.green : C.red }; }
-    if (p === 0) return { txt: "—", tone: C.dim };
-    const g = (c / p - 1) * 100;
-    return { txt: (g >= 0 ? "+" : "") + g.toFixed(0) + "%", tone: g >= 0 ? C.green : C.red };
+    /* A percentage change is only defined off a POSITIVE base. Off a negative
+       one it inverts: IDEA's net profit going -5,286 -> +51,970 cr (a loss
+       becoming a large profit) printed "-1083%" in red, and YESBANK's loss
+       DEEPENING from -366 to -559 printed "+53%" in green. Profit before tax
+       and Net Profit are exactly the rows that go negative. */
+    const gr = growthOnBase(c, p);
+    return { txt: gr.txt, title: gr.title,
+             tone: gr.tone === "pos" ? C.green : gr.tone === "neg" ? C.red : C.dim };
   };
   return (
     <Card noPad style={{ overflow:"hidden" }}>
@@ -972,7 +977,10 @@ function ScreenerIncomeTable({ accent, title = "Income Statement", periods, metr
                       {gCols.map((g, k) => {
                         const gv = gVal(name, g.cur, g.prev);
                         return (
-                          <td key={"g"+k} style={{ ...mono, textAlign:"right", padding:"9px 8px", paddingRight:k===gCols.length-1?"20px":"8px", fontSize:12, color:gv.tone, borderLeft:k===0?`1px solid ${C.line2}`:"none" }}>
+                          <td key={"g"+k} title={gv.title || undefined}
+                              style={{ ...mono, textAlign:"right", padding:"9px 8px", paddingRight:k===gCols.length-1?"20px":"8px",
+                                       fontSize: gv.txt.length > 6 ? 10.5 : 12, color:gv.tone,
+                                       borderLeft:k===0?`1px solid ${C.line2}`:"none", whiteSpace:"nowrap" }}>
                             {gv.txt}
                           </td>
                         );
