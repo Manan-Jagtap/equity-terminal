@@ -3393,7 +3393,16 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
           a second "main" landmark, so "skip to main content" became ambiguous. */}
       <section aria-label={`${co.name} — ${tab}`}>
         {tab==="overview"   && <><ScoreCard API={API} ticker={co.ticker} /><OverviewTab co={co2} rec={rec} cd={cd} profile={liveProfile} profileError={profileRes.error} /></>}
-        {tab==="chart"      && <PriceChart     data={histPrices?.data} intrinsic={fairValue} price={price} ticker={co.ticker} API={API} livePrice={livePx} live={!!liveFeed.live} />}
+        {tab==="chart" && (
+          histPrices?.error
+            ? <div style={{ padding: 24 }}>
+                <ErrorState error={histPrices.error} what={`${co.name}'s price history`}
+                  onRetry={() => window.location.reload()} />
+              </div>
+          : histPrices == null
+            ? <div style={{ ...sans, padding: 40, color: C.dim, fontSize: 13 }}>Loading price history…</div>
+          : <PriceChart data={histPrices?.data} intrinsic={fairValue} price={price} ticker={co.ticker} API={API} livePrice={livePx} live={!!liveFeed.live} />
+        )}
         {tab==="financials" && <FinancialsTab  co={co2} cd={cd} liveFinancials={liveFinancials}
               statementsError={financialsRes.error} onRetryStatements={financialsRes.retry} API={API} />}
         {tab==="ratios"     && <RatiosTab      co={co2} API={API} liveMetrics={liveMetrics} />}
