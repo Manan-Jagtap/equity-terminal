@@ -109,3 +109,29 @@ export const stackLine = {
 export const thCompact = { ...th, padding: "7px 8px" };
 export const tdCompact = { ...td, padding: "6px 8px", fontSize: 11.5 };
 export const tdCompactNum = { ...tdCompact, ...mono, whiteSpace: "nowrap" };
+
+/* THE uppercase micro-label.
+ *
+ * tokens.css defines exactly one (`.evc-stat-label`): 10px at 0.08em tracking in
+ * the tertiary text tier. The product hand-writes ~161 of them in 64 distinct
+ * size/tracking/colour combinations — including fractional sizes (8.5, 9.5,
+ * 10.5, 11.5, 12.5) that no token backs, and tracking anywhere from none to
+ * 0.18em.
+ *
+ * Spread this the way `th`/`td` already are. Two variants only, because two is
+ * what the tokens actually describe:
+ *   label      10px — the section/stat micro-label
+ *   labelSm     9px — the same thing where space genuinely forces it smaller
+ *
+ * Colour is deliberately NOT baked in: these appear on several surfaces and the
+ * palette gate checks contrast per surface, so the call site keeps that choice.
+ */
+export const label = {
+  ...sans,
+  fontSize: 10,
+  letterSpacing: "0.08em",
+  textTransform: "uppercase",
+  fontWeight: 500,
+};
+
+export const labelSm = { ...label, fontSize: 9 };

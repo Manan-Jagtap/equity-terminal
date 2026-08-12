@@ -312,14 +312,21 @@
 /* ── Table ──────────────────────────────────────────────────────────────── */
 .evc-table-wrap { overflow-x: auto; }
 .evc-table { width: 100%; border-collapse: collapse; font-size: var(--ev-fs-md); }
+/* These numbers MIRROR src/design/table.js, which is the de-facto canonical
+   rhythm (8 screens import it against this file's 2 primitives). They used to
+   disagree — th 11px vs 10px, th padding 8px vs 10px, td padding 9px vs 11px —
+   so a table built from the primitive sat on a visibly different row rhythm
+   from one built with the shared style objects, and there was no way to tell
+   which was "the" table. Two specs for one thing is the defect; the values are
+   arbitrary next to that. Change both together or neither. */
 .evc-table th {
-  font-family: var(--ev-font-ui); font-size: var(--ev-fs-xs); font-weight: 600;
+  font-family: var(--ev-font-ui); font-size: var(--ev-fs-2xs); font-weight: 600;
   letter-spacing: var(--ev-track-label); text-transform: uppercase; color: var(--ev-text-3);
-  text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--ev-line-2);
+  text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--ev-line-2);
   white-space: nowrap;
 }
 .evc-table td {
-  padding: 9px 12px; border-bottom: 1px solid var(--ev-line);
+  padding: 11px 12px; border-bottom: 1px solid var(--ev-line);
   color: var(--ev-text-2); font-family: var(--ev-font-ui);
 }
 .evc-table th[data-num], .evc-table td[data-num] { text-align: right; }

@@ -52,7 +52,7 @@ function BasketCard({ b, onOpen }) {
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
         <div style={{ minWidth: 0 }}>
           <div style={{ ...serif, fontSize: 17, color: C.text, lineHeight: 1.2 }}>{b.name}</div>
-          <div style={{ ...sans, fontSize: 10.5, textTransform: "uppercase", letterSpacing: "0.08em", color: C.gold, marginTop: 3 }}>
+          <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", color: C.gold, marginTop: 3 }}>
             {b.kind === "smart_beta" ? `Smart-beta · ${factorLabel}` : "Thematic"}
           </div>
         </div>

@@ -170,7 +170,7 @@ function DividendCalendar({ API, onOpen }) {
   );
   const section = (title, arr) => (arr || []).length > 0 && (
     <div style={{ marginBottom: 18 }}>
-      <div style={{ ...sans, fontSize: 10.5, textTransform: "uppercase", letterSpacing: "0.12em", color: C.dim, marginBottom: 8 }}>{title} · {arr.length}</div>
+      <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: C.dim, marginBottom: 8 }}>{title} · {arr.length}</div>
       <div style={{ border: `1px solid ${C.line}`, borderRadius: 12, overflow: "hidden" }}>{arr.map(Row)}</div>
     </div>
   );

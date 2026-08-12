@@ -258,7 +258,7 @@ export default function AnalystTab({ co, API, price }) {
               <thead>
                 <tr>
                   {["Fiscal Year", "EPS (₹)", "EPS Range", "Revenue", "# Est."].map((h, i) => (
-                    <th key={h} style={{ ...sans, fontSize: 10.5, letterSpacing: "0.05em", textTransform: "uppercase", color: C.dim, fontWeight: 500, padding: "8px 12px", textAlign: i === 0 ? "left" : "right", whiteSpace: "nowrap" }}>{h}</th>
+                    <th key={h} style={{ ...sans, fontSize: 10, letterSpacing: "0.05em", textTransform: "uppercase", color: C.dim, fontWeight: 500, padding: "8px 12px", textAlign: i === 0 ? "left" : "right", whiteSpace: "nowrap" }}>{h}</th>
                   ))}
                 </tr>
               </thead>

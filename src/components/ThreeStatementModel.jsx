@@ -54,7 +54,7 @@ function project(d) {
 function Driver({ label, value, set, step = 0.005, pct = true, suffix, width = 76 }) {
   return (
     <label style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-      <span style={{ ...sans, fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".07em", color: C.dim }}>{label}</span>
+      <span style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: ".07em", color: C.dim }}>{label}</span>
       <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
         <input type="number" value={pct ? +(value * 100).toFixed(2) : value} step={pct ? step * 100 : step}
                onChange={e => set(pct ? Number(e.target.value) / 100 : Number(e.target.value))}
@@ -154,7 +154,7 @@ export default function ThreeStatementModel({ co, price, apiVal }) {
           ["Terminal % of EV", m.tvShare == null ? "—" : (m.tvShare * 100).toFixed(0) + "%", m.tvShare > 0.75 ? C.gold : C.text200],
         ].map(([l, v, col]) => (
           <div key={l} style={{ border: `1px solid ${C.line}`, borderRadius: 10, padding: "11px 13px", background: C.panel2 }}>
-            <div style={{ ...sans, fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".08em", color: C.dim, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{l}</div>
+            <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: ".08em", color: C.dim, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{l}</div>
             <div style={{ ...mono, fontSize: 17, color: col, marginTop: 3 }}>{v}</div>
           </div>
         ))}

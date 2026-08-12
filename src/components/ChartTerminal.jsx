@@ -216,11 +216,11 @@ export default function ChartTerminal({ data, livePrice, live, intrinsic, height
           <button onClick={() => setMenu(m => !m)} style={btn(legendItems.length > 0)}>ƒ Indicators ▾</button>
           {menu && (
             <div style={{ position: "absolute", top: "110%", left: 0, zIndex: 30, background: C.bg900, border: `1px solid ${C.line2}`, borderRadius: 10, padding: 10, minWidth: 190, boxShadow: "0 10px 30px rgba(0,0,0,0.5)" }}>
-              <div style={{ ...sans, fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.1em", color: C.faint, margin: "2px 0 6px" }}>Overlays</div>
+              <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: C.faint, margin: "2px 0 6px" }}>Overlays</div>
               {OVERLAYS.map(k => <MenuRow key={k} k={k} on={!!active[k]} onClick={() => toggle(k)} />)}
-              <div style={{ ...sans, fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.1em", color: C.faint, margin: "8px 0 6px" }}>Oscillators</div>
+              <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: C.faint, margin: "8px 0 6px" }}>Oscillators</div>
               {OSCILLATORS.map(k => <MenuRow key={k} k={k} on={!!active[k]} onClick={() => toggle(k)} />)}
-              <div style={{ ...sans, fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.1em", color: C.faint, margin: "8px 0 6px" }}>Other</div>
+              <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: C.faint, margin: "8px 0 6px" }}>Other</div>
               <MenuRow k="volume" label="Volume" on={!!active.volume} onClick={() => toggle("volume")} />
             </div>
           )}

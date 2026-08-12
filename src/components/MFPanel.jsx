@@ -488,7 +488,7 @@ function FundPage({ fund, onBack, isMobile }) {
                     <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column",
                       alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
                       <div style={{ ...mono, fontSize: 22, color: C.text }}>{detail.top10_weight != null ? detail.top10_weight.toFixed(0) + "%" : "—"}</div>
-                      <div style={{ ...sans, fontSize: 9.5, color: C.dim, textTransform: "uppercase", letterSpacing: "0.1em" }}>in top 10</div>
+                      <div style={{ ...sans, fontSize: 10, color: C.dim, textTransform: "uppercase", letterSpacing: "0.1em" }}>in top 10</div>
                     </div>
                   </div>
                 </div>
