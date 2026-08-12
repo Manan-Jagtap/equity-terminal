@@ -3097,7 +3097,11 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
                         flexWrap:"wrap", rowGap:10, marginBottom: isMobile ? 14 : 24 }}>
             <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-              <button onClick={onBack} style={{ ...sans, display:"flex", alignItems:"center", gap:6, background:"transparent", border:"none", color:C.dim, fontSize:12, cursor:"pointer", padding:0 }}>
+              {/* padding, not font-size: measured 116x15 on a mobile company page, under
+                  WCAG 2.5.8's 24x24 floor, and it is the only way back. */}
+              <button onClick={onBack} style={{ ...sans, display:"flex", alignItems:"center", gap:6,
+                background:"transparent", border:"none", color:C.dim, fontSize:12, cursor:"pointer",
+                padding:"6px 8px", margin:"-6px -8px" }}>
                 <ArrowLeft size={14} /> Back to screener
               </button>
               <span style={{ color:C.bg500 }}>/</span>
