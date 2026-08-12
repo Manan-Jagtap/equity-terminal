@@ -12,6 +12,7 @@ import { useEffect, useState } from "react";
 import { RefreshCw } from "lucide-react";
 import { C, mono, sans, serif } from "../lib/theme.js";
 import { authFetch } from "../lib/auth.js";
+import Audience from "./Audience.jsx";
 
 const card = {
   background: C.bg900, border: `1px solid ${C.line2}`, borderRadius: 12,
@@ -143,6 +144,7 @@ export default function AdminPanel({ API }) {
           </table>
         </div>
       </div>
+      <Audience API={API} />
     </div>
   );
 }
