@@ -126,7 +126,13 @@ export default function Compare({ API, companies = [], onOpen, seed = [] }) {
               border: `1px solid ${C.line2}`, borderRadius: 99, padding: "5px 6px 5px 12px",
               display: "inline-flex", alignItems: "center", gap: 8 }}>
               {it?.name || t}
-              <button onClick={() => remove(t)} style={{ background: "transparent", border: "none", cursor: "pointer",
+              {/* Icon-only AND destructive: a screen reader announced "button"
+                  with no indication of what it removes, in a row of identical
+                  chips. Name it after the company, not the action. */}
+              <button onClick={() => remove(t)}
+                aria-label={`Remove ${it?.name || t} from the comparison`}
+                title={`Remove ${it?.name || t}`}
+                style={{ background: "transparent", border: "none", cursor: "pointer",
                 color: C.dim, display: "inline-flex", padding: 2 }}><X size={13} /></button>
             </span>
           );

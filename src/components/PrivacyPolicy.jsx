@@ -1,8 +1,11 @@
+import { useEffect } from "react";
 /* PrivacyPolicy.jsx — the privacy policy overlay, linked from signup and the
    landing footer. Plain-language v1 drafted for the DPDP Act's notice
    requirement — have a lawyer review before commercial launch (COMPLIANCE.md §4). */
 
 import { X } from "lucide-react";
+import useModalA11y from "../lib/useModalA11y.js";
+import { useEscape } from "../lib/a11y.js";
 import { C, sans, serif } from "../lib/theme.js";
 
 const SECTIONS = [
@@ -37,6 +40,24 @@ const SECTIONS = [
 ];
 
 export default function PrivacyPolicy({ open, onClose }) {
+  /* This was a full-screen overlay with NO dialog semantics: no role, no
+     aria-modal, no focus trap, focus never entered it, and Escape did nothing —
+     so a keyboard user who opened the privacy policy was stuck in it, on the
+     one document a compliance-minded reader is most likely to open with the
+     keyboard. useModalA11y supplies the trap and focus restore; useEscape is
+     capture-phase so a focused element inside cannot swallow the key. */
+  const dialogRef = useModalA11y(open);
+  useEscape(onClose, open);
+  /* useModalA11y traps and restores focus but leaves INITIAL focus to the
+     caller (its own docstring says so). Without this the dialog opens with
+     focus still on the page behind it, so a screen reader never announces it
+     and Tab walks the background first. The container takes focus — this is a
+     document to read, not a form, so there is no first field to jump to. */
+  useEffect(() => {
+    if (!open) return;
+    const t = setTimeout(() => dialogRef.current?.focus(), 10);
+    return () => clearTimeout(t);
+  }, [open, dialogRef]);
   if (!open) return null;
   return (
     <div
@@ -47,7 +68,8 @@ export default function PrivacyPolicy({ open, onClose }) {
         display: "flex", justifyContent: "center", alignItems: "flex-start",
         padding: "7vh 16px", overflowY: "auto",
       }}>
-      <div className="fadein" style={{
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label="Privacy Policy" tabIndex={-1}
+        className="fadein" style={{
         width: "min(640px, 94vw)", background: C.bg900,
         border: `1px solid ${C.line2}`, borderRadius: 12,
         boxShadow: "0 24px 80px rgba(0,0,0,0.6)", padding: "28px 30px 26px",

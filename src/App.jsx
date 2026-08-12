@@ -600,7 +600,9 @@ export default function App() {
           </nav>
 
           <div style={{ position: "relative", borderTop: `1px solid ${C.line}`, paddingTop: 10, marginTop: 8 }}>
-            <button onClick={() => setUserMenu(m => !m)} style={{
+            <button onClick={() => setUserMenu(m => !m)}
+              aria-expanded={userMenu} aria-haspopup="menu"
+              aria-label={userMenu ? "Close account menu" : "Open account menu"} style={{
               ...sans, display: "flex", alignItems: "center", gap: 9, width: "100%",
               padding: "7px 8px", borderRadius: 10, cursor: "pointer",
               fontSize: 12.5, fontWeight: 500, border: "none",
@@ -895,7 +897,9 @@ export default function App() {
               <Icon size={19} strokeWidth={1.7} />{label}
             </button>
           ))}
-          <button onClick={() => setMoreOpen(v => !v)} style={{
+          <button onClick={() => setMoreOpen(v => !v)}
+            aria-expanded={moreOpen} aria-haspopup="menu"
+            aria-label={moreOpen ? "Close more navigation" : "More navigation"} style={{
             ...sans, display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
             background: "transparent", border: "none", cursor: "pointer",
             fontSize: 9, padding: "2px 8px", color: moreOpen ? C.gold : C.dim,
