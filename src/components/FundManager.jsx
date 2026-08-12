@@ -486,7 +486,7 @@ export default function FundManager({ API, user, requestAuth, onOpen }) {
   if (loading) return <PageSkeleton label="Reading your book…" cards={4} />;
 
   const mgr = data?.manager;
-  const empty = !err && (!mgr || !mgr.aum);
+  const empty = !mgr || !mgr.aum;
 
   return (
     <div className="fadein" style={{ padding: "24px 32px", maxWidth: 1080 }}>
@@ -500,12 +500,14 @@ export default function FundManager({ API, user, requestAuth, onOpen }) {
       {/* Universe-wide discovery — shown whether or not the user holds anything. */}
       <HiddenGems API={API} onOpen={onOpen} />
 
-      {err && (
+      {/* Ordered, not merged: an outage shows the error INSTEAD of the empty
+          state (which would say "no book to manage" to someone who has one),
+          and the body below dereferences `mgr`, so neither branch may fall
+          through to it. */}
+      {err ? (
         <ErrorState error={err} what="your book"
           onRetry={() => { setErr(null); setLoaded(false); setReload(n => n + 1); }} />
-      )}
-
-      {empty && (
+      ) : empty ? (
         <div style={{ border: `1px solid ${C.line}`, borderRadius: 12, background: C.panel, padding: "48px 24px", textAlign: "center" }}>
           <Briefcase size={26} color={C.faint} style={{ marginBottom: 12 }} />
           <div style={{ ...serif, fontSize: 20, color: C.text200, marginBottom: 6 }}>No book to manage yet</div>
@@ -514,7 +516,7 @@ export default function FundManager({ API, user, requestAuth, onOpen }) {
             manager's desk lights up with a written note and a sized action queue.
           </div>
         </div>
-      )}
+      ) : null}
 
       {!empty && (
         <>

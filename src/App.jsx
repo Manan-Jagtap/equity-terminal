@@ -892,7 +892,7 @@ export default function App() {
             <button key={id} onClick={() => { setView(id); setMoreOpen(false); }} style={{
               ...sans, display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
               background: "transparent", border: "none", cursor: "pointer",
-              fontSize: 9, padding: "2px 8px", color: view === id && !moreOpen ? C.gold : C.dim,
+              fontSize: 9.5, padding: "8px 8px", minHeight: 44, justifyContent: "center", color: view === id && !moreOpen ? C.gold : C.dim,
             }}>
               <Icon size={19} strokeWidth={1.7} />{label}
             </button>
@@ -902,7 +902,7 @@ export default function App() {
             aria-label={moreOpen ? "Close more navigation" : "More navigation"} style={{
             ...sans, display: "flex", flexDirection: "column", alignItems: "center", gap: 2,
             background: "transparent", border: "none", cursor: "pointer",
-            fontSize: 9, padding: "2px 8px", color: moreOpen ? C.gold : C.dim,
+            fontSize: 9.5, padding: "8px 8px", minHeight: 44, justifyContent: "center", color: moreOpen ? C.gold : C.dim,
           }}>
             <Layers size={19} strokeWidth={1.7} />More
           </button>

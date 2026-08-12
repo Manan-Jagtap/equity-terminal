@@ -80,14 +80,25 @@ export function applyControls(rows, controls) {
 
 export function SortableTh({ label, k, controls, setControls, style }) {
   const active = controls.sortKey === k;
+  const cycle = () => setControls(c => (c.sortKey === k
+      ? (c.sortDir === "desc" ? { ...c, sortDir: "asc" } : { ...c, sortKey: null, sortDir: null })
+      : { ...c, sortKey: k, sortDir: "desc" }));
+  /* A <th onClick> is not a control: no focus, no Enter/Space, and nothing
+     announced the sort state — so every sortable column in the app was
+     mouse-only, and a screen reader could not tell which column the table was
+     sorted by. aria-sort carries the state natively; the inner <button> makes
+     it operable without turning the header cell itself into a tab stop that
+     announces nothing. */
   return (
-    <th onClick={() => setControls(c => (c.sortKey === k
-        ? (c.sortDir === "desc" ? { ...c, sortDir: "asc" } : { ...c, sortKey: null, sortDir: null })
-        : { ...c, sortKey: k, sortDir: "desc" }))}
-      title={`Sort by ${label} — high→low, low→high, off`}
-      style={{ ...style, cursor: "pointer", userSelect: "none",
-               color: active ? C.gold : style?.color }}>
-      {label}{active ? (controls.sortDir === "desc" ? " ↓" : " ↑") : ""}
+    <th aria-sort={active ? (controls.sortDir === "desc" ? "descending" : "ascending") : "none"}
+      style={{ ...style, userSelect: "none", color: active ? C.gold : style?.color }}>
+      <button type="button" onClick={cycle}
+        title={`Sort by ${label} — high→low, low→high, off`}
+        style={{ background: "none", border: "none", padding: 0, margin: 0, font: "inherit",
+                 color: "inherit", cursor: "pointer", textAlign: "inherit",
+                 letterSpacing: "inherit", textTransform: "inherit" }}>
+        {label}{active ? (controls.sortDir === "desc" ? " ↓" : " ↑") : ""}
+      </button>
     </th>
   );
 }
