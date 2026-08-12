@@ -77,7 +77,11 @@
     /* #118 mobile polish: iOS Safari ZOOMS the whole page in when a focused
        input's font is < 16px (our terminal inputs are 13px). Bump inputs to 16px
        on small screens so focusing a field never triggers that jarring zoom. */
-    @media (max-width: 640px) {
+    /* 760px, not 640: the app's own mobile layout runs to 760 (useIsMobile),
+       so a 641-759px viewport got the phone UI with 13px inputs and iOS zoomed
+       the page on every focus — a dead band exactly where small tablets and
+       landscape phones sit. The two breakpoints have to agree. */
+    @media (max-width: 760px) {
       input, select, textarea { font-size: 16px !important; }
     }
   </style>

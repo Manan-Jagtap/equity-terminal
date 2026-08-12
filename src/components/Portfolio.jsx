@@ -607,7 +607,15 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
           <ChevronRight size={13} style={{ transform: pasteOpen ? "rotate(90deg)" : "none", transition: "transform 160ms" }} />
           Paste holdings
         </button>
-        {importMsg && <span style={{ ...sans, fontSize: 11.5, color: importMsg.tone }}>{importMsg.text}</span>}
+        {/* The outcome of a CSV import ("42 added, 3 unmatched") arrives
+            asynchronously with no focus change, so a screen reader never
+            announced it — the user was told nothing about what happened to
+            their book. role=status announces it politely without stealing
+            focus mid-import. */}
+        <span role="status" aria-live="polite" aria-atomic="true"
+              style={{ ...sans, fontSize: 11.5, color: importMsg ? importMsg.tone : "transparent" }}>
+          {importMsg ? importMsg.text : ""}
+        </span>
         {err && <span style={{ ...sans, fontSize: 11, color: C.red }}>Could not reach backend: {err}</span>}
       </form>
 
@@ -787,12 +795,23 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
                     {h.div_income ? inr(h.div_income) : "—"}
                   </td>
                   <td style={{ ...tdNum, color: C.text200 }}>{pctPlain(h.weight)}</td>
-                  <td style={{ ...tdNum, color: pnlColor(h.mos) }}>{signedPct(h.mos)}</td>
+                  {/* Withheld reads "n/m", not a dash — the engine declined to
+                      value this name, which is different from having no data. */}
+                  <td style={{ ...tdNum, color: h.value_suppressed ? C.faint : pnlColor(h.mos) }}
+                      title={h.value_suppressed ? (h.fair_value_note || "The engine withheld its fair value for this name.") : undefined}>
+                    {h.value_suppressed ? "n/m" : signedPct(h.mos)}
+                  </td>
                   <td style={td}><VerdictBadge verdict={h.verdict || "—"} /></td>
                   <td style={{ ...td, textAlign: "center", whiteSpace: "nowrap" }}>
                     <button title="Remove holding"
                       onClick={e => { e.stopPropagation(); remove(h.id, h.name || h.ticker); }}
-                      style={{ background: "transparent", border: "none", cursor: "pointer", padding: 4, lineHeight: 0 }}
+                      aria-label={`Remove ${h.name || h.ticker} from your portfolio`}
+                      /* 22x22 before: a DESTRUCTIVE control, under the 24x24
+                         floor, inside a row that is itself clickable — so a
+                         near-miss opened the company instead, and a near-miss
+                         the other way deleted a hand-typed cost basis. */
+                      style={{ background: "transparent", border: "none", cursor: "pointer",
+                               padding: 9, margin: -5, lineHeight: 0 }}
                       onMouseEnter={e => e.currentTarget.firstChild && (e.currentTarget.firstChild.style.color = C.red)}>
                       <Trash2 size={14} color={C.faint} />
                     </button>

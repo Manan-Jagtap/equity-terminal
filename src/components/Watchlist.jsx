@@ -232,8 +232,14 @@ export default function Watchlist({ API, onOpen, onChanged, user, requestAuth })
               {[
                 ["CMP", inr(it.price), undefined],
                 ["1-day", signed(it.day_move), sign(it.day_move)],
-                ["Fair value", inr(it.intrinsic), "accent"],
-                ["Margin of safety", signed(it.mos), sign(it.mos)],
+                /* The backend now nulls these and sets value_suppressed when
+                   the engine withheld its estimate. "n/m" says withheld;
+                   inr(null) would render a dash that reads as "we have no
+                   data" — a different, wrong claim. */
+                ["Fair value", it.value_suppressed ? "n/m" : inr(it.intrinsic),
+                  it.value_suppressed ? "secondary" : "accent"],
+                ["Margin of safety", it.value_suppressed ? "n/m" : signed(it.mos),
+                  it.value_suppressed ? "secondary" : sign(it.mos)],
                 ["Analyst upside", signed(it.analyst_upside), sign(it.analyst_upside)],
                 ["Score", it.composite == null ? "—" : Math.round(it.composite) + "/100", "secondary"],
               ].map(([l, v, tone]) => (
