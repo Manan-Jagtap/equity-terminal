@@ -8,6 +8,7 @@ import { VerdictBadge } from "./primitives.jsx";
 import Logo from "./Logo.jsx";
 import { fetchWatchlist, saveWatch, removeWatch } from "../lib/watchlist.js";
 import PageHeader from "./ui/PageHeader.jsx";
+import ErrorState from "./ui/ErrorState.jsx";
 /* Modules, not the ui/ barrel — App.jsx imports this screen EAGERLY, so a
    barrel import would drag Radix into the entry chunk (see ui/index.js). */
 import Card from "./ui/Card.jsx";
@@ -136,11 +137,18 @@ export default function Watchlist({ API, onOpen, onChanged, user, requestAuth })
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
 
+  const [err, setErr] = useState(null);   // an outage is not an empty watchlist
+
   const load = useCallback(() => {
-    if (!API || !user) { setData(null); setLoading(false); return; }
+    if (!API || !user) { setData(null); setErr(null); setLoading(false); return; }
     setLoading(true);
-    fetchWatchlist(API).then(d => { setData(d); setLoading(false); })
-      .catch(() => { setData(null); setLoading(false); });
+    /* fetchWatchlist DOES throw on a non-2xx — the catch then discarded the
+       error, which collapsed to items=[] and rendered the never-saved-anything
+       empty state. A 503 told the user their watchlist was empty and invited
+       them to go star some names, which would have been a second failed write.
+       Keep the error. */
+    fetchWatchlist(API).then(d => { setData(d); setErr(null); setLoading(false); })
+      .catch(e => { setData(null); setErr(e); setLoading(false); });
   }, [API, user]);
   useEffect(() => { load(); }, [load]);
 
@@ -177,7 +185,13 @@ export default function Watchlist({ API, onOpen, onChanged, user, requestAuth })
         Saved names with live engine verdict, margin of safety, and your alert triggers. Star any company to add it here.
       </PageHeader>
 
-      {items.length === 0 ? (
+      {/* An outage is not an empty watchlist. Checked BEFORE the empty
+          branch, which otherwise told a user with saved names that they had
+          none and invited them to go star some — a second write that would
+          have failed the same way. */}
+      {err ? (
+        <ErrorState error={err} onRetry={load} what="your watchlist" />
+      ) : items.length === 0 ? (
         <div style={{ padding: 48, textAlign: "center", border: `1px dashed ${C.line2}`, borderRadius: 12 }}>
           <Star size={26} color={C.faint} style={{ marginBottom: 10 }} />
           <div style={{ ...sans, fontSize: 14, color: C.dim }}>No names on your watchlist yet.</div>
