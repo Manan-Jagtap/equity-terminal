@@ -1366,7 +1366,7 @@ function RatiosTab({ co, API, liveMetrics }) {
               <thead>
                 <tr style={{ borderTop:`1px solid ${C.line}`, borderBottom:`1px solid ${C.line2}` }}>
                   <th style={{ ...sans, textAlign:"left", padding:"9px 20px", fontSize:10, textTransform:"uppercase", color:C.dim, fontWeight:500 }} />
-                  {growthCols.map((c,i) => <th key={c} style={{ ...sans, textAlign:"right", padding:"9px 12px", fontSize:10.5, textTransform:"uppercase", color:i===growthCols.length-1?C.gold:C.dim, fontWeight:600, letterSpacing:"0.03em" }}>{c}</th>)}
+                  {growthCols.map((c,i) => <th key={c} style={{ ...sans, textAlign:"right", padding:"9px 12px", fontSize:10, textTransform:"uppercase", color:i===growthCols.length-1?C.gold:C.dim, fontWeight:600, letterSpacing:"0.03em" }}>{c}</th>)}
                 </tr>
               </thead>
               <tbody>
@@ -2450,7 +2450,7 @@ function ForensicsTab({ co, API }) {
           <div key={i} style={{ display:"flex", alignItems:"flex-start", gap:10, padding:"7px 0", borderBottom:i<flags.length-1?`1px solid ${C.bg600}`:"none" }}>
             <span style={{ marginTop:5 }}><Dot f={f.level} /></span>
             <div>
-              <div style={{ ...sans, fontSize:12.5, color:flagColor(f.level), fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em" }}>{f.label}</div>
+              <div style={{ ...sans, fontSize:12, color:flagColor(f.level), fontWeight:600, textTransform:"uppercase", letterSpacing:"0.05em" }}>{f.label}</div>
               <div style={{ ...sans, fontSize:12, color:C.text200, lineHeight:1.55, marginTop:2 }}>{f.note}</div>
             </div>
           </div>
@@ -2469,7 +2469,7 @@ function ForensicsTab({ co, API }) {
           return (
             <div key={k} style={{ padding:"9px 0", borderBottom:`1px solid ${C.bg600}` }}>
               <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:10 }}>
-                <span style={{ ...sans, fontSize:11.5, textTransform:"uppercase", letterSpacing:"0.06em", color:C.text200, fontWeight:500 }}>{meta.label}</span>
+                <span style={{ ...sans, fontSize:11, textTransform:"uppercase", letterSpacing:"0.06em", color:C.text200, fontWeight:500 }}>{meta.label}</span>
                 <span style={{ display:"flex", alignItems:"center", gap:7, ...mono, fontSize:13, color:flagColor(m.flag) }}>
                   {val} <Dot f={m.flag} />
                 </span>

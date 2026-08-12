@@ -215,7 +215,7 @@ function IndicatorCard({ r, onOpen }) {
 function Stat({ label, value, tone, sub }) {
   return (
     <div style={{ minWidth: 0 }}>
-      <div style={{ ...sans, fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.1em", color: C.faint }}>{label}</div>
+      <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.1em", color: C.faint }}>{label}</div>
       <div style={{ ...mono, fontSize: 20, color: tone || C.text, marginTop: 3 }}>{value}</div>
       {sub && <div style={{ ...mono, fontSize: 9.5, color: C.faint, marginTop: 2 }}>{sub}</div>}
     </div>
@@ -316,7 +316,7 @@ export default function EconomyDashboard() {
             const tone = a.label === "cooling" ? C.red : a.label === "expanding" ? C.green : C.gold;
             return (
               <div style={{ border: `1px solid ${C.line}`, borderRadius: 12, background: C.panel, padding: "16px 18px" }}>
-                <div style={{ ...sans, fontSize: 10.5, textTransform: "uppercase", letterSpacing: "0.12em", color: C.dim, marginBottom: 10 }}>
+                <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: C.dim, marginBottom: 10 }}>
                   Real-economy activity
                 </div>
                 {a.composite && (
@@ -350,7 +350,7 @@ export default function EconomyDashboard() {
           })()}
           {(data.forecast?.rows || []).length > 0 && (
             <div style={{ border: `1px solid ${C.line}`, borderRadius: 12, background: C.panel, padding: "16px 18px" }}>
-              <div style={{ ...sans, fontSize: 10.5, textTransform: "uppercase", letterSpacing: "0.12em", color: C.dim, marginBottom: 10 }}>
+              <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: C.dim, marginBottom: 10 }}>
                 Macro outlook · {data.forecast.source}
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: "4px 14px", ...sans, fontSize: 12 }}>
@@ -399,7 +399,7 @@ export default function EconomyDashboard() {
         .filter(sec => sec.series.length > 0)
         .map(sec => (
         <div key={sec.title} style={{ marginBottom: 24 }}>
-          <div style={{ ...sans, fontSize: 10.5, textTransform: "uppercase", letterSpacing: "0.12em",
+          <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em",
                         color: C.dim, marginBottom: 10 }}>{sec.title}</div>
           <div style={{ display: "grid", gap: 12,
                         gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? 150 : 210}px, 1fr))` }}>
@@ -433,7 +433,7 @@ export default function EconomyDashboard() {
         <div style={{ marginBottom: 24 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
             <Scale size={13} color={C.dim} />
-            <span style={{ ...sans, fontSize: 10.5, textTransform: "uppercase", letterSpacing: "0.12em", color: C.dim }}>
+            <span style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: C.dim }}>
               Regulatory radar · RBI &amp; SEBI
             </span>
             {reg.updated_at && (

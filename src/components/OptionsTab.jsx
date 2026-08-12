@@ -133,7 +133,7 @@ function StrategyBuilder({ data, spot }) {
   const sel = { ...mono, fontSize: 12, background: C.panel2, color: C.text, border: `1px solid ${C.line2}`, borderRadius: 6, padding: "4px 6px" };
   const metric = (label, value, color) => (
     <div>
-      <div style={{ ...sans, fontSize: 9.5, textTransform: "uppercase", letterSpacing: ".08em", color: C.dim }}>{label}</div>
+      <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: ".08em", color: C.dim }}>{label}</div>
       <div style={{ ...mono, fontSize: 15, color: color || C.text, marginTop: 2 }}>{value}</div>
     </div>
   );

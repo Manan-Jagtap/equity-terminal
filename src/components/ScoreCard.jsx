@@ -133,7 +133,7 @@ export default function ScoreCard({ API, ticker }) {
                       borderTop: `1px solid ${C.line}`, paddingTop: 14 }}>
           {d.green_flags?.length > 0 && (
             <div>
-              <div style={{ ...sans, fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.08em", color: C.green, marginBottom: 6 }}>What's working</div>
+              <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", color: C.green, marginBottom: 6 }}>What's working</div>
               {d.green_flags.map((f, i) => (
                 <div key={i} style={{ display: "flex", gap: 7, marginBottom: 5 }}>
                   <CheckCircle2 size={13} color={C.green} style={{ flexShrink: 0, marginTop: 2 }} />
@@ -144,7 +144,7 @@ export default function ScoreCard({ API, ticker }) {
           )}
           {d.red_flags?.length > 0 && (
             <div>
-              <div style={{ ...sans, fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.08em", color: C.red, marginBottom: 6 }}>Red flags</div>
+              <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", color: C.red, marginBottom: 6 }}>Red flags</div>
               {d.red_flags.map((f, i) => (
                 <div key={i} style={{ display: "flex", gap: 7, marginBottom: 5 }}>
                   <AlertTriangle size={13} color={C.red} style={{ flexShrink: 0, marginTop: 2 }} />

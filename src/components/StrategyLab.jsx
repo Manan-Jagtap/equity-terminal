@@ -19,7 +19,7 @@ const pctAbs = (x, d = 1) => x == null ? "—" : `${(x * 100).toFixed(d)}%`;
 function Metric({ label, value, color, sub }) {
   return (
     <div style={{ border: `1px solid ${C.line}`, borderRadius: 10, padding: "11px 13px", background: "rgba(16,14,10,0.5)", minWidth: 0 }}>
-      <div style={{ ...sans, fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.09em", color: C.dim, whiteSpace: "nowrap" }}>{label}</div>
+      <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.09em", color: C.dim, whiteSpace: "nowrap" }}>{label}</div>
       <div style={{ ...mono, fontSize: 18, color: color || C.text, marginTop: 3 }}>{value}</div>
       {sub && <div style={{ ...sans, fontSize: 9.5, color: C.faint, marginTop: 1 }}>{sub}</div>}
     </div>
@@ -198,7 +198,7 @@ export default function StrategyLab({ API, onOpen }) {
           {/* current holdings */}
           {res.holdings?.length > 0 && (
             <div>
-              <div style={{ ...sans, fontSize: 10.5, textTransform: "uppercase", letterSpacing: "0.09em", color: C.dim, marginBottom: 8 }}>
+              <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.09em", color: C.dim, marginBottom: 8 }}>
                 What the rule holds today ({res.holdings.length})
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))", gap: 6 }}>

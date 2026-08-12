@@ -37,7 +37,7 @@ function MacroStrip({ macro }) {
     <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap",
                   border: `1px solid ${C.line}`, borderRadius: 12, background: C.panel,
                   padding: "10px 14px", marginBottom: 18 }}>
-      <span style={{ ...sans, fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.12em", color: C.dim }}>
+      <span style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em", color: C.dim }}>
         Macro read
       </span>
       <span style={{ ...chip, color: reg.color, borderColor: reg.color + "55", background: reg.color + "12" }}>
@@ -157,7 +157,7 @@ function TaxMove({ color, label, value, sub }) {
   return (
     <div style={{ flex: "1 1 200px", border: `1px solid ${C.line}`, borderRadius: 10,
                   background: C.bg900, padding: "12px 14px" }}>
-      <div style={{ ...sans, fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.08em", color }}>{label}</div>
+      <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", color }}>{label}</div>
       <div style={{ ...mono, fontSize: 18, color: C.text, marginTop: 4 }}>{value}</div>
       <div style={{ ...sans, fontSize: 10.5, color: C.faint, marginTop: 3, lineHeight: 1.4 }}>{sub}</div>
     </div>
@@ -328,7 +328,7 @@ function GemStat({ label, value, tone }) {
   if (value == null) return null;
   return (
     <span style={{ display: "inline-flex", flexDirection: "column", gap: 1, minWidth: 62 }}>
-      <span style={{ ...sans, fontSize: 8.5, textTransform: "uppercase", letterSpacing: "0.08em", color: C.faint }}>{label}</span>
+      <span style={{ ...sans, fontSize: 9, textTransform: "uppercase", letterSpacing: "0.08em", color: C.faint }}>{label}</span>
       <span style={{ ...mono, fontSize: 12, color: tone || C.text200 }}>{value}</span>
     </span>
   );
@@ -647,7 +647,7 @@ export default function FundManager({ API, user, requestAuth, onOpen }) {
               ["XIRR", data.risk?.xirr != null ? (data.risk.xirr * 100).toFixed(1) + "%" : "—"],
             ].map(([l, v]) => (
               <div key={l} style={{ border: `1px solid ${C.line}`, borderRadius: 10, background: C.panel, padding: "12px 14px" }}>
-                <div style={{ ...sans, fontSize: 9.5, textTransform: "uppercase", letterSpacing: "0.08em", color: C.faint }}>{l}</div>
+                <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.08em", color: C.faint }}>{l}</div>
                 <div style={{ ...mono, fontSize: 17, color: C.text, marginTop: 4 }}>{v ?? "—"}</div>
               </div>
             ))}
