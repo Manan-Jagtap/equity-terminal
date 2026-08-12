@@ -181,24 +181,24 @@ function StrategyBuilder({ data, spot }) {
 
       {/* legs */}
       <div style={{ border: `1px solid ${C.line}`, borderRadius: 10, overflow: "hidden" }}>
-        {legs.map(l => (
+        {legs.map((l, i) => (
           <div key={l.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 10px", borderTop: `1px solid ${C.line}`, flexWrap: "wrap" }}>
-            <select value={l.action} onChange={e => update(l.id, { action: e.target.value })} style={{ ...sel, color: l.action === "buy" ? C.green : C.red }}>
+            <select aria-label={`Leg ${i + 1} — buy or sell`} value={l.action} onChange={e => update(l.id, { action: e.target.value })} style={{ ...sel, color: l.action === "buy" ? C.green : C.red }}>
               <option value="buy">Buy</option><option value="sell">Sell</option>
             </select>
-            <select value={l.type} onChange={e => update(l.id, { type: e.target.value })} style={sel}>
+            <select aria-label={`Leg ${i + 1} — call or put`} value={l.type} onChange={e => update(l.id, { type: e.target.value })} style={sel}>
               <option value="call">Call</option><option value="put">Put</option>
             </select>
-            <select value={l.strike} onChange={e => update(l.id, { strike: Number(e.target.value) })} style={sel}>
+            <select aria-label={`Leg ${i + 1} — strike price`} value={l.strike} onChange={e => update(l.id, { strike: Number(e.target.value) })} style={sel}>
               {strikes.map(s => <option key={s.strike} value={s.strike}>{num(s.strike)}</option>)}
             </select>
             <span style={{ ...sans, fontSize: 10.5, color: C.dim }}>@</span>
-            <input type="number" value={l.premium} step="0.05" onChange={e => update(l.id, { premium: Number(e.target.value) })}
+            <input type="number" aria-label={`Leg ${i + 1} — premium per share`} value={l.premium} step="0.05" onChange={e => update(l.id, { premium: Number(e.target.value) })}
                    style={{ ...sel, width: 72 }} />
             <span style={{ ...sans, fontSize: 10.5, color: C.dim }}>×</span>
-            <input type="number" value={l.lots} min="1" step="1" onChange={e => update(l.id, { lots: Math.max(1, Number(e.target.value)) })}
+            <input type="number" aria-label={`Leg ${i + 1} — number of lots`} value={l.lots} min="1" step="1" onChange={e => update(l.id, { lots: Math.max(1, Number(e.target.value)) })}
                    style={{ ...sel, width: 54 }} title="lots" />
-            <button onClick={() => removeLeg(l.id)} style={{ marginLeft: "auto", background: "transparent", border: "none", cursor: "pointer", color: C.faint, padding: 4, lineHeight: 0 }}><X size={14} /></button>
+            <button onClick={() => removeLeg(l.id)} aria-label={`Remove leg ${i + 1}`} style={{ marginLeft: "auto", background: "transparent", border: "none", cursor: "pointer", color: C.faint, padding: 4, lineHeight: 0 }}><X size={14} /></button>
           </div>
         ))}
         <div style={{ borderTop: `1px solid ${C.line}` }}>
