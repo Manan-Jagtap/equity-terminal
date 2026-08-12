@@ -10,6 +10,7 @@ import PageHeader from "./ui/PageHeader.jsx";
 import ErrorState from "./ui/ErrorState.jsx";
 import useResource from "../lib/useResource.js";
 import { rowActivate, buttonReset } from "../lib/a11y.js";
+import { growthOnBase } from "../lib/formatters.js";
 
 const cr   = v => v == null ? "—" : "₹" + Number(v).toLocaleString("en-IN", { maximumFractionDigits: 0 });
 const signed = v => v == null ? "—" : (v >= 0 ? "+" : "") + (v * 100).toFixed(1) + "%";   // fraction → %
@@ -25,8 +26,32 @@ const SORTS = [
   { id: "dividends", label: "Dividends" },
 ];
 
-function Delta({ v }) {
+/* `v` is a YoY RATIO the backend already computed, so its base is not in the
+   payload — but it is recoverable: prior = current / (1 + v).
+
+   That matters because the ratio is sign-inverted whenever the base was
+   negative. TATACHEM reported PAT -2,116 cr with pat_yoy 42.18, i.e. a -49 cr
+   loss ballooning 43x — and this rendered "▲ +4,218.4%" in GREEN, ranked #6
+   when the user sorted by "PAT growth". URBANCO (+5,267%) and DBREALTY
+   (+2,850%) were the same. Someone scanning for the fastest-growing profits was
+   handed three companies that lost money.
+
+   `level` is the current absolute figure (r.pat / r.sales). When it is absent
+   the old behaviour stands — this only ever ADDS a guard. */
+function Delta({ v, level }) {
   if (v == null) return <span style={{ ...mono, fontSize: 11, color: C.dim }}>—</span>;
+  if (level != null && isFinite(level) && (1 + v) !== 0) {
+    const prior = level / (1 + v);
+    const g = growthOnBase(level, prior);
+    if (!g.sortable) {
+      const tone = g.tone === "pos" ? C.green : g.tone === "neg" ? C.red : C.dim;
+      return (
+        <span title={g.title} style={{ ...mono, fontSize: 10, color: tone, whiteSpace: "nowrap" }}>
+          {g.txt}
+        </span>
+      );
+    }
+  }
   const up = v >= 0;
   return (
     <span style={{ ...mono, fontSize: 11, color: up ? C.green : C.red, display: "inline-flex", alignItems: "center", gap: 3 }}>
@@ -34,6 +59,18 @@ function Delta({ v }) {
     </span>
   );
 }
+
+/* Sort key for a growth column: a ratio off a negative base is not a growth
+   rate, so it must not compete for the top of the leaderboard. Those rows sink
+   rather than disappear — they are still real results. */
+const growthSortKey = (ratio, level) => {
+  if (ratio == null || !isFinite(ratio)) return -Infinity;
+  if (level != null && isFinite(level) && (1 + ratio) !== 0) {
+    const prior = level / (1 + ratio);
+    if (!(prior > 0)) return -Infinity;
+  }
+  return ratio;
+};
 
 function UpcomingCalendar({ API, onOpen }) {
   /* This calendar is not a widget beside the table — when the "Upcoming" sort
@@ -157,7 +194,7 @@ export default function Results({ API, onOpen }) {
   const rows = useMemo(() => {
     const items = applyControls( (data?.items || []).slice(), controls);
     const num = (x, f = -Infinity) => (x == null ? f : x);
-    if (sort === "pat")   items.sort((a, b) => num(b.pat_yoy) - num(a.pat_yoy));
+    if (sort === "pat")   items.sort((a, b) => growthSortKey(num(b.pat_yoy), num(b.pat)) - growthSortKey(num(a.pat_yoy), num(a.pat)));
     if (sort === "sales") items.sort((a, b) => num(b.sales_yoy) - num(a.sales_yoy));
     if (sort === "beat")  items.sort((a, b) => num(b.surprise?.surprise_pct) - num(a.surprise?.surprise_pct));
     return items;  // "latest" keeps API order (newest report first)
@@ -232,9 +269,9 @@ export default function Results({ API, onOpen }) {
                   </td>
                   <td style={{ ...td, textAlign: "left", color: C.text200, whiteSpace: "nowrap" }}>{r.quarter || "—"}</td>
                   <td style={tdNum}>{cr(r.sales)}</td>
-                  <td style={tdNum}><Delta v={r.sales_yoy} /></td>
+                  <td style={tdNum}><Delta v={r.sales_yoy} level={r.sales} /></td>
                   <td style={tdNum}>{cr(r.pat)}</td>
-                  <td style={tdNum}><Delta v={r.pat_yoy} /></td>
+                  <td style={tdNum}><Delta v={r.pat_yoy} level={r.pat} /></td>
                   <td style={tdNum}>{pctRaw(r.opm)}</td>
                   <td style={tdNum}>
                     {s && s.surprise_pct != null ? (
