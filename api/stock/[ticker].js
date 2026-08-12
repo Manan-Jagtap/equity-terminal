@@ -19,6 +19,16 @@ const esc = (s) =>
     .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 
+/* JSON-LD is embedded in a <script> element, and JSON.stringify does NOT escape
+   `<`. A company name containing "</script>" would therefore close the block
+   early and inject arbitrary markup into a page served from our own origin —
+   and these names come from the vendor feed, which we do not control.
+
+   `<` is valid JSON and deserialises to an identical string for every
+   consumer (Google included), so escaping it costs nothing and makes both
+   "</script>" and "<!--" impossible. */
+const jsonLd = (obj) => JSON.stringify(obj).replace(/</g, "\\u003c");
+
 const inr = (v) =>
   v == null || isNaN(v) ? "—"
     : "₹" + Number(v).toLocaleString("en-IN", { maximumFractionDigits: 0 });
@@ -100,7 +110,7 @@ export default async function handler(req, res) {
 <meta property="og:url" content="${canonical}">
 <meta property="og:image" content="https://equityverdict.com/icon-512.png">
 <meta name="twitter:card" content="summary">
-<script type="application/ld+json">${JSON.stringify(ld)}</script>
+<script type="application/ld+json">${jsonLd(ld)}</script>
 <style>
   body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#060A13;color:#e8eefc;margin:0}
   .wrap{max-width:720px;margin:0 auto;padding:32px 20px 64px}

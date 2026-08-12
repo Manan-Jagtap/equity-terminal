@@ -12,6 +12,7 @@ import PageSkeleton from "./Skeleton.jsx";
 import { authFetch } from "../lib/auth.js";
 import { SignInGate } from "./Watchlist.jsx";
 import PageHeader from "./ui/PageHeader.jsx";
+import ErrorState from "./ui/ErrorState.jsx";
 import { buttonReset } from "../lib/a11y.js";
 
 const inr = v => v == null ? "—" : "₹" + Number(v).toLocaleString("en-IN", { maximumFractionDigits: 0 });
@@ -446,15 +447,24 @@ export default function FundManager({ API, user, requestAuth, onOpen }) {
   // loading derives from "signed in but no payload yet" — no sync setState.
   const [loaded, setLoaded] = useState(false);
   const [reload, setReload] = useState(0);      // bump to refetch after a cash change
+  const [err, setErr] = useState(null);        // an outage is NOT an empty book
   const loading = !!user && !loaded;
 
   useEffect(() => {
     if (!API || !user) return;
     let dead = false;
+    /* An outage and an empty book are different facts. Mapping BOTH to
+       `data = null` made `empty = !mgr` true on a failure, so a 500 rendered
+       "No book to manage yet" — telling a user with real positions that they
+       hold nothing, on the screen that manages their money, with "add some
+       holdings" as the suggested remedy. Track the failure separately. */
     authFetch(`${API}/api/portfolio/analysis`)
-      .then(r => (r.ok ? r.json() : null))
-      .then(d => { if (!dead) { setData(d); setLoaded(true); } })
-      .catch(() => { if (!dead) { setData(null); setLoaded(true); } });
+      .then(r => {
+        if (!r.ok) { const e = new Error(`HTTP ${r.status}`); e.kind = "status"; throw e; }
+        return r.json();
+      })
+      .then(d => { if (!dead) { setData(d); setErr(null); setLoaded(true); } })
+      .catch(e => { if (!dead) { setData(null); setErr(e); setLoaded(true); } });
     return () => { dead = true; };
   }, [API, user, reload]);
 
@@ -476,7 +486,7 @@ export default function FundManager({ API, user, requestAuth, onOpen }) {
   if (loading) return <PageSkeleton label="Reading your book…" cards={4} />;
 
   const mgr = data?.manager;
-  const empty = !mgr || !mgr.aum;
+  const empty = !err && (!mgr || !mgr.aum);
 
   return (
     <div className="fadein" style={{ padding: "24px 32px", maxWidth: 1080 }}>
@@ -489,6 +499,11 @@ export default function FundManager({ API, user, requestAuth, onOpen }) {
 
       {/* Universe-wide discovery — shown whether or not the user holds anything. */}
       <HiddenGems API={API} onOpen={onOpen} />
+
+      {err && (
+        <ErrorState error={err} what="your book"
+          onRetry={() => { setErr(null); setLoaded(false); setReload(n => n + 1); }} />
+      )}
 
       {empty && (
         <div style={{ border: `1px solid ${C.line}`, borderRadius: 12, background: C.panel, padding: "48px 24px", textAlign: "center" }}>
