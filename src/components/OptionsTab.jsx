@@ -8,6 +8,7 @@ import { Loader2, Layers, LineChart as LineIcon, Plus, X } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ReferenceLine, ResponsiveContainer, ReferenceDot } from "recharts";
 import { C, sans, serif, mono } from "../lib/theme.js";
 import { th, tdNum } from "../design/table.js";
+import ErrorState from "./ui/ErrorState.jsx";
 
 const num = v => v == null ? "—" : Number(v).toLocaleString("en-IN", { maximumFractionDigits: 0 });
 const f2 = v => v == null ? "—" : Number(v).toFixed(2);
@@ -217,13 +218,15 @@ function StrategyBuilder({ data, spot }) {
 export default function OptionsTab({ co, API }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState(null);      // an outage is not a missing broker
+  const [reload, setReload] = useState(0);
   const [expiry, setExpiry] = useState(null);
   const [view, setView] = useState("chain");
   const atmRef = useRef(null);
 
   useEffect(() => {
     if (!API) { setLoading(false); return; }
-    let live = true; setLoading(true);
+    let live = true; setLoading(true); setErr(null);
     const url = `${API}/api/companies/${co.ticker}/options` + (expiry ? `?expiry=${encodeURIComponent(expiry)}` : "");
     // r.ok: the API answers 4xx/5xx with a JSON body, so `.then(r => r.json())`
     // RESOLVES on failure and `strikes` becomes [] — an outage rendered as
@@ -231,9 +234,9 @@ export default function OptionsTab({ co, API }) {
     fetch(url)
       .then(r => { if (!r.ok) throw new Error(`options ${r.status}`); return r.json(); })
       .then(d => { if (live) { setData(d); setLoading(false); if (!expiry && d.expiry) setExpiry(d.expiry); } })
-      .catch(() => { if (live) { setData(null); setLoading(false); } });
+      .catch(e => { if (live) { setData(null); setErr(e); setLoading(false); } });
     return () => { live = false; };
-  }, [co.ticker, API, expiry]);
+  }, [co.ticker, API, expiry, reload]);
 
   const strikes = data?.strikes || [];
   const spot = data?.last_price;
@@ -252,6 +255,12 @@ export default function OptionsTab({ co, API }) {
       <Loader2 size={16} className="spin" /> Loading option chain…
     </div>
   );
+  /* An outage used to land here and print "Options require Dhan to be
+     connected" — a specific, wrong, actionable diagnosis sending the user to
+     reconnect a broker that was never the problem. "Not configured" is a claim
+     the SERVER makes (configured === false); a failed request is not evidence
+     for it. */
+  if (err) return <ErrorState error={err} onRetry={() => { setErr(null); setLoading(true); setReload(n => n + 1); }} what="the option chain" />;
   if (!data || data.configured === false) return <Empty msg={data?.message || "Options require Dhan to be connected."} />;
   if (!data.available) return <Empty msg={data.message || "No option chain available for this name."} />;
 

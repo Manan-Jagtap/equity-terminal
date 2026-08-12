@@ -264,7 +264,12 @@ const fmtCr = n => {
   if (n == null) return "—";
   const a = Math.abs(n);
   if (a >= 1e5) return (n / 1e5).toFixed(2) + " L Cr";
-  return n.toLocaleString("en-IN", { maximumFractionDigits: 0 });
+  /* Self-labelling on BOTH branches. Below the 1e5 boundary this returned a
+     bare number, so the same field read "₹4.89 L Cr" for the largest names and
+     an unlabelled "₹96,715" for the other 88% — where the true figure is
+     ₹96,715 CRORE. A reader has no way to tell which unit they are looking at,
+     on market cap and enterprise value. */
+  return n.toLocaleString("en-IN", { maximumFractionDigits: 0 }) + " Cr";
 };
 const fmtN  = (n, d=2) => n == null ? "—" : Number(n).toLocaleString("en-IN", { maximumFractionDigits:d, minimumFractionDigits:0 });
 const fmtP  = (n, d=1) => n == null ? "—" : (n >= 0 ? "+" : "") + n.toFixed(d) + "%";
@@ -3123,7 +3128,17 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
                   ? <span className="blink" style={{ width:6, height:6, borderRadius:"50%", background:C.green, display:"inline-block" }} />
                   : <span style={{ width:6, height:6, borderRadius:"50%", background:C.dim, display:"inline-block" }} />}
                 <span style={{ letterSpacing:"0.1em" }}>
-                  {liveFeed.live ? "LIVE" : "EOD"} · {new Date().toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"})}
+                  {liveFeed.live ? "LIVE" : "EOD"}{(() => {
+                    /* This printed the BROWSER's today beside "EOD" whatever the
+                       price vintage actually was — asserting a freshness we had
+                       not established, on a weekend or a stale feed alike. Show
+                       the feed's own as_of when it has one; otherwise say
+                       nothing rather than something we cannot support. */
+                    const asOf = liveFeed.as_of || liveFeed.asOf || null;
+                    if (!asOf) return null;
+                    const d = new Date(asOf);
+                    return isNaN(d) ? null : " · " + d.toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"});
+                  })()}
                 </span>
               </div>
               <span style={{ color:C.bg500 }}>|</span>
@@ -3235,7 +3250,13 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
               <div style={{ display:"flex", gap:20, marginTop:8, ...mono, fontSize:11, color:C.dim, justifyContent:"flex-end" }}>
                 <span>52W H {fmtN(hi52, 2)}</span>
                 <span>52W L {fmtN(lo52, 2)}</span>
-                <span>Beta {fmtN(mktData.beta ?? assumptions?.beta ?? co.assumptions?.beta, 2)}</span>
+                <span title="Beta used by the valuation on this page">
+                  {/* Precedence inverted: the CURATED literal used to win, so
+                      MUTHOOTFIN's header showed a hand-written 0.78 while the
+                      DCF on the same page discounted at the engine's 1.05. The
+                      risk figure on screen must be the risk figure inside the
+                      model. */}
+                  Beta {fmtN(assumptions?.beta ?? co.assumptions?.beta ?? mktData.beta, 2)}</span>
                 {adv30Cr != null && <span>ADV {fmtN(adv30Cr, 0)} Cr</span>}
               </div>
             </div>
