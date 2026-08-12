@@ -61,14 +61,6 @@ function SettingsPanel({ item, onSave, onClose }) {
       <span style={{ ...sans, fontSize: 11, color: C.faint }}>{suffix}</span>
     </span>
   );
-  const Toggle = ({ k }) => (
-    <button onClick={() => setFlags(f => ({ ...f, [k]: !f[k] }))} style={{
-      width: 34, height: 20, borderRadius: 99, border: "none", cursor: "pointer", position: "relative",
-      background: flags[k] ? C.green : C.bg600, transition: "background .15s" }}>
-      <span style={{ position: "absolute", top: 2, left: flags[k] ? 16 : 2, width: 16, height: 16,
-        borderRadius: "50%", background: C.bg, transition: "left .15s" }} />
-    </button>
-  );
 
   const save = async () => {
     setBusy(true);
@@ -92,10 +84,14 @@ function SettingsPanel({ item, onSave, onClose }) {
       <Row label="Margin-of-safety threshold">{num(mos, setMos, "%")}</Row>
       <Row label="Big-move threshold">{num(mv, setMv, "%")}</Row>
       <div style={{ height: 1, background: C.line, margin: "8px 0" }} />
-      <Row label="Alert on verdict upgrade"><Toggle k="alert_verdict" /></Row>
-      <Row label="Alert on margin of safety"><Toggle k="alert_mos" /></Row>
-      <Row label="Alert on price target"><Toggle k="alert_target" /></Row>
-      <Row label="Alert on big daily move"><Toggle k="alert_move" /></Row>
+      <Row label="Alert on verdict upgrade"><Toggle k="alert_verdict" label="Alert on verdict upgrade" on={!!flags["alert_verdict"]}
+        onToggle={() => setFlags(f => ({ ...f, alert_verdict: !f.alert_verdict }))} /></Row>
+      <Row label="Alert on margin of safety"><Toggle k="alert_mos" label="Alert on margin of safety" on={!!flags["alert_mos"]}
+        onToggle={() => setFlags(f => ({ ...f, alert_mos: !f.alert_mos }))} /></Row>
+      <Row label="Alert on price target"><Toggle k="alert_target" label="Alert on price target" on={!!flags["alert_target"]}
+        onToggle={() => setFlags(f => ({ ...f, alert_target: !f.alert_target }))} /></Row>
+      <Row label="Alert on big daily move"><Toggle k="alert_move" label="Alert on big daily move" on={!!flags["alert_move"]}
+        onToggle={() => setFlags(f => ({ ...f, alert_move: !f.alert_move }))} /></Row>
       {/* These two were 29px and 31px tall side by side — same padding, but only
           one had a border — so the pair never sat on a common baseline. One
           size step puts both at 28. */}
@@ -129,6 +125,28 @@ export function SignInGate({ requestAuth, what }) {
       </div>
       <Button variant="primary" size="lg" onClick={requestAuth}>Sign in</Button>
     </div>
+  );
+}
+
+/* Hoisted OUT of the parent's render on purpose. Defined inline, this was a
+   NEW component type on every parent render, so React unmounted and remounted
+   it — destroying keyboard focus every time the user activated it. The user
+   toggles an alert, focus jumps to the top of the page, and they have to tab
+   back to reach the next one.
+
+   It was also an unnamed button whose only state channel was the pill's colour
+   and the knob's position: nothing announced on or off. aria-pressed is the
+   native mechanism for a toggle. */
+function Toggle({ label, on, onToggle }) {
+  return (
+    <button type="button" onClick={onToggle} aria-pressed={on} aria-label={label}
+      style={{
+        width: 34, height: 20, borderRadius: 99, border: "none", cursor: "pointer",
+        position: "relative", flexShrink: 0,
+        background: on ? C.green : C.bg600, transition: "background .15s" }}>
+      <span aria-hidden="true" style={{ position: "absolute", top: 2, left: on ? 16 : 2,
+        width: 16, height: 16, borderRadius: "50%", background: C.bg, transition: "left .15s" }} />
+    </button>
   );
 }
 

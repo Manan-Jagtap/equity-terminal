@@ -313,10 +313,22 @@ export default function App() {
     if (!API) return;
     const tok = new URLSearchParams(window.location.search).get("scenario");
     if (!tok) return;
+    /* Strip the token from the URL once it has been consumed, whatever the
+       outcome. It is a CAPABILITY token — whoever holds the link holds the
+       scenario — and leaving it in the address bar means it rides along in
+       browser history, in anything the user copy-pastes, and in the referrer of
+       every outbound link they click from this page. It was previously
+       preserved through every subsequent navigation, so a token that failed to
+       resolve stayed in the URL for the rest of the session. */
+    const drop = () => {
+      const u = new URL(window.location.href);
+      u.searchParams.delete("scenario");
+      window.history.replaceState(null, "", u.pathname + u.search + u.hash);
+    };
     fetch(`${API}/api/scenarios/shared/${encodeURIComponent(tok)}`)
       .then(r => (r.ok ? r.json() : null))
-      .then(d => { if (d && d.ticker) setSharedScn(d); })
-      .catch(() => {});
+      .then(d => { if (d && d.ticker) setSharedScn(d); drop(); })
+      .catch(() => { drop(); });
   }, [API]);
 
   // Guards the history fetch against races: if the user opens company A and
