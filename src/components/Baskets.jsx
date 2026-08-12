@@ -101,7 +101,14 @@ function BasketCard({ b, onOpen }) {
             <div style={{ ...mono, fontSize: 11, color: scoreColor(m.factor_score ?? m.alpha_score), width: 30, textAlign: "right" }}>
               {Math.round(m.factor_score ?? m.alpha_score ?? 0)}
             </div>
-            <div style={{ ...mono, fontSize: 11, color: m.mos == null ? C.dim : m.mos >= 0 ? C.green : C.red, width: 48, textAlign: "right" }}>{pctFrac(m.mos)}</div>
+            {/* A constituent whose fair value the engine withheld must not
+                show a margin of safety here either — the basket is just another
+                surface, and "n/m" says withheld where "—" would read as
+                missing. Honours the flag whenever the API carries it. */}
+            {(m.value_suppressed || m.fair_value_note)
+              ? <div title={m.fair_value_note || "The engine withheld its fair value for this name."}
+                     style={{ ...mono, fontSize: 11, color: C.faint, width: 48, textAlign: "right" }}>n/m</div>
+              : <div style={{ ...mono, fontSize: 11, color: m.mos == null ? C.dim : m.mos >= 0 ? C.green : C.red, width: 48, textAlign: "right" }}>{pctFrac(m.mos)}</div>}
             <div style={{ ...mono, fontSize: 10.5, color: C.faint, width: 58, textAlign: "right" }}>{inr(m.price)}</div>
             <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 4 }}>
               <VerdictBadge verdict={m.verdict || "—"} />
