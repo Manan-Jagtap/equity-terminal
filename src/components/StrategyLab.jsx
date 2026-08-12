@@ -204,7 +204,7 @@ export default function StrategyLab({ API, onOpen }) {
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))", gap: 6 }}>
                 {res.holdings.map(h => (
                   <button type="button" key={h.ticker} onClick={() => onOpen && onOpen(h.ticker)}
-                       style={{ ...buttonReset,  display: "flex", alignItems: "center", gap: 8, padding: "7px 9px", border: `1px solid ${C.line}`, borderRadius: 8, cursor: onOpen ? "pointer" : "default"  }}
+                       style={{ ...buttonReset, width: "100%", boxSizing: "border-box",   display: "flex", alignItems: "center", gap: 8, padding: "7px 9px", border: `1px solid ${C.line}`, borderRadius: 8, cursor: onOpen ? "pointer" : "default"  }}
                        onMouseEnter={e => (e.currentTarget.style.background = C.panel2)}
                        onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
                     <div style={{ minWidth: 0 }}>

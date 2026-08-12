@@ -122,7 +122,7 @@ function DividendCalendar({ API, onOpen }) {
     <button type="button" key={a.ticker + a.type + a.ex_date + i} onClick={() => onOpen && onOpen(a.ticker)}
       onMouseEnter={e => e.currentTarget.style.background = C.bg800}
       onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-      style={{ ...buttonReset,  display: "flex", alignItems: "baseline", gap: 14, padding: "11px 16px",
+      style={{ ...buttonReset, width: "100%", boxSizing: "border-box",   display: "flex", alignItems: "baseline", gap: 14, padding: "11px 16px",
                borderTop: i ? `1px solid ${C.line}` : "none", cursor: "pointer"  }}>
       <span style={{ ...mono, fontSize: 12, color: a.ex_date >= today ? C.gold : C.text200, flexShrink: 0, minWidth: 92 }}>{a.ex_date}</span>
       <span style={{ ...mono, fontSize: 9, textTransform: "uppercase", letterSpacing: "0.06em",

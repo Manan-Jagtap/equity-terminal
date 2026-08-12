@@ -22,6 +22,7 @@ import { useIsMobile } from "../lib/useResponsive.js";
 import SegmentSOTP from "./SegmentSOTP.jsx";
 import * as engine from "../lib/engine.js";
 import { deriveClientAssumptions, isEngineDialect } from "../lib/derive.js";
+import { isValueSuppressed } from "../lib/engineView.js";
 
 /* ── Primitives ─────────────────────────────────────────────────── */
 const Card = ({ children, style }) => (
@@ -180,10 +181,19 @@ export default function DCFModel({ co, price, apiVal, a, onWork }) {
   const apiVerd = apiRec?.verdict;
   const apiComps = apiRec?.components || [];
 
+  /* `apiIv > 0` is false BOTH when the response hasn't arrived and when the
+     engine deliberately withheld its estimate — and those need opposite
+     treatment. Inferring suppression from a falsy number meant an untouched DCF
+     tab on a suppressed name fell through to the browser's own figure, labelled
+     it "base case", and stamped a verdict from liveVerdictOf(mos) — which is a
+     pure MoS threshold with no confidence gate at all, so it can print BUY on a
+     name the engine rated LOW CONF. Ask the flag, not the value. */
+  const suppressed = isValueSuppressed(apiRec);
   const showApi   = apiIv > 0 && !touched;
-  const headIv    = showApi ? apiIv : iv;
-  const headMos   = showApi ? apiMos : mos;
-  const headVerd  = showApi ? apiVerd : liveVerdictOf(mos);
+  const headIv    = suppressed && !touched ? null : (showApi ? apiIv : iv);
+  const headMos   = suppressed && !touched ? null : (showApi ? apiMos : mos);
+  const headVerd  = suppressed && !touched ? (apiVerd || "—")
+                                           : (showApi ? apiVerd : liveVerdictOf(mos));
   const headComps = (showApi ? apiComps : eb.components) || [];
   const headKe    = v?.ke;
   const headWacc  = v?.wacc;

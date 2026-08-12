@@ -190,7 +190,7 @@ export default function Watchlist({ API, onOpen, onChanged, user, requestAuth })
           <div style={{ position: "absolute", inset: 0, ...gridBg, opacity: 0.25, pointerEvents: "none" }} />
           <div style={{ position: "relative" }}>
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
-              <button type="button" onClick={() => onOpen(it.ticker)} style={{ ...buttonReset,  cursor: "pointer", flex: 1  }}>
+              <button type="button" onClick={() => onOpen(it.ticker)} style={{ ...buttonReset, width: "100%", boxSizing: "border-box",   cursor: "pointer", flex: 1  }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <Logo ticker={it.ticker} name={it.name} sector={it.sector} size={30} />
                   <span style={{ ...serif, fontSize: 20, color: C.text }}>{it.name}</span>

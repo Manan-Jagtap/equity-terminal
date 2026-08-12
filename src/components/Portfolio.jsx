@@ -368,7 +368,7 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
                 ? <div style={{ ...sans, fontSize: 12, color: C.dim }}>No cost basis to compare yet.</div>
                 : [...(digest.movers?.gainers || []), ...(digest.movers?.losers || [])].map(m => (
                   <button type="button" key={m.ticker} onClick={() => onOpen && onOpen(m.ticker)}
-                    style={{ ...buttonReset,  display: "flex", justifyContent: "space-between", padding: "4px 0", cursor: "pointer"  }}>
+                    style={{ ...buttonReset, width: "100%", boxSizing: "border-box",   display: "flex", justifyContent: "space-between", padding: "4px 0", cursor: "pointer"  }}>
                     <span style={{ ...mono, fontSize: 12, color: C.gold }}>{m.ticker}</span>
                     <span style={{ ...mono, fontSize: 12, color: pnlColor(m.pnl_pct) }}>{pctNum(m.pnl_pct)}</span>
                   </button>
@@ -938,7 +938,7 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
                 <span style={{ ...sans, fontSize: 11, color: C.dim }}>mechanical read of your book against the model — you decide</span>
                 {onAnalyse && (
                   <button type="button" onClick={onAnalyse}
-                    style={{ ...buttonReset,  ...sans, fontSize: 11, color: C.gold, cursor: "pointer", marginLeft: "auto"  }}>
+                    style={{ ...buttonReset, width: "100%", boxSizing: "border-box",   ...sans, fontSize: 11, color: C.gold, cursor: "pointer", marginLeft: "auto"  }}>
                     open the Fund Manager desk →
                   </button>
                 )}

@@ -272,7 +272,10 @@ function DataHealth({ API, onOpen }) {
   return (
     <div style={{ border: `1px solid ${C.line}`, borderRadius: 10, background: C.bg900, padding: "10px 14px", marginBottom: 18 }}>
       <button type="button" onClick={() => !clean && setExpand(e => !e)}
-        style={{ ...buttonReset,  display: "flex", alignItems: "center", gap: 8, cursor: clean ? "default" : "pointer"  }}>
+        /* full width or the `marginLeft:auto` below has no space to push into */
+        style={{ ...buttonReset, width: "100%", boxSizing: "border-box",
+                 display: "flex", alignItems: "center", gap: 8,
+                 cursor: clean ? "default" : "pointer" }}>
         <Icon size={14} color={tone} strokeWidth={1.7} />
         <span style={{ ...sans, fontSize: 12, color: C.text200 }}>
           {clean
@@ -286,7 +289,9 @@ function DataHealth({ API, onOpen }) {
         <div style={{ marginTop: 8, borderTop: `1px solid ${C.line}`, paddingTop: 6 }}>
           {flagged.slice(0, 12).map((f, i) => (
             <button type="button" key={i} onClick={() => onOpen(f.ticker)}
-              style={{ ...buttonReset,  display: "flex", alignItems: "baseline", gap: 10, padding: "4px 2px", cursor: "pointer"  }}>
+              style={{ ...buttonReset, width: "100%", boxSizing: "border-box",
+                       display: "flex", alignItems: "baseline", gap: 10,
+                       padding: "4px 2px", cursor: "pointer" }}>
               <span style={{ ...mono, fontSize: 11.5, color: f.status === "alert" ? C.red : C.gold, minWidth: 90 }}>{f.ticker}</span>
               <span style={{ ...sans, fontSize: 11.5, color: C.dim }}>{(f.flags || []).map(x => x.message).join(" · ")}</span>
             </button>
@@ -322,7 +327,13 @@ const MoverList = ({ title, icon, tone, rows, openIf, known }) => (
 
 const Row = ({ left, sub, right, rightTone, pct, icon, clickable, onClick }) => (
   <button type="button" onClick={clickable ? onClick : undefined}
-    style={{ ...buttonReset,  display: "flex", alignItems: "center", gap: 10, padding: "8px 16px", cursor: clickable ? "pointer" : "default"  }}
+    /* width:100% because a <button> SHRINKS TO ITS CONTENT — unlike the <div>
+       this used to be. Without it `flex:1` on the name divides a box only as
+       wide as the text, so the price and % sat immediately after each name at a
+       different x for every row instead of forming one right-hand column. */
+    style={{ ...buttonReset, width: "100%", boxSizing: "border-box",
+             display: "flex", alignItems: "center", gap: 10, padding: "8px 16px",
+             cursor: clickable ? "pointer" : "default" }}
     onMouseEnter={e => clickable && (e.currentTarget.style.background = C.bg800)}
     onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
     {icon}
