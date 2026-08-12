@@ -220,20 +220,30 @@ export default function OptionsTab({ co, API }) {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState(null);      // an outage is not a missing broker
   const [reload, setReload] = useState(0);
+  const lastUrlRef = useRef(null);   // dedupe the expiry round-trip
   const [expiry, setExpiry] = useState(null);
   const [view, setView] = useState("chain");
   const atmRef = useRef(null);
 
   useEffect(() => {
     if (!API) { setLoading(false); return; }
-    let live = true; setLoading(true); setErr(null);
     const url = `${API}/api/companies/${co.ticker}/options` + (expiry ? `?expiry=${encodeURIComponent(expiry)}` : "");
+    /* The first load asks with no expiry, the response CARRIES one, and setting
+       it re-ran this effect — a second identical fetch on every open, with
+       setLoading(true) repainting the spinner over a chain that was already on
+       screen. Skip a URL we have already resolved, and only show the full
+       loading state when there is nothing to show yet. */
+    if (lastUrlRef.current === url) return;   // already resolved this exact URL
+    let live = true; setErr(null);
+    // Only the very first load blanks the pane; an expiry change refreshes the
+    // chain in place rather than flashing a spinner over it.
+    if (!lastUrlRef.current) setLoading(true);
     // r.ok: the API answers 4xx/5xx with a JSON body, so `.then(r => r.json())`
     // RESOLVES on failure and `strikes` becomes [] — an outage rendered as
     // "this name has no option chain", which for an F&O name is simply false.
     fetch(url)
       .then(r => { if (!r.ok) throw new Error(`options ${r.status}`); return r.json(); })
-      .then(d => { if (live) { setData(d); setLoading(false); if (!expiry && d.expiry) setExpiry(d.expiry); } })
+      .then(d => { if (live) { lastUrlRef.current = url; setData(d); setLoading(false); if (!expiry && d.expiry) setExpiry(d.expiry); } })
       .catch(e => { if (live) { setData(null); setErr(e); setLoading(false); } });
     return () => { live = false; };
   }, [co.ticker, API, expiry, reload]);

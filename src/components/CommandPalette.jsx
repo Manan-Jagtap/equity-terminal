@@ -184,8 +184,19 @@ export default function CommandPalette({ open, setOpen, companies, onOpenCompany
         {/* Search input */}
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 18px", borderBottom: `1px solid ${C.line}` }}>
           <Search size={17} color={C.gold} strokeWidth={1.8} />
+          {/* Arrow keys moved a purely VISUAL highlight: the input carried no
+              combobox role, the list no listbox, the rows no option — so a
+              screen-reader user pressing Down heard nothing at all and had no
+              way to know what Enter would do. aria-activedescendant is the
+              mechanism for "focus stays in the input, selection moves in the
+              list", which is exactly how this palette behaves. */}
           <input
             ref={inputRef}
+            role="combobox"
+            aria-expanded={items.length > 0}
+            aria-controls="cmdk-listbox"
+            aria-autocomplete="list"
+            aria-activedescendant={items.length ? `cmdk-opt-${active}` : undefined}
             value={q}
             onChange={e => setQ(e.target.value)}
             onKeyDown={onKeyDown}
@@ -196,7 +207,8 @@ export default function CommandPalette({ open, setOpen, companies, onOpenCompany
         </div>
 
         {/* Results */}
-        <div ref={listRef} style={{ maxHeight: 420, overflowY: "auto" }}>
+        <div ref={listRef} id="cmdk-listbox" role="listbox" aria-label="Results"
+             style={{ maxHeight: 420, overflowY: "auto" }}>
           {items.map((it, i) => {
             const activeRow = i === active;
             const rowStyle = {
@@ -208,6 +220,7 @@ export default function CommandPalette({ open, setOpen, companies, onOpenCompany
             if (it.type === "model") {
               return (
                 <div key={"model-" + (it.co.ticker || it.co.id)}
+                  id={`cmdk-opt-${i}`} role="option" aria-selected={activeRow}
                   onMouseEnter={() => setActive(i)}
                   onMouseDown={e => { e.preventDefault(); pick(it); }}
                   style={rowStyle}>
@@ -225,6 +238,7 @@ export default function CommandPalette({ open, setOpen, companies, onOpenCompany
             if (it.type === "cmd") {
               return (
                 <div key={"cmd-" + it.cmd.view}
+                  id={`cmdk-opt-${i}`} role="option" aria-selected={activeRow}
                   onMouseEnter={() => setActive(i)}
                   onMouseDown={e => { e.preventDefault(); pick(it); }}
                   style={rowStyle}>
@@ -241,6 +255,7 @@ export default function CommandPalette({ open, setOpen, companies, onOpenCompany
             return (
               <div
                 key={co.ticker || co.id}
+                id={`cmdk-opt-${i}`} role="option" aria-selected={activeRow}
                 onMouseEnter={() => setActive(i)}
                 onMouseDown={e => { e.preventDefault(); pick(it); }}
                 style={rowStyle}>

@@ -342,8 +342,12 @@ export default function App() {
       const ticker = co.ticker;
       fetch(`${API}/api/companies/${ticker}/history`)
         .then(r => { if (!r.ok) throw new Error(`history ${r.status}`); return r.json(); })
+        /* null means LOADING; an {error} envelope means the request failed.
+           Collapsing both to null left the Chart tab unable to tell a pending
+           fetch from a 500 from a name that genuinely has no history — so it
+           told the user a blue chip had no price history. */
         .then(d => { if (histReqRef.current === ticker) setHistPrices(d); })
-        .catch(() => { if (histReqRef.current === ticker) setHistPrices(null); });
+        .catch(e => { if (histReqRef.current === ticker) setHistPrices({ error: e }); });
     }
     setView("company");
   };
