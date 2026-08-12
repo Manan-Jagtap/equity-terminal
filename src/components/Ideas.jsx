@@ -201,7 +201,7 @@ export default function Ideas({ API, onOpen }) {
           </div>
           {(data?.sectors || []).slice(0, 6).map(s => (
             <button type="button" key={s.sector} onClick={() => setSector(s.sector)}
-                 style={{ ...buttonReset,  display: "flex", alignItems: "center", gap: 8, padding: "3px 0", cursor: "pointer"  }}>
+                 style={{ ...buttonReset, width: "100%", boxSizing: "border-box",   display: "flex", alignItems: "center", gap: 8, padding: "3px 0", cursor: "pointer"  }}>
               <div style={{ ...sans, fontSize: 11, color: C.text200, width: 130, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{s.sector}</div>
               <div style={{ flex: 1, height: 5, background: C.bg600, borderRadius: 6 }}>
                 <div style={{ height: "100%", width: `${s.avg_alpha || 0}%`, background: scoreColor(s.avg_alpha), borderRadius: 6 }} />

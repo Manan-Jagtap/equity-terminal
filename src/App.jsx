@@ -64,6 +64,18 @@ const Baskets     = lazyReload(() => import("./components/Baskets.jsx"));
 
 const ViewLoader = () => <PageSkeleton label="Loading…" />;
 
+/* The offline fallback, marked as what it is.
+   `.catch(() => setCompanies(SEED))` swapped the whole universe for five
+   hand-written records with hardcoded prices (MUTHOOTFIN ₹3,246, TITAN ₹3,380 —
+   whatever they were when SEED was written) and a deterministic random-walk
+   price series. dataQuality.js has two guards for exactly this: a "price history
+   is synthetic" penalty and a 0.79 confidence cap. Neither fired, because
+   `syntheticSeries` is only attached inside buildFromApi() and the fallback path
+   never goes through it — so an API outage rendered invented prices as live
+   market data at HIGH confidence, with no banner. Stamping the flag here turns
+   both guards on. */
+const DEMO_SEED = SEED.map(c => ({ ...c, syntheticSeries: true }));
+
 /* ── Visibility whitelist ────────────────────────────────────────────────────
    What the terminal shows is driven by the backend /api/universe (the SINGLE
    source of truth — currently the Nifty 100). The NIFTY_50 set below is only a
@@ -89,6 +101,7 @@ export default function App() {
   const [moreOpen, setMoreOpen] = useState(false);
   const [deepLinkMiss, setDeepLinkMiss] = useState(null);   // UX-15: bad deep-linked ticker
   const [companiesLoaded, setCompaniesLoaded] = useState(false);  // real universe fetched (not seed)
+  const [offline, setOffline] = useState(false);   // serving DEMO_SEED, not market data
 
   const [companies,   setCompanies]   = useState(SEED);
   const [loading,     setLoading]     = useState(false);
@@ -281,9 +294,10 @@ export default function App() {
             gateState: r.gate_state || null,
           },
         }));
-        setCompanies(built.length > 0 ? built : SEED);
+        setCompanies(built.length > 0 ? built : DEMO_SEED);
+        setOffline(built.length === 0);
       })
-      .catch(() => setCompanies(SEED))
+      .catch(() => { setCompanies(DEMO_SEED); setOffline(true); })
       .finally(() => { setLoading(false); setCompaniesLoaded(true); });
   }, [API]);
 
@@ -703,6 +717,27 @@ export default function App() {
       )}
 
       <main style={{ marginLeft: railVisible ? 216 : 0 }}>
+        {/* When the universe request fails the app keeps rendering — five
+            hand-written demo records. That is a reasonable way to avoid a blank
+            screen, but only if it SAYS so: without this the user reads invented
+            prices as live market data. role=alert so it is announced, not just
+            drawn. */}
+        {offline && (
+          <div role="alert" style={{
+            ...sans, fontSize: 12.5, lineHeight: 1.5, color: C.text200,
+            background: C.gold + "14", borderBottom: `1px solid ${C.gold}44`,
+            padding: "10px 20px", textAlign: "center",
+          }}>
+            <strong style={{ color: C.gold }}>Demo data.</strong>{" "}
+            We couldn&apos;t reach the market feed, so this is a small sample of
+            placeholder companies with stale prices — not live market data. Nothing
+            here should be acted on.{" "}
+            <button onClick={() => window.location.reload()} style={{
+              ...sans, fontSize: 12.5, background: "none", border: "none",
+              color: C.gold, textDecoration: "underline", cursor: "pointer", padding: 0,
+            }}>Try again</button>
+          </div>
+        )}
         <div style={{ maxWidth: 1360, margin: "0 auto" }}>
         <ErrorBoundary resetKey={view}>
         {/* Keyed by view only: switching companies keeps <Company> mounted

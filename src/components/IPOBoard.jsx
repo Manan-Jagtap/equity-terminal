@@ -55,7 +55,15 @@ function Card({ r, onOpen }) {
     <button type="button" onClick={() => clickable && onOpen(r.detail_id)}
       onMouseEnter={e => { if (clickable) e.currentTarget.style.background = C.bg800; }}
       onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
-      style={{ ...buttonReset,  padding: "13px 16px", borderTop: `1px solid ${C.line}`, cursor: clickable ? "pointer" : "default"  }}>
+      /* width:100% + display:block because a <button> shrinks to its content and
+         is inline-level: without this each IPO row was only as wide as its own
+         text, so TWO short rows flowed side by side instead of stacking, the
+         column edges were ragged, and the `marginLeft:auto` on the RHP link had
+         no space to push into. These were <div>s before the keyboard sweep made
+         them real buttons, which is where the layout went. */
+      style={{ ...buttonReset, width: "100%", boxSizing: "border-box", display: "block",
+               padding: "13px 16px", borderTop: `1px solid ${C.line}`,
+               cursor: clickable ? "pointer" : "default" }}>
       <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
         <span style={{ ...sans, fontSize: 14, fontWeight: 500, color: C.text }}>{r.name}</span>
         {r.is_sme && <span style={{ ...sans, fontSize: 9, fontWeight: 700, color: "#E8B054",

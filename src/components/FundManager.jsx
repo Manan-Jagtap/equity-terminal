@@ -395,7 +395,7 @@ function HiddenGems({ API, onOpen }) {
                          border: `1px solid ${gemScoreColor(g.score)}44`, borderRadius: 6, padding: "3px 8px", flexShrink: 0 }}>
                 {Math.round(g.score)}
               </span>
-              <button type="button" onClick={() => onOpen && onOpen(g.ticker)} style={{ ...buttonReset,  cursor: "pointer", display: "flex", gap: 8, alignItems: "baseline", minWidth: 0  }}>
+              <button type="button" onClick={() => onOpen && onOpen(g.ticker)} style={{ ...buttonReset, width: "100%", boxSizing: "border-box",   cursor: "pointer", display: "flex", gap: 8, alignItems: "baseline", minWidth: 0  }}>
                 <span style={{ ...mono, fontSize: 12.5, color: C.gold }}>{g.ticker}</span>
                 <span style={{ ...sans, fontSize: 12.5, color: C.text }}>{g.name}</span>
               </button>

@@ -94,7 +94,7 @@ function BasketCard({ b, onOpen }) {
       <div style={{ marginTop: 12, paddingTop: 10, borderTop: `1px solid ${C.line}` }}>
         {shown.map((m) => (
           <button type="button" key={m.ticker} onClick={() => onOpen && onOpen(m.ticker)}
-               style={{ ...buttonReset,  display: "flex", alignItems: "center", gap: 8, padding: "5px 4px", cursor: onOpen ? "pointer" : "default", borderRadius: 6  }}
+               style={{ ...buttonReset, width: "100%", boxSizing: "border-box",   display: "flex", alignItems: "center", gap: 8, padding: "5px 4px", cursor: onOpen ? "pointer" : "default", borderRadius: 6  }}
                onMouseEnter={e => (e.currentTarget.style.background = C.panel2)}
                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}>
             <div style={{ ...sans, fontSize: 12, fontWeight: 500, color: C.gold, width: 90, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{m.ticker}</div>
