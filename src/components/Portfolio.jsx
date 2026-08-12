@@ -91,15 +91,30 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
     if (!API || !ticker.trim() || !qty || !avgCost || !buyDate) return;
     setSaving(true);
     try {
-      await authFetch(`${API}/api/portfolio`, {
+      /* The r.ok check this did not have. authFetch RESOLVES on a non-2xx (the
+         API answers errors with a JSON body), so a failed write took the
+         success branch: the form cleared, the list reloaded without the
+         position, and the user was told nothing. They typed that cost basis by
+         hand — losing it silently is the worst outcome on this screen. The
+         catch below already exists to preserve the values; it just never ran. */
+      const r = await authFetch(`${API}/api/portfolio`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ticker: ticker.trim().toUpperCase(), qty: Number(qty), avg_cost: Number(avgCost),
                                ...(buyDate ? { buy_date: buyDate } : {}) }),
       });
+      if (!r.ok) {
+        let detail = "";
+        try { detail = (await r.json())?.detail || ""; } catch { /* body may not be JSON */ }
+        throw new Error(detail || `HTTP ${r.status}`);
+      }
       setTicker(""); setQty(""); setAvgCost(""); setBuyDate("");
       reload();
-    } catch { /* keep form values so the user can retry */ }
+    } catch (ex) {
+      /* keep form values so the user can retry — and SAY so */
+      toast(`Couldn't add ${ticker.trim().toUpperCase()}: ${ex.message || "the request failed"}. Your entry has been kept.`,
+            { tone: "error" });
+    }
     setSaving(false);
   };
 

@@ -1,7 +1,7 @@
 /* Screener — search/sort/filter table of all companies.
    Click row → opens Company detail. */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from "react";
 import { Search, ChevronRight, Database, Star, Download, Bookmark, Save, Trash2 } from "lucide-react";
 import { C, mono, sans } from "../lib/theme.js";
 import { fmt, inr, pct, multiple, inrOrDash, signedPct } from "../lib/formatters.js";
@@ -101,6 +101,23 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
     return m >= 67000 ? "Large" : m >= 22000 ? "Mid" : "Small";
   };
   const [q, setQ] = useState("");
+  /* The 997-row pipeline below depends on `q`, so every keystroke re-ran it and
+     re-rendered the whole table — measured at ~407 ms of blocked main thread per
+     character, which is long enough to drop the characters typed during it.
+     useDeferredValue lets the input update at once and the table catch up. */
+  const deferredQ = useDeferredValue(q);
+
+  /* The table rendered the ENTIRE covered universe at once — ~997 rows x ~32
+     cells = ~31,500 DOM elements, a 1.0-1.6 s commit, and every later state
+     change re-rendered all of it. Nobody reads row 900; the sorts exist because
+     the top of the list is the point. Render a window and let the user ask for
+     more.
+
+     A page size rather than a virtualizer because it is a fraction of the risk
+     on a table with sticky headers, row activation and live price ticks, and it
+     removes the same order of magnitude. */
+  const PAGE = 100;
+  const [shown, setShown] = useState(PAGE);
   const [sort, setSort] = useState("rank");
   const [sf, setSf] = useState("All");
   // Query-builder filters: verdict, data confidence, minimum margin of safety.
@@ -217,7 +234,7 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
       };
     })
     .filter(r => {
-      const mQ = (r.co.name + r.co.ticker).toLowerCase().includes(q.toLowerCase());
+      const mQ = (r.co.name + r.co.ticker).toLowerCase().includes(deferredQ.toLowerCase());
       return mQ && (sf === "All" || sectorBucket(r.co.sector) === sf);
     })
     .filter(r => {
@@ -250,7 +267,16 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
       if (sort === "roe")       return (b.roe || 0) - (a.roe || 0);
       if (sort === "sentiment") return (b.sentiment ?? -1) - (a.sentiment ?? -1);
       return a.co.name.localeCompare(b.co.name);
-    }), [companies, q, sort, sf, vf, cf, minMos, capf, tf, techMap, liveFeed]);
+    }), [companies, deferredQ, sort, sf, vf, cf, minMos, capf, tf, techMap, liveFeed]);
+
+  /* A new filter/sort means a new list — carrying row 400 of the previous one
+     over would be arbitrary. Adjusted DURING RENDER rather than in an effect:
+     React re-runs the component immediately with the corrected value, so the
+     table never paints one frame of the wrong window (and it keeps the
+     set-state-in-effect ratchet clean). */
+  const filterKey = `${deferredQ}|${sort}|${sf}|${vf}|${cf}|${minMos}|${capf}|${tf}`;
+  const [lastFilterKey, setLastFilterKey] = useState(filterKey);
+  if (filterKey !== lastFilterKey) { setLastFilterKey(filterKey); setShown(PAGE); }
 
   /* Sort state used to be colour alone (gold vs dim) with no direction glyph,
      so "which column am I sorted by" was invisible to anyone who cannot see the
@@ -442,7 +468,7 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
           <tbody>
             {loading ? (
               <tr><td colSpan={10} style={{ ...sans, textAlign: "center", padding: 40, color: C.faint }}>Loading live data…</td></tr>
-            ) : rows.map((r, idx) => (
+            ) : rows.slice(0, shown).map((r, idx) => (
               <tr
                 key={r.co.ticker || r.co.id}
                 {...rowActivate(() => onOpen(r.co.ticker || r.co.id))}
@@ -529,6 +555,24 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
           </tbody>
         </table>
       </div>
+
+      {/* The rest of the list stays reachable — the window is a render budget,
+          not a cap on what the screener covers. The count is stated so "100
+          rows" never reads as "that is all there is". */}
+      {!loading && rows.length > shown && (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center",
+                      gap: 12, padding: "14px 0" }}>
+          <button type="button" onClick={() => setShown(n => n + PAGE)}
+            style={{ ...sans, fontSize: 12.5, color: C.gold, background: C.gold + "12",
+                     border: `1px solid ${C.gold}44`, borderRadius: 8,
+                     padding: "8px 18px", cursor: "pointer" }}>
+            Show {Math.min(PAGE, rows.length - shown)} more
+          </button>
+          <span style={{ ...mono, fontSize: 11, color: C.faint }}>
+            showing {shown} of {rows.length}
+          </span>
+        </div>
+      )}
 
       <div style={{
         marginTop: 14, border: `1px solid ${C.line}`,
