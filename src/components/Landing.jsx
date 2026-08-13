@@ -11,6 +11,7 @@ import { C, mono, sans, serif } from "../lib/theme.js";
 import BrandMark from "./BrandMark.jsx";
 import { useIsMobile } from "../lib/useResponsive.js";
 import PrivacyPolicy from "./PrivacyPolicy.jsx";
+import TermsOfService from "./TermsOfService.jsx";
 
 const PILLARS = [
   {
@@ -39,6 +40,7 @@ export default function Landing({ onSignIn }) {
   const isMobile = useIsMobile();
   const PAD = isMobile ? 20 : 48;
   const [policyOpen, setPolicyOpen] = useState(false);
+  const [termsOpen, setTermsOpen] = useState(false);
 
   return (
     <div style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
@@ -117,9 +119,16 @@ export default function Landing({ onSignIn }) {
             padding: "6px 8px", margin: "0 -8px",
             color: C.dim, cursor: "pointer", fontSize: 11.5, textDecoration: "underline",
           }}>Privacy Policy</button>
+          <span style={{ ...sans, color: C.faint, fontSize: 11.5 }} aria-hidden="true">·</span>
+          <button onClick={() => setTermsOpen(true)} style={{
+            ...sans, background: "transparent", border: "none",
+            padding: "6px 8px", margin: "0 -8px",
+            color: C.dim, cursor: "pointer", fontSize: 11.5, textDecoration: "underline",
+          }}>Terms of Service</button>
         </div>
       </footer>
       <PrivacyPolicy open={policyOpen} onClose={() => setPolicyOpen(false)} />
+      <TermsOfService open={termsOpen} onClose={() => setTermsOpen(false)} />
     </div>
   );
 }

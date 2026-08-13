@@ -9,6 +9,7 @@ import { C, mono, sans, serif } from "../lib/theme.js";
 import BrandMark from "./BrandMark.jsx";
 import { login, signup, verifySignup, resendCode } from "../lib/auth.js";
 import PrivacyPolicy from "./PrivacyPolicy.jsx";
+import TermsOfService from "./TermsOfService.jsx";
 import useModalA11y from "../lib/useModalA11y.js";
 
 export default function AuthModal({ open, onClose, API, onAuthed }) {
@@ -18,6 +19,7 @@ export default function AuthModal({ open, onClose, API, onAuthed }) {
   const [name, setName]   = useState("");
   const [consent, setConsent] = useState(false);
   const [policyOpen, setPolicyOpen] = useState(false);
+  const [termsOpen, setTermsOpen] = useState(false);
   const [err, setErr]     = useState(null);
   const [busy, setBusy]   = useState(false);
   const [verifyFor, setVerifyFor] = useState(null);  // email awaiting its code
@@ -206,7 +208,12 @@ export default function AuthModal({ open, onClose, API, onAuthed }) {
                   ...sans, background: "transparent", border: "none", padding: 0,
                   color: C.gold, cursor: "pointer", fontSize: 11.5, textDecoration: "underline",
                 }}>Privacy Policy</button>
-                {" "}and understand this is a research tool, not investment advice.
+                {" "}and the{" "}
+                <button type="button" onClick={() => setTermsOpen(true)} style={{
+                  ...sans, background: "transparent", border: "none", padding: 0,
+                  color: C.gold, cursor: "pointer", fontSize: 11.5, textDecoration: "underline",
+                }}>Terms of Service</button>
+                , and understand this is a research tool, not investment advice.
               </span>
             </label>
           )}
@@ -242,6 +249,7 @@ export default function AuthModal({ open, onClose, API, onAuthed }) {
         )}
       </div>
       <PrivacyPolicy open={policyOpen} onClose={() => setPolicyOpen(false)} />
+      <TermsOfService open={termsOpen} onClose={() => setTermsOpen(false)} />
     </div>
   );
 }
