@@ -18,6 +18,7 @@ import {
 } from "recharts";
 
 import { C, mono, sans, serif, gridBg, sectorAccent } from "../lib/theme.js";
+import { thBare, thCompactBare } from "../design/table.js";
 import FvRange from "./FvRange.jsx";
 import NumberTicker from "./ui/NumberTicker.jsx";
 import { useLive, liveDotStyle } from "../lib/live.js";
@@ -377,9 +378,9 @@ function RatioTable({ title, rows, years, accentColor }) {
       <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12 }}>
         <thead>
           <tr style={{ borderTop:`1px solid ${C.line}`, borderBottom:`1px solid ${C.line}` }}>
-            <th style={{ ...sans, textAlign:"left", padding:"8px 20px", fontSize:10, textTransform:"uppercase", letterSpacing:"0.12em", color:C.dim, fontWeight:500 }}>Metric</th>
+            <th style={{ ...thBare, padding: "10px 20px", textAlign:"left" }}>Metric</th>
             {years.map((y, i) => (
-              <th key={i} style={{ ...sans, textAlign:"right", padding:"8px", fontSize:10, textTransform:"uppercase", letterSpacing:"0.1em", color:i===years.length-1 ? C.gold : C.dim, fontWeight:500, paddingRight:i===years.length-1?"20px":"8px" }}>{y}</th>
+              <th key={i} style={{ ...thCompactBare, textAlign:"right", color:i===years.length-1 ? C.gold : C.dim, paddingRight:i===years.length-1?"20px":"8px" }}>{y}</th>
             ))}
           </tr>
         </thead>
@@ -415,9 +416,9 @@ function FinTable({ title, accent, rows, years }) {
       <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
         <thead>
           <tr style={{ borderTop:`1px solid ${C.line}`, borderBottom:`1px solid ${C.line}` }}>
-            <th style={{ ...sans, textAlign:"left", padding:"8px 20px", fontSize:10, textTransform:"uppercase", color:C.dim, fontWeight:500 }} />
+            <th style={{ ...thBare, padding: "10px 20px", textAlign:"left" }} />
             {years.map((y, i) => (
-              <th key={i} style={{ ...sans, textAlign:"right", padding:"8px", paddingRight:i===years.length-1?"20px":"8px", fontSize:10, textTransform:"uppercase", color:i===years.length-1?C.gold:C.dim, fontWeight:500 }}>{y}</th>
+              <th key={i} style={{ ...thCompactBare, textAlign:"right", paddingRight:i===years.length-1?"20px":"8px", color:i===years.length-1?C.gold:C.dim }}>{y}</th>
             ))}
           </tr>
         </thead>
@@ -549,7 +550,7 @@ function OverviewTab({ co, rec, cd, profile, profileError }) {
               <thead>
                 <tr style={{ borderTop:`1px solid ${C.line}`, borderBottom:`1px solid ${C.line}` }}>
                   {(cd.segmentCols || ["Vertical","AUM (₹ Cr)","Mix","YoY Growth","Yield"]).map((h, i, arr) => (
-                    <th key={i} style={{ ...sans, textAlign:i===0?"left":"right", padding:"8px", paddingLeft:i===0?"20px":"8px", paddingRight:i===arr.length-1?"20px":"8px", fontSize:10, textTransform:"uppercase", color:C.dim, fontWeight:500 }}>{h}</th>
+                    <th key={i} style={{ ...thCompactBare, textAlign:i===0?"left":"right", paddingLeft:i===0?"20px":"8px", paddingRight:i===arr.length-1?"20px":"8px" }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -690,8 +691,8 @@ function ShareholdingTrendCard({ trend }) {
         <table style={{ width:"100%", borderCollapse:"collapse", fontSize:12.5 }}>
           <thead>
             <tr style={{ borderTop:`1px solid ${C.line}`, borderBottom:`1px solid ${C.line2}` }}>
-              <th style={{ ...sans, textAlign:"left", padding:"8px 18px", fontSize:10, textTransform:"uppercase", color:C.dim, fontWeight:500 }} />
-              {periods.map((p, i) => <th key={i} style={{ ...sans, textAlign:"right", padding:"8px 10px", fontSize:10, color:i===periods.length-1?C.gold:C.dim, fontWeight:600, whiteSpace:"nowrap" }}>{label(p)}</th>)}
+              <th style={{ ...thBare, padding: "10px 18px", textAlign:"left" }} />
+              {periods.map((p, i) => <th key={i} style={{ ...thCompactBare, textAlign:"right", color:i===periods.length-1?C.gold:C.dim, fontWeight:600 }}>{label(p)}</th>)}
             </tr>
           </thead>
           <tbody>
@@ -855,9 +856,9 @@ function LiveStatementTable({ title, accent, statements, years, stmtKey, order }
         <table style={{ width:"100%", borderCollapse:"collapse", fontSize:13 }}>
           <thead>
             <tr style={{ borderTop:`1px solid ${C.line}`, borderBottom:`1px solid ${C.line}` }}>
-              <th style={{ ...sans, textAlign:"left", padding:"8px 20px", fontSize:10, textTransform:"uppercase", color:C.dim, fontWeight:500 }} />
+              <th style={{ ...thBare, padding: "10px 20px", textAlign:"left" }} />
               {years.map((y, i) => (
-                <th key={i} style={{ ...sans, textAlign:"right", padding:"8px", paddingRight:i===years.length-1?"20px":"8px", fontSize:10, color:i===years.length-1?C.gold:C.dim, fontWeight:500 }}>FY{String(y).slice(2)}</th>
+                <th key={i} style={{ ...thCompactBare, textAlign:"right", paddingRight:i===years.length-1?"20px":"8px", color:i===years.length-1?C.gold:C.dim }}>FY{String(y).slice(2)}</th>
               ))}
             </tr>
           </thead>
@@ -957,12 +958,12 @@ function ScreenerIncomeTable({ accent, title = "Income Statement", periods, metr
               </colgroup>
               <thead>
                 <tr style={{ borderTop:`1px solid ${C.line}`, borderBottom:`1px solid ${C.line2}` }}>
-                  <th style={{ ...sans, textAlign:"left", padding:"9px 20px", fontSize:10, textTransform:"uppercase", color:C.dim, fontWeight:500 }} />
+                  <th style={{ ...thBare, padding: "10px 20px", textAlign:"left" }} />
                   {periods.map((p, i) => (
-                    <th key={i} style={{ ...sans, textAlign:"right", padding:"9px 8px", fontSize:10.5, color:i===L-1?C.gold:C.dim, fontWeight:600, whiteSpace:"nowrap", letterSpacing:"0.03em" }}>{label(p)}</th>
+                    <th key={i} style={{ ...thCompactBare, textAlign:"right", color:i===L-1?C.gold:C.dim, fontWeight:600 }}>{label(p)}</th>
                   ))}
                   {gCols.map((g, i) => (
-                    <th key={"g"+i} style={{ ...sans, textAlign:"right", padding:"9px 8px", paddingRight:i===gCols.length-1?"20px":"8px", fontSize:10, color:C.gold, fontWeight:600, whiteSpace:"nowrap", borderLeft:i===0?`1px solid ${C.line2}`:"none" }}>{g.label}</th>
+                    <th key={"g"+i} style={{ ...thCompactBare, textAlign:"right", paddingRight:i===gCols.length-1?"20px":"8px", color:C.gold, fontWeight:600, borderLeft:i===0?`1px solid ${C.line2}`:"none" }}>{g.label}</th>
                   ))}
                   {pad.map((_, i) => <th key={"p"+i} style={{ paddingRight:i===padCols-1?"20px":"8px" }} />)}
                 </tr>
@@ -1061,9 +1062,9 @@ function QuarterlyInsightsFallback({ co, API }) {
       <div style={{ overflowX:"auto" }}>
         <table style={{ width:"100%", borderCollapse:"collapse", minWidth:380 }}>
           <thead><tr>
-            <th style={{ ...sans, textAlign:"left", fontSize:10, color:C.dim, textTransform:"uppercase", letterSpacing:"0.08em", padding:"8px 10px" }}>₹ Cr</th>
-            <th style={{ ...sans, textAlign:"right", fontSize:10, color:C.gold, textTransform:"uppercase", letterSpacing:"0.08em", padding:"8px 10px" }}>Latest Qtr</th>
-            <th style={{ ...sans, textAlign:"right", fontSize:10, color:C.dim, textTransform:"uppercase", letterSpacing:"0.08em", padding:"8px 10px" }}>TTM</th>
+            <th style={{ ...thCompactBare, textAlign:"left" }}>₹ Cr</th>
+            <th style={{ ...thCompactBare, textAlign:"right", color:C.gold }}>Latest Qtr</th>
+            <th style={{ ...thCompactBare, textAlign:"right" }}>TTM</th>
           </tr></thead>
           <tbody>
             {rows.map(([label, key]) => (
@@ -1325,8 +1326,8 @@ function RatiosTab({ co, API, liveMetrics }) {
               <div style={{ overflowX:"auto" }}>
                 <table style={{ width:"100%", borderCollapse:"collapse", minWidth:420 }}>
                   <thead><tr>
-                    <th style={{ ...sans, textAlign:"left", fontSize:10, color:C.dim, textTransform:"uppercase", letterSpacing:"0.08em", padding:"8px 18px" }}>Metric</th>
-                    {periods.map(p => <th key={p} style={{ ...sans, textAlign:"right", fontSize:10, color:C.dim, padding:"8px 12px", whiteSpace:"nowrap" }}>{p}</th>)}
+                    <th style={{ ...thBare, padding: "10px 18px", textAlign:"left" }}>Metric</th>
+                    {periods.map(p => <th key={p} style={{ ...thCompactBare, textAlign:"right" }}>{p}</th>)}
                   </tr></thead>
                   <tbody>
                     {Object.entries(src).map(([metric, vals]) => (
@@ -1365,8 +1366,8 @@ function RatiosTab({ co, API, liveMetrics }) {
               <colgroup><col style={{ width:"32%" }} />{growthCols.map((c,i)=><col key={i} style={{ width:(68/growthCols.length)+"%" }} />)}</colgroup>
               <thead>
                 <tr style={{ borderTop:`1px solid ${C.line}`, borderBottom:`1px solid ${C.line2}` }}>
-                  <th style={{ ...sans, textAlign:"left", padding:"9px 20px", fontSize:10, textTransform:"uppercase", color:C.dim, fontWeight:500 }} />
-                  {growthCols.map((c,i) => <th key={c} style={{ ...sans, textAlign:"right", padding:"9px 12px", fontSize:10, textTransform:"uppercase", color:i===growthCols.length-1?C.gold:C.dim, fontWeight:600, letterSpacing:"0.03em" }}>{c}</th>)}
+                  <th style={{ ...thBare, padding: "10px 20px", textAlign:"left" }} />
+                  {growthCols.map((c,i) => <th key={c} style={{ ...thCompactBare, textAlign:"right", color:i===growthCols.length-1?C.gold:C.dim, fontWeight:600 }}>{c}</th>)}
                 </tr>
               </thead>
               <tbody>
@@ -1445,7 +1446,7 @@ function DynamicPeers({ co, allCompanies }) {
             <thead>
               <tr style={{ borderTop:`1px solid ${C.line}`, borderBottom:`1px solid ${C.line}` }}>
                 {["Company","CMP","Intrinsic","MoS","P/E","P/B","ROE","Verdict"].map((h, i) => (
-                  <th key={i} style={{ ...sans, textAlign:i===0?"left":"right", padding:"8px", paddingLeft:i===0?"20px":"8px", paddingRight:i===7?"20px":"8px", fontSize:10, textTransform:"uppercase", color:C.dim, fontWeight:500 }}>{h}</th>
+                  <th key={i} style={{ ...thCompactBare, textAlign:i===0?"left":"right", paddingLeft:i===0?"20px":"8px", paddingRight:i===7?"20px":"8px" }}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -1576,10 +1577,10 @@ function IndianApiPeers({ co, peers, selfMetrics, universe, onOpenTicker }) {
             <thead>
               <tr style={{ borderTop: `1px solid ${C.line}`, borderBottom: `1px solid ${C.line}` }}>
                 <th style={{ width: 34 }} />
-                <th style={{ ...sans, textAlign: "left", padding: "8px 20px", fontSize: 10, textTransform: "uppercase", color: C.dim, fontWeight: 500 }}>Company</th>
-                <th style={{ ...sans, textAlign: "right", padding: "8px", fontSize: 10, textTransform: "uppercase", color: C.dim, fontWeight: 500 }}>Price</th>
+                <th style={{ ...thBare, padding: "10px 20px", textAlign: "left" }}>Company</th>
+                <th style={{ ...thCompactBare, textAlign: "right" }}>Price</th>
                 {cols.map((h, i) => (
-                  <th key={i} style={{ ...sans, textAlign: "right", padding: "8px", paddingRight: i === cols.length - 1 ? "20px" : "8px", fontSize: 10, textTransform: "uppercase", color: C.dim, fontWeight: 500 }}>{h}</th>
+                  <th key={i} style={{ ...thCompactBare, textAlign: "right", paddingRight: i === cols.length - 1 ? "20px" : "8px" }}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -1686,7 +1687,7 @@ function PeersTab({ co, cd, allCompanies, API, onOpenTicker }) {
             <thead>
               <tr style={{ borderTop:`1px solid ${C.line}`, borderBottom:`1px solid ${C.line}` }}>
                 {["Company","Mcap (Cr)","P/E","P/B","ROE","ROA","NIM","AUM Gr","GNPA","CRAR","Div Yield","Beta","Target"].map((h, i) => (
-                  <th key={i} style={{ ...sans, textAlign:i===0?"left":"right", padding:"8px", paddingLeft:i===0?"20px":"8px", paddingRight:i===12?"20px":"8px", fontSize:10, textTransform:"uppercase", color:C.dim, fontWeight:500 }}>{h}</th>
+                  <th key={i} style={{ ...thCompactBare, textAlign:i===0?"left":"right", paddingLeft:i===0?"20px":"8px", paddingRight:i===12?"20px":"8px" }}>{h}</th>
                 ))}
               </tr>
             </thead>
