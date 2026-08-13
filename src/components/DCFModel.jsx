@@ -178,9 +178,28 @@ export default function DCFModel({ co, price, apiVal, a, onWork }) {
 
   // Untouched → backend canonical (identical to screener & header); touched →
   // the live engine recompute. Same model either way, so no jump on first touch.
-  const baseKeyRef = useRef(null);
-  if (baseKeyRef.current === null) baseKeyRef.current = aKey;
-  const touched = aKey !== baseKeyRef.current;
+  /* Derived from the SEED block, not from "whatever the first render happened
+     to hold".
+
+     Company.jsx keys this component `dcf-<ticker>-<seeded|base>-<nonce>`, and
+     that key flips the moment apiVal.assumptions lands. If the user was already
+     dragging a slider when it did, the remount re-initialised a first-render ref
+     to the EDITED values — so `touched` reset to false, showApi turned true, and
+     the headline silently reverted to the backend base case while their own
+     assumptions were still on screen underneath it, relabelled "· base case".
+
+     Computing the base key from `base` makes it reproducible: a remount lands on
+     the same value, so an edit stays an edit across the flip. */
+  const baseKey = useMemo(() => JSON.stringify({
+    risk_free: base.risk_free, erp: base.erp, beta: base.beta, tax_rate: base.tax_rate,
+    terminal_growth: base.terminal_growth, fade_years: base.fade_years,
+    rev_growth: base.rev_growth, ebit_margin: base.ebit_margin,
+    reinvest_rate: base.reinvest_rate, debt_weight: base.debt_weight,
+    cost_debt: base.cost_debt, forecast_roe: base.forecast_roe,
+    terminal_roe: base.terminal_roe, payout: base.payout,
+    _valuation_sector: vs,
+  }), [base, vs]);
+  const touched = aKey !== baseKey;
 
   const apiRec  = apiVal?.recommendation;
   const apiIv   = apiRec?.blended ?? apiRec?.intrinsic;

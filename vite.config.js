@@ -21,7 +21,32 @@ export default defineConfig({
         // ── Cached: THE APP SHELL, AND NOTHING ELSE ─────────────────────────
         // Build output is content-hashed, so cache-first is safe here: a deploy
         // produces new filenames and the old entries are cleaned up.
-        globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest}'],
+        // THE SHELL, and nothing else. '**/*.js' swept in every lazy chunk:
+        // 50 entries / 1,941 kB downloaded on first visit, of which ~1,511 kB
+        // was code the visitor may never reach — the PDF exporter (322 kB), the
+        // charting library (307 kB), the company page (205 kB), the terminal
+        // chart (179 kB), and the INTERNAL styleguide (51 kB). That is 4.6x the
+        // 175 kB entry budget CI polices, paid on first load, and it defeats the
+        // code-splitting it sits on top of: the whole point of a lazy chunk is
+        // not to fetch it until it is needed.
+        //
+        // Vite names the entry `index-<hash>.js`; everything else under assets/
+        // is a route or vendor chunk and is fetched on demand, then kept by the
+        // runtime rule below so a second visit is still offline-capable.
+        globPatterns: [
+          '**/*.{css,html,svg,png,ico,webmanifest}',
+          'assets/index-*.js',
+        ],
+        runtimeCaching: [{
+          // Content-hashed filenames, so CacheFirst is safe: a deploy produces
+          // new names and these entries age out with the cache.
+          urlPattern: /\/assets\/.*\.js$/,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'lazy-chunks',
+            expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 30 },
+          },
+        }],
         navigateFallback: '/index.html',
         // MUST mirror the exclusions in vercel.json's SPA rewrite
         //   "/((?!api/|stock/|.*\\.).*)" -> /index.html
