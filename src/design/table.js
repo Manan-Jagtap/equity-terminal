@@ -62,6 +62,24 @@ export const tdNum = {
   whiteSpace: "nowrap",
 };
 
+/* WHERE THE RULE LIVES — the reason `th` alone could not be adopted.
+ *
+ * `th` above puts the hairline on the header cell. That is one convention. The
+ * financial tables in Company.jsx use the other one: the rule sits on the
+ * `<tr>`, and the cells carry none. Measured: of 26 headers there, ZERO set
+ * borderBottom and 21 sit under a `<tr>` that already draws it.
+ *
+ * Both are internally consistent. `th` is not a superset of them — it is the
+ * alternative. So spreading `...th` at those sites does not consolidate a
+ * divergence, it draws a SECOND hairline on top of the row's, and the first
+ * attempt at this adoption did exactly that.
+ *
+ * Hence a variant rather than a rewrite of every `<tr>`: the type, size,
+ * tracking and padding consolidate; the question of which element owns the rule
+ * stays with the table, because that is a real structural choice and not an
+ * accident. */
+export const thBare = { ...th, borderBottom: "none" };
+
 /* The identity column: left-aligned, wider gutter, and it must be allowed to
    truncate. Unbounded it takes whatever width the longest company name wants
    and pushes the columns that carry the actual verdict off the edge — measured
@@ -107,6 +125,11 @@ export const stackLine = {
    So there are exactly two rhythms, both defined here, and a screen may only
    use the compact one when density is the feature rather than an accident. */
 export const thCompact = { ...th, padding: "7px 8px" };
+/* Company's multi-year financial grids are the same case as the option chain:
+   twelve numeric columns at 8px gutters. Widening them to the standard 12px
+   adds ~96px to a table that already scrolls, so density is the feature here
+   too. Paired with noRule because those grids draw on the <tr>. */
+export const thCompactBare = { ...thCompact, borderBottom: "none" };
 export const tdCompact = { ...td, padding: "6px 8px", fontSize: 11.5 };
 export const tdCompactNum = { ...tdCompact, ...mono, whiteSpace: "nowrap" };
 
