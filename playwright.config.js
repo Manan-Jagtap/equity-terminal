@@ -16,7 +16,17 @@ export default defineConfig({
   webServer: {
     command: "npm run dev",
     url: "http://localhost:5173",
-    reuseExistingServer: !process.env.CI,
+    // NOT `!process.env.CI`. Reuse takes whatever already listens on 5173, and a
+    // preview/dev server started for browser verification does NOT carry the
+    // VITE_API_URL below — so the app comes up pointed at a real (or absent)
+    // backend instead of seed mode, and the seed-mode assertions fail. That
+    // produced three separate false failures during the Aug 2026 sweep, each
+    // one read at first as a regression in the code under test.
+    //
+    // The env below is the contract this file exists to enforce; a server that
+    // was not started with it cannot honour it. Reuse trades ~2s of startup for
+    // a suite that lies, so it is off everywhere.
+    reuseExistingServer: false,
     env: { VITE_API_URL: "http://127.0.0.1:9" },   // unroutable → seed mode
     timeout: 60_000,
   },
