@@ -275,9 +275,9 @@ function isHighPayout(co, a) {
 
 const BLEND_WEIGHTS = {
   fin:    [["Residual Income", 0.65], ["Gordon Growth P/B", 0.20], ["P/E (sector)", 0.15]],
-  nonfin: [["FCFF DCF", 0.65], ["Exit Multiple", 0.20], ["P/E (sector)", 0.15]],
+  nonfin: [["FCFF DCF", 0.66], ["Exit Multiple", 0.19], ["P/E (sector)", 0.15]],
   // Asset-light: earnings-based P/E is the meaningful multiple; EV/EBITDA less so.
-  nonfin_light: [["FCFF DCF", 0.55], ["Exit Multiple", 0.15], ["P/E (sector)", 0.30]],
+  nonfin_light: [["FCFF DCF", 0.56], ["Exit Multiple", 0.15], ["P/E (sector)", 0.29]],
 };
 // Sectors whose value is asset-light / earnings-driven → lean the cross-check on P/E.
 const ASSET_LIGHT = new Set(["IT_SERVICES", "CONSUMER", "CONSUMER_DISC", "PHARMA"]);

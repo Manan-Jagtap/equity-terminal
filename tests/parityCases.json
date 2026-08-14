@@ -26,7 +26,7 @@
    "reinvest_rate": 0.7016,
    "_valuation_sector": "DISTRIBUTION"
   },
-  "exp_blended": 3121.8800076223624,
+  "exp_blended": 3113.7015324237004,
   "exp_primary": 3147.138833669284,
   "exp_components": [
    3147.138833669284,
@@ -62,7 +62,7 @@
    "reinvest_rate": 0.6005,
    "_valuation_sector": "AVIATION"
   },
-  "exp_blended": 82.62820848275906,
+  "exp_blended": 82.16050164229063,
   "exp_primary": 77.95114007807459,
   "exp_components": [
    77.95114007807459,
@@ -134,7 +134,7 @@
    "reinvest_rate": 0.3052,
    "_valuation_sector": "LOGISTICS"
   },
-  "exp_blended": 25569.331054617258,
+  "exp_blended": 25458.58687012878,
   "exp_primary": 22148.836897695663,
   "exp_components": [
    22148.836897695663,
@@ -170,7 +170,7 @@
    "reinvest_rate": 0.3492,
    "_valuation_sector": "REALTY"
   },
-  "exp_blended": 135.3751929702388,
+  "exp_blended": 134.77608892411507,
   "exp_primary": 119.82080922474628,
   "exp_components": [
    119.82080922474628,
@@ -242,7 +242,7 @@
    "reinvest_rate": 0.3524,
    "_valuation_sector": "METAL"
   },
-  "exp_blended": 1205.3579002302847,
+  "exp_blended": 1205.37963522193,
   "exp_primary": 1365.0482264866278,
   "exp_components": [
    1365.0482264866278,
@@ -278,7 +278,7 @@
    "reinvest_rate": 0.4712,
    "_valuation_sector": "MANUFACTURING"
   },
-  "exp_blended": 1476.7267939424116,
+  "exp_blended": 1469.4041817410443,
   "exp_primary": 1220.435366894555,
   "exp_components": [
    1220.435366894555,
@@ -350,7 +350,7 @@
    "reinvest_rate": 0.2792,
    "_valuation_sector": "CONSUMER"
   },
-  "exp_blended": 6979.040485108112,
+  "exp_blended": 6952.6919386233185,
   "exp_primary": 5269.709296958771,
   "exp_components": [
    5269.709296958771,
@@ -386,7 +386,7 @@
    "reinvest_rate": 0.3826,
    "_valuation_sector": "CONSUMER"
   },
-  "exp_blended": 23046.637303126594,
+  "exp_blended": 23102.08747703434,
   "exp_primary": 24505.926466471632,
   "exp_components": [
    24505.926466471632,
@@ -458,7 +458,7 @@
    "reinvest_rate": 0.1594,
    "_valuation_sector": "METAL"
   },
-  "exp_blended": 146.13437600668814,
+  "exp_blended": 145.63213642336046,
   "exp_primary": 136.0895843401346,
   "exp_components": [
    136.0895843401346,
@@ -494,7 +494,7 @@
    "reinvest_rate": 0.5195,
    "_valuation_sector": "CONSTRUCTION"
   },
-  "exp_blended": 7060.464349673311,
+  "exp_blended": 7093.303718741559,
   "exp_primary": 8209.84226706199,
   "exp_components": [
    8209.84226706199,
@@ -566,7 +566,7 @@
    "reinvest_rate": 0.1954,
    "_valuation_sector": "AVIATION"
   },
-  "exp_blended": 197.75315292262627,
+  "exp_blended": 198.15508765023932,
   "exp_primary": 188.79986006870374,
   "exp_components": [
    188.79986006870374,
@@ -602,7 +602,7 @@
    "reinvest_rate": 0.6261,
    "_valuation_sector": "CEMENT"
   },
-  "exp_blended": 2102.622078716457,
+  "exp_blended": 2092.174720391812,
   "exp_primary": 2089.4716649289403,
   "exp_components": [
    2089.4716649289403,
@@ -674,7 +674,7 @@
    "reinvest_rate": 0.1649,
    "_valuation_sector": "TELECOM"
   },
-  "exp_blended": 847.3995313907305,
+  "exp_blended": 843.371143542627,
   "exp_primary": 703.5153893840911,
   "exp_components": [
    703.5153893840911,
@@ -710,7 +710,7 @@
    "reinvest_rate": 0.4326,
    "_valuation_sector": "DEFENCE"
   },
-  "exp_blended": 1702.121862652361,
+  "exp_blended": 1693.6815889532581,
   "exp_primary": 1406.7122831837692,
   "exp_components": [
    1406.7122831837692,
@@ -782,7 +782,7 @@
    "reinvest_rate": 0.7582,
    "_valuation_sector": "CABLES"
   },
-  "exp_blended": 47670.89055133649,
+  "exp_blended": 47617.11849124255,
   "exp_primary": 49569.62696750832,
   "exp_components": [
    49569.62696750832,
@@ -890,7 +890,7 @@
    "reinvest_rate": 0.7644,
    "_valuation_sector": "DEFENCE"
   },
-  "exp_blended": 2931.127054349573,
+  "exp_blended": 2916.3612780388926,
   "exp_primary": 2460.962718446732,
   "exp_components": [
    2460.962718446732,
@@ -926,7 +926,7 @@
    "reinvest_rate": 0.6583,
    "_valuation_sector": "PHARMA"
   },
-  "exp_blended": 4311.975931471421,
+  "exp_blended": 4330.226746628573,
   "exp_primary": 4562.703789288037,
   "exp_components": [
    4562.703789288037,
@@ -998,7 +998,7 @@
    "reinvest_rate": 0.5309,
    "_valuation_sector": "DISTRIBUTION"
   },
-  "exp_blended": 1032.3744523471507,
+  "exp_blended": 1034.9017050929249,
   "exp_primary": 1218.313043948361,
   "exp_components": [
    1218.313043948361,
@@ -1034,7 +1034,7 @@
    "reinvest_rate": 0.3216,
    "_valuation_sector": "CONSUMER"
   },
-  "exp_blended": 4482.719663672793,
+  "exp_blended": 4461.541460537331,
   "exp_primary": 3529.7005225770017,
   "exp_components": [
    3529.7005225770017,
@@ -1106,7 +1106,7 @@
    "reinvest_rate": 0.3978,
    "_valuation_sector": "SUGAR"
   },
-  "exp_blended": 531.6662813761477,
+  "exp_blended": 531.0118456977402,
   "exp_primary": 485.66459571539826,
   "exp_components": [
    485.66459571539826,
@@ -1142,7 +1142,7 @@
    "reinvest_rate": 0.5317,
    "_valuation_sector": "UTILITIES"
   },
-  "exp_blended": 871.2895418965861,
+  "exp_blended": 873.2728982178696,
   "exp_primary": 1018.1437785021592,
   "exp_components": [
    1018.1437785021592,
@@ -1214,7 +1214,7 @@
    "reinvest_rate": 0.445,
    "_valuation_sector": "METAL"
   },
-  "exp_blended": 388.02053531058095,
+  "exp_blended": 388.645942574494,
   "exp_primary": 451.18666896579185,
   "exp_components": [
    451.18666896579185,
@@ -1250,7 +1250,7 @@
    "reinvest_rate": 0.656,
    "_valuation_sector": "CONSUMER"
   },
-  "exp_blended": 110439.33393853327,
+  "exp_blended": 110844.61589794073,
   "exp_primary": 121584.58782223845,
   "exp_components": [
    121584.58782223845,
@@ -1322,7 +1322,7 @@
    "reinvest_rate": 0.7427,
    "_valuation_sector": "TEXTILES"
   },
-  "exp_blended": 471.5030526896869,
+  "exp_blended": 469.1650210234571,
   "exp_primary": 389.6719443716421,
   "exp_components": [
    389.6719443716421,
@@ -1358,7 +1358,7 @@
    "reinvest_rate": 0.6959,
    "_valuation_sector": "METAL"
   },
-  "exp_blended": 5002.241066431333,
+  "exp_blended": 4977.934890051189,
   "exp_primary": 4861.235276028796,
   "exp_components": [
    4861.235276028796,
@@ -1430,7 +1430,7 @@
    "reinvest_rate": 0.3545,
    "_valuation_sector": "CAPITAL_GOODS"
   },
-  "exp_blended": 2914.2484000512536,
+  "exp_blended": 2913.1106707649747,
   "exp_primary": 3273.3892237649197,
   "exp_components": [
    3273.3892237649197,
@@ -1466,7 +1466,7 @@
    "reinvest_rate": 0.6009,
    "_valuation_sector": "PAPER"
   },
-  "exp_blended": 1863.2883995165994,
+  "exp_blended": 1859.7827350351636,
   "exp_primary": 1878.1931893956582,
   "exp_components": [
    1878.1931893956582,
@@ -1538,7 +1538,7 @@
    "reinvest_rate": 0.6231,
    "_valuation_sector": "DEFENCE"
   },
-  "exp_blended": 911.1129766542485,
+  "exp_blended": 906.5950610675333,
   "exp_primary": 752.9859311192137,
   "exp_components": [
    752.9859311192137,
@@ -1574,7 +1574,7 @@
    "reinvest_rate": 0.5009,
    "_valuation_sector": "IT_SERVICES"
   },
-  "exp_blended": 2577.8921966372736,
+  "exp_blended": 2568.5947208452435,
   "exp_primary": 2109.144883372805,
   "exp_components": [
    2109.144883372805,
@@ -1646,7 +1646,7 @@
    "reinvest_rate": 0.7765,
    "_valuation_sector": "CONSTRUCTION"
   },
-  "exp_blended": 286.6820842466744,
+  "exp_blended": 285.8847196327123,
   "exp_primary": 264.9560775969086,
   "exp_components": [
    264.9560775969086,
@@ -1682,7 +1682,7 @@
    "reinvest_rate": 0.3488,
    "_valuation_sector": "LOGISTICS"
   },
-  "exp_blended": 591.0648921588864,
+  "exp_blended": 587.7192418259116,
   "exp_primary": 557.6083888291381,
   "exp_components": [
    557.6083888291381,
@@ -1754,7 +1754,7 @@
    "reinvest_rate": 0.4573,
    "_valuation_sector": "TELECOM"
   },
-  "exp_blended": 782.1814108326745,
+  "exp_blended": 778.9562161255699,
   "exp_primary": 717.6775166905841,
   "exp_components": [
    717.6775166905841,
@@ -1790,7 +1790,7 @@
    "reinvest_rate": 0.6147,
    "_valuation_sector": "TEXTILES"
   },
-  "exp_blended": 14282.114791192751,
+  "exp_blended": 14211.294387269481,
   "exp_primary": 11803.400653878307,
   "exp_components": [
    11803.400653878307,
@@ -1862,7 +1862,7 @@
    "reinvest_rate": 0.1657,
    "_valuation_sector": "AVIATION"
   },
-  "exp_blended": 2965.542733976843,
+  "exp_blended": 2974.6273829329175,
   "exp_primary": 3348.123099040774,
   "exp_components": [
    3348.123099040774,
@@ -1898,7 +1898,7 @@
    "reinvest_rate": 0.5966,
    "_valuation_sector": "CONSUMER"
   },
-  "exp_blended": 1503.9359632645833,
+  "exp_blended": 1510.1377610512413,
   "exp_primary": 1550.4494466645187,
   "exp_components": [
    1550.4494466645187,
@@ -1970,7 +1970,7 @@
    "reinvest_rate": 0.7007,
    "_valuation_sector": "DISTRIBUTION"
   },
-  "exp_blended": 978.9418060766257,
+  "exp_blended": 981.7689108219091,
   "exp_primary": 971.8623501622372,
   "exp_components": [
    971.8623501622372,
@@ -2006,7 +2006,7 @@
    "reinvest_rate": 0.3952,
    "_valuation_sector": "REALTY"
   },
-  "exp_blended": 1655.5670734548103,
+  "exp_blended": 1656.5212589289372,
   "exp_primary": 1768.7805571957185,
   "exp_components": [
    1768.7805571957185,
@@ -2078,7 +2078,7 @@
    "reinvest_rate": 0.2778,
    "_valuation_sector": "CABLES"
   },
-  "exp_blended": 3630.4511476073803,
+  "exp_blended": 3611.784416091051,
   "exp_primary": 3111.121919388246,
   "exp_components": [
    3111.121919388246,
@@ -2114,7 +2114,7 @@
    "reinvest_rate": 0.5014,
    "_valuation_sector": "DEFENCE"
   },
-  "exp_blended": 17737.52984964998,
+  "exp_blended": 17649.575156180643,
   "exp_primary": 14659.115578223125,
   "exp_components": [
    14659.115578223125,
