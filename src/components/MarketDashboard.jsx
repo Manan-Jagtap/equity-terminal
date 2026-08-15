@@ -59,10 +59,14 @@ export default function MarketDashboard({ API, companies, onOpen }) {
     <PageSkeleton label="Loading market…" cards={6} rows={8} />
   );
 
-  /* A failed request is not a closed market. Routing failures here keeps the
-     "market may be closed" explanation below attached to the one case where it
-     is actually true, and ErrorState's promise that it retries on reconnect is
-     backed by useResource's online/visibility listeners. */
+  /* A failed REQUEST is not a closed market, and this branch handles it —
+     ErrorState's promise that it retries on reconnect is backed by useResource's
+     online/visibility listeners.
+
+     What this branch does NOT catch is a failed UPSTREAM. The backend answers
+     200 with empty lists when the vendor call fails, so that case renders as an
+     empty panel, not an error. The empty-state copy no longer guesses at a
+     cause for it — see Empty below. */
   if (error) return (
     <div style={{ padding: `22px ${PAD}px 60px` }}>
       <h1 style={{ ...serif, fontSize: isMobile ? 26 : 32, color: C.text, margin: "0 0 18px", fontWeight: 400 }}>Market Overview</h1>
@@ -94,6 +98,12 @@ export default function MarketDashboard({ API, companies, onOpen }) {
             ? <span style={{ ...mono, fontSize: 11, color: C.green, display: "inline-flex", alignItems: "center", gap: 6 }}>
                 <span className="blink" style={liveDotStyle(C.green)} />LIVE · {liveFeed.as_of}
               </span>
+            /* Deliberately no client-side "N hours old" here. Computing it needs
+               Date.now() at render, which is impure (react-hooks/purity), and
+               moving it to an effect trips set-state-in-effect. The age belongs
+               on the server anyway — the backend knows when it actually fetched
+               versus when it served cache, which the client can only guess at.
+               Follow-up: return as_of_age_min from /api/market/snapshot. */
             : snap?.as_of && <span style={{ ...mono, fontSize: 11, color: C.dim }}>as of {snap.as_of}</span>}
           {/* No spin-while-loading class any more: the skeleton above returns
               before this button renders, so `loading` is provably false here and
@@ -183,7 +193,7 @@ export default function MarketDashboard({ API, companies, onOpen }) {
             return list.length ? list.map((x, i) => (
               <Row key={i} clickable={known.has((x.ticker || "").toUpperCase())} onClick={() => openIf(x.ticker)}
                 left={x.name} sub={fmtActive(x)} right={fmtN(x.price)} rightTone={C.text} pct={x.pct} />
-            )) : <Empty />;
+            )) : <Empty what="movers" />;
           })()}
         </Card>
         <Card title="52-Week Highs / Lows (NSE)" icon={ArrowUpRight}>
@@ -198,7 +208,7 @@ export default function MarketDashboard({ API, companies, onOpen }) {
                   left={x.name} sub="52w low" right={fmtN(x.price)} rightTone={C.red} icon={<ArrowDownRight size={13} color={C.red} />} />
               ))}
             </>
-          ) : <Empty />}
+          ) : <Empty what="names" />}
         </Card>
       </div>
     </div>
@@ -321,7 +331,7 @@ const MoverList = ({ title, icon, tone, rows, openIf, known }) => (
     {rows.length ? rows.map((x, i) => (
       <Row key={i} clickable={known.has((x.ticker || "").toUpperCase())} onClick={() => openIf(x.ticker)}
         left={x.name} sub={x.rating} right={fmtN(x.price)} rightTone={C.text} pct={x.pct} />
-    )) : <Empty />}
+    )) : <Empty what="names" />}
   </Card>
 );
 
@@ -348,6 +358,24 @@ const Row = ({ left, sub, right, rightTone, pct, icon, clickable, onClick }) => 
   </button>
 );
 
-const Empty = () => (
-  <div style={{ ...sans, fontSize: 12, color: C.dim, padding: "14px 16px" }}>No data right now (market may be closed).</div>
+/* This used to read "No data right now (market may be closed)." The comment
+   above the error branch argued that routing failures elsewhere left this copy
+   "attached to the one case where it is actually true". That reasoning has a
+   hole, and it cost a day.
+
+   The upstream feed failing does NOT reach the error branch. market_routes._get
+   returns None on upstream failure, clean(None) yields [], and the route answers
+   200 with {"gainers": [], "losers": []}. A dead feed and a closed market are
+   byte-identical at this boundary — so the copy asserted a cause it had no way
+   to check, and on 14 Aug 2026 a credential outage rendered for hours as a
+   normal quiet evening across gainers, losers and 52-week highs. The panels
+   were the only honest surfaces on the page and they were saying the wrong
+   thing.
+
+   State what is known — the list came back empty — and let the staleness note
+   in the header carry the "how old is this" question, which is answerable. */
+const Empty = ({ what = "data" }) => (
+  <div style={{ ...sans, fontSize: 12, color: C.dim, padding: "14px 16px" }}>
+    No {what} in the latest snapshot.
+  </div>
 );
