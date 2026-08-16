@@ -31,6 +31,13 @@ export function dataQuality(co) {
 
   // ── Price history: real or synthetic? ──────────────────────────────
   if (co.syntheticSeries) penal(0.10, "Price history is synthetic — momentum/52W not from real OHLC");
+  // Mirrors data_quality.py's `synthetic_price` penalty. The backend keeps a ₹1
+  // sentinel price plus a synthetic_price flag; the API sends the client
+  // price=null for that same state, so ABSENCE of a price is how the flag
+  // arrives here. Without this the client scored a priceless name HIGH
+  // confidence (score 1.0) while the server scored it 0.40 / LOW — the same row,
+  // two different trust badges, and a composite 2× the server's.
+  if (!(co.price > 0)) penal(0.60, "Live price unavailable — margin of safety vs price is not meaningful");
 
   // ── Basis-consistency checks (the split/stale-data trap) ───────────
   let pb = null, pe = null, roe = null;
