@@ -9,7 +9,7 @@
      portfolio holdings with a concentration donut, and a fund-facts panel.
 
    All data comes from the licensed vendor feed. A browsing aid, not advice. */
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { ArrowLeft, Search } from "lucide-react";
 import {
   AreaChart, Area, YAxis, Tooltip, ResponsiveContainer, ReferenceLine,
@@ -270,6 +270,12 @@ function FundPage({ fund, onBack, isMobile }) {
   const [navOverride, setNavOverride] = useState(null);
   const [navFailed, setNavFailed] = useState(false);
   const [navLoading, setNavLoading] = useState(false);
+  /* Monotonic id of the latest range click. Raw fetches carry no ordering:
+     click 5Y then 1M and a slow 5Y response can resolve AFTER 1M's, silently
+     repainting the chart (and the "over 1M" return figure) with 5Y data — the
+     toggle highlights one range while the series shows another. Every handler
+     below bails unless it belongs to the newest click. */
+  const navSeq = useRef(0);
 
   /* Initial load — holdings, facts, and the default (1Y) NAV series. No reset
      dance needed: the parent keys this component on fund.name.
@@ -286,6 +292,7 @@ function FundPage({ fund, onBack, isMobile }) {
   const pickRange = r => {
     setRange(r);
     if (!detail?.id) return;
+    const seq = ++navSeq.current;
     setNavLoading(true);
     setNavFailed(false);
     fetch(`${API}/api/mutual-funds/nav?id=${encodeURIComponent(detail.id)}&range=${r}`)
@@ -296,9 +303,12 @@ function FundPage({ fund, onBack, isMobile }) {
          the defect in miniature — an outage in our own API reported to the user
          as a gap in the fund's price history. */
       .then(res => { if (!res.ok) throw new Error(`HTTP ${res.status}`); return res.json(); })
-      .then(d => setNavOverride(d?.nav_history || []))
-      .catch(() => { setNavOverride([]); setNavFailed(true); })
-      .finally(() => setNavLoading(false));
+      .then(d => { if (seq === navSeq.current) setNavOverride(d?.nav_history || []); })
+      /* Staleness guards on catch/finally too: a superseded request that dies
+         must not raise the "Couldn't load" banner — or clear the spinner —
+         for the range that is actually on screen. */
+      .catch(() => { if (seq === navSeq.current) { setNavOverride([]); setNavFailed(true); } })
+      .finally(() => { if (seq === navSeq.current) setNavLoading(false); });
   };
 
   const series = navOverride ?? (detail?.nav_history || []);
