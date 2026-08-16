@@ -13,6 +13,7 @@ import PageHeader from "./ui/PageHeader.jsx";
 import useResource from "../lib/useResource.js";
 import ErrorState from "./ui/ErrorState.jsx";
 import { buttonReset, useEscape } from "../lib/a11y.js";
+import { partitionSection } from "../lib/macroRows.js";
 
 const API = import.meta.env.VITE_API_URL;
 
@@ -186,8 +187,10 @@ function IndicatorCard({ r, onOpen }) {
       {r.awaiting ? (
         <>
           <div style={{ ...mono, fontSize: 18, color: C.faint, marginTop: 6 }}>—</div>
+          {/* "awaiting feed" was one phrase for two facts, and for the seven
+              unwired indicators there is no feed to await. */}
           <div style={{ ...sans, fontSize: 9.5, color: C.faint, marginTop: 8, lineHeight: 1.4 }}>
-            awaiting feed{r.source ? ` · ${r.source}` : ""}
+            {r.status === "no_feed" ? "no source wired" : "awaiting release"}{r.source ? ` · ${r.source}` : ""}
           </div>
         </>
       ) : (
@@ -209,6 +212,24 @@ function IndicatorCard({ r, onOpen }) {
         </>
       )}
     </button>
+  );
+}
+
+/* The indicators the API reports as `status: "no_feed"` — no source is wired, so
+   unlike a late print no card appears on its own, ever. One muted line naming
+   each and its publisher: seven blank tiles would take more room and say less,
+   but leaving them out entirely told the reader the grid was complete. */
+function UnwiredNote({ rows }) {
+  return (
+    <div style={{ ...sans, fontSize: 11, color: C.faint, lineHeight: 1.6, marginTop: 12,
+                  border: `1px dashed ${C.line}`, borderRadius: 10, padding: "10px 14px" }}>
+      <span style={{ color: C.dim }}>
+        No source wired yet — these are missing, not zero, and won't appear until one is connected:
+      </span>{" "}
+      {rows.map((r, i) => (
+        <span key={r.slug}>{i ? " · " : ""}{r.label}{r.source ? ` (${r.source})` : ""}</span>
+      ))}
+    </div>
   );
 }
 
@@ -275,8 +296,10 @@ export default function EconomyDashboard() {
   if (error) return (
     <div className="fadein" style={{ padding: isMobile ? "20px 14px 40px" : "24px 32px 48px", maxWidth: 1180 }}>
       <PageHeader title="Economy">
+        {/* Publisher list matches the live header below: GSTN, NPCI and Grid
+            India publish only the indicators nothing here fetches. */}
         India's high-frequency macro indicators — every figure sourced from a primary official publisher
-        (RBI, MoSPI, GSTN, NPCI, Grid India), each with its own reporting date. A reference, not advice.
+        (RBI, MoSPI, OECD), each with its own reporting date. A reference, not advice.
       </PageHeader>
       <ErrorState error={error} onRetry={retry} what="the macro desk" />
     </div>
@@ -294,8 +317,12 @@ export default function EconomyDashboard() {
             RATE STANCE · {stance.label}
           </span>
         )}>
+        {/* This read "(RBI, MoSPI, GSTN, NPCI, Grid India)". GSTN, NPCI and Grid
+            India publish exactly the seven indicators no feed fetches, so the
+            line credited three sources for figures the page has never shown.
+            They are named further down instead, as unwired. */}
         India's high-frequency macro indicators — every figure sourced from a primary official publisher
-        (RBI, MoSPI, GSTN, NPCI, Grid India), each with its own reporting date. A reference, not advice.
+        (RBI, MoSPI, OECD), each with its own reporting date. A reference, not advice.
       </PageHeader>
 
       {/* Hero band */}
@@ -389,22 +416,29 @@ export default function EconomyDashboard() {
         </div>
       )}
 
-      {/* Sections — indicators without a live feed ("awaiting source") are
-          HIDDEN, not shown as blank cards: an empty tile tells a reader
-          nothing. The API still lists them (admin/status visibility), and a
-          card reappears automatically the moment its feed produces data. A
-          section whose every indicator is awaiting collapses entirely. */}
+      {/* Sections. Three kinds of row, three different facts, and they used to
+          share one silence: every row flagged `awaiting` was filtered out, so a
+          late print (the card returns next month) and an indicator with no
+          source wired at all (the card never returns) both vanished. Seven of
+          the twenty are permanently in the second state — GST collections,
+          e-way bills, both PMIs, peak power, auto sales, UPI — so this grid
+          showed three "Growth & activity" cards out of nine and said nothing
+          about the rest. Late prints stay hidden; the unwired ones are named,
+          because only a decision brings those back. */}
       {(data.sections || [])
-        .map(sec => ({ ...sec, series: (sec.series || []).filter(r => !r.awaiting) }))
-        .filter(sec => sec.series.length > 0)
+        .map(sec => partitionSection(sec))
+        .filter(sec => sec.live.length > 0 || sec.unwired.length > 0)
         .map(sec => (
         <div key={sec.title} style={{ marginBottom: 24 }}>
           <div style={{ ...sans, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.12em",
                         color: C.dim, marginBottom: 10 }}>{sec.title}</div>
-          <div style={{ display: "grid", gap: 12,
-                        gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? 150 : 210}px, 1fr))` }}>
-            {sec.series.map(r => <IndicatorCard key={r.slug} r={r} onOpen={x => setOpen(x)} />)}
-          </div>
+          {sec.live.length > 0 && (
+            <div style={{ display: "grid", gap: 12,
+                          gridTemplateColumns: `repeat(auto-fill, minmax(${isMobile ? 150 : 210}px, 1fr))` }}>
+              {sec.live.map(r => <IndicatorCard key={r.slug} r={r} onOpen={x => setOpen(x)} />)}
+            </div>
+          )}
+          {sec.unwired.length > 0 && <UnwiredNote rows={sec.unwired} />}
         </div>
       ))}
 

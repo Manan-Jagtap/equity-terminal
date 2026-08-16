@@ -70,6 +70,13 @@ jobs:
       # invariant (provenance, not populated-ness) instead of the shapes.
       - name: Suppression contract (no surface reinvents a withheld valuation)
         run: node tests/suppressionContract.mjs
+      # Seven Economy indicators have no source wired. The grid hid every row the
+      # API flagged `awaiting`, which erased "no feed exists" and "this month has
+      # not printed" alike — the page showed three of nine growth cards while
+      # crediting publishers it has never carried a figure from. This gates the
+      # distinction: an unwired row must reach the reader.
+      - name: Macro row contract (an unwired indicator is never silently dropped)
+        run: node tests/macroRowsContract.mjs
       - name: Build
         run: npm run build
       - name: Bundle budget (entry ≤ 175 kB gzip)
