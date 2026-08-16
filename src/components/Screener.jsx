@@ -93,9 +93,22 @@ const sectorBucket = sec => {
 export default function Screener({ companies, onOpen, loading, watched, onToggleWatch, API }) {
   const isWatched = t => watched && watched.has(t);
   const liveFeed = useLive(API);   // near-real-time CMP ticks (shared store)
+  /* ONE price per row for everything this table computes itself. The CMP cell,
+     the cap-band filter and the price sort each used to pick their own source:
+     the cell and the band took the live tick when there was one, the sort took
+     the stored price the engine valued the row on. So during market hours
+     "sort by CMP" ordered the table by numbers the column was not showing, and
+     rows sat visibly out of order. livePx() is null when the feed has no tick
+     for the name (or a non-positive one); rowPrice() is what the row shows,
+     sorts on and bands on. */
+  const livePx = co => {
+    const v = liveFeed.prices?.[(co.ticker || "").toUpperCase()];
+    return v > 0 ? v : null;
+  };
+  const rowPrice = co => livePx(co) ?? co.price;
   // SEBI cap bands (₹cr): Large ≥ 67,000 (~top 100), Mid 22,000–67,000, else Small.
-  const capBand = (co, livePx) => {
-    const px = livePx ?? co.price;
+  const capBand = co => {
+    const px = rowPrice(co);
     const m = (px && co.shares) ? px * co.shares : (co.market_cap ?? null);
     if (m == null) return null;
     return m >= 67000 ? "Large" : m >= 22000 ? "Mid" : "Small";
@@ -240,7 +253,7 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
     .filter(r => {
       if (vf !== "All" && r.verdict !== vf) return false;
       if (cf !== "All" && r.confidence.level !== cf) return false;
-      if (capf !== "All" && capBand(r.co, liveFeed.prices?.[(r.co.ticker || "").toUpperCase()]) !== capf) return false;
+      if (capf !== "All" && capBand(r.co) !== capf) return false;
       const m = parseFloat(minMos);
       if (!isNaN(m) && (r.mos == null || r.mos * 100 < m)) return false;
       if (tf !== "All") {
@@ -263,7 +276,9 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
       }
       if (sort === "composite") return b.composite - a.composite;
       if (sort === "mos")       return b.sortMos - a.sortMos;
-      if (sort === "price")     return (b.co.price || 0) - (a.co.price || 0);
+      // Sort on the price the column SHOWS (live tick when there is one), not
+      // the stored one — see rowPrice above.
+      if (sort === "price")     return (rowPrice(b.co) || 0) - (rowPrice(a.co) || 0);
       if (sort === "roe")       return (b.roe || 0) - (a.roe || 0);
       if (sort === "sentiment") return (b.sentiment ?? -1) - (a.sentiment ?? -1);
       return a.co.name.localeCompare(b.co.name);
@@ -524,7 +539,25 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
                   </div>
                 </td>
                 <td style={{ ...mono, textAlign: "right", padding: "11px 12px", fontSize: 12, whiteSpace: "nowrap" }}>
-                  {inr(liveFeed.prices?.[(r.co.ticker || "").toUpperCase()] ?? r.co.price)} <span style={{ color: C.faint }}>/</span>{" "}
+                  {(() => {
+                    /* A live tick replaced the stored price here with no marker,
+                       while MoS, P/B and P/E on the same row are still computed
+                       on the STORED price (the backend refreshes those from the
+                       same feed every ~90 min; this tick is ~15 s). Intraday the
+                       row's own arithmetic therefore stopped reconciling —
+                       intrinsic ÷ CMP − 1 no longer equalled the MoS beside it —
+                       and nothing said which price the ratios were on. Mark the
+                       tick once it has moved ≥ 0.1% off the stored price (the
+                       resolution of the MoS column) and name both prices. */
+                    const live = livePx(r.co), stored = r.co.price;
+                    const moved = live != null && stored > 0 && Math.abs(live / stored - 1) >= 0.001;
+                    if (!moved) return inr(rowPrice(r.co));
+                    return (
+                      <span title={`${liveFeed.live ? "Live" : "Last traded"} ${inr(live, 2)}${liveFeed.as_of ? ` · ${liveFeed.as_of}` : ""} — MoS, P/B and P/E on this row are on the stored price ${inr(stored, 2)}`}>
+                        {inr(live)}<span aria-hidden="true" style={{ fontSize: 9, color: C.faint }}> ●</span>
+                      </span>
+                    );
+                  })()} <span style={{ color: C.faint }}>/</span>{" "}
                   {r.consensus != null
                     ? <span title="Analyst consensus target — our model has no call on this name" style={{ color: C.dim }}>{inrOrDash(r.consensus)}<span style={{ fontSize: 9, color: C.faint }}> ⌖</span></span>
                     : r.iv == null && r.fairValueNote
@@ -583,7 +616,8 @@ export default function Screener({ companies, onOpen, loading, watched, onToggle
         <span style={{ ...sans, color: C.dim, fontSize: 12 }}>
           Intrinsic = blended fair value (DCF / Residual-Income + relative cross-checks) · the three-bar meter shows data
           confidence (three bars = high, one = low) · &quot;n/m&quot; means the engine withheld its fair value for that name —
-          the verdict still stands · click a row for the full model
+          the verdict still stands · ● after a CMP = live tick; MoS, P/B and P/E are on the stored price it moved from
+          · click a row for the full model
         </span>
       </div>
     </div>

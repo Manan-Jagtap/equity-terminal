@@ -2888,8 +2888,31 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
   if (!visibleTabs.some(t => t.id === tab)) setTab("overview");
 
   const hasRealPrices = (histPrices?.data?.length || 0) > 10;
+  /* The [{i, close}] series lib/technicals.js reads for recommend()'s momentum
+     leg (16% of the composite, plus the "Above/Below 50-DMA, RSI xx" note that
+     the Verdict tab prints while apiVal loads). `co.series` is NEVER real
+     history: seedData.buildFromApi() fills it with makeSeries() — a
+     deterministic random walk seeded from the ticker's char codes — and nothing
+     upstream ever swapped in the /history closes. Yet the flag below was already
+     `syntheticSeries: !hasRealPrices`, so on every name whose /history loaded
+     (the normal case) the engine was told the series was REAL: dataQuality's
+     synthetic penalty and its 0.79 confidence cap switched off, and the momentum
+     row printed a 50-DMA/RSI reading taken from noise as if it were the tape
+     (TITAN: "Above 50-DMA, RSI 68", momentum 78, data HIGH — from a walk).
+     Build the series from the SAME payload the flag is derived from, so the two
+     can no longer disagree; with no usable history hand recommend() an EMPTY
+     series (technicals() then abstains: RSI 50, no SMA calls → neutral 50)
+     rather than letting a random walk move the score, with `syntheticSeries:
+     true` still set so the note and the confidence cap say why. */
+  const realSeries = useMemo(() => {
+    if (!hasRealPrices) return null;
+    return histPrices.data
+      .filter(p => p?.close != null)
+      .map((p, i) => ({ i, close: p.close }));
+  }, [histPrices, hasRealPrices]);
   const co2 = useMemo(() => {
-    const base = { ...co, price, assumptions, syntheticSeries: !hasRealPrices };
+    const base = { ...co, price, assumptions, syntheticSeries: !hasRealPrices,
+                   series: realSeries || [] };
     // Full multi-year statements (exact backend shape) → lib/derive.js grounds
     // the client fallback in the SAME history the backend derives from, so the
     // header's client-recomputed intrinsic converges on the backend's.
@@ -2917,7 +2940,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
       }
     }
     return base;
-  }, [co, price, assumptions, hasRealPrices, liveStatement, liveInsights, liveFinancials]);
+  }, [co, price, assumptions, hasRealPrices, realSeries, liveStatement, liveInsights, liveFinancials]);
   const rec  = useMemo(() => recommend(co2, assumptions), [co2, assumptions]);
   const set  = useCallback(k => val => setAssumptions(prev => ({ ...prev, [k]: val })), [setAssumptions]);
 
@@ -3031,12 +3054,17 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
           sma50: null,
         }));
     }
-    // Fallback: synthetic series
-    return (co.series || []).map((p, i) => ({
-      date: null, label: String(i), close: p.close, high: null, low: null,
-      volume: null, sma20: null, sma50: null,
-    }));
-  }, [histPrices, co.series]);
+    /* No history → NO rows. This used to fall back to `co.series`, the
+       makeSeries() random walk from seedData.buildFromApi(), dressed in the
+       same {date,label,close,…} shape as real OHLC — a fabricated 250-point
+       price path sitting in a variable named priceChartData with nothing to
+       mark it synthetic. Every consumer today gates on hasRealPrices (52W
+       range, prev-close, ADV), so it never reached the screen; but the next
+       consumer to read priceChartData directly would have charted noise as
+       the tape (that is exactly how Bajaj's 52W High 8,547 at a ₹920 price got
+       out once already). Return [] so an absent history reads as absent. */
+    return [];
+  }, [histPrices]);
 
   // Add SMA to price chart data
 
@@ -3143,9 +3171,12 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
               <div style={{ display:"flex", alignItems:"center", gap:6 }}>
                 {liveFeed.live
                   ? <span className="blink" style={{ width:6, height:6, borderRadius:"50%", background:C.green, display:"inline-block" }} />
-                  : <span style={{ width:6, height:6, borderRadius:"50%", background:C.dim, display:"inline-block" }} />}
+                  : <span style={{ width:6, height:6, borderRadius:"50%", background: liveFeed.stale ? C.gold : C.dim, display:"inline-block" }} />}
                 <span style={{ letterSpacing:"0.1em" }}>
-                  {liveFeed.live ? "LIVE" : "EOD"}{(() => {
+                  {/* STALE, not EOD, when the store has retired a dead feed's LIVE
+                      claim (lib/live.js): the price is a frozen intraday tick and
+                      "EOD" would assert a vintage it does not have. */}
+                  {liveFeed.live ? "LIVE" : liveFeed.stale ? "STALE" : "EOD"}{(() => {
                     /* This printed the BROWSER's today beside "EOD" whatever the
                        price vintage actually was — asserting a freshness we had
                        not established, on a weekend or a stale feed alike. Show
