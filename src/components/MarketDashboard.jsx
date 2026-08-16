@@ -25,6 +25,9 @@ const fmtVol = n => n == null ? "—" : n >= 1e7 ? (n / 1e7).toFixed(1) + " Cr" 
 const fmtActive = x => x?.value_cr != null
   ? "₹" + fmtN(x.value_cr, 0) + " Cr traded"
   : fmtVol(x?.volume) + " vol";
+// Age of the live feed's last NEW tick — seconds stamped by the store on its
+// own poll cadence (lib/live.js), so rendering it stays pure.
+const fmtAge = s => s >= 3600 ? Math.floor(s / 3600) + "h" : s >= 60 ? Math.floor(s / 60) + "m" : Math.max(0, s | 0) + "s";
 
 export default function MarketDashboard({ API, companies, onOpen }) {
   const isMobile = useIsMobile();
@@ -98,10 +101,25 @@ export default function MarketDashboard({ API, companies, onOpen }) {
             ? <span style={{ ...mono, fontSize: 11, color: C.green, display: "inline-flex", alignItems: "center", gap: 6 }}>
                 <span className="blink" style={liveDotStyle(C.green)} />LIVE · {liveFeed.as_of}
               </span>
-            /* Deliberately no client-side "N hours old" here. Computing it needs
-               Date.now() at render, which is impure (react-hooks/purity), and
-               moving it to an effect trips set-state-in-effect. The age belongs
-               on the server anyway — the backend knows when it actually fetched
+            /* A dead feed used to keep this badge pulsing green over frozen
+               prices: `live` was only ever the server's claim from the last
+               payload we managed to receive, and nothing ever retired it. The
+               store (lib/live.js) now drops `live` and sets `stale` once no NEW
+               tick has arrived for STALE_AFTER_MS, stamping the age on its own
+               poll cadence — so this stays pure (no Date.now() at render) and
+               the badge turns amber, stops blinking, and says how old the last
+               tick is instead of claiming LIVE. */
+            : liveFeed.stale
+            ? <span style={{ ...mono, fontSize: 11, color: C.gold, display: "inline-flex", alignItems: "center", gap: 6 }}
+                    title={`No new prices for ${fmtAge(liveFeed.stale_s)} — the live feed may be down. Prices shown are the last received (${liveFeed.as_of}).`}>
+                <span style={liveDotStyle(C.gold)} />STALE {fmtAge(liveFeed.stale_s)} · {liveFeed.as_of}
+              </span>
+            /* Deliberately no client-side "N hours old" for the SNAPSHOT here.
+               Computing it needs Date.now() at render, which is impure
+               (react-hooks/purity), and moving it to an effect trips
+               set-state-in-effect. (The live-feed age above is different: the
+               store stamps it off the render path.) The snapshot age belongs on
+               the server anyway — the backend knows when it actually fetched
                versus when it served cache, which the client can only guess at.
                Follow-up: return as_of_age_min from /api/market/snapshot. */
             : snap?.as_of && <span style={{ ...mono, fontSize: 11, color: C.dim }}>as of {snap.as_of}</span>}
