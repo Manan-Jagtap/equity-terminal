@@ -38,7 +38,15 @@ test("screener renders the seed universe with honest verdicts", async ({ page })
   // in the verdict filter dropdown before any visible chip.
   const bajaj = page.locator("tr", { hasText: "Bajaj Finance" });
   await expect(bajaj).toBeVisible({ timeout: 15000 });
-  await expect(bajaj).toContainText("AVOID");
+  // REDUCE, not AVOID. This assertion used to pin AVOID, which was the CLIENT
+  // ladder's drift rather than the product's answer: Bajaj seeds at MoS -43.6%
+  // with 21.4% ROE, and engines.recommend keeps a high-return franchise
+  // (ROE >= 16%) at REDUCE down to -45% precisely because the single-sector DCF
+  // is the leg known to understate premium compounders — only past -45% does it
+  // abstain. The client had no such band, so every premium compounder printed a
+  // confident AVOID the server never published. Reconciled in the verdict-parity
+  // PR (113/113); this test now pins the backend's answer.
+  await expect(bajaj).toContainText("REDUCE");
   // The extreme-MoS lender gate must render NO CALL, never a naive BUY.
   const muthoot = page.locator("tr", { hasText: "Muthoot Finance" });
   await expect(muthoot).toContainText("NO CALL");

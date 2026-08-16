@@ -52,25 +52,16 @@ jobs:
       # backend's engines.recommend (TRIM/REDUCE, the −0.18 AVOID floor, the
       # +50% BUY cap, the high-ROE band…). Exact string match against the
       # backend's own verdicts over every zone edge and gate.
-      #
-      # ADVISORY until reconciled, and the reason is worth stating in full. On
-      # the day this landed (16 Aug 2026) the run was 74/113: the client ladder
-      # had drifted in ways nothing pinned — the AVOID floor (−0.25 vs the
-      # backend's −0.18), the +50% BUY cap, the high-ROE REDUCE band, five
-      # backend gates (VAL-01, VAL-04, lender divergence, INSURANCE, low-ROE)
-      # with no client mirror, and one outright bug: `null >= -0.10` is true in
-      # JS, so a name with NO PRICE read HOLD on the offline path where the
-      # backend says NO DATA. That is the finding, and this harness is how it
-      # was found.
-      #
-      # Merging it red-and-blocking would fail every unrelated PR and teach
-      # everyone to ignore the gate. Softening the assertions would hide the
-      # drift again. So it runs and reports on every PR, and flips to blocking
-      # the moment recommend.js is reconciled — which is a valuation-behaviour
-      # change that moves live verdicts and goes through the calibration cycle,
-      # not through this workflow. Remove continue-on-error in that PR.
-      - name: Verdict parity (advisory until recommend.js is reconciled — see comment)
-        continue-on-error: true
+      # ARC-01/ARC-07, now BLOCKING. It landed advisory at 74/113 because the
+      # client ladder had drifted: the AVOID floor (−0.25 vs the backend's
+      # −0.18), no +50% BUY cap, no high-ROE REDUCE band, five backend gates
+      # with no mirror, four composite legs weighted differently, and
+      # `null >= -0.10` reading a priceless name as HOLD. All 39 are closed and
+      # the fixture reproduces byte-identical from engines.py, so from here a
+      # mismatch means someone moved one ladder without the other — which is
+      # exactly what this is for. Regenerate with tests/gen_verdict_cases.py
+      # after any engines.py / data_quality.py / sector_params.py change.
+      - name: Verdict parity (must be 113/113)
         run: node tests/verdictParity.mjs
       # The engine withholds a fair value while keeping its verdict. A surface
       # that reinvents the withheld number breaks the product's core claim —
