@@ -177,6 +177,20 @@ export default function PriceChart({ data, intrinsic, ticker, API, livePrice, li
                 </button>
               </>
             ) : intraday == null ? "Loading intraday…"
+              : (intraday.reason === "quota" || intraday.reason === "vendor_error" || intraday.note) ? (
+                /* The backend now labels WHY an empty payload is empty. Quota
+                   exhaustion and vendor outages used to fall through to the
+                   market-closed line below — the same market-state lie the
+                   transport branch above was cured of. The `note` check keeps
+                   this honest against a backend deployed before `reason`
+                   existed (the backend ships manually; Vercel doesn't wait). */
+                <>
+                  Couldn't get today's ticks — {intraday.note ? intraday.note
+                    : intraday.reason === "quota" ? "the data vendor's monthly quota is exhausted"
+                    : "the data vendor didn't answer"}. This is not a statement about the market being open or closed.
+                </>
+              ) : (intraday.reason === "unknown_ticker" || intraday.reason === "no_feed")
+                ? "No live intraday feed is available for this name."
               : "No intraday ticks right now — the market is closed or this name has no live feed."}
           </div>
         ) : (

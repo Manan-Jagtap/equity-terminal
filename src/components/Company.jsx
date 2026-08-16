@@ -1958,12 +1958,12 @@ function DocsTab({ co, API, profile }) {
   // narrative, consolidated here so it lives in exactly one place.
   const mgmtCalls = (profile?.concalls || []).filter(c =>
     c && typeof c.ai_summary === "string" && !c.ai_summary.startsWith("/") && c.ai_summary.trim().length > 40);
-  /* `empty` drives copy that makes a claim about the FILINGS ("No documents
-     found ... appear here as filings are collected"), so it must exclude the
-     case where we simply couldn't ask. This matters more here than anywhere:
-     the vendor revoked /documents (DATA-12), so this endpoint really does fail,
-     and the tab was telling users their filings hadn't been collected yet. */
-  const empty    = !loading && !error && concalls.length === 0 && reports.length === 0 && ratings.length === 0 && anns.length === 0 && mgmtCalls.length === 0;
+  /* `empty` may only be claimed when a request actually SUCCEEDED and said so.
+     !loading/!error exclude the outage case (useResource), and `docs != null`
+     excludes the never-asked case (no API base / no ticker → url null): that
+     path skips the fetch entirely, yet used to fall through to the empty card
+     and assert an absence we had never verified. */
+  const empty    = !loading && !error && docs != null && concalls.length === 0 && reports.length === 0 && ratings.length === 0 && anns.length === 0 && mgmtCalls.length === 0;
 
   // The feed publishes dates at MIXED granularity: "May 2026" (concalls carry
   // no day), "30 Jun 2026", or relative ages ("1d"). Rendering through Date()
@@ -2024,11 +2024,20 @@ function DocsTab({ co, API, profile }) {
         <ErrorState error={error} onRetry={retry} what="documents" />
       )}
 
+      {/* State what is KNOWN, never promise collection. The old copy said
+          filings would "appear … within the weekly refresh", but both upstream
+          document sources closed on 24 Jul 2026 (the vendor revoked /documents
+          — DATA-12 — and BSE's announcements API anti-bots us), so no
+          collection runs and the promised fill-in could never happen. Worse,
+          the backend route answers its own failures with 200 and an empty
+          body, so this card is also what an upstream fault looks like — the
+          copy must not claim more than "none stored". */}
       {empty && (
         <Card>
           <div style={{ ...sans, color:C.dim, fontSize:13, padding:40, textAlign:"center" }}>
-            No documents found for {co.ticker} yet. Concalls, annual reports, ratings and announcements
-            appear here as filings are collected for this company — typically within the weekly refresh.
+            No stored documents for {co.ticker}. The upstream filing feeds this library drew
+            from closed in July 2026, so new documents are not currently being collected —
+            this list will not fill in on its own.
           </div>
         </Card>
       )}
@@ -2058,8 +2067,11 @@ function DocsTab({ co, API, profile }) {
       )}
 
       {/* Four cards whose empty copy is "No concall documents." / "No annual
-          reports." — true statements only when the fetch succeeded. */}
-      {!loading && !error && !empty && (
+          reports." — true statements only when the fetch succeeded, so this
+          grid needs `docs != null` for the same reason `empty` does: in the
+          never-asked case (null fetch url) these per-card absence lines would
+          be just as unverified as the empty card above. */}
+      {!loading && !error && !empty && docs != null && (
         <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(340px, 1fr))", gap:20 }}>
           {/* Concalls */}
           <Card>
