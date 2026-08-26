@@ -15,6 +15,10 @@
 
 import { isFinancial } from "./valuation.js";
 
+// Same threshold as data_quality.py / data_integrity.py, so the trust layer,
+// the integrity sweep and this mirror all agree on what "stale" means.
+const STALE_PRICE_DAYS = 5;
+
 export function dataQuality(co) {
   const flags = [];
   let score = 1.0;
@@ -38,6 +42,25 @@ export function dataQuality(co) {
   // confidence (score 1.0) while the server scored it 0.40 / LOW — the same row,
   // two different trust badges, and a composite 2× the server's.
   if (!(co.price > 0)) penal(0.60, "Live price unavailable — margin of safety vs price is not meaningful");
+
+  // Mirrors data_quality.py's delisted / stale-price penalties. A price that
+  // stopped updating is not a live price, and the extreme case is a security
+  // that no longer exists: JBCHEPHARM (amalgamated into Torrent Pharma on
+  // 8 Jul 2026) was rendering a 28-day-old quote at confidence 1.0 "high",
+  // because nothing on either side looked at the AGE of the price — only at
+  // whether one was present.
+  //
+  // Both shapes are accepted because `co` here is spread straight off the API
+  // response in Company.jsx (snake_case survives) but other call sites build a
+  // camelCased object. Reading both keeps the client and server scores equal
+  // whichever path built the row — the exact divergence the price penalty above
+  // was written to close.
+  const staleDays = co.price_stale_days ?? co.priceStaleDays;
+  if (co.delisted) {
+    penal(0.60, "No longer listed — figures are historical, not current market data");
+  } else if (typeof staleDays === "number" && staleDays > STALE_PRICE_DAYS) {
+    penal(0.30, `Price is ${Math.round(staleDays)} days old — margin of safety vs price may be out of date`);
+  }
 
   // ── Basis-consistency checks (the split/stale-data trap) ───────────
   let pb = null, pe = null, roe = null;
