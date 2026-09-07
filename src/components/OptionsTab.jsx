@@ -1,8 +1,10 @@
-/* OptionsTab.jsx — option chain (Dhan-backed) + a strategy payoff builder.
+/* OptionsTab.jsx — option chain (backend's market-data feed, currently
+   Upstox — see data.feed_provider, never hardcode the vendor here) + a
+   strategy payoff builder.
    Chain: OI, IV, LTP, greeks + PCR, centered on ATM. Builder: multi-leg
    payoff-at-expiry with presets, breakevens and max P&L, priced off the live
-   chain LTPs. Degrades to an honest empty state when Dhan isn't connected or
-   the name isn't in F&O. A data aid, not advice. */
+   chain LTPs. Degrades to an honest empty state when the feed isn't
+   connected or the name isn't in F&O. A data aid, not advice. */
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Loader2, Layers, LineChart as LineIcon, Plus, X } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ReferenceLine, ResponsiveContainer, ReferenceDot } from "recharts";
@@ -271,7 +273,7 @@ export default function OptionsTab({ co, API }) {
      the SERVER makes (configured === false); a failed request is not evidence
      for it. */
   if (err) return <ErrorState error={err} onRetry={() => { setErr(null); setLoading(true); setReload(n => n + 1); }} what="the option chain" />;
-  if (!data || data.configured === false) return <Empty msg={data?.message || "Options require Dhan to be connected."} />;
+  if (!data || data.configured === false) return <Empty msg={data?.message || "Options require the market-data feed to be connected."} />;
   if (!data.available) return <Empty msg={data.message || "No option chain available for this name."} />;
 
   const oiBar = (v, side) => (
@@ -347,7 +349,9 @@ export default function OptionsTab({ co, API }) {
             </table>
           </div>
           <div style={{ ...sans, fontSize: 10, color: C.faint, marginTop: 8 }}>
-            Live option chain via Dhan · IV/greeks from Dhan · {data.expiry}. Highlighted row = at-the-money. Data aid, not advice.
+            {/* data.feed_provider comes from the live response — see the
+                MarketDashboard note on why this must not be hardcoded. */}
+            Live option chain via {data.feed_provider ? data.feed_provider[0].toUpperCase() + data.feed_provider.slice(1) : "the market-data feed"} · {data.expiry}. Highlighted row = at-the-money. Data aid, not advice.
           </div>
         </>
       )}

@@ -3,7 +3,7 @@
    One poller per browser tab no matter how many components subscribe
    (screener rows, company header, dashboard indices all read the same
    store). Polls /api/live every 15s while the tab is visible; the backend
-   caches ~12s and fans one Dhan batch-LTP call out to every client, so
+   caches ~12s and fans one market-data feed batch-LTP call out to every client, so
    "real-time" costs one upstream request per window platform-wide. */
 
 import { useEffect, useSyncExternalStore } from "react";
@@ -23,8 +23,8 @@ const subs = new Set();
 export const STALE_AFTER_MS = 90 * 1000;
 
 /* Pure. Apply the staleness verdict to a server payload. `ageMs` is the time
-   since as_of last CHANGED — not since we last heard from the server: when Dhan
-   dies the backend keeps answering 200 with the same frozen payload
+   since as_of last CHANGED — not since we last heard from the server: when the
+   market-data feed dies the backend keeps answering 200 with the same frozen payload
    (live_prices.snapshot serves its cache on upstream failure), and that has to
    read stale exactly like a backend we cannot reach at all. Both used to leave
    the LIVE badge pulsing green over prices that had stopped moving, because
