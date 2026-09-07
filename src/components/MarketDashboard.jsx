@@ -233,7 +233,8 @@ export default function MarketDashboard({ API, companies, onOpen }) {
   );
 }
 
-/* Second-source data health (Dhan vs IndianAPI cross-check). Silent when clean —
+/* Second-source data health (market-data feed vs IndianAPI cross-check;
+   feed_provider in the response names the live vendor). Silent when clean —
    a one-line all-clear. Flagged names expand into a clickable list, so a stale
    or divergent price is never something the user finds out about the hard way. */
 function DataHealth({ API, onOpen }) {
@@ -310,7 +311,12 @@ function DataHealth({ API, onOpen }) {
             ? `Data health: both price sources agree on all ${health.count} names`
             : `Data health: ${health.alerts} alert${health.alerts === 1 ? "" : "s"}, ${health.warnings} warning${health.warnings === 1 ? "" : "s"} across ${health.count} names`}
         </span>
-        <span style={{ ...mono, fontSize: 10, color: C.faint, marginLeft: "auto" }}>Dhan × IndianAPI</span>
+        {/* Named from the live response, not hardcoded — this read "Dhan"
+            for a full day after the backend moved to Upstox (7 Sep 2026),
+            because the vendor's name was baked into the JSX. */}
+        <span style={{ ...mono, fontSize: 10, color: C.faint, marginLeft: "auto" }}>
+          {health.feed_provider ? `${health.feed_provider[0].toUpperCase()}${health.feed_provider.slice(1)} × IndianAPI` : "second-source × IndianAPI"}
+        </span>
         {!clean && <ChevronDown size={13} color={C.dim} style={{ transform: expand ? "rotate(180deg)" : "none", transition: "transform .15s" }} />}
       </button>
       {expand && flagged.length > 0 && (

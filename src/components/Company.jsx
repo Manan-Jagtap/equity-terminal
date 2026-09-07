@@ -2829,7 +2829,7 @@ export default function Company({ co, assumptions, setAssumptions, price, setPri
     [statementRes,  "latest-year operating figures"],
   ].filter(([r]) => r.error);
 
-  // F&O-underlying universe (Dhan scrip master, cached ~daily server-side).
+  // F&O-underlying universe (market-data feed's scrip master, cached ~daily server-side).
   // Cash-only names get no Options tab — showing an always-empty tab reads
   // like a bug. null = unknown (fetch failed) → fail OPEN and keep the tab.
   const [fnoSet, setFnoSet] = useState(null);

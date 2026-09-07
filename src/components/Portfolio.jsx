@@ -555,18 +555,25 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
           Import CSV / PDF
         </button>
         <button type="button" disabled={importing}
-          title="Pull your actual holdings straight from your Dhan account (read-only; no orders are ever placed)"
+          title="Pull your actual holdings straight from your broker account (read-only; no orders are ever placed)"
           onClick={async () => {
             setImporting(true); setImportMsg(null);
             try {
+              /* Endpoint path is still /sync-dhan — kept from when Dhan was
+                 the only vendor, unchanged to avoid an unforced backend/
+                 frontend path-matching edit. The RESPONSE names the live
+                 vendor via feed_provider, which is what the button/tooltip/
+                 message text actually use, so none of this needs to change
+                 on the next swap. */
               const r = await authFetch(`${API}/api/portfolio/sync-dhan`, { method: "POST" });
               const d = await r.json();
               if (!r.ok) throw new Error(d?.detail || "sync failed");
-              const parts = [`Synced ${d.imported} holding${d.imported === 1 ? "" : "s"} from Dhan`];
+              const provider = d.feed_provider ? d.feed_provider[0].toUpperCase() + d.feed_provider.slice(1) : "your broker";
+              const parts = [`Synced ${d.imported} holding${d.imported === 1 ? "" : "s"} from ${provider}`];
               if (d.uncovered?.length) parts.push(`outside coverage: ${d.uncovered.join(", ")}`);
               setImportMsg({ tone: C.green, text: parts.join(" · ") });
               reload();
-            } catch (e) { setImportMsg({ tone: C.red, text: `Dhan sync: ${e.message}` }); }
+            } catch (e) { setImportMsg({ tone: C.red, text: `Broker sync: ${e.message}` }); }
             setImporting(false);
           }}
           style={{
@@ -574,7 +581,7 @@ export default function Portfolio({ API, onOpen, user, requestAuth, onAnalyse })
             padding: "8px 14px", borderRadius: 8, cursor: importing ? "wait" : "pointer",
             border: `1px solid ${C.green}55`, color: C.green, background: C.green + "0d",
           }}>
-          <Sparkles size={13} /> Sync from Dhan
+          <Sparkles size={13} /> Sync from broker
         </button>
         <button type="button" onClick={() => setShowAnalysis(v => !v)}
           title={showAnalysis ? "Hide the analysis panels" : "Show X-ray, composition and holding-term analysis for this book"}
